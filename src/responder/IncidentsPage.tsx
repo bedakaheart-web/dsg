@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "../js/supabase";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -15,7 +16,6 @@ interface Report {
   evidence_url: string | null;
   created_at: string;
   responder_id: string | null;
-  // ✅ Resolution fields now included
   responder_notes: string | null;
   action_notes: string | null;
   resolution_type: string | null;
@@ -199,7 +199,6 @@ const INCIDENTS_STYLES = `
 .ri-badge.s-progress { background: var(--warning-bg); color: var(--warning-light); border-color: var(--warning-light); }
 .ri-badge.s-resolved { background: var(--success-bg); color: var(--success-light); border-color: var(--success-light); }
 
-/* ✅ FIXED: Fields — single column to prevent overflow */
 .ri-fields { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
 .ri-fields-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
@@ -211,70 +210,17 @@ const INCIDENTS_STYLES = `
 
 .ri-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.6; padding: 11px 13px; background: var(--bg-secondary); border: 1px solid var(--border-light); border-radius: 10px; margin-bottom: 12px; }
 
-/* ✅ Resolution summary box — shown on resolved cards */
-.ri-resolution-box {
-  margin-bottom: 14px;
-  border-radius: 10px;
-  overflow: hidden;
-  border: 1px solid var(--success-light);
-  background: var(--success-bg);
-}
-.ri-resolution-hd {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 13px;
-  background: rgba(11,102,35,0.08);
-  border-bottom: 1px solid rgba(11,102,35,0.15);
-}
-.ri-resolution-hd-label {
-  font-size: 9px;
-  font-weight: 800;
-  color: var(--success);
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  flex: 1;
-}
-.ri-resolution-type-tag {
-  font-size: 8px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 5px;
-  background: var(--success);
-  color: white;
-  text-transform: uppercase;
-}
-.ri-resolution-body {
-  padding: 12px 13px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.ri-resolution-section {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.ri-resolution-section-lbl {
-  font-size: 9px;
-  font-weight: 700;
-  color: var(--success);
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-}
-.ri-resolution-section-val {
-  font-size: 12px;
-  color: var(--text-primary);
-  line-height: 1.5;
-  font-weight: 400;
-}
+/* Resolution summary box */
+.ri-resolution-box { margin-bottom: 14px; border-radius: 10px; overflow: hidden; border: 1px solid var(--success-light); background: var(--success-bg); }
+.ri-resolution-hd { display: flex; align-items: center; gap: 8px; padding: 9px 13px; background: rgba(11,102,35,0.08); border-bottom: 1px solid rgba(11,102,35,0.15); }
+.ri-resolution-hd-label { font-size: 9px; font-weight: 800; color: var(--success); text-transform: uppercase; letter-spacing: 0.4px; flex: 1; }
+.ri-resolution-type-tag { font-size: 8px; font-weight: 700; padding: 3px 8px; border-radius: 5px; background: var(--success); color: white; text-transform: uppercase; }
+.ri-resolution-body { padding: 12px 13px; display: flex; flex-direction: column; gap: 10px; }
+.ri-resolution-section { display: flex; flex-direction: column; gap: 4px; }
+.ri-resolution-section-lbl { font-size: 9px; font-weight: 700; color: var(--success); text-transform: uppercase; letter-spacing: 0.3px; }
+.ri-resolution-section-val { font-size: 12px; color: var(--text-primary); line-height: 1.5; font-weight: 400; }
 .ri-resolution-divider { height: 1px; background: rgba(11,102,35,0.12); }
-.ri-resolution-footer {
-  font-size: 10px;
-  color: var(--success);
-  font-weight: 600;
-  padding: 6px 13px 10px;
-}
+.ri-resolution-footer { font-size: 10px; color: var(--success); font-weight: 600; padding: 6px 13px 10px; }
 
 /* Evidence */
 .ri-ev-wrap { border-radius: 10px; overflow: hidden; background: var(--bg-secondary); border: 1px solid var(--border-light); margin-bottom: 14px; }
@@ -304,8 +250,8 @@ const INCIDENTS_STYLES = `
 .ri-lb-close { position: fixed; top: 20px; right: 24px; font-size: 14px; color: rgba(255,255,255,0.6); cursor: pointer; background: rgba(255,255,255,0.1); border: none; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
 .ri-lb-close:hover { background: rgba(255,255,255,0.2); color: white; }
 
-/* ── Modal ── */
-.ri-modal-bg { position: fixed; inset: 0; z-index: 10000; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; padding: 20px; animation: fadeIn 0.2s ease; }
+/* ── Modal — FIXED: rendered via portal to document.body ── */
+.ri-modal-bg { position: fixed; inset: 0; z-index: 99999; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; padding: 20px; animation: fadeIn 0.2s ease; }
 .ri-modal { background: var(--surface); border: 1px solid var(--border-light); border-radius: 16px; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; animation: modalIn 0.28s cubic-bezier(0.34,1.56,0.64,1) both; box-shadow: 0 20px 25px rgba(0,0,0,0.15); scrollbar-width: thin; scrollbar-color: var(--border-light) transparent; }
 .ri-modal-hd { padding: 20px 24px; border-bottom: 1px solid var(--border-light); display: flex; align-items: flex-start; gap: 14px; position: relative; background: var(--bg-secondary); }
 .ri-modal-icon { width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0; background: linear-gradient(135deg, var(--success) 0%, var(--success-light) 100%); display: flex; align-items: center; justify-content: center; color: white; }
@@ -492,7 +438,13 @@ function ResolutionModal({ report, responderName, onCancel, onConfirm, submittin
     onConfirm({ resolutionType, notes: notes.trim(), actionTaken: actionTaken.trim() });
   };
 
-  return (
+  // ── FIXED: stop body scroll while modal is open ──
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  const modalContent = (
     <div className="ri-modal-bg" onClick={onCancel}>
       <div className="ri-modal" onClick={(e) => e.stopPropagation()}>
 
@@ -584,6 +536,10 @@ function ResolutionModal({ report, responderName, onCancel, onConfirm, submittin
       </div>
     </div>
   );
+
+  // ✅ KEY FIX: render modal directly into document.body via portal
+  // This escapes any parent overflow:hidden or z-index stacking issues
+  return createPortal(modalContent, document.body);
 }
 
 // ─── Resolution Summary Box ───────────────────────────────────────────────────
@@ -655,7 +611,6 @@ export default function ResponderIncidentsPage() {
   }, []);
 
   const loadReports = async () => {
-    // ✅ Now fetches resolution fields too
     const { data } = await supabase
       .from("reports")
       .select("id,type,description,location,address,reporter_name,reporter_contact,status,evidence_url,created_at,responder_id,responder_notes,action_notes,resolution_type,resolved_at")
@@ -684,7 +639,6 @@ export default function ResponderIncidentsPage() {
     setClaiming(null);
   };
 
-  // ✅ Now saves directly to reports table using the correct columns
   const confirmResolve = async (payload: { resolutionType: string; notes: string; actionTaken: string }) => {
     if (!resolveTarget || !responderId) return;
     setResolving(true);
@@ -735,13 +689,16 @@ export default function ResponderIncidentsPage() {
       <style>{INCIDENTS_STYLES}</style>
       <div className="ri">
 
-        {lightbox && (
+        {/* ✅ Lightbox also uses portal so it always floats above everything */}
+        {lightbox && createPortal(
           <div className="ri-lb" onClick={() => setLightbox(null)}>
             <button className="ri-lb-close" onClick={() => setLightbox(null)}><SvgIcon path={ICONS.x} size={20} /></button>
             <img src={lightbox} alt="Evidence" onClick={(e) => e.stopPropagation()} />
-          </div>
+          </div>,
+          document.body
         )}
 
+        {/* ✅ Modal uses portal — rendered outside the card DOM tree entirely */}
         {resolveTarget && (
           <ResolutionModal
             report={resolveTarget}
@@ -810,7 +767,6 @@ export default function ResponderIncidentsPage() {
                       <span className={cls("ri-badge", sm.colorClass)}>{sm.label}</span>
                     </div>
 
-                    {/* ✅ FIXED: Stacked layout — Location full width, then 2-col row */}
                     <div className="ri-fields">
                       <div className="ri-field">
                         <span className="ri-field-lbl"><SvgIcon path={ICONS.mapPin} size={10} /> Location</span>
@@ -836,7 +792,6 @@ export default function ResponderIncidentsPage() {
 
                     {r.description && <div className="ri-desc">{r.description}</div>}
 
-                    {/* ✅ Resolution summary shown on resolved cards */}
                     <ResolutionSummary report={r} />
 
                     {r.evidence_url && (

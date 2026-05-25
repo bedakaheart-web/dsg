@@ -394,6 +394,39 @@ const CSS = `
   .cr-hotline-number { font-family: 'Cabinet Grotesk', sans-serif; font-size: 14px; font-weight: 800; color: #eef0f7; }
   .cr-hotline-call { font-size: 11px; font-weight: 600; color: var(--hc); opacity: .70; }
 
+  /* ── Notification Warning Banner ── */
+  .cr-notif-banner {
+    display: flex; align-items: flex-start; gap: 14px;
+    background: rgba(255,209,102,.06);
+    border: 1px solid rgba(255,209,102,.22);
+    border-radius: 14px; padding: 16px 18px;
+    margin-bottom: 28px; width: 100%; max-width: 780px;
+    text-align: left; animation: cr-up .5s ease .12s both;
+  }
+  .cr-notif-banner-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+  .cr-notif-banner-body { flex: 1; }
+  .cr-notif-banner-title {
+    font-family: 'Cabinet Grotesk', sans-serif;
+    font-size: 13px; font-weight: 800; letter-spacing: -.01em;
+    color: #FFD166; margin-bottom: 6px;
+  }
+  .cr-notif-banner-text {
+    font-size: 12px; color: rgba(238,240,247,.40); line-height: 1.65; margin: 0;
+  }
+  .cr-notif-banner-text strong { color: rgba(255,209,102,.75); font-weight: 600; }
+  .cr-notif-banner-blocked {
+    font-size: 11px; color: rgba(255,107,107,.65);
+    margin-top: 8px; line-height: 1.5;
+  }
+  .cr-notif-enable-btn {
+    flex-shrink: 0; background: rgba(255,209,102,.10);
+    border: 1px solid rgba(255,209,102,.28); border-radius: 9px;
+    padding: 9px 16px; font-size: 12px; font-weight: 600;
+    color: #FFD166; cursor: pointer; white-space: nowrap;
+    transition: background .18s; align-self: flex-start;
+  }
+  .cr-notif-enable-btn:hover { background: rgba(255,209,102,.20); }
+
   /* ── Success ── */
   .cr-success {
     display: flex; flex-direction: column; align-items: center; text-align: center;
@@ -411,7 +444,7 @@ const CSS = `
   }
   .cr-success-sub {
     font-size: 14px; font-weight: 400; color: rgba(238,240,247,.35);
-    max-width: 460px; line-height: 1.68; margin-bottom: 36px;
+    max-width: 460px; line-height: 1.68; margin-bottom: 28px;
   }
 
   /* ── SUCCESS CARDS ROW ── */
@@ -460,6 +493,8 @@ const CSS = `
     .cr-banner-btn { width: 100%; justify-content: center; }
     .cr-steps { -webkit-mask-image: none; mask-image: none; }
     .cr-success-cards { flex-direction: column; align-items: center; }
+    .cr-notif-banner { flex-direction: column; }
+    .cr-notif-enable-btn { width: 100%; justify-content: center; text-align: center; }
   }
   @media (max-width: 560px) {
     .cr-fields { grid-template-columns: 1fr; }
@@ -495,6 +530,11 @@ export default function CitizenReport() {
   const [reporterName,    setReporterName]    = useState("");
   const [reporterContact, setReporterContact] = useState("");
   const [description,     setDescription]    = useState("");
+
+  // ── Notification permission state (re-render trigger) ──
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission>(
+    "Notification" in window ? Notification.permission : "granted"
+  );
 
   const fileRef    = useRef<HTMLInputElement>(null);
   const activeType = INCIDENT_TYPES.find(t => t.value === selectedType);
@@ -572,6 +612,15 @@ export default function CitizenReport() {
     return { url: data?.publicUrl ?? null, errorMsg: null };
   }
 
+  // ── Request notification permission after successful submit ──
+  async function requestNotificationPermission() {
+    if (!("Notification" in window)) return;
+    if (Notification.permission === "default") {
+      const result = await Notification.requestPermission();
+      setNotifPermission(result);
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!agreed || !selectedType) return;
@@ -593,9 +642,11 @@ export default function CitizenReport() {
     }).select("id").single();
     if (error) { setSubmitError("Failed to submit report. Please try again."); setSubmitting(false); return; }
     setSubmitting(false);
-    // ✅ Store the new report ID so we can link directly to it
     setSubmittedId(inserted?.id ?? null);
     setSubmitted(true);
+
+    // ── Prompt for notification permission right after success ──
+    await requestNotificationPermission();
   }
 
   useEffect(() => {
@@ -623,6 +674,49 @@ export default function CitizenReport() {
     setFileObject(null); setAgreed(false); setUploadProgress("idle");
   }
 
+  // ── Notification warning banner (shown on success screen) ──
+  function NotificationWarningBanner() {
+    if (!("Notification" in window)) return null;
+    if (notifPermission === "granted") return null;
+
+    return (
+      <div className="cr-notif-banner">
+        <span className="cr-notif-banner-icon">⚠️</span>
+        <div className="cr-notif-banner-body">
+          <div className="cr-notif-banner-title">
+            Enable Notifications &amp; Location Access
+          </div>
+          <p className="cr-notif-banner-text">
+            To receive real-time updates on your report and allow accurate GPS
+            tracking, please{" "}
+            <strong>enable notifications and location access</strong>{" "}
+            in your browser or device settings. Without these, you may miss
+            important responder updates and your location may not be detected
+            correctly when submitting future reports.
+          </p>
+          {notifPermission === "denied" && (
+            <p className="cr-notif-banner-blocked">
+              🔒 Notifications are currently blocked. Go to your browser
+              Settings → Site Permissions → Notifications and allow this site,
+              then reload the page.
+            </p>
+          )}
+        </div>
+        {notifPermission === "default" && (
+          <button
+            className="cr-notif-enable-btn"
+            onClick={async () => {
+              const result = await Notification.requestPermission();
+              setNotifPermission(result);
+            }}
+          >
+            Enable Now →
+          </button>
+        )}
+      </div>
+    );
+  }
+
   // ── Success screen ──
   if (submitted) {
     return (
@@ -641,7 +735,10 @@ export default function CitizenReport() {
                 shortly. Keep your phone nearby for follow-up.
               </p>
 
-              {/* ✅ TWO CARDS SIDE BY SIDE */}
+              {/* ── Notification + GPS warning banner ── */}
+              <NotificationWarningBanner />
+
+              {/* ── Two cards side by side ── */}
               <div className="cr-success-cards">
 
                 {/* Card 1 — Submit another */}

@@ -41,12 +41,12 @@ const ICONS = {
   broadcast: "M1 6l10.1 7.5L22 6M1 18h22M1 12h4M19 12h4",
   send:      "M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z",
   filter:    "M22 3H2l8 9.46V19l4 2v-8.54L22 3z",
+  checkAll:  "M2 12l5 5L22 4M7 12l5 5 5-5",
 };
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const STYLES = `
-/* ── Variables — match dashboard exactly ── */
 .rap-root {
   --primary: #0066FF;
   --success: #00B074;
@@ -213,9 +213,7 @@ const STYLES = `
 
 /* ── Skeleton ── */
 .rap-skel {
-  background: linear-gradient(90deg,
-    #f0f2f5 25%, #e4e7ec 50%, #f0f2f5 75%
-  );
+  background: linear-gradient(90deg, #f0f2f5 25%, #e4e7ec 50%, #f0f2f5 75%);
   background-size: 400% 100%;
   animation: rap-shimmer 1.4s ease infinite;
   border-radius: 6px;
@@ -291,6 +289,29 @@ const STYLES = `
   padding: 0 4px;
 }
 
+/* ── Mark all read button ── */
+.rap-mark-all {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.rap-mark-all:hover {
+  border-color: var(--success);
+  color: var(--success);
+  background: rgba(0,176,116,0.06);
+}
+
 /* ── Alert list ── */
 .rap-list { display: flex; flex-direction: column; gap: 10px; }
 
@@ -319,7 +340,7 @@ const STYLES = `
   animation: rap-fadeIn 0.3s ease both;
   position: relative;
   overflow: hidden;
-  cursor: default;
+  cursor: pointer;
 }
 
 .rap-card::before {
@@ -334,8 +355,19 @@ const STYLES = `
 .rap-card.cv-blue::before   { background: var(--primary); }
 .rap-card.cv-green::before  { background: var(--success); }
 
+/* Unread card — slightly highlighted background */
+.rap-card.unread { background: var(--surface); }
+.rap-card.unread.cv-red    { background: rgba(255,59,48,0.03); }
+.rap-card.unread.cv-amber  { background: rgba(255,149,0,0.03); }
+.rap-card.unread.cv-blue   { background: rgba(0,102,255,0.03); }
+.rap-card.unread.cv-green  { background: rgba(0,176,116,0.03); }
+
+/* Read card — dimmed */
+.rap-card.read { opacity: 0.6; }
+
 .rap-card:hover {
   transform: translateY(-3px);
+  opacity: 1 !important;
   box-shadow: 0 8px 20px rgba(0,0,0,0.08);
   border-color: var(--text-tertiary);
 }
@@ -443,6 +475,28 @@ const STYLES = `
   color: var(--text-tertiary);
 }
 
+/* Unread dot */
+.rap-unread-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--danger);
+  flex-shrink: 0;
+  margin-left: auto;
+  align-self: center;
+  animation: rap-pulse 2s ease infinite;
+}
+
+/* Read tick */
+.rap-read-tick {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--text-tertiary);
+  margin-left: auto;
+}
+
 /* ── Compose Panel ── */
 .rap-compose {
   background: var(--surface);
@@ -492,7 +546,6 @@ const STYLES = `
   letter-spacing: 0.3px;
 }
 
-/* ── Form Fields ── */
 .rap-field { display: flex; flex-direction: column; gap: 6px; }
 
 .rap-label {
@@ -546,7 +599,6 @@ const STYLES = `
   background: var(--surface);
 }
 
-/* ── Type selector ── */
 .rap-type-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -580,7 +632,6 @@ const STYLES = `
 .rap-type-opt.active.tv-blue  { background: rgba(0,102,255,0.08);  border-color: rgba(0,102,255,0.35);  color: var(--primary); }
 .rap-type-opt.active.tv-green { background: rgba(0,176,116,0.08);  border-color: rgba(0,176,116,0.35);  color: var(--success); }
 
-/* ── Success banner ── */
 .rap-success {
   display: flex;
   align-items: center;
@@ -597,7 +648,6 @@ const STYLES = `
   animation: rap-fadeIn 0.3s ease;
 }
 
-/* ── Send button ── */
 .rap-send {
   width: 100%;
   padding: 12px;
@@ -634,7 +684,6 @@ const STYLES = `
   box-shadow: none;
 }
 
-/* ── Spinner ── */
 .rap-spinner {
   display: inline-block;
   width: 13px; height: 13px;
@@ -644,7 +693,6 @@ const STYLES = `
   animation: rap-spin 0.7s linear infinite;
 }
 
-/* ── Responsive ── */
 @media (max-width: 768px) {
   .rap-title { font-size: 26px; }
   .rap-stats { grid-template-columns: repeat(2, 1fr); gap: 10px; }
@@ -652,7 +700,24 @@ const STYLES = `
 }
 `;
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const LS_KEY = "rap_read_alert_ids";
+
+function loadReadIds(): Set<string> {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    return new Set(raw ? JSON.parse(raw) : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveReadIds(ids: Set<string>) {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify([...ids]));
+  } catch { /* ignore */ }
+}
 
 type AlertColor = "red" | "amber" | "blue" | "green";
 
@@ -729,6 +794,22 @@ export default function ResponderAlertsPage() {
   const [alertType, setAlertType] = useState("warning");
   const [filter,    setFilter]    = useState("all");
 
+  // ── Read tracking ──
+  const [readIds, setReadIds] = useState<Set<string>>(loadReadIds);
+
+  const markRead = (id: string) => {
+    if (readIds.has(id)) return;
+    const updated = new Set([...readIds, id]);
+    setReadIds(updated);
+    saveReadIds(updated);
+  };
+
+  const markAllRead = () => {
+    const updated = new Set([...readIds, ...alerts.map((a) => String(a.id))]);
+    setReadIds(updated);
+    saveReadIds(updated);
+  };
+
   const loadAlerts = async () => {
     try {
       const { data } = await supabase
@@ -781,15 +862,19 @@ export default function ResponderAlertsPage() {
     success: alerts.filter((a) => a.type === "success").length,
   };
 
+  // ── Unread count: alerts whose IDs are NOT in readIds ──
+  const unreadCount = alerts.filter((a) => !readIds.has(String(a.id))).length;
+
   const filteredAlerts = filter === "all"
     ? alerts
     : alerts.filter((a) => a.type === filter);
 
+  // First stat shows UNREAD count (was "total" before — the bug)
   const statCards = [
-    { label: "Total Alerts", value: counts.total,   colorClass: "sv-default", icon: <SvgIcon path={ICONS.bell} size={18} /> },
-    { label: "Danger",       value: counts.danger,  colorClass: "sv-red",     icon: <SvgIcon path={ICONS.warn} size={18} /> },
-    { label: "Warning",      value: counts.warning, colorClass: "sv-amber",   icon: <SvgIcon path={ICONS.warn} size={18} /> },
-    { label: "Info",         value: counts.info,    colorClass: "sv-blue",    icon: <SvgIcon path={ICONS.info} size={18} /> },
+    { label: "Unread",   value: loading ? null : unreadCount,    colorClass: unreadCount > 0 ? "sv-red" : "sv-default", icon: <SvgIcon path={ICONS.bell} size={18} /> },
+    { label: "Danger",   value: loading ? null : counts.danger,  colorClass: "sv-red",   icon: <SvgIcon path={ICONS.warn} size={18} /> },
+    { label: "Warning",  value: loading ? null : counts.warning, colorClass: "sv-amber", icon: <SvgIcon path={ICONS.warn} size={18} /> },
+    { label: "Info",     value: loading ? null : counts.info,    colorClass: "sv-blue",  icon: <SvgIcon path={ICONS.info} size={18} /> },
   ];
 
   return (
@@ -820,7 +905,7 @@ export default function ResponderAlertsPage() {
             <div key={s.label} className={`rap-stat ${s.colorClass}`}>
               <div className="rap-stat-icon">{s.icon}</div>
               <div className="rap-stat-num">
-                {loading
+                {s.value === null
                   ? <div className="rap-skel rap-skel-num" />
                   : s.value
                 }
@@ -853,6 +938,14 @@ export default function ResponderAlertsPage() {
                   </button>
                 );
               })}
+
+              {/* ── Mark all read — only shown when there are unread alerts ── */}
+              {unreadCount > 0 && !loading && (
+                <button className="rap-mark-all" onClick={markAllRead}>
+                  <SvgIcon path={ICONS.checkAll} size={12} />
+                  Mark all read ({unreadCount})
+                </button>
+              )}
             </div>
 
             <div className="rap-list">
@@ -868,10 +961,16 @@ export default function ResponderAlertsPage() {
                 </div>
               ) : (
                 filteredAlerts.map((a) => {
-                  const meta  = ALERT_META[a.type] ?? ALERT_META.info;
-                  const color = getAlertColor(a.type);
+                  const meta    = ALERT_META[a.type] ?? ALERT_META.info;
+                  const color   = getAlertColor(a.type);
+                  const isRead  = readIds.has(String(a.id));
+
                   return (
-                    <div key={String(a.id)} className={`rap-card cv-${color}`}>
+                    <div
+                      key={String(a.id)}
+                      className={`rap-card cv-${color} ${isRead ? "read" : "unread"}`}
+                      onClick={() => markRead(String(a.id))}
+                    >
                       <div className="rap-card-top">
                         <div className="rap-card-icon">
                           <AlertIcon type={a.type} size={16} />
@@ -891,12 +990,28 @@ export default function ResponderAlertsPage() {
                           <div className="rap-card-title">{a.title}</div>
                           <div className="rap-card-msg">{a.message}</div>
                         </div>
+
+                        {/* Unread dot or read tick */}
+                        {!isRead
+                          ? <span className="rap-unread-dot" title="Unread" />
+                          : (
+                            <span className="rap-read-tick" title="Read">
+                              <SvgIcon path={ICONS.check} size={10} />
+                            </span>
+                          )
+                        }
                       </div>
+
                       <div className="rap-card-footer">
                         <span className="rap-card-meta">
                           <SvgIcon path={ICONS.clock} size={11} />
                           {formatRelative(a.created_at)}
                         </span>
+                        {isRead && (
+                          <span className="rap-card-meta" style={{ marginLeft: "auto" }}>
+                            Read
+                          </span>
+                        )}
                       </div>
                     </div>
                   );

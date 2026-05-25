@@ -1,6 +1,5 @@
-// src/App.tsx
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './pages/Layout';
 
@@ -22,14 +21,14 @@ const TermsOfService     = lazy(() => import('./pages/TermsOfService'));
 const TermsOfUse         = lazy(() => import('./pages/TermsOfUse'));
 
 // ── Citizen-scoped pages ───────────────────────────────────────
-const CitizenMap         = lazy(() => import('./citizen/CitizenMap'));
-const CitizenDirectory   = lazy(() => import('./citizen/CitizenDirectory'));
-const CitizenSafetyTips  = lazy(() => import('./citizen/CitizenSafetyTips'));
-const CitizenAbout       = lazy(() => import('./citizen/CitizenAbout'));
-const CitizenReport      = lazy(() => import('./citizen/CitizenReport'));
-const CitizenDashboard   = lazy(() => import('./citizen/CitizenDashboard'));
-const CitizenAlertsPage  = lazy(() => import('./citizen/CitizenAlertsPage'));
-const CitizenHistory     = lazy(() => import('./citizen/CitizenHistory'));
+const CitizenMap          = lazy(() => import('./citizen/CitizenMap'));
+const CitizenDirectory    = lazy(() => import('./citizen/CitizenDirectory'));
+const CitizenSafetyTips   = lazy(() => import('./citizen/CitizenSafetyTips'));
+const CitizenAbout        = lazy(() => import('./citizen/CitizenAbout'));
+const CitizenReport       = lazy(() => import('./citizen/CitizenReport'));
+const CitizenDashboard    = lazy(() => import('./citizen/CitizenDashboard'));
+const CitizenAlertsPage   = lazy(() => import('./citizen/CitizenAlertsPage'));
+const CitizenHistory      = lazy(() => import('./citizen/CitizenHistory'));
 const CitizenReportDetail = lazy(() => import('./citizen/CitizenReportDetail'));
 
 // ── Admin ──────────────────────────────────────────────────────
@@ -44,8 +43,7 @@ const ResponderIncidents  = lazy(() => import('./responder/IncidentsPage'));
 
 export default function App() {
   return (
-    <BrowserRouter
-      basename="/dumasafeguide"
+    <HashRouter
       future={{
         v7_startTransition: true,
         v7_relativeSplatPath: true,
@@ -106,6 +104,6 @@ export default function App() {
 
         </Routes>
       </Suspense>
-    </BrowserRouter>
+    </HashRouter>
   );
 }

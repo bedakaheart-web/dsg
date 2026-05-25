@@ -28,6 +28,7 @@ import RespondersPage from "./RespondersPage";
 import AdminTeamPage from "./AdminTeaPage";
 
 import dsgLogo from "../assets/dsg.logo.png";
+import footerBg from "../assets/footer.png"; // ✅ Import background
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -109,8 +110,23 @@ const DASH_STYLE = `
   position: fixed; inset: 0; z-index: 9000; overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: var(--text); background: var(--bg);
+  background-image: url('${footerBg}');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
 }
-.hud { display: flex; height: 100%; width: 100%; }
+
+.hud-portal::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(250, 251, 252, 0.85) 0%, rgba(255, 255, 255, 0.9) 50%, rgba(250, 251, 252, 0.85) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.hud { display: flex; height: 100%; width: 100%; position: relative; z-index: 2; }
 
 /* ── Mobile overlay ── */
 .hud-sidebar-overlay {
