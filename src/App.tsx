@@ -43,7 +43,7 @@ import CitizenReportDetail from './citizen/CitizenReportDetail';
 // fixed overlay and makes all links in it unclickable.
 import RespondersDashboard from './responder/Respondersdashboard';
 import ResponderAlertsPage from './responder/Responderalertspage';
-import RespondersPage      from './responder/Responderspage';
+import ResponderTeamPage   from './responder/Responderteam';   // ✅ FIX: was Responderspage
 import Dispatch            from './responder/Dispatch';
 import ResponderIncidents  from './responder/IncidentsPage';
 
@@ -111,7 +111,7 @@ export default function App() {
         <Route element={<ProtectedRoute allowedRole="responder" />}>
           <Route path="/responder/dashboard"  element={<RespondersDashboard />} />
           <Route path="/responder/alerts"     element={<ResponderAlertsPage />} />
-          <Route path="/responder/responders" element={<RespondersPage />} />
+          <Route path="/responder/team"       element={<ResponderTeamPage />} />  {/* ✅ FIX: was /responder/responders */}
           <Route path="/responder/dispatch"   element={<Dispatch />} />
           <Route path="/responder/incidents"  element={<ResponderIncidents />} />
         </Route>

@@ -20,126 +20,143 @@ interface Report {
 // ─── Meta ─────────────────────────────────────────────────────────────────────
 
 const TYPE_META: Record<string, { icon: string; label: string; colorClass: string }> = {
-  fire:     { icon: "🔥", label: "Fire",     colorClass: "type-fire"     },
+  fire:     { icon: "🔥", label: "Fire",     colorClass: "type-fire" },
   accident: { icon: "🚗", label: "Accident", colorClass: "type-accident" },
-  flood:    { icon: "🌊", label: "Flood",    colorClass: "type-flood"    },
-  crime:    { icon: "🚨", label: "Crime",    colorClass: "type-crime"    },
-  medical:  { icon: "🏥", label: "Medical",  colorClass: "type-medical"  },
-  other:    { icon: "⚠️", label: "Other",    colorClass: "type-other"    },
+  flood:    { icon: "🌊", label: "Flood",    colorClass: "type-flood" },
+  crime:    { icon: "🚨", label: "Crime",    colorClass: "type-crime" },
+  medical:  { icon: "🏥", label: "Medical",  colorClass: "type-medical" },
+  other:    { icon: "⚠️", label: "Other",    colorClass: "type-other" },
 };
 
 const STATUS_META: Record<string, { label: string; colorClass: string }> = {
-  pending:       { label: "Pending",     colorClass: "status-pending"     },
+  pending:       { label: "Pending",     colorClass: "status-pending" },
   "in-progress": { label: "In Progress", colorClass: "status-in-progress" },
-  resolved:      { label: "Resolved",    colorClass: "status-resolved"    },
+  resolved:      { label: "Resolved",    colorClass: "status-resolved" },
 };
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
+// ─── Unified Dispatch Styles ──────────────────────────────────────────────────
 
-const STYLES = `
+const DISPATCH_STYLES = `
 :root {
-  --ink:   #07101C;
-  --s1:    #080F1B;
-  --s2:    #060C16;
-  --edge:  rgba(255,255,255,0.07);
-  --text:  #D8EAF8;
-  --muted: rgba(216,234,248,0.45);
-  --dim:   rgba(216,234,248,0.22);
+  /* Core Colors - Professional Light Theme */
+  --primary:        #0052CC;
+  --primary-light:  #4D94FF;
+  --success:        #0B6623;
+  --success-light:  #2FA232;
+  --warning:        #974F0C;
+  --warning-light:  #D97706;
+  --danger:         #AE2A19;
+  --danger-light:   #DC2626;
+  --info:           #0369A1;
 
-  --red:   #F44;
-  --amber: #F90;
-  --blue:  #3B9EFF;
-  --green: #00DC82;
-  --pink:  #FF3FA4;
-  --slate: #8899BB;
-
-  --font-head: 'Bebas Neue', 'Arial Narrow', Arial, sans-serif;
-  --font-mono: 'IBM Plex Mono', 'Fira Mono', monospace;
-  --font-body: 'DM Sans', system-ui, sans-serif;
+  /* Backgrounds */
+  --bg-primary:     #FAFBFC;
+  --bg-secondary:   #F3F4F6;
+  --surface:        #FFFFFF;
+  
+  /* Text */
+  --text-primary:   #111827;
+  --text-secondary: #4B5563;
+  --text-tertiary:  #9CA3AF;
+  
+  /* Borders & Accents */
+  --border-light:   #E5E7EB;
+  --border-med:     #D1D5DB;
+  --border-dark:    #9CA3AF;
+  
+  /* Semantic */
+  --error:          #DC2626;
+  --success-bg:     #ECFDF5;
+  --warning-bg:     #FEF3C7;
+  --error-bg:       #FEE2E2;
+  --info-bg:        #EFF6FF;
 }
 
-@keyframes pip {
-  0%,100% { opacity:1; transform:scale(1); }
-  50%     { opacity:0.5; transform:scale(1.5); }
-}
-@keyframes spin {
-  to { transform:rotate(360deg); }
-}
-@keyframes fadeIn {
-  from { opacity:0; transform:translateY(4px); }
-  to   { opacity:1; transform:translateY(0); }
-}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes slideIn { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: none; } }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.65; } }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif; }
 
+/* ── Container ── */
 .dp {
-  font-family: var(--font-body);
-  color: var(--text);
+  font-family: inherit;
+  color: var(--text-primary);
   min-height: 100vh;
-  background: var(--ink);
+  background: var(--bg-primary);
+  padding: 28px;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 /* ── Header ── */
 .dp-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: flex-start;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: 14px;
+  margin-bottom: 28px;
 }
+
 .dp-eyebrow {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: rgba(244,68,68,0.6);
-  letter-spacing: 0.28em;
+  font-size: 11px;
+  color: var(--primary);
+  letter-spacing: 0.6px;
   text-transform: uppercase;
   margin-bottom: 6px;
+  font-weight: 700;
   display: flex;
   align-items: center;
   gap: 8px;
 }
+
 .dp-eyebrow::before {
   content: '';
   display: block;
-  width: 20px;
-  height: 1px;
-  background: var(--red);
-  opacity: 0.5;
+  width: 18px;
+  height: 2px;
+  background: var(--primary);
 }
+
 .dp-title {
-  font-family: var(--font-head);
-  font-size: 42px;
-  font-weight: 400;
-  color: #fff;
-  letter-spacing: 0.04em;
-  line-height: 1;
+  font-size: 36px;
+  color: var(--text-primary);
+  letter-spacing: -0.4px;
+  line-height: 1.1;
+  font-weight: 800;
 }
+
 .dp-header-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex-shrink: 0;
 }
+
 .dp-live-badge {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.14em;
-  color: var(--red);
-  padding: 7px 14px;
-  border-radius: 6px;
-  border: 1px solid rgba(244,68,68,0.25);
-  background: rgba(244,68,68,0.06);
+  gap: 6px;
+  font-size: 11px;
+  padding: 7px 13px;
+  border-radius: 8px;
+  border: 1px solid var(--danger-light);
+  background: var(--error-bg);
+  color: var(--danger-light);
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+  font-weight: 700;
 }
+
 .dp-live-dot {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
-  background: var(--red);
-  animation: pip 1.6s ease infinite;
+  background: var(--danger-light);
+  animation: pulse 1.4s ease infinite;
 }
 
 /* ── Filter bar ── */
@@ -147,130 +164,150 @@ const STYLES = `
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 10px;
-  padding: 10px 14px;
-  background: var(--s1);
-  border: 1px solid var(--edge);
-  border-radius: 10px;
-  margin-bottom: 14px;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
+
 .dp-filter-label {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  color: var(--dim);
-  letter-spacing: 0.2em;
+  font-size: 10px;
+  color: var(--text-secondary);
+  letter-spacing: 0.5px;
   text-transform: uppercase;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   flex-shrink: 0;
+  font-weight: 700;
 }
+
 .dp-filter-sep {
   width: 1px;
-  height: 18px;
-  background: var(--edge);
-  margin: 0 2px;
+  height: 20px;
+  background: var(--border-light);
+  margin: 0 4px;
   flex-shrink: 0;
 }
+
 .dp-filter-group {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   flex-wrap: wrap;
 }
+
 .dp-chip {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  padding: 5px 11px;
-  border-radius: 6px;
+  font-size: 11px;
+  padding: 6px 12px;
+  border-radius: 8px;
   cursor: pointer;
-  border: 1px solid var(--edge);
-  background: rgba(255,255,255,0.02);
-  color: var(--muted);
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  border: 1px solid var(--border-light);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  transition: all 0.2s;
   white-space: nowrap;
   user-select: none;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.3px;
+  font-weight: 500;
 }
+
 .dp-chip:hover {
-  border-color: rgba(255,255,255,0.15);
-  color: var(--text);
+  border-color: var(--border-med);
+  color: var(--text-primary);
+  background: var(--surface);
 }
+
 .dp-chip.active {
-  background: rgba(244,68,68,0.1);
-  border-color: rgba(244,68,68,0.35);
-  color: var(--red);
+  background: linear-gradient(135deg, var(--primary) 0%, #0052CC 100%);
+  border-color: transparent;
+  color: white;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0, 82, 204, 0.2);
 }
+
 .dp-chip-count {
   display: inline-block;
   margin-left: 5px;
   font-size: 8px;
-  opacity: 0.55;
-  background: rgba(255,255,255,0.07);
+  opacity: 0.65;
+  background: rgba(0, 0, 0, 0.04);
   border-radius: 3px;
-  padding: 1px 5px;
+  padding: 2px 5px;
+  font-weight: 700;
 }
 
 /* ── Layout ── */
 .dp-body {
   display: grid;
-  grid-template-columns: 1fr 370px;
-  gap: 14px;
+  grid-template-columns: 1fr 380px;
+  gap: 16px;
   align-items: start;
 }
-@media (max-width: 1060px) {
+
+@media (max-width: 1140px) {
   .dp-body { grid-template-columns: 1fr; }
 }
 
 /* ── Panels ── */
 .dp-panel {
-  background: var(--s1);
-  border: 1px solid var(--edge);
+  background: var(--surface);
+  border: 1px solid var(--border-light);
   border-radius: 12px;
   overflow: hidden;
   position: relative;
+  animation: slideIn 0.5s ease-out both;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
+
 .dp-panel::before {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, rgba(244,68,68,0.5), rgba(59,158,255,0.15), transparent 55%);
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary) 0%, transparent 70%);
   pointer-events: none;
   z-index: 1;
 }
+
 .dp-panel-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--edge);
-  background: rgba(255,255,255,0.015);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--bg-secondary);
 }
+
 .dp-panel-title {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  color: var(--dim);
-  letter-spacing: 0.2em;
+  font-size: 11px;
+  color: var(--text-secondary);
+  letter-spacing: 0.5px;
   text-transform: uppercase;
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
+  font-weight: 700;
 }
+
 .dp-count-pill {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  padding: 3px 10px;
-  border-radius: 20px;
-  background: rgba(244,68,68,0.08);
-  border: 1px solid rgba(244,68,68,0.22);
-  color: var(--red);
-  letter-spacing: 0.06em;
+  font-size: 9px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, var(--primary) 0%, #0052CC 100%);
+  border: none;
+  color: white;
+  letter-spacing: 0.3px;
+  font-weight: 700;
 }
 
 /* ── Map ── */
-.dp-map-wrap { width: 100%; height: 540px; position: relative; }
+.dp-map-wrap { width: 100%; height: 540px; position: relative; border-radius: 8px; overflow: hidden; }
 .dp-map-wrap iframe { width:100%; height:100%; border:0; display:block; }
+
 .dp-map-overlay {
   position: absolute;
   bottom: 14px;
@@ -281,19 +318,22 @@ const STYLES = `
   z-index: 10;
   pointer-events: none;
 }
+
 .dp-map-tag {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-family: var(--font-mono);
-  font-size: 9px;
-  padding: 5px 11px;
-  border-radius: 6px;
-  background: rgba(7,16,28,0.9);
-  border: 1px solid var(--edge);
-  color: var(--muted);
+  font-size: 11px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid var(--border-light);
+  color: var(--text-primary);
   backdrop-filter: blur(10px);
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
+
 .dp-map-empty {
   display: flex;
   flex-direction: column;
@@ -301,10 +341,12 @@ const STYLES = `
   justify-content: center;
   height: 540px;
   gap: 10px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--dim);
-  letter-spacing: 0.14em;
+  font-size: 12px;
+  color: var(--text-secondary);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  background: var(--bg-secondary);
+  border-radius: 8px;
 }
 
 /* ── Queue ── */
@@ -312,130 +354,145 @@ const STYLES = `
   max-height: 576px;
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: rgba(244,68,68,0.15) transparent;
+  scrollbar-color: var(--border-light) transparent;
 }
-.dp-queue::-webkit-scrollbar { width: 3px; }
+
+.dp-queue::-webkit-scrollbar { width: 4px; }
 .dp-queue::-webkit-scrollbar-thumb {
-  background: rgba(244,68,68,0.15);
+  background: var(--border-light);
   border-radius: 2px;
 }
 
 /* ── Cards ── */
 .dp-card {
-  padding: 13px 16px;
+  padding: 14px 16px;
   cursor: pointer;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid var(--border-light);
   position: relative;
-  transition: background 0.14s;
-  animation: fadeIn 0.2s ease both;
+  transition: all 0.2s;
+  animation: fadeIn 0.3s ease-out both;
 }
+
 .dp-card::after {
   content: '';
   position: absolute;
   left: 0; top: 8px; bottom: 8px;
-  width: 3px;
-  border-radius: 0 2px 2px 0;
+  width: 2px;
+  border-radius: 0 1px 1px 0;
   transform: scaleY(0);
-  transition: transform 0.18s cubic-bezier(0.4,0,0.2,1);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   transform-origin: center;
 }
-.dp-card:hover { background: rgba(255,255,255,0.02); }
+
+.dp-card:hover { background: var(--bg-secondary); }
 .dp-card:hover::after,
 .dp-card.selected::after { transform: scaleY(1); }
-.dp-card.selected { background: rgba(255,255,255,0.025); }
+.dp-card.selected { background: rgba(0, 82, 204, 0.04); }
 .dp-card:last-child { border-bottom: none; }
 
 /* Card accent colors by type */
-.dp-card.type-fire::after    { background: #F44; }
-.dp-card.type-accident::after { background: #F90; }
-.dp-card.type-flood::after   { background: #3B9EFF; }
-.dp-card.type-crime::after   { background: #FF3FA4; }
-.dp-card.type-medical::after { background: #00DC82; }
-.dp-card.type-other::after   { background: #8899BB; }
+.dp-card.type-fire::after      { background: var(--danger-light); }
+.dp-card.type-accident::after   { background: var(--warning-light); }
+.dp-card.type-flood::after      { background: var(--primary); }
+.dp-card.type-crime::after      { background: var(--danger-light); }
+.dp-card.type-medical::after    { background: var(--success-light); }
+.dp-card.type-other::after      { background: var(--text-tertiary); }
 
 .dp-card-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 5px;
+  margin-bottom: 6px;
   gap: 8px;
 }
+
 .dp-card-type {
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   flex: 1;
   min-width: 0;
 }
+
 .dp-card-icon {
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 16px;
   flex-shrink: 0;
+  border: 1px solid var(--border-light);
 }
 
 /* Type-specific icon bg */
-.dp-card.type-fire     .dp-card-icon { background: rgba(244,68,68,0.12); }
-.dp-card.type-accident .dp-card-icon { background: rgba(255,153,0,0.12); }
-.dp-card.type-flood    .dp-card-icon { background: rgba(59,158,255,0.12); }
-.dp-card.type-crime    .dp-card-icon { background: rgba(255,63,164,0.12); }
-.dp-card.type-medical  .dp-card-icon { background: rgba(0,220,130,0.12); }
-.dp-card.type-other    .dp-card-icon { background: rgba(136,153,187,0.12); }
+.dp-card.type-fire     .dp-card-icon { background: rgba(220, 38, 38, 0.08); }
+.dp-card.type-accident .dp-card-icon { background: rgba(217, 119, 6, 0.08); }
+.dp-card.type-flood    .dp-card-icon { background: rgba(0, 82, 204, 0.08); }
+.dp-card.type-crime    .dp-card-icon { background: rgba(220, 38, 38, 0.08); }
+.dp-card.type-medical  .dp-card-icon { background: rgba(11, 102, 35, 0.08); }
+.dp-card.type-other    .dp-card-icon { background: rgba(156, 163, 175, 0.08); }
 
 /* Type-specific label color */
-.dp-card.type-fire     .dp-card-type-label { color: #F44; }
-.dp-card.type-accident .dp-card-type-label { color: #F90; }
-.dp-card.type-flood    .dp-card-type-label { color: #3B9EFF; }
-.dp-card.type-crime    .dp-card-type-label { color: #FF3FA4; }
-.dp-card.type-medical  .dp-card-type-label { color: #00DC82; }
-.dp-card.type-other    .dp-card-type-label { color: #8899BB; }
+.dp-card.type-fire     .dp-card-type-label { color: var(--danger-light); }
+.dp-card.type-accident .dp-card-type-label { color: var(--warning-light); }
+.dp-card.type-flood    .dp-card-type-label { color: var(--primary); }
+.dp-card.type-crime    .dp-card-type-label { color: var(--danger-light); }
+.dp-card.type-medical  .dp-card-type-label { color: var(--success-light); }
+.dp-card.type-other    .dp-card-type-label { color: var(--text-tertiary); }
 
 /* ── Status badges ── */
 .dp-status {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-family: var(--font-mono);
-  font-size: 8px;
-  padding: 3px 8px;
-  border-radius: 4px;
-  border: 1px solid rgba(255,255,255,0.07);
+  font-size: 9px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid;
   white-space: nowrap;
   flex-shrink: 0;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.3px;
+  font-weight: 700;
 }
+
 .dp-status-dot {
   width: 4px;
   height: 4px;
   border-radius: 50%;
 }
+
 .dp-status.status-pending {
-  background: rgba(244,68,68,0.1);
-  color: #F44;
+  background: var(--error-bg);
+  color: var(--danger-light);
+  border-color: var(--danger-light);
 }
-.dp-status.status-pending .dp-status-dot { background: #F44; }
+
+.dp-status.status-pending .dp-status-dot { background: var(--danger-light); }
+
 .dp-status.status-in-progress {
-  background: rgba(255,153,0,0.1);
-  color: #F90;
+  background: var(--warning-bg);
+  color: var(--warning-light);
+  border-color: var(--warning-light);
 }
-.dp-status.status-in-progress .dp-status-dot { background: #F90; }
+
+.dp-status.status-in-progress .dp-status-dot { background: var(--warning-light); }
+
 .dp-status.status-resolved {
-  background: rgba(0,220,130,0.1);
-  color: #00DC82;
+  background: var(--success-bg);
+  color: var(--success-light);
+  border-color: var(--success-light);
 }
-.dp-status.status-resolved .dp-status-dot { background: #00DC82; }
+
+.dp-status.status-resolved .dp-status-dot { background: var(--success-light); }
 
 /* ── Meta & tags ── */
 .dp-card-addr {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  color: var(--dim);
+  font-size: 11px;
+  color: var(--text-secondary);
   display: flex;
   align-items: center;
   gap: 5px;
@@ -443,99 +500,113 @@ const STYLES = `
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-weight: 500;
 }
+
 .dp-card-desc {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  line-height: 1.6;
-  color: rgba(216,234,248,0.3);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-secondary);
   font-style: italic;
-  border-left: 2px solid rgba(255,255,255,0.06);
-  padding-left: 9px;
+  border-left: 2px solid var(--border-light);
+  padding-left: 10px;
   margin: 6px 0 8px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
 .dp-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 5px;
   align-items: center;
+  margin-bottom: 8px;
 }
+
 .dp-tag {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-family: var(--font-mono);
-  font-size: 8px;
+  font-size: 9px;
   padding: 3px 8px;
-  border-radius: 4px;
-  border: 1px solid var(--edge);
-  background: rgba(255,255,255,0.02);
-  color: var(--muted);
+  border-radius: 5px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-weight: 500;
 }
+
 .dp-tag-tel {
-  color: #00DC82;
-  border-color: rgba(0,220,130,0.2);
-  background: rgba(0,220,130,0.04);
+  color: var(--success-light);
+  border-color: var(--success-light);
+  background: var(--success-bg);
   text-decoration: none;
   cursor: pointer;
+  font-weight: 700;
 }
-.dp-tag-tel:hover { background: rgba(0,220,130,0.1); }
+
+.dp-tag-tel:hover { background: rgba(11, 102, 35, 0.15); }
 
 /* ── Action buttons ── */
 .dp-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
+  gap: 6px;
   margin-top: 8px;
 }
+
 .dp-btn {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-family: var(--font-mono);
-  font-size: 8px;
-  font-weight: 500;
-  letter-spacing: 0.04em;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
   padding: 6px 11px;
   border-radius: 6px;
   cursor: pointer;
   border: 1px solid;
   text-decoration: none;
-  transition: background 0.15s, transform 0.12s, border-color 0.15s;
+  transition: all 0.2s;
   white-space: nowrap;
+  text-transform: uppercase;
 }
+
 .dp-btn:hover { transform: translateY(-1px); }
-.dp-btn:active { transform: translateY(0); }
+
 .dp-btn-claim {
-  background: rgba(244,68,68,0.08);
-  border-color: rgba(244,68,68,0.3);
-  color: var(--red);
+  background: var(--error-bg);
+  border-color: var(--danger-light);
+  color: var(--danger-light);
 }
+
 .dp-btn-claim:hover {
-  background: rgba(244,68,68,0.16);
-  border-color: rgba(244,68,68,0.5);
+  background: rgba(220, 38, 38, 0.15);
+  border-color: var(--danger-light);
 }
+
 .dp-btn-resolve {
-  background: rgba(0,220,130,0.07);
-  border-color: rgba(0,220,130,0.28);
-  color: #00DC82;
+  background: var(--success-bg);
+  border-color: var(--success-light);
+  color: var(--success-light);
 }
+
 .dp-btn-resolve:hover {
-  background: rgba(0,220,130,0.14);
-  border-color: rgba(0,220,130,0.45);
+  background: rgba(11, 102, 35, 0.15);
+  border-color: var(--success-light);
 }
+
 .dp-btn-nav {
-  background: rgba(59,158,255,0.07);
-  border-color: rgba(59,158,255,0.26);
-  color: var(--blue);
+  background: var(--info-bg);
+  border-color: var(--primary);
+  color: var(--primary);
 }
+
 .dp-btn-nav:hover {
-  background: rgba(59,158,255,0.14);
-  border-color: rgba(59,158,255,0.44);
+  background: rgba(0, 82, 204, 0.15);
+  border-color: var(--primary);
 }
 
 /* ── Utility ── */
@@ -543,11 +614,12 @@ const STYLES = `
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  border: 2px solid rgba(255,255,255,0.07);
-  border-top-color: var(--red);
-  animation: spin 0.7s linear infinite;
+  border: 2px solid var(--border-light);
+  border-top-color: var(--primary);
+  animation: spin 0.8s linear infinite;
   flex-shrink: 0;
 }
+
 .dp-empty {
   display: flex;
   flex-direction: column;
@@ -555,77 +627,85 @@ const STYLES = `
   justify-content: center;
   padding: 48px 24px;
   gap: 12px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--dim);
-  letter-spacing: 0.14em;
+  font-size: 12px;
+  color: var(--text-secondary);
+  letter-spacing: 0.3px;
   text-align: center;
+  text-transform: uppercase;
 }
-.dp-empty-icon { font-size: 26px; opacity: 0.12; }
 
-/* SVG icon helpers */
+.dp-empty-icon { font-size: 28px; opacity: 0.2; }
+
 .dp-icon {
   display: inline-block;
   vertical-align: middle;
   flex-shrink: 0;
 }
+
+@media (max-width: 768px) {
+  .dp { padding: 16px; }
+  .dp-title { font-size: 28px; }
+  .dp-body { grid-template-columns: 1fr; }
+  .dp-filters { flex-direction: column; align-items: flex-start; }
+  .dp-filter-group { width: 100%; }
+}
 `;
 
-// ─── SVG Icons (no external deps needed) ─────────────────────────────────────
+// ─── SVG Icons (lightweight) ──────────────────────────────────────────────
 
 const Icon = {
   MapPin: () => (
-    <svg className="dp-icon" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg className="dp-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
     </svg>
   ),
   Clock: () => (
-    <svg className="dp-icon" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg className="dp-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
     </svg>
   ),
   User: () => (
-    <svg className="dp-icon" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg className="dp-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
     </svg>
   ),
   Phone: () => (
-    <svg className="dp-icon" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg className="dp-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
     </svg>
   ),
   Bolt: () => (
-    <svg className="dp-icon" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg className="dp-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
     </svg>
   ),
   Check: () => (
-    <svg className="dp-icon" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg className="dp-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
     </svg>
   ),
   Route: () => (
-    <svg className="dp-icon" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg className="dp-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="6" cy="19" r="3"/><path d="M9 19h8.5c.4 0 .9-.2 1.2-.5l2.7-2.7c.3-.3.5-.7.6-1.1V5"/><path d="M18 5a3 3 0 0 0-3-3H9L6 5"/><circle cx="18" cy="5" r="3"/>
     </svg>
   ),
   File: () => (
-    <svg className="dp-icon" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg className="dp-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
     </svg>
   ),
   Filter: () => (
-    <svg className="dp-icon" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg className="dp-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
     </svg>
   ),
   Layers: () => (
-    <svg className="dp-icon" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg className="dp-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>
     </svg>
   ),
   Radar: () => (
-    <svg className="dp-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg className="dp-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6a6 6 0 0 0 0 12"/><path d="M12 10a2 2 0 0 0 0 4"/><line x1="12" y1="2" x2="12" y2="12"/>
     </svg>
   ),
@@ -654,12 +734,12 @@ function cls(...args: (string | false | undefined | null)[]): string {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function Dispatch() {
-  const [reports, setReports]           = useState<Report[]>([]);
-  const [loading, setLoading]           = useState(true);
-  const [responderId, setResponderId]   = useState("");
+  const [reports, setReports] = useState<Report[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [responderId, setResponderId] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
-  const [filterType,   setFilterType]   = useState("all");
-  const [selectedId,   setSelectedId]   = useState<string | null>(null);
+  const [filterType, setFilterType] = useState("all");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -706,7 +786,7 @@ export default function Dispatch() {
 
   const filtered = reports.filter((r) => {
     const statusOk = filterStatus === "all" || r.status === filterStatus;
-    const typeOk   = filterType   === "all" || r.type   === filterType;
+    const typeOk = filterType === "all" || r.type === filterType;
     return statusOk && typeOk;
   });
 
@@ -724,18 +804,17 @@ export default function Dispatch() {
     : "https://www.google.com/maps?q=Dumaguete+City&z=13&output=embed";
 
   const statusFilters = ["all", "pending", "in-progress", "resolved"];
-  const typeFilters   = ["all", "fire", "accident", "flood", "crime", "medical", "other"];
+  const typeFilters = ["all", "fire", "accident", "flood", "crime", "medical", "other"];
 
   return (
     <>
-      <style>{STYLES}</style>
+      <style>{DISPATCH_STYLES}</style>
       <div className="dp">
-
         {/* Header */}
         <div className="dp-header">
           <div>
             <div className="dp-eyebrow">Field Operations</div>
-            <div className="dp-title">DISPATCH CENTER</div>
+            <div className="dp-title">Dispatch Center</div>
           </div>
           <div className="dp-header-right">
             {loading && <div className="dp-spinner" />}
@@ -782,7 +861,6 @@ export default function Dispatch() {
 
         {/* Main body */}
         <div className="dp-body">
-
           {/* Map panel */}
           <div className="dp-panel">
             <div className="dp-panel-header">
@@ -819,7 +897,7 @@ export default function Dispatch() {
             ) : (
               <div className="dp-map-empty">
                 <Icon.MapPin />
-                No location data for this report
+                No location data available
               </div>
             )}
           </div>
@@ -831,7 +909,7 @@ export default function Dispatch() {
                 <Icon.Layers />
                 Incident Queue
               </span>
-              <span className="dp-count-pill">{filtered.length} Reports</span>
+              <span className="dp-count-pill">{filtered.length}</span>
             </div>
 
             <div className="dp-queue" ref={listRef}>
@@ -842,24 +920,20 @@ export default function Dispatch() {
               ) : filtered.length === 0 ? (
                 <div className="dp-empty">
                   <span className="dp-empty-icon">📭</span>
-                  No incidents match filters
+                  No Incidents
                 </div>
               ) : (
                 filtered.map((r) => {
-                  const tm = TYPE_META[r.type]     ?? TYPE_META.other;
+                  const tm = TYPE_META[r.type] ?? TYPE_META.other;
                   const sm = STATUS_META[r.status] ?? STATUS_META.pending;
-                  const isMine    = r.responder_id === responderId;
-                  const isSel     = String(r.id) === selectedId;
+                  const isMine = r.responder_id === responderId;
+                  const isSel = String(r.id) === selectedId;
                   const unclaimed = !r.responder_id && r.status === "pending";
 
                   return (
                     <div
                       key={String(r.id)}
-                      className={cls(
-                        "dp-card",
-                        tm.colorClass,
-                        isSel && "selected"
-                      )}
+                      className={cls("dp-card", tm.colorClass, isSel && "selected")}
                       onClick={() => setSelectedId(isSel ? null : String(r.id))}
                       role="button"
                       tabIndex={0}
@@ -883,13 +957,11 @@ export default function Dispatch() {
                       {/* Address */}
                       <div className="dp-card-addr">
                         <Icon.MapPin />
-                        {r.address || r.location || "No location specified"}
+                        {r.address || r.location || "No location"}
                       </div>
 
                       {/* Description */}
-                      {r.description && (
-                        <div className="dp-card-desc">{r.description}</div>
-                      )}
+                      {r.description && <div className="dp-card-desc">{r.description}</div>}
 
                       {/* Meta chips */}
                       <div className="dp-meta">
