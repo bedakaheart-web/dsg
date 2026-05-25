@@ -15,242 +15,709 @@ interface Alert {
 
 // ─── Meta ─────────────────────────────────────────────────────────────────────
 
-const ALERT_META: Record<string, { label: string; colorClass: string }> = {
-  danger:  { label: "DANGER",  colorClass: "al-danger"  },
-  warning: { label: "WARNING", colorClass: "al-warning" },
-  info:    { label: "INFO",    colorClass: "al-info"    },
-  success: { label: "SUCCESS", colorClass: "al-success" },
+const ALERT_META: Record<string, { label: string; colorVar: string; bgVar: string; borderVar: string }> = {
+  danger:  { label: "DANGER",  colorVar: "var(--danger)",  bgVar: "rgba(255,59,48,0.06)",   borderVar: "var(--danger)"  },
+  warning: { label: "WARNING", colorVar: "var(--warning)", bgVar: "rgba(255,149,0,0.06)",   borderVar: "var(--warning)" },
+  info:    { label: "INFO",    colorVar: "var(--primary)", bgVar: "rgba(0,102,255,0.06)",   borderVar: "var(--primary)" },
+  success: { label: "SUCCESS", colorVar: "var(--success)", bgVar: "rgba(0,176,116,0.06)",   borderVar: "var(--success)" },
 };
 
 // ─── SVG Icons ────────────────────────────────────────────────────────────────
 
-const Ico = {
-  Bell: ({ size = 14 }: { size?: number }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline-block",verticalAlign:"middle",flexShrink:0}}>
-      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-    </svg>
-  ),
-  Warn: ({ size = 13 }: { size?: number }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline-block",verticalAlign:"middle",flexShrink:0}}>
-      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-    </svg>
-  ),
-  Info: ({ size = 13 }: { size?: number }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline-block",verticalAlign:"middle",flexShrink:0}}>
-      <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
-    </svg>
-  ),
-  Check: ({ size = 13 }: { size?: number }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline-block",verticalAlign:"middle",flexShrink:0}}>
-      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
-    </svg>
-  ),
-  Clock: ({ size = 9 }: { size?: number }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline-block",verticalAlign:"middle",flexShrink:0}}>
-      <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-    </svg>
-  ),
-  Broadcast: ({ size = 15 }: { size?: number }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline-block",verticalAlign:"middle",flexShrink:0}}>
-      <path d="M1 6l10.1 7.5L22 6"/><path d="M1 18h22"/><path d="M1 12h4"/><path d="M19 12h4"/><circle cx="12" cy="12" r="2"/>
-    </svg>
-  ),
+const SvgIcon = ({ path, size = 16 }: { path: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+    style={{ display: "inline-block", verticalAlign: "middle", flexShrink: 0 }}
+    dangerouslySetInnerHTML={{ __html: path }}
+  />
+);
+
+const ICONS = {
+  bell:      "M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0",
+  warn:      "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17v.01",
+  info:      "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 8h.01M12 12v4",
+  check:     "M22 11.08V12a10 10 0 1 1-5.93-9.14M22 4l-10 10.01-3-3.01",
+  clock:     "M12 2a10 10 0 1 0 10 10M12 6v6l4 2",
+  broadcast: "M1 6l10.1 7.5L22 6M1 18h22M1 12h4M19 12h4",
+  send:      "M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z",
+  filter:    "M22 3H2l8 9.46V19l4 2v-8.54L22 3z",
 };
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const STYLES = `
-:root {
-  --ink:   #06101C;
-  --s1:    #070F1B;
-  --edge:  rgba(255,255,255,0.07);
-  --text:  #D8EAF8;
-  --muted: rgba(216,234,248,0.45);
-  --dim:   rgba(216,234,248,0.22);
-  --red:   #F33;
-  --amber: #F90;
-  --blue:  #4D9EFF;
-  --green: #00DC82;
-  --font-head: 'Bebas Neue','Arial Narrow',Arial,sans-serif;
-  --font-mono: 'IBM Plex Mono','Fira Mono',monospace;
-  --font-body: 'DM Sans',system-ui,sans-serif;
+/* ── Variables — match dashboard exactly ── */
+.rap-root {
+  --primary: #0066FF;
+  --success: #00B074;
+  --warning: #FF9500;
+  --danger:  #FF3B30;
+  --bg:      #FAFBFC;
+  --surface: #FFFFFF;
+  --border:  #E5E7EB;
+  --text:    #1F2937;
+  --text-secondary: #6B7280;
+  --text-tertiary:  #9CA3AF;
 }
 
-@keyframes spin    { to{transform:rotate(360deg)} }
-@keyframes fadeIn  { from{opacity:0} to{opacity:1} }
-@keyframes shimmer { from{background-position:-200% 0} to{background-position:200% 0} }
+@keyframes rap-fadeIn  { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes rap-pulse   { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+@keyframes rap-spin    { to { transform: rotate(360deg); } }
+@keyframes rap-shimmer {
+  from { background-position: -400% 0; }
+  to   { background-position:  400% 0; }
+}
 
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-.ra{font-family:var(--font-body);color:var(--text);min-height:100vh;background:var(--ink)}
+.rap-root {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  min-height: 100vh;
+}
 
-/* ── Header — always visible immediately ── */
-.ra-hd{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:20px}
-.ra-eyebrow{font-family:var(--font-mono);font-size:10px;color:rgba(243,51,51,.6);letter-spacing:.28em;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:8px}
-.ra-eyebrow::before{content:'';display:block;width:20px;height:1px;background:var(--red);opacity:.5}
-.ra-title{font-family:var(--font-head);font-size:42px;font-weight:400;color:#fff;letter-spacing:.04em;line-height:1}
+/* ── Page Header ── */
+.rap-hd {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 24px;
+  animation: rap-fadeIn 0.4s ease both;
+}
 
-/* ── Stats — always visible, numbers swap in ── */
-.ra-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:20px}
-.ra-stat{background:rgba(6,17,32,.92);border:1px solid var(--edge);border-radius:12px;padding:16px;position:relative;overflow:hidden}
-.ra-stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
-.ra-stat-icon{font-size:16px;margin-bottom:10px;opacity:.85;display:flex;align-items:center}
-.ra-stat-num{font-family:var(--font-head);font-size:34px;line-height:1;margin-bottom:5px;min-height:34px}
-.ra-stat-lbl{font-family:var(--font-mono);font-size:8.5px;color:var(--dim);letter-spacing:.12em;text-transform:uppercase}
+.rap-eyebrow {
+  font-size: 11px;
+  color: var(--primary);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
-.ra-stat.sc-total  ::before,.ra-stat.sc-total  .ra-stat-icon,.ra-stat.sc-total  .ra-stat-num{color:var(--text)}
-.ra-stat.sc-total  ::before{background:var(--text)}
-.ra-stat.sc-danger ::before{background:var(--red)}
-.ra-stat.sc-danger .ra-stat-icon,.ra-stat.sc-danger .ra-stat-num{color:var(--red)}
-.ra-stat.sc-warning::before{background:var(--amber)}
-.ra-stat.sc-warning .ra-stat-icon,.ra-stat.sc-warning .ra-stat-num{color:var(--amber)}
-.ra-stat.sc-info   ::before{background:var(--blue)}
-.ra-stat.sc-info   .ra-stat-icon,.ra-stat.sc-info   .ra-stat-num{color:var(--blue)}
+.rap-eyebrow::before {
+  content: '';
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: var(--primary);
+}
 
-/* ── Skeleton shimmer ── */
-.ra-skel{
+.rap-title {
+  font-size: 32px;
+  color: var(--text);
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+  font-weight: 700;
+}
+
+.rap-live {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--danger);
+  background: rgba(255, 59, 48, 0.06);
+  color: var(--danger);
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.rap-live-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--danger);
+  animation: rap-pulse 1.4s ease infinite;
+}
+
+/* ── Stat Grid ── */
+.rap-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.rap-stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s;
+  animation: rap-fadeIn 0.5s ease both;
+  cursor: default;
+}
+
+.rap-stat:nth-child(2) { animation-delay: 0.05s; }
+.rap-stat:nth-child(3) { animation-delay: 0.10s; }
+.rap-stat:nth-child(4) { animation-delay: 0.15s; }
+
+.rap-stat:hover {
+  transform: translateY(-4px);
+  border-color: var(--primary);
+  box-shadow: 0 8px 16px rgba(0,102,255,0.10);
+}
+
+.rap-stat::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+
+.rap-stat.sv-red::before    { background: var(--danger); }
+.rap-stat.sv-amber::before  { background: var(--warning); }
+.rap-stat.sv-blue::before   { background: var(--primary); }
+.rap-stat.sv-green::before  { background: var(--success); }
+.rap-stat.sv-default::before{ background: var(--text-secondary); }
+
+.rap-stat-icon { font-size: 20px; margin-bottom: 12px; display: flex; align-items: center; }
+.rap-stat.sv-red    .rap-stat-icon { color: var(--danger); }
+.rap-stat.sv-amber  .rap-stat-icon { color: var(--warning); }
+.rap-stat.sv-blue   .rap-stat-icon { color: var(--primary); }
+.rap-stat.sv-green  .rap-stat-icon { color: var(--success); }
+.rap-stat.sv-default .rap-stat-icon { color: var(--text-secondary); }
+
+.rap-stat-num {
+  font-size: 32px;
+  line-height: 1;
+  margin-bottom: 6px;
+  letter-spacing: -0.5px;
+  font-weight: 700;
+  min-height: 32px;
+}
+.rap-stat.sv-red    .rap-stat-num { color: var(--danger); }
+.rap-stat.sv-amber  .rap-stat-num { color: var(--warning); }
+.rap-stat.sv-blue   .rap-stat-num { color: var(--primary); }
+.rap-stat.sv-green  .rap-stat-num { color: var(--success); }
+.rap-stat.sv-default .rap-stat-num { color: var(--text); }
+
+.rap-stat-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* ── Skeleton ── */
+.rap-skel {
   background: linear-gradient(90deg,
-    rgba(255,255,255,.04) 25%,
-    rgba(255,255,255,.08) 50%,
-    rgba(255,255,255,.04) 75%
+    #f0f2f5 25%, #e4e7ec 50%, #f0f2f5 75%
   );
-  background-size: 200% 100%;
-  animation: shimmer 1.4s ease infinite;
+  background-size: 400% 100%;
+  animation: rap-shimmer 1.4s ease infinite;
   border-radius: 6px;
 }
-.ra-skel-num{height:34px;width:40px;border-radius:4px;margin-bottom:5px}
-.ra-skel-card{
-  background:rgba(6,17,32,.92);
-  border:1px solid var(--edge);
-  border-left:3px solid rgba(255,255,255,.06);
-  border-radius:12px;
-  padding:16px 18px;
-  display:flex;flex-direction:column;gap:12px;
-}
-.ra-skel-badge{height:20px;width:72px}
-.ra-skel-title{height:18px;width:65%}
-.ra-skel-msg-1{height:12px;width:100%}
-.ra-skel-msg-2{height:12px;width:78%}
-.ra-skel-foot{height:12px;width:80px}
+.rap-skel-num   { height: 32px; width: 48px; margin-bottom: 6px; }
+.rap-skel-badge { height: 22px; width: 80px; border-radius: 6px; }
+.rap-skel-title { height: 20px; width: 60%; margin: 8px 0; }
+.rap-skel-line  { height: 13px; border-radius: 4px; }
+.rap-skel-foot  { height: 13px; width: 90px; border-radius: 4px; }
 
 /* ── Layout ── */
-.ra-layout{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start}
-@media(max-width:1050px){.ra-layout{grid-template-columns:1fr}}
+.rap-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 1050px) {
+  .rap-layout { grid-template-columns: 1fr; }
+}
+
+/* ── Filter bar ── */
+.rap-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.rap-filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.rap-filter-btn:hover {
+  border-color: var(--text-secondary);
+  color: var(--text);
+}
+
+.rap-filter-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.rap-filter-btn.active.fv-red    { background: var(--danger);  border-color: var(--danger); }
+.rap-filter-btn.active.fv-amber  { background: var(--warning); border-color: var(--warning); }
+.rap-filter-btn.active.fv-blue   { background: var(--primary); border-color: var(--primary); }
+.rap-filter-btn.active.fv-green  { background: var(--success); border-color: var(--success); }
+
+.rap-filter-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  font-size: 10px;
+  font-weight: 700;
+  background: rgba(0,0,0,0.1);
+  padding: 0 4px;
+}
 
 /* ── Alert list ── */
-.ra-list{display:flex;flex-direction:column;gap:10px}
-.ra-empty{text-align:center;padding:52px;font-family:var(--font-mono);font-size:10.5px;color:var(--dim);letter-spacing:.12em}
+.rap-list { display: flex; flex-direction: column; gap: 10px; }
 
-/* ── Alert card — fade in only, no translateY so no layout shift ── */
-.ra-card{
-  background:rgba(6,17,32,.92);border:1px solid;border-radius:12px;
-  padding:16px 18px;display:flex;flex-direction:column;gap:10px;
-  transition:border-color .2s,box-shadow .2s;
-  animation:fadeIn .25s ease both;
-  position:relative;overflow:hidden;
+.rap-empty {
+  text-align: center;
+  padding: 48px 24px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
 }
-.ra-card::before{content:'';position:absolute;top:0;left:0;right:0;height:36px;background:linear-gradient(180deg,currentColor,transparent);opacity:.06;pointer-events:none}
-.ra-card:hover{box-shadow:0 8px 40px rgba(0,0,0,.4)}
 
-.ra-card.al-danger {border-left:3px solid var(--red);  border-color:rgba(243,51,51,.22)}
-.ra-card.al-warning{border-left:3px solid var(--amber); border-color:rgba(255,153,0,.22)}
-.ra-card.al-info   {border-left:3px solid var(--blue);  border-color:rgba(77,158,255,.22)}
-.ra-card.al-success{border-left:3px solid var(--green); border-color:rgba(0,220,130,.22)}
-.ra-card.al-danger:hover {border-color:rgba(243,51,51,.5)}
-.ra-card.al-warning:hover{border-color:rgba(255,153,0,.5)}
-.ra-card.al-info:hover   {border-color:rgba(77,158,255,.5)}
-.ra-card.al-success:hover{border-color:rgba(0,220,130,.5)}
+/* ── Alert Card ── */
+.rap-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: all 0.25s;
+  animation: rap-fadeIn 0.3s ease both;
+  position: relative;
+  overflow: hidden;
+  cursor: default;
+}
 
-.ra-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
-.ra-badge-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-.ra-badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:8.5px;font-weight:700;padding:3px 10px;border-radius:5px;letter-spacing:.08em}
-.ra-badge.al-danger {background:rgba(243,51,51,.1); color:var(--red);  border:1px solid rgba(243,51,51,.25)}
-.ra-badge.al-warning{background:rgba(255,153,0,.1); color:var(--amber);border:1px solid rgba(255,153,0,.25)}
-.ra-badge.al-info   {background:rgba(77,158,255,.1);color:var(--blue); border:1px solid rgba(77,158,255,.25)}
-.ra-badge.al-success{background:rgba(0,220,130,.1); color:var(--green);border:1px solid rgba(0,220,130,.25)}
+.rap-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: 3px;
+}
 
-.ra-card-target{font-family:var(--font-mono);font-size:8.5px;font-weight:600;padding:2px 8px;border-radius:4px;background:rgba(77,158,255,.08);color:rgba(77,158,255,.7);border:1px solid rgba(77,158,255,.2)}
-.ra-card-title{font-size:15px;font-weight:700;color:#fff;line-height:1.3}
-.ra-card-msg{font-size:13px;font-weight:300;color:rgba(216,234,248,.5);line-height:1.65}
-.ra-card-footer{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.ra-card-meta{display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:9px;color:var(--dim)}
+.rap-card.cv-red::before    { background: var(--danger); }
+.rap-card.cv-amber::before  { background: var(--warning); }
+.rap-card.cv-blue::before   { background: var(--primary); }
+.rap-card.cv-green::before  { background: var(--success); }
 
-/* ── Compose panel ── */
-.ra-compose{background:rgba(6,17,32,.95);border:1px solid var(--edge);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:16px;position:sticky;top:24px}
-.ra-compose-hd{display:flex;align-items:center;gap:10px;padding-bottom:14px;border-bottom:1px solid var(--edge)}
-.ra-compose-icon{width:36px;height:36px;border-radius:10px;flex-shrink:0;background:rgba(243,51,51,.1);border:1px solid rgba(243,51,51,.2);display:flex;align-items:center;justify-content:center;color:var(--red)}
-.ra-compose-title{font-size:14px;font-weight:700;color:#fff}
-.ra-compose-sub{font-family:var(--font-mono);font-size:8.5px;color:var(--dim);margin-top:2px;text-transform:uppercase;letter-spacing:.1em}
+.rap-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  border-color: var(--text-tertiary);
+}
 
-.ra-field{display:flex;flex-direction:column;gap:8px}
-.ra-label{font-family:var(--font-mono);font-size:9px;font-weight:600;color:rgba(216,234,248,.32);letter-spacing:.1em;text-transform:uppercase}
-.ra-input{background:rgba(3,11,21,.8);border:1px solid var(--edge);border-radius:9px;padding:11px 13px;font-family:var(--font-body);font-size:13px;color:var(--text);outline:none;transition:border-color .2s;width:100%}
-.ra-input::placeholder{color:var(--dim)}
-.ra-input:focus{border-color:rgba(243,51,51,.3)}
-.ra-textarea{background:rgba(3,11,21,.8);border:1px solid var(--edge);border-radius:9px;padding:11px 13px;font-family:var(--font-body);font-size:13px;font-weight:300;color:var(--text);outline:none;transition:border-color .2s;width:100%;resize:vertical;min-height:90px;line-height:1.65}
-.ra-textarea::placeholder{color:var(--dim)}
-.ra-textarea:focus{border-color:rgba(243,51,51,.3)}
+.rap-card.cv-red:hover   { border-color: var(--danger);  box-shadow: 0 8px 20px rgba(255,59,48,0.10); }
+.rap-card.cv-amber:hover { border-color: var(--warning); box-shadow: 0 8px 20px rgba(255,149,0,0.10); }
+.rap-card.cv-blue:hover  { border-color: var(--primary); box-shadow: 0 8px 20px rgba(0,102,255,0.10); }
+.rap-card.cv-green:hover { border-color: var(--success); box-shadow: 0 8px 20px rgba(0,176,116,0.10); }
 
-.ra-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.ra-type-opt{display:flex;align-items:center;gap:7px;padding:9px 11px;background:rgba(255,255,255,.03);border:1px solid var(--edge);border-radius:8px;cursor:pointer;font-size:11px;font-weight:500;color:var(--muted);transition:all .15s}
-.ra-type-opt:hover:not(.active){border-color:rgba(255,255,255,.15);color:var(--text)}
-.ra-type-opt.active.al-danger {background:rgba(243,51,51,.1); border-color:rgba(243,51,51,.3); color:var(--red)}
-.ra-type-opt.active.al-warning{background:rgba(255,153,0,.1); border-color:rgba(255,153,0,.3); color:var(--amber)}
-.ra-type-opt.active.al-info   {background:rgba(77,158,255,.1);border-color:rgba(77,158,255,.3);color:var(--blue)}
-.ra-type-opt.active.al-success{background:rgba(0,220,130,.1); border-color:rgba(0,220,130,.3); color:var(--green)}
-.ra-type-icon{font-size:13px;flex-shrink:0;display:flex;align-items:center}
+.rap-card-skeleton {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-left: 3px solid var(--border);
+}
 
-.ra-success{text-align:center;padding:10px 14px;background:rgba(0,220,130,.07);border:1px solid rgba(0,220,130,.2);border-radius:8px;font-family:var(--font-mono);font-size:9.5px;color:var(--green);letter-spacing:.08em;display:flex;align-items:center;justify-content:center;gap:7px}
+.rap-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
 
-.ra-send{width:100%;padding:13px;border-radius:10px;border:none;cursor:pointer;font-family:var(--font-body);font-size:14px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s}
-.ra-send:hover:not(:disabled){transform:translateY(-2px);filter:brightness(1.1)}
-.ra-send:active:not(:disabled){transform:none}
-.ra-send:disabled{opacity:.4;cursor:not-allowed;background:rgba(216,234,248,.1);color:rgba(216,234,248,.3)}
+.rap-card-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+}
 
-.ra-spinner-sm{display:inline-block;width:13px;height:13px;border-radius:50%;border:2px solid rgba(255,255,255,.15);border-top-color:#fff;animation:spin .7s linear infinite}
+.rap-card.cv-red   .rap-card-icon { background: rgba(255,59,48,0.08);  color: var(--danger);  border-color: rgba(255,59,48,0.2); }
+.rap-card.cv-amber .rap-card-icon { background: rgba(255,149,0,0.08);  color: var(--warning); border-color: rgba(255,149,0,0.2); }
+.rap-card.cv-blue  .rap-card-icon { background: rgba(0,102,255,0.08);  color: var(--primary); border-color: rgba(0,102,255,0.2); }
+.rap-card.cv-green .rap-card-icon { background: rgba(0,176,116,0.08);  color: var(--success); border-color: rgba(0,176,116,0.2); }
+
+.rap-card-body { flex: 1; min-width: 0; }
+
+.rap-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 6px;
+  border: 1px solid;
+  letter-spacing: 0.3px;
+  margin-bottom: 6px;
+}
+
+.rap-badge.bv-red   { background: rgba(255,59,48,0.08);  color: var(--danger);  border-color: rgba(255,59,48,0.25); }
+.rap-badge.bv-amber { background: rgba(255,149,0,0.08);  color: var(--warning); border-color: rgba(255,149,0,0.25); }
+.rap-badge.bv-blue  { background: rgba(0,102,255,0.08);  color: var(--primary); border-color: rgba(0,102,255,0.25); }
+.rap-badge.bv-green { background: rgba(0,176,116,0.08);  color: var(--success); border-color: rgba(0,176,116,0.25); }
+
+.rap-card-target {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(0,102,255,0.06);
+  color: var(--primary);
+  border: 1px solid rgba(0,102,255,0.18);
+  margin-left: 6px;
+}
+
+.rap-card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.3;
+  margin-bottom: 4px;
+}
+
+.rap-card-msg {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.rap-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.rap-card-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+/* ── Compose Panel ── */
+.rap-compose {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: sticky;
+  top: 24px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+}
+
+.rap-compose-hd {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.rap-compose-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  background: rgba(255,59,48,0.08);
+  border: 1px solid rgba(255,59,48,0.20);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--danger);
+}
+
+.rap-compose-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.rap-compose-sub {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* ── Form Fields ── */
+.rap-field { display: flex; flex-direction: column; gap: 6px; }
+
+.rap-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.rap-input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 13px;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+}
+
+.rap-input::placeholder { color: var(--text-tertiary); }
+.rap-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0,102,255,0.08);
+  background: var(--surface);
+}
+
+.rap-textarea {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 13px;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+  resize: vertical;
+  min-height: 90px;
+  line-height: 1.6;
+}
+
+.rap-textarea::placeholder { color: var(--text-tertiary); }
+.rap-textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0,102,255,0.08);
+  background: var(--surface);
+}
+
+/* ── Type selector ── */
+.rap-type-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.rap-type-opt {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 11px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all 0.15s;
+  user-select: none;
+}
+
+.rap-type-opt:hover:not(.active) {
+  border-color: var(--text-secondary);
+  color: var(--text);
+  background: var(--surface);
+}
+
+.rap-type-opt.active.tv-red   { background: rgba(255,59,48,0.08);  border-color: rgba(255,59,48,0.35);  color: var(--danger); }
+.rap-type-opt.active.tv-amber { background: rgba(255,149,0,0.08);  border-color: rgba(255,149,0,0.35);  color: var(--warning); }
+.rap-type-opt.active.tv-blue  { background: rgba(0,102,255,0.08);  border-color: rgba(0,102,255,0.35);  color: var(--primary); }
+.rap-type-opt.active.tv-green { background: rgba(0,176,116,0.08);  border-color: rgba(0,176,116,0.35);  color: var(--success); }
+
+/* ── Success banner ── */
+.rap-success {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 14px;
+  background: rgba(0,176,116,0.08);
+  border: 1px solid rgba(0,176,116,0.25);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--success);
+  letter-spacing: 0.3px;
+  animation: rap-fadeIn 0.3s ease;
+}
+
+/* ── Send button ── */
+.rap-send {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  background: var(--danger);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(255,59,48,0.20);
+}
+
+.rap-send:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(255,59,48,0.30);
+  filter: brightness(1.05);
+}
+
+.rap-send:active:not(:disabled) { transform: none; }
+
+.rap-send:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: var(--border);
+  color: var(--text-tertiary);
+  box-shadow: none;
+}
+
+/* ── Spinner ── */
+.rap-spinner {
+  display: inline-block;
+  width: 13px; height: 13px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.25);
+  border-top-color: #fff;
+  animation: rap-spin 0.7s linear infinite;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .rap-title { font-size: 26px; }
+  .rap-stats { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .rap-stat-num { font-size: 24px; }
+}
 `;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+type AlertColor = "red" | "amber" | "blue" | "green";
+
+function getAlertColor(type: string): AlertColor {
+  if (type === "danger")  return "red";
+  if (type === "warning") return "amber";
+  if (type === "success") return "green";
+  return "blue";
+}
+
 function formatRelative(ts: string) {
   const diff = Math.floor((Date.now() - new Date(ts).getTime()) / 1000);
-  if (diff < 60) return `${diff}s ago`;
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 60)    return `${diff}s ago`;
+  if (diff < 3600)  return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
   return new Date(ts).toLocaleDateString();
 }
 
-function cls(...args: (string | false | undefined | null)[]): string {
-  return args.filter(Boolean).join(" ");
+function AlertIcon({ type, size = 14 }: { type: string; size?: number }) {
+  if (type === "info")    return <SvgIcon path={ICONS.info}  size={size} />;
+  if (type === "success") return <SvgIcon path={ICONS.check} size={size} />;
+  return <SvgIcon path={ICONS.warn} size={size} />;
 }
 
-function AlertTypeIcon({ type, size = 13 }: { type: string; size?: number }) {
-  if (type === "info")    return <Ico.Info size={size} />;
-  if (type === "success") return <Ico.Check size={size} />;
-  return <Ico.Warn size={size} />;
-}
+// ─── Skeleton Card ────────────────────────────────────────────────────────────
 
-// ─── Skeleton components ──────────────────────────────────────────────────────
-
-function SkeletonCards({ count = 3 }: { count?: number }) {
+function SkeletonCard() {
   return (
-    <>
-      {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="ra-skel-card">
-          <div><div className="ra-skel ra-skel-badge" /></div>
-          <div className="ra-skel ra-skel-title" />
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <div className="ra-skel ra-skel-msg-1" />
-            <div className="ra-skel ra-skel-msg-2" />
-          </div>
-          <div className="ra-skel ra-skel-foot" />
+    <div className="rap-card-skeleton">
+      <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+        <div className="rap-skel" style={{ width: 36, height: 36, borderRadius: 8, flexShrink: 0 }} />
+        <div style={{ flex: 1 }}>
+          <div className="rap-skel rap-skel-badge" style={{ marginBottom: 8 }} />
+          <div className="rap-skel rap-skel-title" />
         </div>
-      ))}
-    </>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <div className="rap-skel rap-skel-line" />
+        <div className="rap-skel rap-skel-line" style={{ width: "75%" }} />
+      </div>
+      <div style={{ paddingTop: 8, borderTop: "1px solid #E5E7EB" }}>
+        <div className="rap-skel rap-skel-foot" />
+      </div>
+    </div>
   );
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// ─── Type options config ──────────────────────────────────────────────────────
+
+const TYPE_OPTIONS = [
+  { value: "danger",  label: "Danger",  colorClass: "tv-red"   },
+  { value: "warning", label: "Warning", colorClass: "tv-amber" },
+  { value: "info",    label: "Info",    colorClass: "tv-blue"  },
+  { value: "success", label: "Success", colorClass: "tv-green" },
+];
+
+const FILTER_OPTIONS = [
+  { value: "all",     label: "All",     colorClass: ""         },
+  { value: "danger",  label: "Danger",  colorClass: "fv-red"   },
+  { value: "warning", label: "Warning", colorClass: "fv-amber" },
+  { value: "info",    label: "Info",    colorClass: "fv-blue"  },
+  { value: "success", label: "Success", colorClass: "fv-green" },
+];
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function ResponderAlertsPage() {
   const [alerts,    setAlerts]    = useState<Alert[]>([]);
@@ -260,6 +727,7 @@ export default function ResponderAlertsPage() {
   const [title,     setTitle]     = useState("");
   const [message,   setMessage]   = useState("");
   const [alertType, setAlertType] = useState("warning");
+  const [filter,    setFilter]    = useState("all");
 
   const loadAlerts = async () => {
     try {
@@ -305,138 +773,180 @@ export default function ResponderAlertsPage() {
     }
   };
 
-  // Counts — 0 while loading, real values after
   const counts = {
     total:   alerts.length,
     danger:  alerts.filter((a) => a.type === "danger").length,
     warning: alerts.filter((a) => a.type === "warning").length,
     info:    alerts.filter((a) => a.type === "info").length,
+    success: alerts.filter((a) => a.type === "success").length,
   };
 
-  const statCards = [
-    { label: "Total Alerts", value: counts.total,   colorClass: "sc-total",   icon: <Ico.Bell size={16} /> },
-    { label: "Danger",       value: counts.danger,  colorClass: "sc-danger",  icon: <Ico.Warn size={16} /> },
-    { label: "Warning",      value: counts.warning, colorClass: "sc-warning", icon: <Ico.Warn size={16} /> },
-    { label: "Info",         value: counts.info,    colorClass: "sc-info",    icon: <Ico.Info size={16} /> },
-  ];
+  const filteredAlerts = filter === "all"
+    ? alerts
+    : alerts.filter((a) => a.type === filter);
 
-  const typeOptions = ["danger", "warning", "info", "success"];
+  const statCards = [
+    { label: "Total Alerts", value: counts.total,   colorClass: "sv-default", icon: <SvgIcon path={ICONS.bell} size={18} /> },
+    { label: "Danger",       value: counts.danger,  colorClass: "sv-red",     icon: <SvgIcon path={ICONS.warn} size={18} /> },
+    { label: "Warning",      value: counts.warning, colorClass: "sv-amber",   icon: <SvgIcon path={ICONS.warn} size={18} /> },
+    { label: "Info",         value: counts.info,    colorClass: "sv-blue",    icon: <SvgIcon path={ICONS.info} size={18} /> },
+  ];
 
   return (
     <>
       <style>{STYLES}</style>
-      <div className="ra">
+      <div className="rap-root">
 
-        {/* ── Header — renders immediately, no loading gate ── */}
-        <div className="ra-hd">
+        {/* ── Header ── */}
+        <div className="rap-hd">
           <div>
-            <div className="ra-eyebrow">Field Operations</div>
-            <div className="ra-title">ALERTS</div>
+            <div className="rap-eyebrow">Field Operations</div>
+            <div className="rap-title">Alerts</div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {loading && (
+              <div className="rap-spinner" style={{ borderTopColor: "var(--primary)", borderColor: "var(--border)" }} />
+            )}
+            <div className="rap-live">
+              <span className="rap-live-dot" />
+              LIVE
+            </div>
           </div>
         </div>
 
-        {/* ── Stats — structure always visible, numbers fill in ── */}
-        <div className="ra-stats">
+        {/* ── Stats ── */}
+        <div className="rap-stats">
           {statCards.map((s) => (
-            <div key={s.label} className={cls("ra-stat", s.colorClass)}>
-              <div className="ra-stat-icon">{s.icon}</div>
-              <div className="ra-stat-num">
+            <div key={s.label} className={`rap-stat ${s.colorClass}`}>
+              <div className="rap-stat-icon">{s.icon}</div>
+              <div className="rap-stat-num">
                 {loading
-                  ? <div className="ra-skel ra-skel-num" />
+                  ? <div className="rap-skel rap-skel-num" />
                   : s.value
                 }
               </div>
-              <div className="ra-stat-lbl">{s.label}</div>
+              <div className="rap-stat-label">{s.label}</div>
             </div>
           ))}
         </div>
 
         {/* ── Layout ── */}
-        <div className="ra-layout">
+        <div className="rap-layout">
 
-          {/* Alert feed — skeleton → real cards */}
-          <div className="ra-list">
-            {loading ? (
-              <SkeletonCards count={3} />
-            ) : alerts.length === 0 ? (
-              <div className="ra-empty">NO ALERTS YET</div>
-            ) : (
-              alerts.map((a) => {
-                const am = ALERT_META[a.type] ?? ALERT_META.info;
+          {/* ── Left: Alert feed ── */}
+          <div>
+            {/* Filter bar */}
+            <div className="rap-filter-bar">
+              <SvgIcon path={ICONS.filter} size={13} />
+              {FILTER_OPTIONS.map((f) => {
+                const count = f.value === "all" ? counts.total : (counts as any)[f.value] ?? 0;
                 return (
-                  <div key={String(a.id)} className={cls("ra-card", am.colorClass)}>
-                    <div className="ra-card-top">
-                      <div style={{ flex: 1 }}>
-                        <div className="ra-badge-row">
-                          <span className={cls("ra-badge", am.colorClass)}>
-                            <AlertTypeIcon type={a.type} size={9} />
-                            {am.label}
-                          </span>
-                          {a.target_role && (
-                            <span className="ra-card-target">→ {a.target_role.toUpperCase()}</span>
-                          )}
+                  <button
+                    key={f.value}
+                    className={`rap-filter-btn ${f.colorClass} ${filter === f.value ? "active" : ""}`}
+                    onClick={() => setFilter(f.value)}
+                  >
+                    {f.label}
+                    {count > 0 && (
+                      <span className="rap-filter-count">{count}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="rap-list">
+              {loading ? (
+                <>
+                  <SkeletonCard />
+                  <SkeletonCard />
+                  <SkeletonCard />
+                </>
+              ) : filteredAlerts.length === 0 ? (
+                <div className="rap-empty">
+                  {filter === "all" ? "No alerts yet" : `No ${filter} alerts`}
+                </div>
+              ) : (
+                filteredAlerts.map((a) => {
+                  const meta  = ALERT_META[a.type] ?? ALERT_META.info;
+                  const color = getAlertColor(a.type);
+                  return (
+                    <div key={String(a.id)} className={`rap-card cv-${color}`}>
+                      <div className="rap-card-top">
+                        <div className="rap-card-icon">
+                          <AlertIcon type={a.type} size={16} />
                         </div>
-                        <div className="ra-card-title">{a.title}</div>
+                        <div className="rap-card-body">
+                          <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 4, marginBottom: 6 }}>
+                            <span className={`rap-badge bv-${color}`}>
+                              <AlertIcon type={a.type} size={9} />
+                              {meta.label}
+                            </span>
+                            {a.target_role && (
+                              <span className="rap-card-target">
+                                → {a.target_role.toUpperCase()}
+                              </span>
+                            )}
+                          </div>
+                          <div className="rap-card-title">{a.title}</div>
+                          <div className="rap-card-msg">{a.message}</div>
+                        </div>
+                      </div>
+                      <div className="rap-card-footer">
+                        <span className="rap-card-meta">
+                          <SvgIcon path={ICONS.clock} size={11} />
+                          {formatRelative(a.created_at)}
+                        </span>
                       </div>
                     </div>
-                    <div className="ra-card-msg">{a.message}</div>
-                    <div className="ra-card-footer">
-                      <span className="ra-card-meta">
-                        <Ico.Clock size={9} />
-                        {formatRelative(a.created_at)}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })
-            )}
+                  );
+                })
+              )}
+            </div>
           </div>
 
-          {/* ── Compose panel — always fully visible ── */}
-          <div className="ra-compose">
-            <div className="ra-compose-hd">
-              <div className="ra-compose-icon"><Ico.Broadcast size={15} /></div>
+          {/* ── Right: Compose panel ── */}
+          <div className="rap-compose">
+            <div className="rap-compose-hd">
+              <div className="rap-compose-icon">
+                <SvgIcon path={ICONS.broadcast} size={16} />
+              </div>
               <div>
-                <div className="ra-compose-title">Broadcast Alert</div>
-                <div className="ra-compose-sub">Send to citizens</div>
+                <div className="rap-compose-title">Broadcast Alert</div>
+                <div className="rap-compose-sub">Send to citizens</div>
               </div>
             </div>
 
-            <div className="ra-field">
-              <span className="ra-label">Alert Type</span>
-              <div className="ra-type-grid">
-                {typeOptions.map((t) => {
-                  const am = ALERT_META[t];
-                  return (
-                    <div
-                      key={t}
-                      className={cls("ra-type-opt", am.colorClass, alertType === t && "active")}
-                      onClick={() => setAlertType(t)}
-                    >
-                      <span className="ra-type-icon">
-                        <AlertTypeIcon type={t} size={13} />
-                      </span>
-                      <span>{am.label}</span>
-                    </div>
-                  );
-                })}
+            <div className="rap-field">
+              <span className="rap-label">Alert Type</span>
+              <div className="rap-type-grid">
+                {TYPE_OPTIONS.map((t) => (
+                  <div
+                    key={t.value}
+                    className={`rap-type-opt ${t.colorClass} ${alertType === t.value ? "active" : ""}`}
+                    onClick={() => setAlertType(t.value)}
+                  >
+                    <AlertIcon type={t.value} size={13} />
+                    <span>{t.label}</span>
+                  </div>
+                ))}
               </div>
             </div>
 
-            <div className="ra-field">
-              <label className="ra-label">Title</label>
+            <div className="rap-field">
+              <label className="rap-label">Title</label>
               <input
-                className="ra-input"
+                className="rap-input"
                 placeholder="e.g. Road closed — Rizal Blvd"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
               />
             </div>
 
-            <div className="ra-field">
-              <label className="ra-label">Message</label>
+            <div className="rap-field">
+              <label className="rap-label">Message</label>
               <textarea
-                className="ra-textarea"
+                className="rap-textarea"
                 placeholder="Describe the situation and any public safety instructions…"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
@@ -444,21 +954,22 @@ export default function ResponderAlertsPage() {
             </div>
 
             {sent && (
-              <div className="ra-success">
-                <Ico.Check size={12} />
-                ALERT BROADCAST SUCCESSFULLY
+              <div className="rap-success">
+                <SvgIcon path={ICONS.check} size={13} />
+                Alert broadcast successfully
               </div>
             )}
 
             <button
-              className="ra-send"
+              className="rap-send"
               disabled={!title.trim() || !message.trim() || sending}
               onClick={handleSend}
             >
-              {sending
-                ? <><span className="ra-spinner-sm" /> Sending…</>
-                : <><Ico.Bell size={14} /> Broadcast Alert</>
-              }
+              {sending ? (
+                <><span className="rap-spinner" /> Sending…</>
+              ) : (
+                <><SvgIcon path={ICONS.send} size={14} /> Broadcast Alert</>
+              )}
             </button>
           </div>
         </div>

@@ -25,11 +25,10 @@ export default function ProtectedRoute({ allowedRole }: Props) {
   useEffect(() => {
     let cancelled = false;
 
-    // ✅ FIX: Use onAuthStateChange instead of one-shot getUser()
-    // This waits for Supabase to fully persist the session before checking,
-    // preventing the race condition where navigate() fires before the session
-    // is committed to storage.
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const check = async () => {
+      // getSession() reads from local cache — no network race condition
+      const { data: { session } } = await supabase.auth.getSession();
+
       if (cancelled) return;
 
       if (!session?.user) {
@@ -58,12 +57,10 @@ export default function ProtectedRoute({ allowedRole }: Props) {
       } else {
         setAuthState({ status: "wrong_role", actualRole: role });
       }
-    });
-
-    return () => {
-      cancelled = true;
-      subscription.unsubscribe();
     };
+
+    check();
+    return () => { cancelled = true; };
   }, [allowedRole]);
 
   if (authState.status === "loading") {

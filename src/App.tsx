@@ -1,51 +1,46 @@
 // src/App.tsx
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
-import Layout        from './pages/Layout';
+import Layout from './pages/Layout';
 
 // ── Public Pages ───────────────────────────────────────────────
-import Homepage           from './pages/Homepage';
-import Login              from './pages/Login';
-import Signup             from './pages/Signup';
-import ForgotPassword     from './pages/Forgotpassword';
-import Directory          from './pages/Directory';
-import Map                from './pages/Map';
-import Report             from './pages/Report';
-import IncidentAlerts     from './pages/Incidentalerts';
-import AboutDumaSafeGuide from './pages/AboutDumaSafeGuide';
-import PartnerAgencies    from './pages/PartnerAgencies';
-import PrivacyPolicy      from './pages/PrivacyPolicy';
-import Resources          from './pages/Resources';
-import SafetyTips         from './pages/SafetyTips';
-import TermsOfService     from './pages/TermsOfService';
-import TermsOfUse         from './pages/TermsOfUse';
+const Homepage           = lazy(() => import('./pages/Homepage'));
+const Login              = lazy(() => import('./pages/Login'));
+const Signup             = lazy(() => import('./pages/Signup'));
+const ForgotPassword     = lazy(() => import('./pages/Forgotpassword'));
+const Directory          = lazy(() => import('./pages/Directory'));
+const Map                = lazy(() => import('./pages/Map'));
+const Report             = lazy(() => import('./pages/Report'));
+const IncidentAlerts     = lazy(() => import('./pages/Incidentalerts'));
+const AboutDumaSafeGuide = lazy(() => import('./pages/AboutDumaSafeGuide'));
+const PartnerAgencies    = lazy(() => import('./pages/PartnerAgencies'));
+const PrivacyPolicy      = lazy(() => import('./pages/PrivacyPolicy'));
+const Resources          = lazy(() => import('./pages/Resources'));
+const SafetyTips         = lazy(() => import('./pages/SafetyTips'));
+const TermsOfService     = lazy(() => import('./pages/TermsOfService'));
+const TermsOfUse         = lazy(() => import('./pages/TermsOfUse'));
 
 // ── Citizen-scoped pages ───────────────────────────────────────
-import CitizenMap         from './citizen/CitizenMap';
-import CitizenDirectory   from './citizen/CitizenDirectory';
-import CitizenSafetyTips  from './citizen/CitizenSafetyTips';
-import CitizenAbout       from './citizen/CitizenAbout';
-import CitizenReport      from './citizen/CitizenReport';
+const CitizenMap         = lazy(() => import('./citizen/CitizenMap'));
+const CitizenDirectory   = lazy(() => import('./citizen/CitizenDirectory'));
+const CitizenSafetyTips  = lazy(() => import('./citizen/CitizenSafetyTips'));
+const CitizenAbout       = lazy(() => import('./citizen/CitizenAbout'));
+const CitizenReport      = lazy(() => import('./citizen/CitizenReport'));
+const CitizenDashboard   = lazy(() => import('./citizen/CitizenDashboard'));
+const CitizenAlertsPage  = lazy(() => import('./citizen/CitizenAlertsPage'));
+const CitizenHistory     = lazy(() => import('./citizen/CitizenHistory'));
+const CitizenReportDetail = lazy(() => import('./citizen/CitizenReportDetail'));
 
 // ── Admin ──────────────────────────────────────────────────────
-import AdminDashboard from './admin/AdminDashboard';
-
-// ── Citizen ────────────────────────────────────────────────────
-import CitizenDashboard    from './citizen/CitizenDashboard';
-import CitizenAlertsPage   from './citizen/CitizenAlertsPage';
-import CitizenHistory      from './citizen/CitizenHistory';
-import CitizenReportDetail from './citizen/CitizenReportDetail';
+const AdminDashboard = lazy(() => import('./admin/AdminDashboard'));
 
 // ── Responder ──────────────────────────────────────────────────
-// NOTE: RespondersDashboard is a self-contained full-screen portal
-// (position:fixed, z-index:9000). It must NOT be wrapped in <Layout />
-// because Layout renders a global navbar that gets buried under the
-// fixed overlay and makes all links in it unclickable.
-import RespondersDashboard from './responder/Respondersdashboard';
-import ResponderAlertsPage from './responder/Responderalertspage';
-import ResponderTeamPage   from './responder/Responderteam';   // ✅ FIX: was Responderspage
-import Dispatch            from './responder/Dispatch';
-import ResponderIncidents  from './responder/IncidentsPage';
+const RespondersDashboard = lazy(() => import('./responder/Respondersdashboard'));
+const ResponderAlertsPage = lazy(() => import('./responder/Responderalertspage'));
+const ResponderTeamPage   = lazy(() => import('./responder/Responderteam'));
+const Dispatch            = lazy(() => import('./responder/Dispatch'));
+const ResponderIncidents  = lazy(() => import('./responder/IncidentsPage'));
 
 export default function App() {
   return (
@@ -56,67 +51,61 @@ export default function App() {
         v7_relativeSplatPath: true,
       }}
     >
-      <Routes>
+      <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>}>
+        <Routes>
 
-        {/* ── PUBLIC — Global Navbar + Footer ──────────────── */}
-        <Route element={<Layout />}>
-          <Route path="/"                 element={<Homepage />} />
-          <Route path="/directory"        element={<Directory />} />
-          <Route path="/report"           element={<Report />} />
-          <Route path="/incident-alerts"  element={<IncidentAlerts />} />
-          <Route path="/about"            element={<AboutDumaSafeGuide />} />
-          <Route path="/partner-agencies" element={<PartnerAgencies />} />
-          <Route path="/resources"        element={<Resources />} />
-          <Route path="/safetytips"       element={<SafetyTips />} />
-          <Route path="/terms-of-use"     element={<TermsOfUse />} />
-          <Route path="/map"              element={<Map />} />
-          <Route path="/privacy"          element={<PrivacyPolicy />} />
-          <Route path="/terms"            element={<TermsOfService />} />
-        </Route>
-
-        {/* ── STANDALONE — own full-page layout, no global navbar ── */}
-        <Route path="/login"           element={<Login />} />
-        <Route path="/signup"          element={<Signup />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-
-        {/* ── ADMIN portal ─────────────────────────────────── */}
-        <Route element={<ProtectedRoute allowedRole="admin" />}>
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        </Route>
-
-        {/* ── CITIZEN portal ───────────────────────────────── */}
-        <Route element={<ProtectedRoute allowedRole="citizen" />}>
+          {/* ── PUBLIC — Global Navbar + Footer ──────────────── */}
           <Route element={<Layout />}>
-            <Route path="/citizen/dashboard"   element={<CitizenDashboard />} />
-            <Route path="/citizen/alerts"      element={<CitizenAlertsPage />} />
-            <Route path="/citizen/history"     element={<CitizenHistory />} />
-            <Route path="/citizen/history/:id" element={<CitizenReportDetail />} />
-            <Route path="/citizen/map"         element={<CitizenMap />} />
-            <Route path="/citizen/directory"   element={<CitizenDirectory />} />
-            <Route path="/citizen/safetytips"  element={<CitizenSafetyTips />} />
-            <Route path="/citizen/about"       element={<CitizenAbout />} />
-            <Route path="/citizen/report"      element={<CitizenReport />} />
+            <Route path="/"                 element={<Homepage />} />
+            <Route path="/directory"        element={<Directory />} />
+            <Route path="/report"           element={<Report />} />
+            <Route path="/incident-alerts"  element={<IncidentAlerts />} />
+            <Route path="/about"            element={<AboutDumaSafeGuide />} />
+            <Route path="/partner-agencies" element={<PartnerAgencies />} />
+            <Route path="/resources"        element={<Resources />} />
+            <Route path="/safetytips"       element={<SafetyTips />} />
+            <Route path="/terms-of-use"     element={<TermsOfUse />} />
+            <Route path="/map"              element={<Map />} />
+            <Route path="/privacy"          element={<PrivacyPolicy />} />
+            <Route path="/terms"            element={<TermsOfService />} />
           </Route>
-        </Route>
 
-        {/* ── RESPONDER portal ─────────────────────────────── */}
-        {/*
-          ✅ NO <Layout /> wrapper here.
-          RespondersDashboard renders its own full-screen portal with
-          position:fixed + z-index:9000. Wrapping it in <Layout /> causes
-          the global navbar to render underneath the fixed overlay, making
-          every link in the navbar (including Sign Up / Sign In) unclickable.
-          The dashboard already has its own sidebar, topbar, and Sign Out button.
-        */}
-        <Route element={<ProtectedRoute allowedRole="responder" />}>
-          <Route path="/responder/dashboard"  element={<RespondersDashboard />} />
-          <Route path="/responder/alerts"     element={<ResponderAlertsPage />} />
-          <Route path="/responder/team"       element={<ResponderTeamPage />} />  {/* ✅ FIX: was /responder/responders */}
-          <Route path="/responder/dispatch"   element={<Dispatch />} />
-          <Route path="/responder/incidents"  element={<ResponderIncidents />} />
-        </Route>
+          {/* ── STANDALONE ───────────────────────────────────── */}
+          <Route path="/login"           element={<Login />} />
+          <Route path="/signup"          element={<Signup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
 
-      </Routes>
+          {/* ── ADMIN portal ─────────────────────────────────── */}
+          <Route element={<ProtectedRoute allowedRole="admin" />}>
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          </Route>
+
+          {/* ── CITIZEN portal ───────────────────────────────── */}
+          <Route element={<ProtectedRoute allowedRole="citizen" />}>
+            <Route element={<Layout />}>
+              <Route path="/citizen/dashboard"   element={<CitizenDashboard />} />
+              <Route path="/citizen/alerts"      element={<CitizenAlertsPage />} />
+              <Route path="/citizen/history"     element={<CitizenHistory />} />
+              <Route path="/citizen/history/:id" element={<CitizenReportDetail />} />
+              <Route path="/citizen/map"         element={<CitizenMap />} />
+              <Route path="/citizen/directory"   element={<CitizenDirectory />} />
+              <Route path="/citizen/safetytips"  element={<CitizenSafetyTips />} />
+              <Route path="/citizen/about"       element={<CitizenAbout />} />
+              <Route path="/citizen/report"      element={<CitizenReport />} />
+            </Route>
+          </Route>
+
+          {/* ── RESPONDER portal ─────────────────────────────── */}
+          <Route element={<ProtectedRoute allowedRole="responder" />}>
+            <Route path="/responder/dashboard"  element={<RespondersDashboard />} />
+            <Route path="/responder/alerts"     element={<ResponderAlertsPage />} />
+            <Route path="/responder/team"       element={<ResponderTeamPage />} />
+            <Route path="/responder/dispatch"   element={<Dispatch />} />
+            <Route path="/responder/incidents"  element={<ResponderIncidents />} />
+          </Route>
+
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

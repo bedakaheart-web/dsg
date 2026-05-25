@@ -1,300 +1,629 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "../js/supabase";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaCheck, FaArrowRight } from "react-icons/fa";
 import logoImage from "../assets/dsg.logo.png";
+import directorybg from "../assets/directorybg.png";
 
 const CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@500;700;800;900&family=Instrument+Sans:wght@400;500;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Syne:wght@700;800;900&display=swap');
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   .lg-root {
     min-height: 100vh;
-    display: flex; flex-direction: column; align-items: center;
-    justify-content: flex-start;
-    font-family: 'Instrument Sans', sans-serif;
-    padding: 32px 24px 48px;
-    background: #080c14 url('/src/assets/loginbg.png') center/cover no-repeat fixed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: linear-gradient(135deg, #0d1b2e 0%, #071a1d 50%, #0a1f28 100%);
+    padding: 24px;
     position: relative;
-    overflow-y: auto;
+    overflow: hidden;
   }
 
-  .lg-glow {
-    position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
-  }
-  .lg-glow-a {
-    position: absolute; width: 700px; height: 700px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(46,204,143,.07) 0%, transparent 65%);
-    top: -260px; left: -160px;
-  }
-  .lg-glow-b {
-    position: absolute; width: 600px; height: 600px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(123,158,255,.05) 0%, transparent 65%);
-    bottom: -200px; right: -120px;
-  }
-
-  .lg-back-home {
-    display: inline-flex; align-items: center; gap: 8px;
-    margin-bottom: 16px;
-    padding: 8px 18px 8px 14px;
-    font-family: 'Instrument Sans', sans-serif;
-    font-size: 12px; font-weight: 600; letter-spacing: .04em;
-    color: rgba(238,240,247,.55);
-    text-decoration: none;
-    background: rgba(255,255,255,.055);
-    border: 1px solid rgba(255,255,255,.1);
-    border-radius: 999px;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    transition: color .22s, background .22s, border-color .22s, box-shadow .22s, transform .18s;
-    position: relative; z-index: 1;
-    flex-shrink: 0;
-    align-self: flex-start;
-  }
-  .lg-back-home:hover {
-    color: #2ECC8F;
-    background: rgba(46,204,143,.08);
-    border-color: rgba(46,204,143,.3);
-    box-shadow: 0 0 18px rgba(46,204,143,.12);
-    transform: translateY(-1px);
-  }
-  .lg-back-home .bh-arrow {
-    display: flex; align-items: center; justify-content: center;
-    width: 20px; height: 20px; border-radius: 50%;
-    background: rgba(255,255,255,.07);
-    border: 1px solid rgba(255,255,255,.1);
-    transition: background .22s, border-color .22s, transform .22s;
-    flex-shrink: 0;
-  }
-  .lg-back-home:hover .bh-arrow {
-    background: rgba(46,204,143,.15);
-    border-color: rgba(46,204,143,.35);
-    transform: translateX(-2px);
-  }
-
-  .lg-content {
-    flex: 1;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    width: 100%;
-    position: relative; z-index: 1;
-    padding: 16px 0;
-  }
-
-  .lg-card {
-    position: relative; z-index: 1;
-    background: rgba(15,21,33,.82);
-    border: 1px solid rgba(255,255,255,.08);
-    border-radius: 24px;
-    padding: 44px 40px 40px;
-    width: 100%; max-width: 440px;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    animation: lg-rise .55s cubic-bezier(.22,1,.36,1) both;
-  }
-  @keyframes lg-rise {
-    from { opacity: 0; transform: translateY(24px) scale(.98); }
-    to   { opacity: 1; transform: translateY(0)   scale(1);    }
-  }
-  .lg-card::before {
+  /* background image */
+  .lg-root::after {
     content: '';
-    position: absolute; top: 0; left: 40px; right: 40px; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(46,204,143,.45), transparent);
-    border-radius: 1px;
+    position: fixed; inset: 0; z-index: 0;
+    background-image: var(--bg-image);
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    opacity: 0.12;
+    pointer-events: none;
   }
 
-  .lg-brand {
-    display: flex; flex-direction: column; align-items: center;
-    gap: 14px; margin-bottom: 32px; text-align: center;
+  /* animated background atmosphere */
+  .lg-root::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(0,200,224,0.10) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(232,55,42,0.08) 0%, transparent 50%);
+    animation: atmosphereDrift 25s ease-in-out infinite;
+    pointer-events: none;
   }
-  .lg-logo-ring {
-    width: 72px; height: 72px; border-radius: 18px;
-    background: rgba(46,204,143,.06);
-    border: 1px solid rgba(46,204,143,.18);
+
+  @keyframes atmosphereDrift {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.85; transform: scale(1.02); }
+  }
+
+  /* ── Page layout ── */
+  .lg-page {
+    position: relative; z-index: 1;
+    width: 100%; max-width: 1080px;
+    display: grid;
+    grid-template-columns: 1.1fr 440px;
+    gap: 0;
+    background: rgba(13, 27, 46, 0.85);
+    border-radius: 24px;
+    border: 1px solid rgba(0, 200, 224, 0.18);
+    box-shadow:
+      0 0 80px rgba(0, 200, 224, 0.10),
+      0 25px 80px rgba(7, 16, 29, 0.65),
+      inset 0 1px 0 rgba(0, 200, 224, 0.08);
+    overflow: hidden;
+    min-height: 620px;
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    animation: pageSlideUp .7s cubic-bezier(.22,1,.36,1) both;
+  }
+
+  @keyframes pageSlideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Left branding panel ── */
+  .lg-brand-panel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 60px 56px;
+    background: linear-gradient(135deg, #0a2540 0%, #0d1b2e 50%, #051a24 100%);
+    overflow: hidden;
+  }
+
+  .lg-brand-panel-bg {
+    position: absolute; inset: 0; z-index: 0;
+    background-size: cover; background-position: center;
+    opacity: 0.02;
+  }
+
+  .lg-brand-panel::after {
+    content: '';
+    position: absolute; inset: 0; z-index: 0;
+    background: radial-gradient(ellipse 90% 110% at 50% -10%, rgba(0,200,224,0.10) 0%, transparent 60%);
+  }
+
+  /* decorative geometric accent */
+  .lg-panel-geo {
+    position: absolute; z-index: 1;
+    bottom: -100px; right: -100px;
+    width: 360px; height: 360px;
+    border-radius: 50%;
+    border: 60px solid rgba(0, 200, 224, 0.06);
+    box-shadow: 0 0 60px rgba(0, 200, 224, 0.08);
+    animation: geoPulse 8s ease-in-out infinite;
+  }
+
+  .lg-panel-geo-2 {
+    position: absolute; z-index: 1;
+    top: -60px; left: -60px;
+    width: 240px; height: 240px;
+    border-radius: 50%;
+    border: 40px solid rgba(232, 55, 42, 0.04);
+    animation: geoPulse 10s 1s ease-in-out infinite reverse;
+  }
+
+  @keyframes geoPulse {
+    0%, 100% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.15); opacity: 0.9; }
+  }
+
+  .lg-brand-top { position: relative; z-index: 2; }
+
+  .lg-brand-logo {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 64px;
+    animation: slideDown .6s cubic-bezier(.22,1,.36,1) both;
+  }
+
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .lg-brand-logo-img {
+    width: 48px; height: 48px;
+    background: linear-gradient(135deg, rgba(0,200,224,0.18), rgba(232,55,42,0.12));
+    border: 1.5px solid rgba(0, 200, 224, 0.25);
+    border-radius: 14px; padding: 10px;
     display: flex; align-items: center; justify-content: center;
-    padding: 10px;
-  }
-  .lg-logo-ring img { width: 100%; height: 100%; object-fit: contain; }
-  .lg-brand-name {
-    font-family: 'Cabinet Grotesk', sans-serif;
-    font-size: 22px; font-weight: 900;
-    letter-spacing: -.03em; color: #eef0f7;
-  }
-  .lg-brand-name span { color: #2ECC8F; }
-  .lg-brand-sub {
-    font-size: 12.5px; color: rgba(238,240,247,.32);
-    line-height: 1.5; max-width: 260px;
+    box-shadow: 0 0 24px rgba(0, 200, 224, 0.12);
+    transition: all .3s ease;
   }
 
-  .lg-divider {
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,.07), transparent);
-    margin-bottom: 28px;
+  .lg-brand-logo:hover .lg-brand-logo-img {
+    transform: scale(1.08) rotate(-4deg);
+    box-shadow: 0 0 32px rgba(0, 200, 224, 0.18);
   }
 
-  .lg-error {
-    display: flex; align-items: flex-start; gap: 10px;
-    background: rgba(255,107,107,.07);
-    border: 1px solid rgba(255,107,107,.2);
-    border-radius: 10px; padding: 11px 14px;
-    font-size: 12.5px; color: #FF6B6B;
+  .lg-brand-logo-img img { width: 100%; height: 100%; object-fit: contain; }
+
+  .lg-brand-logo-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 17px; font-weight: 900;
+    color: #f8fafc; letter-spacing: -0.02em;
+  }
+
+  .lg-brand-logo-name span { color: #00c8e0; }
+
+  .lg-brand-headline {
+    font-family: 'Syne', sans-serif;
+    font-size: 36px; font-weight: 900;
+    color: #f8fafc; line-height: 1.08;
+    letter-spacing: -0.025em;
     margin-bottom: 20px;
-    animation: lg-shake .35s ease;
+    animation: slideUp .7s .1s cubic-bezier(.22,1,.36,1) both;
   }
-  @keyframes lg-shake {
-    0%,100% { transform: translateX(0); }
-    20%     { transform: translateX(-5px); }
-    40%     { transform: translateX(5px); }
-    60%     { transform: translateX(-3px); }
-    80%     { transform: translateX(3px); }
-  }
-  .lg-error-icon { flex-shrink: 0; margin-top: 1px; }
 
-  .lg-field { margin-bottom: 18px; }
-  .lg-label {
-    display: block;
-    font-size: 10px; font-weight: 700; letter-spacing: .13em;
-    text-transform: uppercase; color: rgba(238,240,247,.28);
-    margin-bottom: 8px;
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
   }
-  .lg-input-wrap { position: relative; }
-  .lg-input {
-    width: 100%;
-    background: rgba(255,255,255,.04);
-    border: 1px solid rgba(255,255,255,.08);
-    border-radius: 11px;
-    padding: 12px 14px;
-    font-family: 'Instrument Sans', sans-serif;
-    font-size: 14px; color: #eef0f7; outline: none;
-    transition: border-color .2s, background .2s, box-shadow .2s;
-  }
-  .lg-input::placeholder { color: rgba(238,240,247,.18); }
-  .lg-input:focus {
-    border-color: rgba(46,204,143,.38);
-    background: rgba(46,204,143,.03);
-    box-shadow: 0 0 0 3px rgba(46,204,143,.06);
-  }
-  .lg-input.lg-has-pw { padding-right: 44px; }
-  .lg-eye {
-    position: absolute; right: 13px; top: 50%; transform: translateY(-50%);
-    background: none; border: none; cursor: pointer;
-    color: rgba(143,149,172,.25); padding: 0;
-    display: flex; align-items: center;
-    transition: color .2s;
-  }
-  .lg-eye:hover { color: rgba(238,240,247,.6); }
 
-  .lg-row {
-    display: flex; align-items: center; justify-content: space-between;
+  .lg-brand-headline .accent { color: #00c8e0; }
+
+  .lg-brand-desc {
+    font-size: 14.5px; font-weight: 400;
+    color: rgba(200, 228, 244, 0.52);
+    line-height: 1.8; max-width: 340px;
+    animation: slideUp .7s .15s cubic-bezier(.22,1,.36,1) both;
+  }
+
+  .lg-brand-bottom { position: relative; z-index: 2; }
+
+  .lg-brand-stats {
+    display: flex; gap: 36px; margin-bottom: 32px;
+    animation: slideUp .7s .25s cubic-bezier(.22,1,.36,1) both;
+  }
+
+  .lg-brand-stat-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px; font-weight: 900;
+    color: #f8fafc; line-height: 1;
+    margin-bottom: 5px;
+  }
+
+  .lg-brand-stat-val em { color: #00c8e0; font-style: normal; }
+
+  .lg-brand-stat-label {
+    font-size: 10.5px; font-weight: 600;
+    color: rgba(168, 216, 255, 0.38);
+    text-transform: uppercase; letter-spacing: .12em;
+  }
+
+  .lg-brand-divider {
+    height: 1px; background: linear-gradient(90deg, rgba(0, 200, 224, 0.12), transparent);
     margin-bottom: 26px;
   }
+
+  .lg-brand-badge {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-size: 12px; color: rgba(168, 216, 255, 0.50);
+    animation: slideUp .7s .35s cubic-bezier(.22,1,.36,1) both;
+  }
+
+  .lg-brand-badge-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #00c8e0; flex-shrink: 0;
+    box-shadow: 0 0 10px rgba(0, 200, 224, 0.80);
+    animation: lg-pulse 2.2s ease-in-out infinite;
+  }
+
+  @keyframes lg-pulse { 0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.75)} }
+
+  /* ── Right form panel ── */
+  .lg-form-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 56px 48px;
+    background: rgba(6, 15, 28, 0.65);
+    border-left: 1px solid rgba(0, 200, 224, 0.12);
+    position: relative;
+  }
+
+  .lg-form-panel::before {
+    content: '';
+    position: absolute; top: -150px; right: -150px;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(0, 200, 224, 0.06), transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    filter: blur(40px);
+  }
+
+  .lg-form-header {
+    margin-bottom: 36px;
+    position: relative; z-index: 1;
+    animation: slideUp .6s .1s cubic-bezier(.22,1,.36,1) both;
+  }
+
+  .lg-form-eyebrow {
+    font-size: 10px; font-weight: 800;
+    letter-spacing: .18em; text-transform: uppercase;
+    color: #00c8e0; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 9px;
+  }
+
+  .lg-form-eyebrow::before {
+    content: '';
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #00c8e0; opacity: 0.7;
+    animation: lg-pulse 2.2s ease-in-out infinite;
+  }
+
+  .lg-form-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px; font-weight: 900;
+    color: #f8fafc; letter-spacing: -0.025em;
+    margin-bottom: 7px;
+  }
+
+  .lg-form-sub {
+    font-size: 13.5px; font-weight: 400;
+    color: rgba(168, 216, 255, 0.52);
+  }
+
+  /* rule */
+  .lg-rule {
+    height: 1px; background: linear-gradient(90deg, rgba(0, 200, 224, 0.10), transparent);
+    margin-bottom: 32px;
+    position: relative; z-index: 1;
+  }
+
+  /* error */
+  .lg-error {
+    display: flex; align-items: flex-start; gap: 11px;
+    background: rgba(232, 55, 42, 0.12);
+    border: 1px solid rgba(232, 55, 42, 0.28);
+    border-radius: 12px;
+    padding: 13px 15px;
+    font-size: 12.5px;
+    color: #ff7f6b;
+    margin-bottom: 20px;
+    animation: errorShake .35s ease;
+    position: relative; z-index: 1;
+  }
+
+  @keyframes errorShake {
+    0%,100%{transform:translateX(0)}
+    20%{transform:translateX(-6px)}
+    40%{transform:translateX(6px)}
+    60%{transform:translateX(-4px)}
+    80%{transform:translateX(4px)}
+  }
+
+  /* fields */
+  .lg-field {
+    margin-bottom: 20px;
+    position: relative; z-index: 1;
+    animation: slideUp .5s ease both;
+  }
+
+  .lg-field:nth-child(3) { animation-delay: .2s; }
+  .lg-field:nth-child(4) { animation-delay: .25s; }
+
+  .lg-label {
+    display: block;
+    font-size: 11px; font-weight: 700;
+    color: rgba(168, 216, 255, 0.64);
+    margin-bottom: 9px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .lg-input-wrap {
+    position: relative;
+  }
+
+  .lg-field-icon {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    color: rgba(0, 200, 224, 0.35);
+    pointer-events: none;
+    display: flex; align-items: center;
+    transition: color .25s ease;
+  }
+
+  .lg-input-wrap:focus-within .lg-field-icon {
+    color: rgba(0, 200, 224, 0.65);
+  }
+
+  .lg-input {
+    width: 100%;
+    background: rgba(6, 15, 28, 0.85);
+    border: 1.5px solid rgba(0, 200, 224, 0.16);
+    border-radius: 11px;
+    padding: 13px 16px 13px 42px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 14px;
+    color: #f8fafc;
+    outline: none;
+    transition: all .25s ease;
+  }
+
+  .lg-input::placeholder {
+    color: rgba(168, 216, 255, 0.22);
+  }
+
+  .lg-input:focus {
+    border-color: rgba(0, 200, 224, 0.42);
+    background: rgba(0, 200, 224, 0.04);
+    box-shadow: 0 0 0 4px rgba(0, 200, 224, 0.08), inset 0 0 0 1px rgba(0, 200, 224, 0.06);
+  }
+
+  .lg-input.has-eye {
+    padding-right: 44px;
+  }
+
+  .lg-eye {
+    position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer; padding: 0;
+    color: rgba(0, 200, 224, 0.35);
+    display: flex; align-items: center;
+    transition: color .25s ease;
+  }
+
+  .lg-eye:hover {
+    color: rgba(0, 200, 224, 0.70);
+  }
+
+  /* helper row */
+  .lg-helper-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 28px; margin-top: 8px;
+    position: relative; z-index: 1;
+    animation: slideUp .5s .3s cubic-bezier(.22,1,.36,1) both;
+  }
+
   .lg-remember {
     display: flex; align-items: center; gap: 8px;
-    font-size: 12.5px; color: rgba(238,240,247,.35); cursor: pointer;
+    font-size: 12.5px;
+    color: rgba(168, 216, 255, 0.55);
+    cursor: pointer;
     user-select: none;
+    transition: color .2s ease;
   }
-  .lg-remember input[type="checkbox"] { accent-color: #fff9f3; cursor: pointer; }
-  .lg-forgot {
-    font-size: 12.5px; font-weight: 500;
-    color: #8ed9df; text-decoration: none;
-    transition: opacity .18s;
-  }
-  .lg-forgot:hover { opacity: .7; }
 
+  .lg-remember:hover {
+    color: rgba(168, 216, 255, 0.75);
+  }
+
+  .lg-remember input[type="checkbox"] {
+    accent-color: #00c8e0;
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid rgba(0, 200, 224, 0.32);
+    border-radius: 4px;
+    transition: all .2s ease;
+  }
+
+  .lg-remember input[type="checkbox"]:hover {
+    border-color: rgba(0, 200, 224, 0.50);
+  }
+
+  .lg-forgot {
+    font-size: 12.5px; font-weight: 700;
+    color: #00c8e0; text-decoration: none;
+    transition: all .25s ease;
+  }
+
+  .lg-forgot:hover {
+    color: #a8d8ff;
+    text-shadow: 0 0 14px rgba(0, 200, 224, 0.35);
+    letter-spacing: 0.5px;
+  }
+
+  /* button */
   .lg-btn {
-    width: 100%; padding: 13px 20px;
-    font-family: 'Cabinet Grotesk', sans-serif;
-    font-size: 13px; font-weight: 800; letter-spacing: .1em;
-    text-transform: uppercase; border-radius: 11px; border: none;
-    background: linear-gradient(135deg, #87849b, #355c8f);
-    color: #060a10;
+    width: 100%;
+    padding: 15px 22px;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px; font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-radius: 11px; border: none;
+    background: linear-gradient(135deg, #e8372a 0%, #f04438 100%);
+    color: #fff;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center; gap: 8px;
-    transition: transform .18s, box-shadow .18s, background .18s;
-    margin-bottom: 22px;
-    position: relative; overflow: hidden;
+    transition: all .25s ease;
+    margin-bottom: 24px;
+    box-shadow: 0 0 32px rgba(232, 55, 42, 0.32), 0 0 0 1px rgba(232, 55, 42, 0.22);
+    position: relative; z-index: 1;
+    overflow: hidden;
+    animation: slideUp .5s .35s cubic-bezier(.22,1,.36,1) both;
   }
-  .lg-btn::after {
-    content: ''; position: absolute; inset: 0;
-    background: linear-gradient(135deg, rgba(26,51,19,0.1), transparent);
-    opacity: 0; transition: opacity .2s;
+
+  .lg-btn::before {
+    content: '';
+    position: absolute; top: 0; left: -100%;
+    width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.20), transparent);
+    transform: skewX(-20deg);
+    transition: left 0.45s ease;
   }
-  .lg-btn:hover:not(:disabled)::after { opacity: 1; }
+
+  .lg-btn:hover:not(:disabled)::before {
+    left: 140%;
+  }
+
   .lg-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #f04438 0%, #f85a47 100%);
     transform: translateY(-2px);
-    box-shadow: 0 10px 28px rgba(46,204,143,.28);
+    box-shadow: 0 0 50px rgba(232, 55, 42, 0.55), 0 6px 24px rgba(232, 55, 42, 0.35);
   }
-  .lg-btn:active:not(:disabled) { transform: translateY(0); }
-  .lg-btn:disabled { opacity: .45; cursor: not-allowed; }
 
-  .lg-spin {
+  .lg-btn:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  .lg-btn:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+  }
+
+  .lg-spinner {
     width: 14px; height: 14px; border-radius: 50%;
-    border: 2px solid rgba(6,10,16,.25);
-    border-top-color: #060a10;
-    animation: lg-rotate .65s linear infinite;
-    flex-shrink: 0;
+    border: 2px solid rgba(255,255,255,.22); border-top-color: #fff;
+    animation: lg-spin .65s linear infinite; flex-shrink: 0;
   }
-  @keyframes lg-rotate { to { transform: rotate(360deg); } }
 
-  .lg-footer {
+  @keyframes lg-spin { to { transform: rotate(360deg); } }
+
+  /* footer */
+  .lg-form-footer {
     text-align: center;
-    font-size: 12.5px; color: rgba(74,83,117,.28);
+    font-size: 13px;
+    color: rgba(168, 216, 255, 0.50);
+    padding-top: 22px;
+    border-top: 1px solid rgba(0, 200, 224, 0.10);
+    position: relative; z-index: 1;
+    animation: slideUp .5s .4s cubic-bezier(.22,1,.36,1) both;
   }
-  .lg-footer a {
-    color: #2ECC8F; text-decoration: none; font-weight: 500;
-    transition: opacity .18s;
-  }
-  .lg-footer a:hover { opacity: .7; }
 
+  .lg-form-footer a {
+    color: #00c8e0;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all .25s ease;
+  }
+
+  .lg-form-footer a:hover {
+    color: #a8d8ff;
+    text-shadow: 0 0 14px rgba(0, 200, 224, 0.35);
+    letter-spacing: 0.5px;
+  }
+
+  /* success */
   .lg-success {
     display: flex; flex-direction: column; align-items: center;
-    justify-content: center; gap: 14px; padding: 20px 0;
-    animation: lg-rise .4s ease both;
+    text-align: center; padding: 28px 0;
+    animation: slideUp .6s cubic-bezier(.22,1,.36,1) both;
+    position: relative; z-index: 1;
   }
-  .lg-success-ring {
-    width: 56px; height: 56px; border-radius: 50%;
-    background: rgba(46,204,143,.1);
-    border: 1px solid rgba(46,204,143,.3);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 22px; color: #2ECC8F;
-  }
-  .lg-success-text {
-    font-family: 'Cabinet Grotesk', sans-serif;
-    font-size: 16px; font-weight: 800; color: #eef0f7;
-  }
-  .lg-success-sub { font-size: 12.5px; color: rgba(238,240,247,.3); }
 
+  .lg-success-icon {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: rgba(0, 200, 224, 0.18);
+    border: 2px solid rgba(0, 200, 224, 0.40);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px; margin-bottom: 18px;
+    box-shadow: 0 0 32px rgba(0, 200, 224, 0.25);
+    animation: successPop .5s .1s cubic-bezier(.22,1,.36,1) both;
+  }
+
+  @keyframes successPop {
+    from { transform: scale(.5) rotate(-15deg); opacity: 0; }
+    to { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+
+  .lg-success-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 24px; font-weight: 900; color: #f8fafc; margin-bottom: 10px;
+  }
+
+  .lg-success-sub {
+    font-size: 14px;
+    color: rgba(168, 216, 255, 0.60);
+    line-height: 1.7;
+  }
+
+  /* checking */
   .lg-checking {
     display: flex; align-items: center; justify-content: center;
-    gap: 10px; padding: 60px 0;
-    font-size: 13px; color: rgba(238,240,247,.28);
+    gap: 12px; padding: 60px 0;
+    font-size: 13.5px; color: rgba(168, 216, 255, 0.55);
+    position: relative; z-index: 1;
   }
+
   .lg-check-spin {
     width: 16px; height: 16px; border-radius: 50%;
-    border: 2px solid rgba(46,204,143,.2);
-    border-top-color: #2ECC8F;
-    animation: lg-rotate .7s linear infinite;
-    flex-shrink: 0;
+    border: 2.5px solid rgba(0, 200, 224, 0.20); border-top-color: #00c8e0;
+    animation: lg-spin .7s linear infinite;
+  }
+
+  /* responsive */
+  @media (max-width: 920px) {
+    .lg-page {
+      grid-template-columns: 1fr;
+      max-width: 500px;
+      border-radius: 20px;
+    }
+
+    .lg-brand-panel {
+      display: none;
+    }
+
+    .lg-form-panel {
+      border-left: none;
+      border-radius: 20px;
+    }
   }
 
   @media (max-width: 480px) {
-    .lg-root { padding: 20px 16px 32px; }
-    .lg-content { padding: 12px 0; }
-    .lg-card {
-      padding: 32px 24px 28px;
-      border-radius: 18px;
-    }
-    .lg-card::before { left: 24px; right: 24px; }
-    .lg-brand-name { font-size: 20px; }
-    .lg-row {
-      flex-direction: column;
+    .lg-root {
+      padding: 16px;
       align-items: flex-start;
-      gap: 12px;
-      margin-bottom: 20px;
+      padding-top: 32px;
+    }
+
+    .lg-page {
+      min-height: auto;
+      border-radius: 16px;
+    }
+
+    .lg-form-panel {
+      padding: 36px 26px;
+    }
+
+    .lg-form-title {
+      font-size: 24px;
+    }
+
+    .lg-input {
+      padding: 11px 14px 11px 38px;
+      font-size: 13px;
+    }
+
+    .lg-btn {
+      padding: 13px 18px;
+      font-size: 12px;
+      margin-bottom: 18px;
+    }
+
+    .lg-form-footer {
+      font-size: 12px;
     }
   }
+
   @media (max-width: 360px) {
-    .lg-card { padding: 28px 18px 24px; }
+    .lg-form-panel {
+      padding: 28px 18px;
+    }
+
+    .lg-form-title {
+      font-size: 22px;
+    }
+
+    .lg-input {
+      font-size: 12px;
+    }
   }
 `;
 
@@ -303,6 +632,14 @@ const ROLE_REDIRECT: Record<string, string> = {
   responder: "/responder/dashboard",
   citizen:   "/citizen/dashboard",
 };
+
+function IconMail() {
+  return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>;
+}
+
+function IconLock() {
+  return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>;
+}
 
 export default function Login() {
   const navigate = useNavigate();
@@ -317,44 +654,25 @@ export default function Login() {
 
   useEffect(() => {
     let cancelled = false;
-
     const checkSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-
-        // No session — show the login form immediately
-        if (!session?.user) {
-          if (!cancelled) setChecking(false);
-          return;
-        }
-
-        // Session exists — verify it's still valid by fetching the user
+        if (!session?.user) { if (!cancelled) setChecking(false); return; }
         const { data: { user }, error: userError } = await supabase.auth.getUser();
-
         if (userError || !user) {
-          // Session is stale/invalid — sign out cleanly and show the form
           await supabase.auth.signOut();
           if (!cancelled) setChecking(false);
           return;
         }
-
-        // Valid session — fetch role and redirect
         const { data: profile } = await supabase
           .from("profiles").select("role").eq("id", user.id).single();
-
         const role = profile?.role?.trim().toLowerCase() ?? "";
-        if (!cancelled) {
-          navigate(ROLE_REDIRECT[role] ?? "/citizen/dashboard", { replace: true });
-        }
-      } catch {
-        // Any unexpected error — just show the login form
-        if (!cancelled) setChecking(false);
-      }
+        if (!cancelled) navigate(ROLE_REDIRECT[role] ?? "/citizen/dashboard", { replace: true });
+      } catch { if (!cancelled) setChecking(false); }
     };
-
     checkSession();
     return () => { cancelled = true; };
-  }, []);
+  }, [navigate]);
 
   const handleLogin = async () => {
     setError("");
@@ -363,19 +681,15 @@ export default function Login() {
       return;
     }
     setLoading(true);
-
     const { data: authData, error: authError } =
       await supabase.auth.signInWithPassword({ email: email.trim(), password });
-
     if (authError || !authData?.user) {
       setError(authError?.message || "Login failed. Please check your credentials.");
       setLoading(false);
       return;
     }
-
     const { data: profile, error: profileError } = await supabase
       .from("profiles").select("role").eq("id", authData.user.id).single();
-
     if (profileError || !profile?.role) {
       await new Promise(res => setTimeout(res, 1500));
       const { data: retryProfile } = await supabase
@@ -386,40 +700,70 @@ export default function Login() {
         return;
       }
       const role = retryProfile.role.trim().toLowerCase();
-      setSuccess(true);
-      setLoading(false);
+      setSuccess(true); setLoading(false);
       setTimeout(() => navigate(ROLE_REDIRECT[role] ?? "/citizen/dashboard", { replace: true }), 900);
       return;
     }
-
     const role = profile.role.trim().toLowerCase();
-    setSuccess(true);
-    setLoading(false);
+    setSuccess(true); setLoading(false);
     setTimeout(() => navigate(ROLE_REDIRECT[role] ?? "/citizen/dashboard", { replace: true }), 900);
   };
 
   return (
     <>
       <style>{CSS}</style>
-      <div className="lg-root">
+      <div className="lg-root" style={{ '--bg-image': `url(${directorybg})` } as React.CSSProperties}>
+        <div className="lg-page">
 
-        <div className="lg-glow">
-          <div className="lg-glow-a" />
-          <div className="lg-glow-b" />
-        </div>
+          {/* ── Left branding panel ── */}
+          <div className="lg-brand-panel">
+            <div className="lg-brand-panel-bg" style={{ backgroundImage: `url(${directorybg})` }} />
+            <div className="lg-panel-geo" />
+            <div className="lg-panel-geo-2" />
 
-        <Link to="/" className="lg-back-home">
-          <span className="bh-arrow">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 12H5M12 5l-7 7 7 7"/>
-            </svg>
-          </span>
-          Back to Home
-        </Link>
+            <div className="lg-brand-top">
+              <div className="lg-brand-logo">
+                <div className="lg-brand-logo-img">
+                  <img src={logoImage} alt="DumaSafeGuide" />
+                </div>
+                <div className="lg-brand-logo-name">Duma<span>SafeGuide</span></div>
+              </div>
 
-        <div className="lg-content">
-          <div className="lg-card">
+              <div className="lg-brand-headline">
+                Emergency<br/><span className="accent">Response</span><br/>Portal
+              </div>
+              <p className="lg-brand-desc">
+                A unified platform for citizens, responders, and
+                administrators to coordinate emergency response
+                across all barangays in Dumaguete City.
+              </p>
+            </div>
+
+            <div className="lg-brand-bottom">
+              <div className="lg-brand-stats">
+                <div>
+                  <div className="lg-brand-stat-val">30<em>+</em></div>
+                  <div className="lg-brand-stat-label">Barangays</div>
+                </div>
+                <div>
+                  <div className="lg-brand-stat-val"><em>24</em>/7</div>
+                  <div className="lg-brand-stat-label">Monitoring</div>
+                </div>
+                <div>
+                  <div className="lg-brand-stat-val">&lt;<em>5m</em></div>
+                  <div className="lg-brand-stat-label">Avg Response</div>
+                </div>
+              </div>
+              <div className="lg-brand-divider" />
+              <div className="lg-brand-badge">
+                <span className="lg-brand-badge-dot" />
+                Systems operational · Dumaguete City
+              </div>
+            </div>
+          </div>
+
+          {/* ── Right form panel ── */}
+          <div className="lg-form-panel">
             {checking ? (
               <div className="lg-checking">
                 <span className="lg-check-spin" />
@@ -427,36 +771,32 @@ export default function Login() {
               </div>
             ) : success ? (
               <div className="lg-success">
-                <div className="lg-success-ring">✓</div>
-                <div className="lg-success-text">Signed in!</div>
-                <div className="lg-success-sub">Redirecting you now…</div>
+                <div className="lg-success-icon">
+                  <FaCheck size={32} color="#00c8e0" />
+                </div>
+                <div className="lg-success-title">Welcome back!</div>
+                <div className="lg-success-sub">Redirecting you to your dashboard…</div>
               </div>
             ) : (
               <>
-                <div className="lg-brand">
-                  <div className="lg-logo-ring">
-                    <img src={logoImage} alt="DumaSafeGuide" />
-                  </div>
-                  <div>
-                    <div className="lg-brand-name">Duma<span>SafeGuide</span></div>
-                    <p className="lg-brand-sub">
-                      Emergency response portal — sign in to continue.
-                    </p>
-                  </div>
+                <div className="lg-form-header">
+                  <div className="lg-form-eyebrow">Secure Sign In</div>
+                  <div className="lg-form-title">Sign In</div>
+                  <div className="lg-form-sub">Enter your credentials to access your dashboard.</div>
                 </div>
 
-                <div className="lg-divider" />
+                <div className="lg-rule" />
 
                 {error && (
                   <div className="lg-error" key={error}>
-                    <span className="lg-error-icon">⚠</span>
-                    <span>{error}</span>
+                    <span>⚠</span><span>{error}</span>
                   </div>
                 )}
 
                 <div className="lg-field">
                   <label className="lg-label">Email Address</label>
                   <div className="lg-input-wrap">
+                    <span className="lg-field-icon"><IconMail /></span>
                     <input
                       className="lg-input"
                       type="email"
@@ -473,8 +813,9 @@ export default function Login() {
                 <div className="lg-field">
                   <label className="lg-label">Password</label>
                   <div className="lg-input-wrap">
+                    <span className="lg-field-icon"><IconLock /></span>
                     <input
-                      className="lg-input lg-has-pw"
+                      className="lg-input has-eye"
                       type={showPw ? "text" : "password"}
                       placeholder="••••••••"
                       value={password}
@@ -482,50 +823,39 @@ export default function Login() {
                       onKeyDown={e => e.key === "Enter" && handleLogin()}
                       autoComplete="current-password"
                     />
-                    <button
-                      className="lg-eye"
-                      onClick={() => setShowPw(v => !v)}
-                      tabIndex={-1}
-                      type="button"
-                    >
-                      {showPw ? <FaEyeSlash size={15} /> : <FaEye size={15} />}
+                    <button type="button" className="lg-eye" onClick={() => setShowPw(v => !v)} tabIndex={-1} aria-label={showPw ? "Hide password" : "Show password"}>
+                      {showPw ? <FaEyeSlash size={14} /> : <FaEye size={14} />}
                     </button>
                   </div>
                 </div>
 
-                <div className="lg-row">
+                <div className="lg-helper-row">
                   <label className="lg-remember">
-                    <input
-                      type="checkbox"
-                      checked={remember}
-                      onChange={e => setRemember(e.target.checked)}
-                    />
+                    <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} />
                     Remember me
                   </label>
-                  <Link to="/forgot-password" className="lg-forgot">
-                    Forgot password?
-                  </Link>
+                  <Link to="/forgot-password" className="lg-forgot">Forgot password?</Link>
                 </div>
 
-                <button
-                  className="lg-btn"
-                  onClick={handleLogin}
-                  disabled={loading}
-                  type="button"
-                >
-                  {loading && <span className="lg-spin" />}
-                  {loading ? "Signing in…" : "Sign In"}
+                <button className="lg-btn" onClick={handleLogin} disabled={loading} type="button">
+                  {loading && <span className="lg-spinner" />}
+                  {loading ? "Signing in…" : (
+                    <>
+                      Sign In
+                      <FaArrowRight size={11} />
+                    </>
+                  )}
                 </button>
 
-                <div className="lg-footer">
-                  No account yet?{" "}
-                  <Link to="/signup">Create one</Link>
+                <div className="lg-form-footer">
+                  Don't have an account?{" "}
+                  <Link to="/signup">Create one →</Link>
                 </div>
               </>
             )}
           </div>
-        </div>
 
+        </div>
       </div>
     </>
   );

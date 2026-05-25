@@ -2,168 +2,265 @@ import { useEffect, useState } from "react";
 import { supabase } from "../js/supabase";
 
 const IA_STYLE = `
-  @import url('https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@500;700;800&family=Instrument+Sans:wght@400;500&display=swap');
+:root {
+  --primary:  #0066FF;
+  --success:  #00B074;
+  --warning:  #FF9500;
+  --danger:   #FF3B30;
+  --bg:       #FAFBFC;
+  --surface:  #FFFFFF;
+  --border:   #E5E7EB;
+  --text:     #1F2937;
+  --text-secondary: #6B7280;
+  --text-tertiary:  #9CA3AF;
+}
 
-  .ia-root {
-    font-family: 'Instrument Sans', sans-serif;
-    color: #edf0fa;
-    padding: 32px 0 80px;
-    min-height: 100vh;
-  }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  /* ── Header ── */
-  .ia-header {
-    display: flex; align-items: flex-start; justify-content: space-between;
-    flex-wrap: wrap; gap: 16px; margin-bottom: 32px;
-  }
-  .ia-eyebrow {
-    font-size: 10px; font-weight: 700; letter-spacing: .18em;
-    text-transform: uppercase; color: rgba(237,240,250,.3); margin-bottom: 6px;
-  }
-  .ia-title {
-    font-family: 'Cabinet Grotesk', sans-serif;
-    font-size: 26px; font-weight: 800; letter-spacing: -.02em;
-    color: #f0f2f8; margin: 0 0 4px;
-  }
-  .ia-subtitle { font-size: 13px; color: rgba(237,240,250,.4); margin: 0; }
+@keyframes ia-fadeIn  { from { opacity: 0; transform: translateY(8px);  } to { opacity: 1; transform: none; } }
+@keyframes ia-slideIn { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: none; } }
+@keyframes ia-pulse   { 0%,100% { opacity:1; } 50% { opacity:0.6; } }
 
-  /* ── Stat row ── */
-  .ia-stats {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 12px; margin-bottom: 28px;
-  }
-  .ia-stat {
-    background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.07);
-    border-radius: 12px; padding: 18px 20px; position: relative; overflow: hidden;
-  }
-  .ia-stat::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-    background: var(--is-color); opacity: .7;
-  }
-  .ia-stat-num {
-    font-family: 'Cabinet Grotesk', sans-serif;
-    font-size: 30px; font-weight: 800; color: var(--is-color); line-height: 1;
-    margin-bottom: 4px;
-  }
-  .ia-stat-label {
-    font-size: 11.5px; font-weight: 500; color: rgba(237,240,250,.4);
-  }
-  .ia-stat-pct {
-    font-size: 10.5px; color: rgba(237,240,250,.25); margin-top: 2px;
-  }
+.ia-root {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--text);
+  min-height: 100vh;
+}
 
-  /* ── Grid layout ── */
-  .ia-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  @media (max-width: 700px) { .ia-grid { grid-template-columns: 1fr; } }
+/* ── Header ── */
+.ia-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  flex-wrap: wrap; gap: 16px; margin-bottom: 24px;
+  animation: ia-fadeIn 0.4s ease both;
+}
 
-  .ia-panel {
-    background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.07);
-    border-radius: 14px; padding: 22px;
-  }
-  .ia-panel-full { grid-column: 1 / -1; }
-  .ia-panel-title {
-    font-family: 'Cabinet Grotesk', sans-serif;
-    font-size: 12px; font-weight: 800; letter-spacing: .1em;
-    text-transform: uppercase; color: rgba(237,240,250,.3);
-    margin-bottom: 20px;
-  }
+.ia-eyebrow {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+  text-transform: uppercase; color: var(--primary); margin-bottom: 6px;
+  display: flex; align-items: center; gap: 8px;
+}
 
-  /* ── Horizontal bar chart ── */
-  .ia-hbar-row {
-    display: flex; align-items: center; gap: 12px; margin-bottom: 14px;
-  }
-  .ia-hbar-row:last-child { margin-bottom: 0; }
-  .ia-hbar-label { font-size: 12px; color: rgba(237,240,250,.55); width: 90px; flex-shrink: 0; }
-  .ia-hbar-track {
-    flex: 1; height: 8px; border-radius: 4px;
-    background: rgba(255,255,255,.06); overflow: hidden;
-  }
-  .ia-hbar-fill {
-    height: 100%; border-radius: 4px;
-    background: var(--hb-color);
-    transition: width .6s cubic-bezier(.4,0,.2,1);
-  }
-  .ia-hbar-val {
-    font-family: 'Cabinet Grotesk', sans-serif;
-    font-size: 13px; font-weight: 700;
-    color: var(--hb-color); width: 28px; text-align: right; flex-shrink: 0;
-  }
+.ia-eyebrow::before {
+  content: ''; display: block; width: 20px; height: 2px;
+  background: var(--primary);
+}
 
-  /* ── Vertical bar chart ── */
-  .ia-vbar-wrap {
-    display: flex; align-items: flex-end; gap: 6px;
-    height: 140px; padding-bottom: 24px; position: relative;
-  }
-  .ia-vbar-col {
-    flex: 1; display: flex; flex-direction: column; align-items: center;
-    gap: 4px; height: 100%; justify-content: flex-end;
-  }
-  .ia-vbar-bar {
-    width: 100%; border-radius: 5px 5px 0 0;
-    background: var(--vb-color); min-height: 4px;
-    transition: height .5s cubic-bezier(.4,0,.2,1);
-    position: relative;
-  }
-  .ia-vbar-bar:hover::after {
-    content: attr(data-val);
-    position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
-    background: rgba(15,22,35,.95); border: 1px solid rgba(255,255,255,.1);
-    border-radius: 5px; padding: 3px 7px;
-    font-size: 11px; font-weight: 700; color: #edf0fa;
-    white-space: nowrap; pointer-events: none; margin-bottom: 4px;
-  }
-  .ia-vbar-xlabel {
-    font-size: 10px; color: rgba(237,240,250,.3);
-    text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    max-width: 100%;
-  }
+.ia-title {
+  font-size: 32px; font-weight: 700; letter-spacing: -0.5px;
+  color: var(--text); line-height: 1.1; margin: 0 0 4px;
+}
 
-  /* ── Donut-style ring ── */
-  .ia-donut-wrap {
-    display: flex; align-items: center; gap: 24px;
-  }
-  .ia-donut-ring {
-    width: 110px; height: 110px; flex-shrink: 0;
-  }
-  .ia-donut-legend { display: flex; flex-direction: column; gap: 10px; flex: 1; }
-  .ia-donut-legend-item {
-    display: flex; align-items: center; gap: 8px;
-  }
-  .ia-donut-legend-dot {
-    width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0;
-  }
-  .ia-donut-legend-label { font-size: 12.5px; color: rgba(237,240,250,.55); flex: 1; }
-  .ia-donut-legend-val {
-    font-family: 'Cabinet Grotesk', sans-serif;
-    font-size: 13px; font-weight: 700; color: rgba(237,240,250,.7);
-  }
+.ia-subtitle {
+  font-size: 12px; color: var(--text-tertiary); margin: 0;
+}
 
-  /* ── Resolution rate ── */
-  .ia-res-rate-wrap { display: flex; align-items: center; gap: 20px; }
-  .ia-res-rate-num {
-    font-family: 'Cabinet Grotesk', sans-serif;
-    font-size: 52px; font-weight: 800; line-height: 1;
-    color: #2ECC8F;
-  }
-  .ia-res-rate-label { font-size: 13px; color: rgba(237,240,250,.4); line-height: 1.5; }
-  .ia-res-bar-track {
-    margin-top: 16px; height: 8px; border-radius: 4px;
-    background: rgba(255,255,255,.06); overflow: hidden;
-  }
-  .ia-res-bar-fill {
-    height: 100%; border-radius: 4px; background: #2ECC8F;
-    transition: width .8s cubic-bezier(.4,0,.2,1);
-  }
+/* ── Stat grid ── */
+.ia-stats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px; margin-bottom: 24px;
+}
+
+.ia-stat {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 20px; position: relative; overflow: hidden;
+  transition: all 0.3s; cursor: default; animation: ia-fadeIn 0.5s ease-out both;
+}
+
+.ia-stat:nth-child(2) { animation-delay: 0.05s; }
+.ia-stat:nth-child(3) { animation-delay: 0.10s; }
+.ia-stat:nth-child(4) { animation-delay: 0.15s; }
+
+.ia-stat:hover {
+  transform: translateY(-4px);
+  border-color: var(--primary);
+  box-shadow: 0 8px 16px rgba(0,102,255,0.10);
+}
+
+.ia-stat::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: var(--is-color);
+}
+
+.ia-stat-num {
+  font-size: 32px; line-height: 1; margin-bottom: 6px;
+  letter-spacing: -0.5px; font-weight: 700; color: var(--is-color);
+}
+
+.ia-stat-label {
+  font-size: 11px; color: var(--text-secondary);
+  letter-spacing: 0.3px; text-transform: uppercase; font-weight: 500;
+}
+
+.ia-stat-pct {
+  font-size: 10.5px; color: var(--text-tertiary); margin-top: 6px;
+}
+
+/* ── Grid layout ── */
+.ia-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+}
+
+@media (max-width: 1024px) { .ia-grid { grid-template-columns: 1fr; } }
+
+.ia-panel {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 20px; position: relative; overflow: hidden;
+  animation: ia-slideIn 0.5s ease-out both;
+}
+
+.ia-panel:nth-child(2) { animation-delay: 0.1s; }
+.ia-panel:nth-child(3) { animation-delay: 0.15s; }
+.ia-panel:nth-child(4) { animation-delay: 0.2s; }
+
+.ia-panel-full { grid-column: 1 / -1; }
+
+.ia-panel-title {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+  text-transform: uppercase; color: var(--text-secondary);
+  margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
+}
+
+/* ── Horizontal bar chart ── */
+.ia-hbar-row {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+}
+
+.ia-hbar-row:last-child { margin-bottom: 0; }
+
+.ia-hbar-label {
+  font-size: 12px; color: var(--text-secondary); width: 80px;
+  flex-shrink: 0; font-weight: 500;
+}
+
+.ia-hbar-track {
+  flex: 1; height: 6px; border-radius: 3px;
+  background: var(--border); overflow: hidden;
+}
+
+.ia-hbar-fill {
+  height: 100%; border-radius: 3px; background: var(--hb-color);
+  transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+}
+
+.ia-hbar-val {
+  font-size: 12px; font-weight: 600; color: var(--hb-color);
+  width: 24px; text-align: right; flex-shrink: 0;
+}
+
+/* ── Vertical bar chart ── */
+.ia-vbar-wrap {
+  display: flex; align-items: flex-end; gap: 8px;
+  height: 160px; padding-bottom: 20px; position: relative;
+}
+
+.ia-vbar-col {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  gap: 6px; height: 100%; justify-content: flex-end;
+}
+
+.ia-vbar-bar {
+  width: 100%; border-radius: 6px 6px 0 0; background: var(--vb-color);
+  min-height: 3px; transition: height 0.5s cubic-bezier(0.4,0,0.2,1);
+  position: relative;
+}
+
+.ia-vbar-bar:hover::after {
+  content: attr(data-val);
+  position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+  background: var(--text); border: 1px solid var(--border);
+  border-radius: 6px; padding: 4px 8px;
+  font-size: 11px; font-weight: 600; color: #fff;
+  white-space: nowrap; pointer-events: none; margin-bottom: 6px;
+}
+
+.ia-vbar-xlabel {
+  font-size: 11px; color: var(--text-secondary); text-align: center;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  max-width: 100%; font-weight: 500;
+}
+
+/* ── Donut chart ── */
+.ia-donut-wrap {
+  display: flex; align-items: center; gap: 28px;
+}
+
+.ia-donut-ring {
+  width: 120px; height: 120px; flex-shrink: 0;
+}
+
+.ia-donut-legend {
+  display: flex; flex-direction: column; gap: 12px; flex: 1;
+}
+
+.ia-donut-legend-item {
+  display: flex; align-items: center; gap: 10px;
+}
+
+.ia-donut-legend-dot {
+  width: 8px; height: 8px; border-radius: 3px; flex-shrink: 0;
+}
+
+.ia-donut-legend-label {
+  font-size: 12px; color: var(--text-secondary); flex: 1; font-weight: 500;
+}
+
+.ia-donut-legend-val {
+  font-size: 13px; font-weight: 600; color: var(--text);
+}
+
+/* ── Resolution rate ── */
+.ia-res-rate-wrap {
+  display: flex; align-items: center; gap: 24px;
+}
+
+.ia-res-rate-num {
+  font-size: 48px; font-weight: 700; line-height: 1;
+  color: var(--success);
+}
+
+.ia-res-rate-label {
+  font-size: 12px; color: var(--text-secondary); line-height: 1.6;
+}
+
+.ia-res-bar-track {
+  margin-top: 16px; height: 8px; border-radius: 4px;
+  background: var(--border); overflow: hidden;
+}
+
+.ia-res-bar-fill {
+  height: 100%; border-radius: 4px; background: var(--success);
+  transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* ── Empty state ── */
+.ia-empty {
+  font-size: 12px; letter-spacing: 0.3px;
+  color: var(--text-secondary); text-transform: uppercase; margin: 0;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .ia-title { font-size: 26px; }
+  .ia-stats { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .ia-stat-num { font-size: 24px; }
+  .ia-donut-wrap { flex-direction: column; gap: 16px; }
+  .ia-vbar-wrap { height: 120px; }
+}
+
+@media (max-width: 420px) {
+  .ia-stats { grid-template-columns: 1fr; }
+}
 `;
 
 const MONTH_LABELS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
 const TYPE_COLORS: Record<string, string> = {
-  fire:       "#FB923C",
-  flood:      "#7B9EFF",
-  crime:      "#EF5B5B",
-  medical:    "#2ECC8F",
-  accident:   "#FFD166",
-  other:      "#888",
+  fire:       "#FF3B30",
+  flood:      "#0066FF",
+  crime:      "#FF2D55",
+  medical:    "#00B074",
+  accident:   "#FF9500",
+  other:      "#9CA3AF",
 };
 
 export default function IncidentAnalytics() {
@@ -209,11 +306,11 @@ export default function IncidentAnalytics() {
 
   // Donut SVG data
   const statusSlices = [
-    { label: "Pending",    count: pending,  color: "#FFD166" },
-    { label: "In Progress",count: inProg,   color: "#7B9EFF" },
-    { label: "Resolved",   count: resolved, color: "#2ECC8F" },
+    { label: "Resolved",    count: resolved, color: "#00B074" },
+    { label: "In Progress", count: inProg,   color: "#FF9500" },
+    { label: "Pending",     count: pending,  color: "#FF3B30" },
   ];
-  const donutRadius = 44;
+  const donutRadius = 50;
   const donutCircumference = 2 * Math.PI * donutRadius;
   let donutOffset = 0;
 
@@ -225,24 +322,23 @@ export default function IncidentAnalytics() {
         {/* Header */}
         <div className="ia-header">
           <div>
-            <div className="ia-eyebrow">Admin Panel</div>
-            <h1 className="ia-title">Incident Analytics</h1>
-            <p className="ia-subtitle">Statistical overview of reported incidents</p>
+            <div className="ia-eyebrow">Management</div>
+            <h1 className="ia-title">Analytics</h1>
+            <p className="ia-subtitle">Incident data & statistical insights</p>
           </div>
         </div>
 
-        {/* Stat strip */}
+        {/* Stat cards */}
         <div className="ia-stats">
           {[
-            { label: "Total Reports", value: total,    color: "#7B9EFF", pct: "All time" },
-            { label: "Pending",       value: pending,  color: "#FFD166", pct: total ? `${Math.round((pending/total)*100)}%` : "0%" },
-            { label: "In Progress",   value: inProg,   color: "#7B9EFF", pct: total ? `${Math.round((inProg/total)*100)}%` : "0%" },
-            { label: "Resolved",      value: resolved, color: "#2ECC8F", pct: total ? `${resRate}%` : "0%" },
+            { label: "Total Reports", value: total,    color: "#0066FF" },
+            { label: "Pending",       value: pending,  color: "#FF3B30" },
+            { label: "In Progress",   value: inProg,   color: "#FF9500" },
+            { label: "Resolved",      value: resolved, color: "#00B074" },
           ].map((s) => (
             <div className="ia-stat" key={s.label} style={{ "--is-color": s.color } as React.CSSProperties}>
               <div className="ia-stat-num">{s.value}</div>
               <div className="ia-stat-label">{s.label}</div>
-              <div className="ia-stat-pct">{s.pct} of total</div>
             </div>
           ))}
         </div>
@@ -261,7 +357,7 @@ export default function IncidentAnalytics() {
                     data-val={m.count}
                     style={{
                       height: `${Math.round((m.count / maxMonthly) * 100)}%`,
-                      "--vb-color": "#7B9EFF",
+                      "--vb-color": "#0066FF",
                     } as React.CSSProperties}
                   />
                   <span className="ia-vbar-xlabel">{m.label}</span>
@@ -274,7 +370,7 @@ export default function IncidentAnalytics() {
           <div className="ia-panel">
             <div className="ia-panel-title">Incidents by Type</div>
             {typeEntries.length === 0 ? (
-              <p style={{ fontSize: 13, color: "rgba(237,240,250,.25)", margin: 0 }}>No data yet.</p>
+              <p className="ia-empty">No data yet.</p>
             ) : (
               typeEntries.map(([type, count]) => (
                 <div className="ia-hbar-row" key={type}>
@@ -284,13 +380,13 @@ export default function IncidentAnalytics() {
                       className="ia-hbar-fill"
                       style={{
                         width: `${Math.round((count / maxType) * 100)}%`,
-                        "--hb-color": TYPE_COLORS[type] ?? "#888",
+                        "--hb-color": TYPE_COLORS[type] ?? "#9CA3AF",
                       } as React.CSSProperties}
                     />
                   </div>
                   <span
                     className="ia-hbar-val"
-                    style={{ "--hb-color": TYPE_COLORS[type] ?? "#888" } as React.CSSProperties}
+                    style={{ "--hb-color": TYPE_COLORS[type] ?? "#9CA3AF" } as React.CSSProperties}
                   >
                     {count}
                   </span>
@@ -299,40 +395,37 @@ export default function IncidentAnalytics() {
             )}
           </div>
 
-          {/* Status donut */}
+          {/* Status distribution */}
           <div className="ia-panel">
             <div className="ia-panel-title">Status Distribution</div>
             <div className="ia-donut-wrap">
               {/* SVG donut */}
-              <svg className="ia-donut-ring" viewBox="0 0 110 110">
-                <circle cx="55" cy="55" r={donutRadius} fill="none"
-                  stroke="rgba(255,255,255,.06)" strokeWidth="12" />
-                {total === 0 ? (
-                  <circle cx="55" cy="55" r={donutRadius} fill="none"
-                    stroke="rgba(255,255,255,.08)" strokeWidth="12" />
-                ) : statusSlices.map((s) => {
+              <svg className="ia-donut-ring" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r={donutRadius} fill="none"
+                  stroke="var(--border)" strokeWidth="14" />
+                {total === 0 ? null : statusSlices.map((s) => {
                   const dash = (s.count / total) * donutCircumference;
                   const gap  = donutCircumference - dash;
                   const el = (
                     <circle key={s.label}
-                      cx="55" cy="55" r={donutRadius} fill="none"
-                      stroke={s.color} strokeWidth="12"
+                      cx="60" cy="60" r={donutRadius} fill="none"
+                      stroke={s.color} strokeWidth="14"
                       strokeDasharray={`${dash} ${gap}`}
                       strokeDashoffset={-donutOffset}
-                      strokeLinecap="butt"
-                      transform="rotate(-90 55 55)"
-                      style={{ opacity: .85 }}
+                      strokeLinecap="round"
+                      transform="rotate(-90 60 60)"
+                      style={{ opacity: 0.9 }}
                     />
                   );
                   donutOffset += dash;
                   return el;
                 })}
-                <text x="55" y="51" textAnchor="middle"
-                  fill="#f0f2f8" fontSize="18" fontWeight="800"
-                  fontFamily="Cabinet Grotesk, sans-serif">{total}</text>
-                <text x="55" y="65" textAnchor="middle"
-                  fill="rgba(237,240,250,.35)" fontSize="9.5"
-                  fontFamily="Instrument Sans, sans-serif">TOTAL</text>
+                <text x="60" y="56" textAnchor="middle"
+                  fill="var(--text)" fontSize="20" fontWeight="700"
+                  fontFamily="inherit">{total}</text>
+                <text x="60" y="71" textAnchor="middle"
+                  fill="var(--text-tertiary)" fontSize="10"
+                  fontFamily="inherit">TOTAL</text>
               </svg>
 
               <div className="ia-donut-legend">

@@ -17,8 +17,8 @@ import {
 
 const RP_STYLE = `
   .rp-root {
-    font-family: 'IBM Plex Sans', sans-serif;
-    color: #edf0fa;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--text, #1F2937);
   }
   .rp-header {
     display: flex; align-items: flex-end;
@@ -26,37 +26,55 @@ const RP_STYLE = `
     gap: 14px; margin-bottom: 24px;
   }
   .rp-eyebrow {
-    font-size: 10px; font-weight: 700; letter-spacing: .18em;
-    text-transform: uppercase; color: rgba(237,240,250,.28); margin-bottom: 4px;
+    font-size: 11px; font-weight: 600; letter-spacing: .5px;
+    text-transform: uppercase; color: var(--primary, #0066FF);
+    display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
+  }
+  .rp-eyebrow::before {
+    content: ''; display: block; width: 20px; height: 2px;
+    background: var(--primary, #0066FF);
   }
   .rp-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 22px; font-weight: 800; color: #f0f2f8;
-    letter-spacing: -.02em; margin: 0 0 3px;
+    font-size: 28px; font-weight: 700; color: var(--text, #1F2937);
+    letter-spacing: -.5px; margin: 0 0 4px; line-height: 1.1;
   }
-  .rp-subtitle { font-size: 13px; color: rgba(237,240,250,.35); margin: 0; }
+  .rp-subtitle {
+    font-size: 11px; color: var(--text-tertiary, #9CA3AF);
+    margin: 0; letter-spacing: .3px;
+  }
   .rp-add-btn {
     display: flex; align-items: center; gap: 8px;
-    padding: 10px 20px;
-    background: linear-gradient(135deg, #e63946, #ff5d73);
-    border: none; border-radius: 9px;
-    font-family: 'IBM Plex Sans', sans-serif;
-    font-size: 13px; font-weight: 600; letter-spacing: .03em;
+    padding: 10px 18px;
+    background: linear-gradient(135deg, #0066FF 0%, #0052cc 100%);
+    border: none; border-radius: 8px;
+    font-family: inherit;
+    font-size: 13px; font-weight: 600;
     color: #fff; cursor: pointer;
-    box-shadow: 0 4px 14px rgba(230,57,70,.3);
+    box-shadow: 0 2px 8px rgba(0,102,255,.2);
     transition: all .18s; white-space: nowrap;
   }
-  .rp-add-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(230,57,70,.4); }
+  .rp-add-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(0,102,255,.3);
+  }
+
+  /* Stats */
   .rp-stats {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
     gap: 12px; margin-bottom: 24px;
   }
   .rp-stat {
-    background: rgba(255,255,255,.035);
-    border: 1px solid rgba(255,255,255,.07);
-    border-radius: 12px; padding: 16px 18px;
+    background: var(--surface, #fff);
+    border: 1px solid var(--border, #E5E7EB);
+    border-radius: 12px; padding: 18px 20px;
     position: relative; overflow: hidden;
+    transition: all .3s; cursor: default;
+  }
+  .rp-stat:hover {
+    transform: translateY(-3px);
+    border-color: var(--s-accent);
+    box-shadow: 0 6px 16px rgba(0,0,0,.06);
   }
   .rp-stat::before {
     content: ''; position: absolute;
@@ -64,259 +82,451 @@ const RP_STYLE = `
     background: var(--s-accent);
   }
   .rp-stat-num {
-    font-family: 'Syne', sans-serif;
-    font-size: 28px; font-weight: 800;
+    font-size: 28px; font-weight: 700;
     color: var(--s-accent); line-height: 1; margin-bottom: 4px;
   }
-  .rp-stat-label { font-size: 11px; color: rgba(237,240,250,.38); letter-spacing: .04em; }
+  .rp-stat-label {
+    font-size: 11px; color: var(--text-secondary, #6B7280);
+    letter-spacing: .3px; text-transform: uppercase; font-weight: 500;
+  }
+
+  /* Tabs */
   .rp-tabs {
     display: flex; gap: 4px;
-    background: rgba(255,255,255,.03);
-    border: 1px solid rgba(255,255,255,.07);
+    background: var(--bg, #FAFBFC);
+    border: 1px solid var(--border, #E5E7EB);
     border-radius: 10px; padding: 4px;
     width: fit-content; margin-bottom: 14px;
   }
   .rp-tab {
     display: flex; align-items: center; gap: 7px;
-    padding: 8px 18px; border-radius: 7px; border: none;
-    font-family: 'IBM Plex Sans', sans-serif;
+    padding: 8px 16px; border-radius: 7px; border: 1px solid transparent;
+    font-family: inherit;
     font-size: 13px; font-weight: 500;
     cursor: pointer; transition: all .17s;
-    background: transparent; color: rgba(237,240,250,.4);
+    background: transparent; color: var(--text-secondary, #6B7280);
   }
-  .rp-tab:hover { color: rgba(237,240,250,.75); background: rgba(255,255,255,.04); }
-  .rp-tab.active { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.1); color: #fff; }
+  .rp-tab:hover {
+    color: var(--text, #1F2937);
+    background: var(--surface, #fff);
+    border-color: var(--border, #E5E7EB);
+  }
+  .rp-tab.active {
+    background: linear-gradient(135deg, #0066FF 0%, #0052cc 100%);
+    color: #fff; border-color: transparent; font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0,102,255,.2);
+  }
   .rp-tab-count {
-    background: rgba(255,255,255,.1);
-    border-radius: 6px; padding: 1px 6px;
-    font-size: 10px; font-family: 'IBM Plex Mono', monospace; font-weight: 700;
-    color: rgba(237,240,250,.5);
+    background: rgba(0,0,0,.06);
+    border-radius: 6px; padding: 1px 7px;
+    font-size: 10px; font-weight: 700;
+    color: var(--text-secondary, #6B7280);
   }
-  .rp-tab.active .rp-tab-count { background: rgba(230,57,70,.2); color: #ff7b87; }
+  .rp-tab.active .rp-tab-count {
+    background: rgba(255,255,255,.2);
+    color: rgba(255,255,255,.9);
+  }
+
+  /* Duty filter */
   .rp-duty-filter { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
   .rp-duty-pill {
     display: flex; align-items: center; gap: 6px;
-    padding: 6px 14px; border-radius: 20px; border: 1px solid;
-    font-family: 'IBM Plex Sans', sans-serif;
+    padding: 5px 12px; border-radius: 20px; border: 1px solid;
+    font-family: inherit;
     font-size: 12px; font-weight: 600;
     cursor: pointer; transition: all .17s; background: transparent;
   }
-  .rp-duty-pill--all { border-color: rgba(255,255,255,.12); color: rgba(237,240,250,.45); }
-  .rp-duty-pill--all.active, .rp-duty-pill--all:hover { background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.2); color: #fff; }
-  .rp-duty-pill--on { border-color: rgba(46,204,143,.2); color: rgba(46,204,143,.6); }
-  .rp-duty-pill--on.active, .rp-duty-pill--on:hover { background: rgba(46,204,143,.1); border-color: rgba(46,204,143,.4); color: #2ECC8F; }
-  .rp-duty-pill--off { border-color: rgba(255,255,255,.08); color: rgba(237,240,250,.3); }
-  .rp-duty-pill--off.active, .rp-duty-pill--off:hover { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.15); color: rgba(237,240,250,.6); }
+  .rp-duty-pill--all {
+    border-color: var(--border, #E5E7EB);
+    color: var(--text-secondary, #6B7280);
+  }
+  .rp-duty-pill--all.active,
+  .rp-duty-pill--all:hover {
+    background: var(--bg, #FAFBFC);
+    border-color: var(--text-secondary, #6B7280);
+    color: var(--text, #1F2937);
+  }
+  .rp-duty-pill--on { border-color: rgba(0,176,116,.25); color: #00B074; }
+  .rp-duty-pill--on.active, .rp-duty-pill--on:hover {
+    background: rgba(0,176,116,.06); border-color: #00B074;
+  }
+  .rp-duty-pill--off { border-color: var(--border, #E5E7EB); color: var(--text-tertiary, #9CA3AF); }
+  .rp-duty-pill--off.active, .rp-duty-pill--off:hover {
+    background: var(--bg, #FAFBFC);
+    border-color: var(--text-secondary, #6B7280);
+    color: var(--text-secondary, #6B7280);
+  }
   .rp-duty-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+  /* Toolbar */
   .rp-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
-  .rp-search-wrap { position: relative; flex: 1; min-width: 200px; max-width: 340px; }
+  .rp-search-wrap { position: relative; flex: 1; min-width: 200px; max-width: 320px; }
   .rp-search-icon {
-    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
-    color: rgba(237,240,250,.25); font-size: 12px; pointer-events: none;
+    position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+    color: var(--text-tertiary, #9CA3AF); font-size: 12px; pointer-events: none;
   }
   .rp-search {
-    width: 100%; padding: 9px 12px 9px 34px;
-    background: rgba(255,255,255,.04);
-    border: 1px solid rgba(255,255,255,.08);
+    width: 100%; padding: 8px 12px 8px 32px;
+    background: var(--surface, #fff);
+    border: 1px solid var(--border, #E5E7EB);
     border-radius: 8px;
-    font-family: 'IBM Plex Sans', sans-serif;
-    font-size: 13px; color: #edf0fa;
+    font-family: inherit;
+    font-size: 13px; color: var(--text, #1F2937);
     outline: none; transition: border-color .17s;
     box-sizing: border-box;
   }
-  .rp-search::placeholder { color: rgba(237,240,250,.25); }
-  .rp-search:focus { border-color: rgba(255,255,255,.18); }
+  .rp-search::placeholder { color: var(--text-tertiary, #9CA3AF); }
+  .rp-search:focus { border-color: var(--primary, #0066FF); box-shadow: 0 0 0 3px rgba(0,102,255,.08); }
   .rp-refresh-btn {
     display: flex; align-items: center; gap: 6px;
-    padding: 9px 14px;
-    background: rgba(255,255,255,.04);
-    border: 1px solid rgba(255,255,255,.08);
+    padding: 8px 14px;
+    background: var(--surface, #fff);
+    border: 1px solid var(--border, #E5E7EB);
     border-radius: 8px;
-    font-family: 'IBM Plex Sans', sans-serif;
-    font-size: 13px; color: rgba(237,240,250,.5);
+    font-family: inherit;
+    font-size: 13px; color: var(--text-secondary, #6B7280);
     cursor: pointer; transition: all .17s;
   }
-  .rp-refresh-btn:hover { background: rgba(255,255,255,.08); color: #fff; }
+  .rp-refresh-btn:hover {
+    background: var(--bg, #FAFBFC);
+    border-color: var(--text-secondary, #6B7280);
+    color: var(--text, #1F2937);
+  }
   .rp-refresh-btn.spinning svg { animation: rpSpin .7s linear infinite; }
   @keyframes rpSpin { to { transform: rotate(360deg); } }
+
+  /* Notice */
   .rp-notice {
     display: flex; align-items: flex-start; gap: 10px;
-    padding: 12px 16px;
-    background: rgba(123,158,255,.06);
-    border: 1px solid rgba(123,158,255,.15);
-    border-radius: 10px; margin-bottom: 16px;
-    font-size: 13px; color: rgba(237,240,250,.5); line-height: 1.6;
+    padding: 11px 14px;
+    background: rgba(0,102,255,.04);
+    border: 1px solid rgba(0,102,255,.14);
+    border-radius: 8px; margin-bottom: 16px;
+    font-size: 12.5px; color: var(--text-secondary, #6B7280); line-height: 1.6;
   }
-  .rp-notice-icon { color: #7B9EFF; margin-top: 2px; flex-shrink: 0; }
+  .rp-notice-icon { color: var(--primary, #0066FF); margin-top: 2px; flex-shrink: 0; }
+
+  /* Table */
   .rp-table-wrap {
-    background: rgba(255,255,255,.025);
-    border: 1px solid rgba(255,255,255,.07);
-    border-radius: 14px; overflow: hidden;
+    background: var(--surface, #fff);
+    border: 1px solid var(--border, #E5E7EB);
+    border-radius: 12px; overflow: hidden;
   }
   .rp-table { width: 100%; border-collapse: collapse; }
-  .rp-table thead tr { border-bottom: 1px solid rgba(255,255,255,.06); }
+  .rp-table thead tr { border-bottom: 1px solid var(--border, #E5E7EB); background: var(--bg, #FAFBFC); }
   .rp-table th {
-    padding: 12px 16px;
-    font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 700;
-    letter-spacing: .15em; text-transform: uppercase;
-    color: rgba(237,240,250,.25); text-align: left;
+    padding: 11px 16px;
+    font-size: 10px; font-weight: 600;
+    letter-spacing: .5px; text-transform: uppercase;
+    color: var(--text-tertiary, #9CA3AF); text-align: left;
   }
   .rp-table td {
-    padding: 14px 16px;
-    font-size: 13px; color: rgba(237,240,250,.75);
-    border-bottom: 1px solid rgba(255,255,255,.04);
+    padding: 13px 16px;
+    font-size: 13px; color: var(--text-secondary, #6B7280);
+    border-bottom: 1px solid var(--border, #E5E7EB);
     vertical-align: middle;
   }
   .rp-table tbody tr:last-child td { border-bottom: none; }
-  .rp-table tbody tr:hover td { background: rgba(255,255,255,.02); }
+  .rp-table tbody tr:hover td { background: var(--bg, #FAFBFC); }
+
+  /* Avatar */
   .rp-avatar {
-    width: 34px; height: 34px; border-radius: 9px;
+    width: 34px; height: 34px; border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
-    font-family: 'IBM Plex Mono', monospace; font-weight: 700;
-    font-size: 11px; flex-shrink: 0;
+    font-weight: 700; font-size: 11px; flex-shrink: 0;
+    font-family: inherit;
   }
-  .rp-avatar-responder { background: linear-gradient(135deg, #0a3060, #1565c0); color: #7B9EFF; border: 1px solid rgba(123,158,255,.25); }
-  .rp-avatar-citizen { background: linear-gradient(135deg, #0a3d2e, #1a6645); color: #2ECC8F; border: 1px solid rgba(46,204,143,.25); }
+  .rp-avatar-responder {
+    background: rgba(0,102,255,.1);
+    color: var(--primary, #0066FF);
+    border: 1px solid rgba(0,102,255,.18);
+  }
+  .rp-avatar-citizen {
+    background: rgba(0,176,116,.1);
+    color: #00B074;
+    border: 1px solid rgba(0,176,116,.18);
+  }
   .rp-name-cell { display: flex; align-items: center; gap: 10px; }
-  .rp-name { font-weight: 600; color: #f0f2f8; font-size: 13px; }
+  .rp-name { font-weight: 600; color: var(--text, #1F2937); font-size: 13px; }
   .rp-source-tag {
-    display: inline-flex; align-items: center; gap: 4px;
-    padding: 2px 8px; border-radius: 5px;
-    font-size: 9px; font-family: 'IBM Plex Mono', monospace; font-weight: 700;
+    display: inline-flex; align-items: center; gap: 3px;
+    padding: 2px 7px; border-radius: 4px;
+    font-size: 9px; font-weight: 600;
     letter-spacing: .1em; text-transform: uppercase;
   }
-  .rp-tag-auth { background: rgba(46,204,143,.1); border: 1px solid rgba(46,204,143,.2); color: #2ECC8F; }
-  .rp-tag-manual { background: rgba(255,209,102,.1); border: 1px solid rgba(255,209,102,.2); color: #FFD166; }
+  .rp-tag-auth {
+    background: rgba(0,176,116,.08);
+    border: 1px solid rgba(0,176,116,.18);
+    color: #00B074;
+  }
+  .rp-tag-manual {
+    background: rgba(255,149,0,.08);
+    border: 1px solid rgba(255,149,0,.2);
+    color: #FF9500;
+  }
+
+  /* Badges */
   .rp-status-badge {
     display: inline-flex; align-items: center; gap: 5px;
-    padding: 3px 9px; border-radius: 6px;
-    font-size: 11px; font-weight: 600; font-family: 'IBM Plex Mono', monospace;
+    padding: 3px 8px; border-radius: 4px;
+    font-size: 10px; font-weight: 600;
     text-transform: uppercase; letter-spacing: .06em;
   }
-  .rp-status-active { background: rgba(46,204,143,.1); border: 1px solid rgba(46,204,143,.2); color: #2ECC8F; }
-  .rp-status-inactive { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); color: rgba(237,240,250,.35); }
+  .rp-status-active {
+    background: rgba(0,176,116,.08);
+    border: 1px solid rgba(0,176,116,.2);
+    color: #00B074;
+  }
+  .rp-status-inactive {
+    background: var(--bg, #FAFBFC);
+    border: 1px solid var(--border, #E5E7EB);
+    color: var(--text-tertiary, #9CA3AF);
+  }
   .rp-status-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
   .rp-duty-badge {
     display: inline-flex; align-items: center; gap: 5px;
-    padding: 3px 9px; border-radius: 6px;
-    font-size: 11px; font-weight: 700; font-family: 'IBM Plex Mono', monospace;
+    padding: 3px 8px; border-radius: 4px;
+    font-size: 10px; font-weight: 700;
     text-transform: uppercase; letter-spacing: .06em;
   }
-  .rp-duty-badge--on { background: rgba(46,204,143,.1); border: 1px solid rgba(46,204,143,.25); color: #2ECC8F; }
-  .rp-duty-badge--off { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.09); color: rgba(237,240,250,.3); }
+  .rp-duty-badge--on {
+    background: rgba(0,176,116,.08);
+    border: 1px solid rgba(0,176,116,.2);
+    color: #00B074;
+  }
+  .rp-duty-badge--off {
+    background: var(--bg, #FAFBFC);
+    border: 1px solid var(--border, #E5E7EB);
+    color: var(--text-tertiary, #9CA3AF);
+  }
   .rp-duty-badge-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+  /* Action buttons */
   .rp-duty-toggle {
     display: flex; align-items: center; gap: 5px;
-    padding: 6px 11px; border-radius: 6px; border: 1px solid;
-    font-family: 'IBM Plex Sans', sans-serif;
-    font-size: 12px; font-weight: 600;
+    padding: 5px 10px; border-radius: 6px; border: 1px solid;
+    font-family: inherit; font-size: 12px; font-weight: 600;
     cursor: pointer; transition: all .16s;
   }
-  .rp-duty-toggle--on { background: rgba(46,204,143,.08); border-color: rgba(46,204,143,.2); color: #2ECC8F; }
-  .rp-duty-toggle--on:hover { background: rgba(46,204,143,.16); border-color: rgba(46,204,143,.4); }
-  .rp-duty-toggle--off { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.1); color: rgba(237,240,250,.4); }
-  .rp-duty-toggle--off:hover { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.2); color: rgba(237,240,250,.7); }
+  .rp-duty-toggle--on {
+    background: rgba(0,176,116,.06);
+    border-color: rgba(0,176,116,.2);
+    color: #00B074;
+  }
+  .rp-duty-toggle--on:hover {
+    background: rgba(0,176,116,.12);
+    border-color: #00B074;
+  }
+  .rp-duty-toggle--off {
+    background: var(--bg, #FAFBFC);
+    border-color: var(--border, #E5E7EB);
+    color: var(--text-secondary, #6B7280);
+  }
+  .rp-duty-toggle--off:hover {
+    background: var(--surface, #fff);
+    border-color: var(--text-secondary, #6B7280);
+    color: var(--text, #1F2937);
+  }
   .rp-action-btns { display: flex; gap: 6px; flex-wrap: wrap; }
   .rp-btn-edit, .rp-btn-remove {
     display: flex; align-items: center; gap: 5px;
-    padding: 6px 11px; border-radius: 6px; border: 1px solid;
-    font-family: 'IBM Plex Sans', sans-serif;
-    font-size: 12px; font-weight: 600;
+    padding: 5px 10px; border-radius: 6px; border: 1px solid;
+    font-family: inherit; font-size: 12px; font-weight: 600;
     cursor: pointer; transition: all .16s;
   }
-  .rp-btn-edit { background: rgba(123,158,255,.08); border-color: rgba(123,158,255,.2); color: #7B9EFF; }
-  .rp-btn-edit:hover { background: rgba(123,158,255,.16); border-color: rgba(123,158,255,.4); }
-  .rp-btn-remove { background: rgba(230,57,70,.07); border-color: rgba(230,57,70,.18); color: rgba(230,57,70,.7); }
-  .rp-btn-remove:hover { background: rgba(230,57,70,.14); border-color: rgba(230,57,70,.35); color: #e63946; }
-  .rp-empty { text-align: center; padding: 52px 20px; color: rgba(237,240,250,.25); }
-  .rp-empty-icon { font-size: 32px; margin-bottom: 12px; opacity: .3; }
-  .rp-empty-text { font-size: 14px; }
+  .rp-btn-edit {
+    background: rgba(0,102,255,.06);
+    border-color: rgba(0,102,255,.18);
+    color: var(--primary, #0066FF);
+  }
+  .rp-btn-edit:hover {
+    background: rgba(0,102,255,.12);
+    border-color: var(--primary, #0066FF);
+  }
+  .rp-btn-remove {
+    background: rgba(255,59,48,.05);
+    border-color: rgba(255,59,48,.18);
+    color: var(--danger, #FF3B30);
+  }
+  .rp-btn-remove:hover {
+    background: rgba(255,59,48,.1);
+    border-color: var(--danger, #FF3B30);
+  }
 
-  /* ── Modal ── */
+  /* Empty state */
+  .rp-empty { text-align: center; padding: 52px 20px; color: var(--text-tertiary, #9CA3AF); }
+  .rp-empty-icon { font-size: 28px; margin-bottom: 12px; opacity: .35; }
+  .rp-empty-text { font-size: 13px; }
+
+  /* Modal overlay */
   .rp-overlay {
     position: fixed; inset: 0;
-    background: rgba(0,0,0,.65);
-    backdrop-filter: blur(6px);
+    background: rgba(0,0,0,.35);
+    backdrop-filter: blur(4px);
     z-index: 1000;
     display: flex; align-items: center; justify-content: center;
     padding: 20px;
   }
   .rp-modal {
-    background: #0d1626;
-    border: 1px solid rgba(255,255,255,.1);
+    background: var(--surface, #fff);
+    border: 1px solid var(--border, #E5E7EB);
     border-radius: 16px; padding: 28px;
-    width: 100%; max-width: 460px;
-    box-shadow: 0 24px 60px rgba(0,0,0,.5);
-    animation: rpModalIn .22s ease;
+    width: 100%; max-width: 440px;
+    box-shadow: 0 12px 40px rgba(0,0,0,.1);
+    animation: rpModalIn .2s ease;
   }
-  @keyframes rpModalIn { from { opacity: 0; transform: translateY(10px) scale(.97); } to { opacity: 1; transform: none; } }
-  .rp-modal-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; color: #f0f2f8; margin: 0 0 6px; }
-  .rp-modal-sub { font-size: 13px; color: rgba(237,240,250,.35); margin: 0 0 22px; line-height: 1.6; }
+  @keyframes rpModalIn {
+    from { opacity: 0; transform: translateY(8px) scale(.98); }
+    to   { opacity: 1; transform: none; }
+  }
+  .rp-modal-title {
+    font-size: 18px; font-weight: 700;
+    color: var(--text, #1F2937); margin: 0 0 5px;
+  }
+  .rp-modal-sub {
+    font-size: 13px; color: var(--text-secondary, #6B7280);
+    margin: 0 0 20px; line-height: 1.6;
+  }
 
   /* Auth account toggle */
   .rp-auth-toggle {
     display: flex; align-items: center; justify-content: space-between;
     padding: 12px 14px;
-    background: rgba(123,158,255,.05);
-    border: 1px solid rgba(123,158,255,.15);
-    border-radius: 10px; margin-bottom: 18px; cursor: pointer;
+    background: rgba(0,102,255,.04);
+    border: 1px solid rgba(0,102,255,.14);
+    border-radius: 8px; margin-bottom: 16px; cursor: pointer;
     transition: background .17s;
   }
-  .rp-auth-toggle:hover { background: rgba(123,158,255,.09); }
+  .rp-auth-toggle:hover { background: rgba(0,102,255,.07); }
   .rp-auth-toggle-left { display: flex; flex-direction: column; gap: 2px; }
-  .rp-auth-toggle-label { font-size: 13px; font-weight: 600; color: #7B9EFF; }
-  .rp-auth-toggle-sub { font-size: 11px; color: rgba(237,240,250,.3); }
+  .rp-auth-toggle-label { font-size: 13px; font-weight: 600; color: var(--primary, #0066FF); }
+  .rp-auth-toggle-sub { font-size: 11px; color: var(--text-tertiary, #9CA3AF); }
   .rp-auth-switch {
     width: 36px; height: 20px; border-radius: 10px;
-    background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
+    background: var(--border, #E5E7EB);
+    border: 1px solid var(--border, #E5E7EB);
     position: relative; transition: background .2s; flex-shrink: 0;
   }
-  .rp-auth-switch.on { background: #7B9EFF; border-color: #7B9EFF; }
+  .rp-auth-switch.on { background: var(--primary, #0066FF); border-color: var(--primary, #0066FF); }
   .rp-auth-switch::after {
     content: ''; position: absolute;
     top: 2px; left: 2px;
     width: 14px; height: 14px; border-radius: 50%;
     background: #fff; transition: transform .2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,.15);
   }
   .rp-auth-switch.on::after { transform: translateX(16px); }
 
   /* Auth section */
   .rp-auth-section {
-    background: rgba(123,158,255,.04);
-    border: 1px solid rgba(123,158,255,.12);
-    border-radius: 10px; padding: 14px;
+    background: rgba(0,102,255,.03);
+    border: 1px solid rgba(0,102,255,.1);
+    border-radius: 8px; padding: 14px;
     margin-bottom: 4px;
     display: flex; flex-direction: column; gap: 12px;
   }
   .rp-auth-section-label {
-    font-family: 'IBM Plex Mono', monospace;
     font-size: 9px; font-weight: 700; letter-spacing: .18em;
-    text-transform: uppercase; color: rgba(123,158,255,.5);
+    text-transform: uppercase; color: rgba(0,102,255,.5);
     margin-bottom: 2px;
   }
 
+  /* Fields */
   .rp-field { margin-bottom: 14px; }
-  .rp-label { display: block; font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: rgba(237,240,250,.3); margin-bottom: 6px; font-family: 'IBM Plex Mono', monospace; }
-  .rp-input { width: 100%; padding: 10px 13px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: 8px; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; color: #edf0fa; outline: none; transition: border-color .17s; box-sizing: border-box; }
-  .rp-input::placeholder { color: rgba(237,240,250,.22); }
-  .rp-input:focus { border-color: rgba(123,158,255,.5); }
+  .rp-label {
+    display: block; font-size: 11px; font-weight: 600;
+    letter-spacing: .1em; text-transform: uppercase;
+    color: var(--text-secondary, #6B7280);
+    margin-bottom: 6px;
+  }
+  .rp-input {
+    width: 100%; padding: 9px 12px;
+    background: var(--bg, #FAFBFC);
+    border: 1px solid var(--border, #E5E7EB);
+    border-radius: 8px; font-family: inherit;
+    font-size: 13px; color: var(--text, #1F2937);
+    outline: none; transition: border-color .17s, box-shadow .17s;
+    box-sizing: border-box;
+  }
+  .rp-input::placeholder { color: var(--text-tertiary, #9CA3AF); }
+  .rp-input:focus {
+    border-color: var(--primary, #0066FF);
+    box-shadow: 0 0 0 3px rgba(0,102,255,.08);
+    background: var(--surface, #fff);
+  }
   .rp-input-wrap { position: relative; }
-  .rp-pw-toggle { position: absolute; right: 11px; top: 50%; transform: translateY(-50%); background: none; border: none; color: rgba(237,240,250,.3); cursor: pointer; padding: 2px; display: flex; align-items: center; }
-  .rp-pw-toggle:hover { color: rgba(237,240,250,.7); }
-  .rp-select { width: 100%; padding: 10px 13px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: 8px; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; color: #edf0fa; outline: none; cursor: pointer; box-sizing: border-box; }
-  .rp-select option { background: #0d1626; }
+  .rp-pw-toggle {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    background: none; border: none;
+    color: var(--text-tertiary, #9CA3AF);
+    cursor: pointer; padding: 2px; display: flex; align-items: center;
+  }
+  .rp-pw-toggle:hover { color: var(--text-secondary, #6B7280); }
+  .rp-select {
+    width: 100%; padding: 9px 12px;
+    background: var(--bg, #FAFBFC);
+    border: 1px solid var(--border, #E5E7EB);
+    border-radius: 8px; font-family: inherit;
+    font-size: 13px; color: var(--text, #1F2937);
+    outline: none; cursor: pointer; box-sizing: border-box;
+  }
+  .rp-select:focus {
+    border-color: var(--primary, #0066FF);
+    box-shadow: 0 0 0 3px rgba(0,102,255,.08);
+  }
 
-  /* Error / success banners */
-  .rp-modal-error { padding: 10px 14px; background: rgba(230,57,70,.08); border: 1px solid rgba(230,57,70,.2); border-radius: 8px; font-size: 12px; color: #ff7b87; margin-bottom: 14px; line-height: 1.5; }
-  .rp-modal-success { padding: 10px 14px; background: rgba(46,204,143,.08); border: 1px solid rgba(46,204,143,.2); border-radius: 8px; font-size: 12px; color: #2ECC8F; margin-bottom: 14px; line-height: 1.5; }
+  /* Banners */
+  .rp-modal-error {
+    padding: 10px 14px;
+    background: rgba(255,59,48,.05);
+    border: 1px solid rgba(255,59,48,.18);
+    border-radius: 8px; font-size: 12px;
+    color: var(--danger, #FF3B30);
+    margin-bottom: 14px; line-height: 1.5;
+  }
+  .rp-modal-success {
+    padding: 10px 14px;
+    background: rgba(0,176,116,.06);
+    border: 1px solid rgba(0,176,116,.2);
+    border-radius: 8px; font-size: 12px;
+    color: #00B074;
+    margin-bottom: 14px; line-height: 1.5;
+  }
 
-  .rp-modal-actions { display: flex; gap: 10px; margin-top: 22px; justify-content: flex-end; }
-  .rp-modal-save { padding: 10px 22px; background: linear-gradient(135deg, #e63946, #ff5d73); border: none; border-radius: 8px; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; font-weight: 700; color: #fff; cursor: pointer; transition: all .17s; box-shadow: 0 4px 12px rgba(230,57,70,.3); display: flex; align-items: center; gap: 8px; }
-  .rp-modal-save:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(230,57,70,.4); }
+  /* Modal actions */
+  .rp-modal-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+  .rp-modal-save {
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #0066FF 0%, #0052cc 100%);
+    border: none; border-radius: 8px; font-family: inherit;
+    font-size: 13px; font-weight: 700; color: #fff; cursor: pointer;
+    transition: all .17s; box-shadow: 0 2px 8px rgba(0,102,255,.2);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .rp-modal-save:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(0,102,255,.3);
+  }
   .rp-modal-save:disabled { opacity: .5; cursor: not-allowed; }
-  .rp-modal-cancel { padding: 10px 18px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: 8px; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; font-weight: 500; color: rgba(237,240,250,.5); cursor: pointer; transition: all .17s; }
-  .rp-modal-cancel:hover { background: rgba(255,255,255,.09); color: #fff; }
-  .rp-spinner { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 2px solid rgba(255,255,255,.2); border-top-color: #fff; animation: rpSpin .7s linear infinite; }
+  .rp-modal-cancel {
+    padding: 10px 16px;
+    background: var(--bg, #FAFBFC);
+    border: 1px solid var(--border, #E5E7EB);
+    border-radius: 8px; font-family: inherit;
+    font-size: 13px; font-weight: 500;
+    color: var(--text-secondary, #6B7280);
+    cursor: pointer; transition: all .17s;
+  }
+  .rp-modal-cancel:hover {
+    background: var(--surface, #fff);
+    border-color: var(--text-secondary, #6B7280);
+    color: var(--text, #1F2937);
+  }
+  .rp-spinner {
+    display: inline-block; width: 14px; height: 14px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.3); border-top-color: #fff;
+    animation: rpSpin .7s linear infinite;
+  }
 `;
 
 function getInitials(name: string | null | undefined): string {
@@ -360,21 +570,19 @@ export default function RespondersPage() {
   const [search, setSearch]         = useState("");
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
-  // Add modal state
-  const [showAdd, setShowAdd]         = useState(false);
-  const [createAuth, setCreateAuth]   = useState(true);  // toggle: create real auth account
+  const [showAdd, setShowAdd]           = useState(false);
+  const [createAuth, setCreateAuth]     = useState(true);
   const [showPassword, setShowPassword] = useState(false);
-  const [saving, setSaving]           = useState(false);
-  const [modalError, setModalError]   = useState<string | null>(null);
+  const [saving, setSaving]             = useState(false);
+  const [modalError, setModalError]     = useState<string | null>(null);
   const [modalSuccess, setModalSuccess] = useState<string | null>(null);
-  const [formData, setFormData]       = useState({
+  const [formData, setFormData]         = useState({
     name: "", email: "", password: "", on_duty: true,
   });
 
-  // Edit modal state
-  const [showEdit, setShowEdit]   = useState(false);
-  const [selected, setSelected]   = useState<ManualResponder | null>(null);
-  const [editForm, setEditForm]   = useState({ name: "", email: "", on_duty: true });
+  const [showEdit, setShowEdit] = useState(false);
+  const [selected, setSelected] = useState<ManualResponder | null>(null);
+  const [editForm, setEditForm] = useState({ name: "", email: "", on_duty: true });
 
   const fetchAll = async (quiet = false) => {
     if (!quiet) setLoading(true);
@@ -408,7 +616,6 @@ export default function RespondersPage() {
 
   useEffect(() => { fetchAll(); }, []);
 
-  // ── Add Responder ─────────────────────────────────────────────────────────
   const addResponder = async () => {
     if (!formData.name.trim() || !formData.email.trim()) {
       setModalError("Name and email are required.");
@@ -423,23 +630,17 @@ export default function RespondersPage() {
     setModalError(null);
     setModalSuccess(null);
 
-    // Step 1: Create Supabase auth account if toggled on
     if (createAuth) {
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email.trim(),
         password: formData.password,
-        options: {
-          data: { full_name: formData.name.trim(), role: "responder" },
-        },
+        options: { data: { full_name: formData.name.trim(), role: "responder" } },
       });
-
       if (signUpError) {
         setModalError(`Auth account error: ${signUpError.message}`);
         setSaving(false);
         return;
       }
-
-      // Step 2: Upsert into profiles table with role = responder
       const userId = signUpData.user?.id;
       if (userId) {
         await supabase.from("profiles").upsert({
@@ -451,7 +652,6 @@ export default function RespondersPage() {
       }
     }
 
-    // Step 3: Always insert into responders table
     const { error: insertError } = await supabase.from("responders").insert({
       name: formData.name.trim(),
       email: formData.email.trim(),
@@ -474,8 +674,6 @@ export default function RespondersPage() {
     setFormData({ name: "", email: "", password: "", on_duty: true });
     setCreateAuth(true);
     fetchAll(true);
-
-    // Auto-close after 1.5s
     setTimeout(() => { setShowAdd(false); setModalSuccess(null); }, 1500);
   };
 
@@ -534,11 +732,11 @@ export default function RespondersPage() {
   const offDutyCount = manualResponders.filter((r) => !r.on_duty).length;
 
   const stats = [
-    { label: "Total Responders", value: allResponders.length,     accent: "#7B9EFF" },
-    { label: "On Duty",          value: onDutyCount,              accent: "#2ECC8F" },
-    { label: "Off Duty",         value: offDutyCount,             accent: "#FFD166" },
-    { label: "Auth Accounts",    value: profileResponders.length, accent: "#FB923C" },
-    { label: "Citizens",         value: citizens.length,          accent: "#B0B8CC" },
+    { label: "Total Responders", value: allResponders.length,     accent: "#0066FF" },
+    { label: "On Duty",          value: onDutyCount,              accent: "#00B074" },
+    { label: "Off Duty",         value: offDutyCount,             accent: "#FF9500" },
+    { label: "Auth Accounts",    value: profileResponders.length, accent: "#FF9500" },
+    { label: "Citizens",         value: citizens.length,          accent: "#6B7280" },
   ];
 
   const renderResponderRow = (r: ProfileUser | ManualResponder, i: number) => {
@@ -560,7 +758,7 @@ export default function RespondersPage() {
             </div>
           </div>
         </td>
-        <td style={{ color: "rgba(237,240,250,.55)", fontSize: 12 }}>{r.email || "—"}</td>
+        <td style={{ fontSize: 12 }}>{r.email || "—"}</td>
         <td>
           <span className={`rp-status-badge ${status === "active" ? "rp-status-active" : "rp-status-inactive"}`}>
             <span className="rp-status-dot" />{status || "active"}
@@ -597,7 +795,7 @@ export default function RespondersPage() {
               </button>
             </div>
           ) : (
-            <span style={{ fontSize: 11, color: "rgba(237,240,250,.2)", fontFamily: "monospace" }}>
+            <span style={{ fontSize: 11, color: "var(--text-tertiary, #9CA3AF)" }}>
               Auth-managed
             </span>
           )}
@@ -617,11 +815,13 @@ export default function RespondersPage() {
           </div>
         </div>
       </td>
-      <td style={{ color: "rgba(237,240,250,.55)", fontSize: 12 }}>{c.email || "—"}</td>
+      <td style={{ fontSize: 12 }}>{c.email || "—"}</td>
       <td><span className="rp-status-badge rp-status-active"><span className="rp-status-dot" /> Active</span></td>
       <td><span className="rp-duty-badge rp-duty-badge--on"><span className="rp-duty-badge-dot" /> Registered</span></td>
-      <td style={{ fontSize: 12, color: "rgba(237,240,250,.3)", fontFamily: "monospace" }}>
-        {c.created_at ? new Date(c.created_at).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" }) : "—"}
+      <td style={{ fontSize: 12, color: "var(--text-tertiary, #9CA3AF)" }}>
+        {c.created_at
+          ? new Date(c.created_at).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })
+          : "—"}
       </td>
     </tr>
   );
@@ -631,17 +831,27 @@ export default function RespondersPage() {
       <style>{RP_STYLE}</style>
       <div className="rp-root">
 
+        {/* Header */}
         <div className="rp-header">
           <div>
             <div className="rp-eyebrow">Personnel Management</div>
-            <h2 className="rp-title">Responders & Citizens</h2>
+            <h2 className="rp-title">Responders &amp; Citizens</h2>
             <p className="rp-subtitle">All registered accounts and manually-added responders</p>
           </div>
-          <button className="rp-add-btn" onClick={() => { setFormData({ name: "", email: "", password: "", on_duty: true }); setModalError(null); setModalSuccess(null); setShowAdd(true); }}>
+          <button
+            className="rp-add-btn"
+            onClick={() => {
+              setFormData({ name: "", email: "", password: "", on_duty: true });
+              setModalError(null);
+              setModalSuccess(null);
+              setShowAdd(true);
+            }}
+          >
             <FaPlus size={11} /> Add Responder
           </button>
         </div>
 
+        {/* Stats */}
         <div className="rp-stats">
           {stats.map((s) => (
             <div key={s.label} className="rp-stat" style={{ "--s-accent": s.accent } as React.CSSProperties}>
@@ -651,53 +861,102 @@ export default function RespondersPage() {
           ))}
         </div>
 
+        {/* Tabs */}
         <div className="rp-tabs">
-          <button className={`rp-tab${tab === "responders" ? " active" : ""}`} onClick={() => { setTab("responders"); setDutyFilter("all"); }}>
-            <FaUserShield size={11} /> Responders <span className="rp-tab-count">{allResponders.length}</span>
+          <button
+            className={`rp-tab${tab === "responders" ? " active" : ""}`}
+            onClick={() => { setTab("responders"); setDutyFilter("all"); }}
+          >
+            <FaUserShield size={11} /> Responders
+            <span className="rp-tab-count">{allResponders.length}</span>
           </button>
-          <button className={`rp-tab${tab === "citizens" ? " active" : ""}`} onClick={() => setTab("citizens")}>
-            <FaUserCircle size={11} /> Citizens <span className="rp-tab-count">{citizens.length}</span>
+          <button
+            className={`rp-tab${tab === "citizens" ? " active" : ""}`}
+            onClick={() => setTab("citizens")}
+          >
+            <FaUserCircle size={11} /> Citizens
+            <span className="rp-tab-count">{citizens.length}</span>
           </button>
         </div>
 
+        {/* Duty filter */}
         {tab === "responders" && (
           <div className="rp-duty-filter">
-            <button className={`rp-duty-pill rp-duty-pill--all${dutyFilter === "all" ? " active" : ""}`} onClick={() => setDutyFilter("all")}>All ({allResponders.length})</button>
-            <button className={`rp-duty-pill rp-duty-pill--on${dutyFilter === "on" ? " active" : ""}`} onClick={() => setDutyFilter("on")}>
-              <span className="rp-duty-dot" style={{ background: "#2ECC8F" }} /> On Duty ({onDutyCount})
+            <button
+              className={`rp-duty-pill rp-duty-pill--all${dutyFilter === "all" ? " active" : ""}`}
+              onClick={() => setDutyFilter("all")}
+            >
+              All ({allResponders.length})
             </button>
-            <button className={`rp-duty-pill rp-duty-pill--off${dutyFilter === "off" ? " active" : ""}`} onClick={() => setDutyFilter("off")}>
-              <span className="rp-duty-dot" style={{ background: "rgba(237,240,250,.3)" }} /> Off Duty ({offDutyCount})
+            <button
+              className={`rp-duty-pill rp-duty-pill--on${dutyFilter === "on" ? " active" : ""}`}
+              onClick={() => setDutyFilter("on")}
+            >
+              <span className="rp-duty-dot" style={{ background: "#00B074" }} />
+              On Duty ({onDutyCount})
+            </button>
+            <button
+              className={`rp-duty-pill rp-duty-pill--off${dutyFilter === "off" ? " active" : ""}`}
+              onClick={() => setDutyFilter("off")}
+            >
+              <span className="rp-duty-dot" style={{ background: "#9CA3AF" }} />
+              Off Duty ({offDutyCount})
             </button>
           </div>
         )}
 
+        {/* Notice */}
         <div className="rp-notice">
           <FaUserShield className="rp-notice-icon" size={13} />
           <span>
-            <strong style={{ color: "#7B9EFF" }}>Auth accounts</strong> are from your <code style={{ fontFamily: "monospace", fontSize: 11 }}>profiles</code> table.{" "}
-            <strong style={{ color: "#FFD166" }}>Manual entries</strong> are from the <code style={{ fontFamily: "monospace", fontSize: 11 }}>responders</code> table.
-            Use <strong style={{ color: "#2ECC8F" }}>Add Responder</strong> to create both at once.
+            <strong style={{ color: "var(--primary, #0066FF)" }}>Auth accounts</strong> are from your{" "}
+            <code style={{ fontFamily: "monospace", fontSize: 11, background: "rgba(0,0,0,.05)", padding: "1px 5px", borderRadius: 4 }}>profiles</code> table.{" "}
+            <strong style={{ color: "#FF9500" }}>Manual entries</strong> are from the{" "}
+            <code style={{ fontFamily: "monospace", fontSize: 11, background: "rgba(0,0,0,.05)", padding: "1px 5px", borderRadius: 4 }}>responders</code> table.
+            Use <strong style={{ color: "#00B074" }}>Add Responder</strong> to create both at once.
           </span>
         </div>
 
+        {/* Toolbar */}
         <div className="rp-toolbar">
           <div className="rp-search-wrap">
             <FaSearch className="rp-search-icon" />
-            <input className="rp-search" placeholder={`Search ${tab}…`} value={search} onChange={(e) => setSearch(e.target.value)} />
+            <input
+              className="rp-search"
+              placeholder={`Search ${tab}…`}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
-          <button className={`rp-refresh-btn${refreshing ? " spinning" : ""}`} onClick={() => fetchAll(true)}>
+          <button
+            className={`rp-refresh-btn${refreshing ? " spinning" : ""}`}
+            onClick={() => fetchAll(true)}
+          >
             <FaSyncAlt size={11} /> Refresh
           </button>
         </div>
 
+        {/* Table */}
         {loading ? (
-          <div style={{ textAlign: "center", padding: "40px 0" }}><div className="rp-spinner" /></div>
+          <div style={{ textAlign: "center", padding: "48px 0" }}>
+            <div style={{
+              display: "inline-block", width: 24, height: 24, borderRadius: "50%",
+              border: "2px solid var(--border, #E5E7EB)",
+              borderTopColor: "var(--primary, #0066FF)",
+              animation: "rpSpin .8s linear infinite",
+            }} />
+          </div>
         ) : (
           <div className="rp-table-wrap">
             <table className="rp-table">
               <thead>
-                <tr><th>Name</th><th>Email</th><th>Status</th><th>Duty</th><th>{tab === "citizens" ? "Joined" : "Actions"}</th></tr>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Status</th>
+                  <th>Duty</th>
+                  <th>{tab === "citizens" ? "Joined" : "Actions"}</th>
+                </tr>
               </thead>
               <tbody>
                 {tab === "responders" && (
@@ -715,33 +974,38 @@ export default function RespondersPage() {
           </div>
         )}
 
-        {/* ── Add Responder Modal ── */}
+        {/* Add Modal */}
         {showAdd && (
           <div className="rp-overlay" onClick={() => setShowAdd(false)}>
             <div className="rp-modal" onClick={(e) => e.stopPropagation()}>
               <h3 className="rp-modal-title">Add Responder</h3>
               <p className="rp-modal-sub">Create a login account and add them to the responders list in one step.</p>
 
-              {/* Auth account toggle */}
               <div className="rp-auth-toggle" onClick={() => setCreateAuth((v) => !v)}>
                 <div className="rp-auth-toggle-left">
                   <span className="rp-auth-toggle-label">Create Login Account</span>
-                  <span className="rp-auth-toggle-sub">Lets the responder log in to the app with email & password</span>
+                  <span className="rp-auth-toggle-sub">Lets the responder log in with email &amp; password</span>
                 </div>
                 <div className={`rp-auth-switch${createAuth ? " on" : ""}`} />
               </div>
 
-              {/* Basic info */}
               <div className="rp-field">
                 <label className="rp-label">Full Name</label>
-                <input className="rp-input" placeholder="e.g. Juan dela Cruz" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+                <input
+                  className="rp-input" placeholder="e.g. Juan dela Cruz"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                />
               </div>
               <div className="rp-field">
                 <label className="rp-label">Email</label>
-                <input className="rp-input" type="email" placeholder="e.g. juan@bfp.gov.ph" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+                <input
+                  className="rp-input" type="email" placeholder="e.g. juan@bfp.gov.ph"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                />
               </div>
 
-              {/* Password — only shown when creating auth account */}
               {createAuth && (
                 <div className="rp-auth-section">
                   <div className="rp-auth-section-label">Login Credentials</div>
@@ -766,7 +1030,11 @@ export default function RespondersPage() {
 
               <div className="rp-field" style={{ marginTop: 14 }}>
                 <label className="rp-label">Duty Status</label>
-                <select className="rp-select" value={formData.on_duty ? "on" : "off"} onChange={(e) => setFormData({ ...formData, on_duty: e.target.value === "on" })}>
+                <select
+                  className="rp-select"
+                  value={formData.on_duty ? "on" : "off"}
+                  onChange={(e) => setFormData({ ...formData, on_duty: e.target.value === "on" })}
+                >
                   <option value="on">On Duty</option>
                   <option value="off">Off Duty</option>
                 </select>
@@ -786,7 +1054,7 @@ export default function RespondersPage() {
           </div>
         )}
 
-        {/* ── Edit Modal ── */}
+        {/* Edit Modal */}
         {showEdit && (
           <div className="rp-overlay" onClick={() => setShowEdit(false)}>
             <div className="rp-modal" onClick={(e) => e.stopPropagation()}>
@@ -802,7 +1070,11 @@ export default function RespondersPage() {
               </div>
               <div className="rp-field">
                 <label className="rp-label">Duty Status</label>
-                <select className="rp-select" value={editForm.on_duty ? "on" : "off"} onChange={(e) => setEditForm({ ...editForm, on_duty: e.target.value === "on" })}>
+                <select
+                  className="rp-select"
+                  value={editForm.on_duty ? "on" : "off"}
+                  onChange={(e) => setEditForm({ ...editForm, on_duty: e.target.value === "on" })}
+                >
                   <option value="on">On Duty</option>
                   <option value="off">Off Duty</option>
                 </select>

@@ -31,6 +31,14 @@ const UNIT_COLORS: Record<string, string> = {
   HQ:      "#8B5CF6",
 };
 
+const ROLE_COLORS: Record<string, string> = {
+  admin:     "#8B5CF6",
+  responder: "#0066FF",
+  commander: "#FF9500",
+  medic:     "#00B074",
+  scout:     "#FF2D55",
+};
+
 // ─── SVG Icons ────────────────────────────────────────────────────────────────
 
 const SvgIcon = ({ path, size = 16 }: { path: string; size?: number }) => (
@@ -54,12 +62,15 @@ const ICONS = {
   chevDown: "M6 9l6 6 6-6",
   chevUp:   "M18 15l-6-6-6 6",
   retry:    "M1 4v6h6M23 20v-6h-6M20.49 9A9 9 0 0 0 5.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 0 1 3.51 15",
+  badge:    "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z",
+  settings: "M12 1v6m0 6v6M4.22 4.22l4.24 4.24m3.08 3.08l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m3.08-3.08l4.24-4.24M19.78 19.78l-4.24-4.24m-3.08-3.08l-4.24-4.24",
+  trash:    "M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h16zM10 11v6M14 11v6",
 };
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const STYLES = `
-.rtp-root {
+.atp-root {
   --primary: #0066FF;
   --success: #00B074;
   --warning: #FF9500;
@@ -73,16 +84,16 @@ const STYLES = `
   --text-tertiary:  #9CA3AF;
 }
 
-@keyframes rtp-fadeIn  { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-@keyframes rtp-slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-@keyframes rtp-pulse   { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-@keyframes rtp-spin    { to { transform: rotate(360deg); } }
-@keyframes rtp-shimmer { from { background-position: -400% 0; } to { background-position: 400% 0; } }
-@keyframes rtp-expand  { from { opacity: 0; max-height: 0; } to { opacity: 1; max-height: 300px; } }
+@keyframes atp-fadeIn  { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes atp-slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes atp-pulse   { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+@keyframes atp-spin    { to { transform: rotate(360deg); } }
+@keyframes atp-shimmer { from { background-position: -400% 0; } to { background-position: 400% 0; } }
+@keyframes atp-expand  { from { opacity: 0; max-height: 0; } to { opacity: 1; max-height: 300px; } }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-.rtp-root {
+.atp-root {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: var(--text);
   background: var(--bg);
@@ -90,17 +101,17 @@ const STYLES = `
 }
 
 /* ── Header ── */
-.rtp-hd {
+.atp-hd {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 24px;
-  animation: rtp-fadeIn 0.4s ease both;
+  animation: atp-fadeIn 0.4s ease both;
 }
 
-.rtp-eyebrow {
+.atp-eyebrow {
   font-size: 11px;
   color: var(--primary);
   letter-spacing: 0.5px;
@@ -112,7 +123,7 @@ const STYLES = `
   gap: 8px;
 }
 
-.rtp-eyebrow::before {
+.atp-eyebrow::before {
   content: '';
   display: block;
   width: 20px;
@@ -120,7 +131,7 @@ const STYLES = `
   background: var(--primary);
 }
 
-.rtp-title {
+.atp-title {
   font-size: 32px;
   color: var(--text);
   letter-spacing: -0.5px;
@@ -128,13 +139,13 @@ const STYLES = `
   font-weight: 700;
 }
 
-.rtp-subtitle {
+.atp-subtitle {
   font-size: 12px;
   color: var(--text-tertiary);
   margin-top: 4px;
 }
 
-.rtp-live {
+.atp-live {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -149,23 +160,23 @@ const STYLES = `
   font-weight: 600;
 }
 
-.rtp-live-dot {
+.atp-live-dot {
   width: 5px;
   height: 5px;
   border-radius: 50%;
   background: var(--success);
-  animation: rtp-pulse 1.4s ease infinite;
+  animation: atp-pulse 1.4s ease infinite;
 }
 
 /* ── Stat Grid ── */
-.rtp-stats {
+.atp-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px;
   margin-bottom: 24px;
 }
 
-.rtp-stat {
+.atp-stat {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -173,39 +184,41 @@ const STYLES = `
   position: relative;
   overflow: hidden;
   transition: all 0.3s;
-  animation: rtp-fadeIn 0.5s ease both;
+  animation: atp-fadeIn 0.5s ease both;
   cursor: default;
 }
 
-.rtp-stat:nth-child(2) { animation-delay: 0.05s; }
-.rtp-stat:nth-child(3) { animation-delay: 0.10s; }
-.rtp-stat:nth-child(4) { animation-delay: 0.15s; }
+.atp-stat:nth-child(2) { animation-delay: 0.05s; }
+.atp-stat:nth-child(3) { animation-delay: 0.10s; }
+.atp-stat:nth-child(4) { animation-delay: 0.15s; }
 
-.rtp-stat:hover {
+.atp-stat:hover {
   transform: translateY(-4px);
   border-color: var(--primary);
   box-shadow: 0 8px 16px rgba(0,102,255,0.10);
 }
 
-.rtp-stat::before {
+.atp-stat::before {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 2px;
 }
 
-.rtp-stat.sv-default::before { background: var(--text-secondary); }
-.rtp-stat.sv-green::before   { background: var(--success); }
-.rtp-stat.sv-amber::before   { background: var(--warning); }
-.rtp-stat.sv-gray::before    { background: var(--text-tertiary); }
+.atp-stat.sv-default::before { background: var(--text-secondary); }
+.atp-stat.sv-green::before   { background: var(--success); }
+.atp-stat.sv-amber::before   { background: var(--warning); }
+.atp-stat.sv-purple::before  { background: var(--purple); }
+.atp-stat.sv-gray::before    { background: var(--text-tertiary); }
 
-.rtp-stat-icon { font-size: 20px; margin-bottom: 12px; display: flex; align-items: center; }
-.rtp-stat.sv-default .rtp-stat-icon { color: var(--text-secondary); }
-.rtp-stat.sv-green   .rtp-stat-icon { color: var(--success); }
-.rtp-stat.sv-amber   .rtp-stat-icon { color: var(--warning); }
-.rtp-stat.sv-gray    .rtp-stat-icon { color: var(--text-tertiary); }
+.atp-stat-icon { font-size: 20px; margin-bottom: 12px; display: flex; align-items: center; }
+.atp-stat.sv-default .atp-stat-icon { color: var(--text-secondary); }
+.atp-stat.sv-green   .atp-stat-icon { color: var(--success); }
+.atp-stat.sv-amber   .atp-stat-icon { color: var(--warning); }
+.atp-stat.sv-purple  .atp-stat-icon { color: var(--purple); }
+.atp-stat.sv-gray    .atp-stat-icon { color: var(--text-tertiary); }
 
-.rtp-stat-num {
+.atp-stat-num {
   font-size: 32px;
   line-height: 1;
   margin-bottom: 6px;
@@ -213,12 +226,13 @@ const STYLES = `
   font-weight: 700;
   min-height: 32px;
 }
-.rtp-stat.sv-default .rtp-stat-num { color: var(--text); }
-.rtp-stat.sv-green   .rtp-stat-num { color: var(--success); }
-.rtp-stat.sv-amber   .rtp-stat-num { color: var(--warning); }
-.rtp-stat.sv-gray    .rtp-stat-num { color: var(--text-tertiary); }
+.atp-stat.sv-default .atp-stat-num { color: var(--text); }
+.atp-stat.sv-green   .atp-stat-num { color: var(--success); }
+.atp-stat.sv-amber   .atp-stat-num { color: var(--warning); }
+.atp-stat.sv-purple  .atp-stat-num { color: var(--purple); }
+.atp-stat.sv-gray    .atp-stat-num { color: var(--text-tertiary); }
 
-.rtp-stat-label {
+.atp-stat-label {
   font-size: 11px;
   color: var(--text-secondary);
   letter-spacing: 0.3px;
@@ -227,21 +241,19 @@ const STYLES = `
 }
 
 /* ── Skeleton ── */
-.rtp-skel {
+.atp-skel {
   background: linear-gradient(90deg, #f0f2f5 25%, #e4e7ec 50%, #f0f2f5 75%);
   background-size: 400% 100%;
-  animation: rtp-shimmer 1.4s ease infinite;
+  animation: atp-shimmer 1.4s ease infinite;
   border-radius: 6px;
 }
-.rtp-skel-num  { height: 32px; width: 48px; margin-bottom: 6px; }
-.rtp-skel-av   { width: 44px; height: 44px; border-radius: 10px; flex-shrink: 0; }
-.rtp-skel-name { height: 16px; width: 58%; }
-.rtp-skel-role { height: 11px; width: 35%; margin-top: 6px; }
-.rtp-skel-line { height: 12px; width: 80%; }
-.rtp-skel-lsm  { height: 12px; width: 52%; }
+.atp-skel-num  { height: 32px; width: 48px; margin-bottom: 6px; }
+.atp-skel-av   { width: 44px; height: 44px; border-radius: 10px; flex-shrink: 0; }
+.atp-skel-name { height: 16px; width: 58%; }
+.atp-skel-role { height: 11px; width: 35%; margin-top: 6px; }
 
 /* ── Toolbar ── */
-.rtp-toolbar {
+.atp-toolbar {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -249,13 +261,13 @@ const STYLES = `
   flex-wrap: wrap;
 }
 
-.rtp-search-wrap {
+.atp-search-wrap {
   position: relative;
   flex: 1;
   min-width: 200px;
 }
 
-.rtp-search-icon {
+.atp-search-icon {
   position: absolute;
   left: 11px;
   top: 50%;
@@ -265,7 +277,7 @@ const STYLES = `
   display: flex;
 }
 
-.rtp-search {
+.atp-search {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -278,20 +290,20 @@ const STYLES = `
   width: 100%;
 }
 
-.rtp-search::placeholder { color: var(--text-tertiary); }
-.rtp-search:focus {
+.atp-search::placeholder { color: var(--text-tertiary); }
+.atp-search:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(0,102,255,0.08);
 }
 
-.rtp-filter-grp {
+.atp-filter-grp {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
   align-items: center;
 }
 
-.rtp-filter-btn {
+.atp-filter-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -307,17 +319,18 @@ const STYLES = `
   white-space: nowrap;
 }
 
-.rtp-filter-btn:hover {
+.atp-filter-btn:hover {
   border-color: var(--text-secondary);
   color: var(--text);
 }
 
-.rtp-filter-btn.active         { background: var(--primary);  border-color: var(--primary);  color: #fff; }
-.rtp-filter-btn.fv-green.active { background: var(--success);  border-color: var(--success); }
-.rtp-filter-btn.fv-amber.active { background: var(--warning);  border-color: var(--warning); }
-.rtp-filter-btn.fv-gray.active  { background: var(--text-secondary); border-color: var(--text-secondary); }
+.atp-filter-btn.active         { background: var(--primary);  border-color: var(--primary);  color: #fff; }
+.atp-filter-btn.fv-green.active { background: var(--success);  border-color: var(--success); }
+.atp-filter-btn.fv-amber.active { background: var(--warning);  border-color: var(--warning); }
+.atp-filter-btn.fv-purple.active { background: var(--purple);  border-color: var(--purple); }
+.atp-filter-btn.fv-gray.active  { background: var(--text-secondary); border-color: var(--text-secondary); }
 
-.rtp-filter-count {
+.atp-filter-count {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -331,16 +344,16 @@ const STYLES = `
 }
 
 /* ── Grid ── */
-.rtp-grid {
+.atp-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 12px;
 }
 
-@media (max-width: 600px) { .rtp-grid { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .atp-grid { grid-template-columns: 1fr; } }
 
 /* ── Member Card ── */
-.rtp-card {
+.atp-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -349,12 +362,12 @@ const STYLES = `
   flex-direction: column;
   gap: 14px;
   transition: all 0.25s;
-  animation: rtp-slideUp 0.35s ease both;
+  animation: atp-slideUp 0.35s ease both;
   position: relative;
   overflow: hidden;
 }
 
-.rtp-card::before {
+.atp-card::before {
   content: '';
   position: absolute;
   top: 0; left: 0; bottom: 0;
@@ -362,20 +375,20 @@ const STYLES = `
   background: var(--card-accent, var(--primary));
 }
 
-.rtp-card:hover {
+.atp-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 8px 20px rgba(0,0,0,0.08);
   border-color: var(--text-tertiary);
 }
 
 /* ── Card top ── */
-.rtp-card-top {
+.atp-card-top {
   display: flex;
   align-items: flex-start;
   gap: 12px;
 }
 
-.rtp-avatar {
+.atp-avatar {
   width: 44px;
   height: 44px;
   border-radius: 10px;
@@ -393,14 +406,14 @@ const STYLES = `
   letter-spacing: 0.5px;
 }
 
-.rtp-avatar-img {
+.atp-avatar-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   border-radius: 9px;
 }
 
-.rtp-dot {
+.atp-dot {
   position: absolute;
   bottom: -3px; right: -3px;
   width: 11px; height: 11px;
@@ -409,11 +422,11 @@ const STYLES = `
   border: 2.5px solid var(--surface);
 }
 
-.rtp-dot.is-responding { animation: rtp-pulse 1.1s ease-in-out infinite; }
+.atp-dot.is-responding { animation: atp-pulse 1.1s ease-in-out infinite; }
 
-.rtp-card-info { flex: 1; min-width: 0; }
+.atp-card-info { flex: 1; min-width: 0; }
 
-.rtp-card-name {
+.atp-card-name {
   font-size: 14px;
   font-weight: 700;
   color: var(--text);
@@ -423,14 +436,30 @@ const STYLES = `
   text-overflow: ellipsis;
 }
 
-.rtp-card-role {
+.atp-card-role {
   font-size: 11px;
   color: var(--text-tertiary);
   text-transform: capitalize;
   margin-top: 3px;
 }
 
-.rtp-unit-tag {
+.atp-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 4px;
+  margin-top: 6px;
+  background: var(--role-bg);
+  border: 1px solid var(--role-border);
+  color: var(--role-color);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.atp-unit-tag {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -438,14 +467,14 @@ const STYLES = `
   font-weight: 600;
   padding: 2px 8px;
   border-radius: 4px;
-  margin-top: 6px;
+  margin-left: 6px;
   background: var(--unit-bg);
   border: 1px solid var(--unit-border);
   color: var(--unit-color);
   letter-spacing: 0.3px;
 }
 
-.rtp-status-pill {
+.atp-status-pill {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
@@ -460,7 +489,7 @@ const STYLES = `
 }
 
 /* ── Contacts ── */
-.rtp-contacts {
+.atp-contacts {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -468,7 +497,7 @@ const STYLES = `
   padding-top: 12px;
 }
 
-.rtp-contact-row {
+.atp-contact-row {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -476,7 +505,7 @@ const STYLES = `
   color: var(--text-secondary);
 }
 
-.rtp-contact-row a {
+.atp-contact-row a {
   color: inherit;
   text-decoration: none;
   overflow: hidden;
@@ -486,10 +515,10 @@ const STYLES = `
   transition: color 0.15s;
 }
 
-.rtp-contact-row a:hover { color: var(--primary); }
+.atp-contact-row a:hover { color: var(--primary); }
 
 /* ── Expand button ── */
-.rtp-expand-btn {
+.atp-expand-btn {
   width: 100%;
   display: flex;
   align-items: center;
@@ -506,24 +535,24 @@ const STYLES = `
   transition: all 0.2s;
 }
 
-.rtp-expand-btn:hover {
+.atp-expand-btn:hover {
   background: var(--surface);
   border-color: var(--primary);
   color: var(--primary);
 }
 
-.rtp-expand-btn svg { transition: transform 0.2s; }
+.atp-expand-btn svg { transition: transform 0.2s; }
 
 /* ── Expanded detail ── */
-.rtp-detail {
+.atp-detail {
   display: flex;
   flex-direction: column;
   gap: 8px;
   overflow: hidden;
-  animation: rtp-expand 0.22s ease both;
+  animation: atp-expand 0.22s ease both;
 }
 
-.rtp-detail-row {
+.atp-detail-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -532,9 +561,9 @@ const STYLES = `
   border-bottom: 1px solid var(--border);
 }
 
-.rtp-detail-row:last-child { border-bottom: none; }
+.atp-detail-row:last-child { border-bottom: none; }
 
-.rtp-detail-key {
+.atp-detail-key {
   font-size: 11px;
   color: var(--text-tertiary);
   text-transform: uppercase;
@@ -543,7 +572,7 @@ const STYLES = `
   white-space: nowrap;
 }
 
-.rtp-detail-val {
+.atp-detail-val {
   font-size: 12px;
   color: var(--text-secondary);
   font-weight: 500;
@@ -551,7 +580,7 @@ const STYLES = `
 }
 
 /* ── Card footer ── */
-.rtp-card-foot {
+.atp-card-foot {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -561,7 +590,7 @@ const STYLES = `
   padding-top: 10px;
 }
 
-.rtp-meta {
+.atp-meta {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -569,8 +598,41 @@ const STYLES = `
   color: var(--text-tertiary);
 }
 
+.atp-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.atp-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 12px;
+}
+
+.atp-action-btn:hover {
+  color: var(--text);
+  border-color: var(--text-secondary);
+  background: var(--bg);
+}
+
+.atp-action-btn.danger:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: rgba(255,59,48,0.08);
+}
+
 /* ── Skeleton card ── */
-.rtp-skel-card {
+.atp-skel-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -582,7 +644,7 @@ const STYLES = `
 }
 
 /* ── Empty / Error ── */
-.rtp-empty {
+.atp-empty {
   grid-column: 1 / -1;
   text-align: center;
   padding: 60px 24px;
@@ -595,19 +657,19 @@ const STYLES = `
   border-radius: 12px;
 }
 
-.rtp-empty-icon {
+.atp-empty-icon {
   color: var(--text-tertiary);
   opacity: 0.5;
 }
 
-.rtp-empty-text {
+.atp-empty-text {
   font-size: 13px;
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.3px;
 }
 
-.rtp-retry-btn {
+.atp-retry-btn {
   margin-top: 4px;
   padding: 8px 20px;
   background: var(--bg);
@@ -623,27 +685,27 @@ const STYLES = `
   gap: 6px;
 }
 
-.rtp-retry-btn:hover {
+.atp-retry-btn:hover {
   border-color: var(--primary);
   color: var(--primary);
   background: var(--surface);
 }
 
 /* ── Spinner ── */
-.rtp-spinner {
+.atp-spinner {
   display: inline-block;
   width: 16px; height: 16px;
   border-radius: 50%;
   border: 2px solid var(--border);
   border-top-color: var(--primary);
-  animation: rtp-spin 0.7s linear infinite;
+  animation: atp-spin 0.7s linear infinite;
 }
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-  .rtp-title  { font-size: 26px; }
-  .rtp-stats  { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .rtp-stat-num { font-size: 24px; }
+  .atp-title  { font-size: 26px; }
+  .atp-stats  { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .atp-stat-num { font-size: 24px; }
 }
 `;
 
@@ -672,17 +734,17 @@ function fmtRelative(ts?: string) {
 
 function SkeletonCard() {
   return (
-    <div className="rtp-skel-card">
+    <div className="atp-skel-card">
       <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-        <div className="rtp-skel rtp-skel-av" />
+        <div className="atp-skel atp-skel-av" />
         <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
-          <div className="rtp-skel rtp-skel-name" />
-          <div className="rtp-skel rtp-skel-role" />
+          <div className="atp-skel atp-skel-name" />
+          <div className="atp-skel atp-skel-role" />
         </div>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        <div className="rtp-skel rtp-skel-line" />
-        <div className="rtp-skel rtp-skel-lsm" />
+        <div className="atp-skel" style={{ height: 12, width: "80%" }} />
+        <div className="atp-skel" style={{ height: 12, width: "52%" }} />
       </div>
       <div style={{ height: 34, borderRadius: 8, background: "#f0f2f5" }} />
     </div>
@@ -697,17 +759,21 @@ function MemberCard({ member, index }: { member: TeamMember; index: number }) {
   const status     = member.status ?? "off_duty";
   const statusMeta = STATUS_META[status] ?? STATUS_META.off_duty;
   const unit       = member.unit ?? "HQ";
+  const role       = member.role ?? "responder";
   const unitColor  = UNIT_COLORS[unit] ?? "#0066FF";
+  const roleColor  = ROLE_COLORS[role] ?? "#0066FF";
 
   const avBg     = `${unitColor}18`;
   const avBorder = `${unitColor}35`;
+  const roleBg   = `${roleColor}18`;
+  const roleBorder = `${roleColor}35`;
 
   const displayName = member.full_name ?? "Unknown Member";
   const displayRole = member.role ?? "—";
 
   return (
     <div
-      className="rtp-card"
+      className="atp-card"
       style={{
         animationDelay: `${index * 0.04}s`,
         ["--card-accent" as any]: unitColor,
@@ -716,9 +782,9 @@ function MemberCard({ member, index }: { member: TeamMember; index: number }) {
       }}
     >
       {/* ── Top row ── */}
-      <div className="rtp-card-top">
+      <div className="atp-card-top">
         <div
-          className="rtp-avatar"
+          className="atp-avatar"
           style={{
             ["--av-bg"     as any]: avBg,
             ["--av-border" as any]: avBorder,
@@ -726,33 +792,46 @@ function MemberCard({ member, index }: { member: TeamMember; index: number }) {
           }}
         >
           {member.avatar_url
-            ? <img src={member.avatar_url} alt={displayName} className="rtp-avatar-img" />
+            ? <img src={member.avatar_url} alt={displayName} className="atp-avatar-img" />
             : initials(member.full_name)
           }
           <span
-            className={`rtp-dot${status === "responding" ? " is-responding" : ""}`}
+            className={`atp-dot${status === "responding" ? " is-responding" : ""}`}
             style={{ ["--dot-color" as any]: statusMeta.color }}
           />
         </div>
 
-        <div className="rtp-card-info">
-          <div className="rtp-card-name">{displayName}</div>
-          <div className="rtp-card-role" style={{ textTransform: "capitalize" }}>{displayRole}</div>
-          <div
-            className="rtp-unit-tag"
-            style={{
-              ["--unit-bg"     as any]: avBg,
-              ["--unit-border" as any]: avBorder,
-              ["--unit-color"  as any]: unitColor,
-            }}
-          >
-            <SvgIcon path={ICONS.shield} size={9} />
-            {unit} Unit
+        <div className="atp-card-info">
+          <div className="atp-card-name">{displayName}</div>
+          <div className="atp-card-role" style={{ textTransform: "capitalize" }}>{displayRole}</div>
+          <div>
+            <span
+              className="atp-role-badge"
+              style={{
+                ["--role-bg"     as any]: roleBg,
+                ["--role-border" as any]: roleBorder,
+                ["--role-color"  as any]: roleColor,
+              }}
+            >
+              <SvgIcon path={ICONS.badge} size={8} />
+              {role}
+            </span>
+            <span
+              className="atp-unit-tag"
+              style={{
+                ["--unit-bg"     as any]: avBg,
+                ["--unit-border" as any]: avBorder,
+                ["--unit-color"  as any]: unitColor,
+              }}
+            >
+              <SvgIcon path={ICONS.shield} size={9} />
+              {unit}
+            </span>
           </div>
         </div>
 
         <span
-          className="rtp-status-pill"
+          className="atp-status-pill"
           style={{
             color: statusMeta.color,
             background: statusMeta.bg,
@@ -765,15 +844,15 @@ function MemberCard({ member, index }: { member: TeamMember; index: number }) {
 
       {/* ── Contacts ── */}
       {(member.email || member.phone) && (
-        <div className="rtp-contacts">
+        <div className="atp-contacts">
           {member.email && (
-            <div className="rtp-contact-row">
+            <div className="atp-contact-row">
               <SvgIcon path={ICONS.mail} size={12} />
               <a href={`mailto:${member.email}`}>{member.email}</a>
             </div>
           )}
           {member.phone && (
-            <div className="rtp-contact-row">
+            <div className="atp-contact-row">
               <SvgIcon path={ICONS.phone} size={12} />
               <a href={`tel:${member.phone}`}>{member.phone}</a>
             </div>
@@ -782,34 +861,42 @@ function MemberCard({ member, index }: { member: TeamMember; index: number }) {
       )}
 
       {/* ── Expand toggle ── */}
-      <button className="rtp-expand-btn" onClick={() => setExpanded((v) => !v)}>
+      <button className="atp-expand-btn" onClick={() => setExpanded((v) => !v)}>
         {expanded ? "Hide details" : "View details"}
         <SvgIcon path={expanded ? ICONS.chevUp : ICONS.chevDown} size={12} />
       </button>
 
       {/* ── Expanded detail ── */}
       {expanded && (
-        <div className="rtp-detail">
+        <div className="atp-detail">
           {[
-            { key: "Role",      val: displayRole,                       color: undefined },
+            { key: "Role",      val: displayRole,                       color: roleColor },
             { key: "Unit",      val: unit,                              color: unitColor },
             { key: "Status",    val: statusMeta.label,                  color: statusMeta.color },
             { key: "Last seen", val: fmtRelative(member.joined_at),    color: undefined },
           ].map(({ key, val, color }) => (
-            <div key={key} className="rtp-detail-row">
-              <span className="rtp-detail-key">{key}</span>
-              <span className="rtp-detail-val" style={color ? { color } : undefined}>{val}</span>
+            <div key={key} className="atp-detail-row">
+              <span className="atp-detail-key">{key}</span>
+              <span className="atp-detail-val" style={color ? { color } : undefined}>{val}</span>
             </div>
           ))}
         </div>
       )}
 
-      {/* ── Footer ── */}
-      <div className="rtp-card-foot">
-        <span className="rtp-meta">
+      {/* ── Admin Actions ── */}
+      <div className="atp-card-foot">
+        <span className="atp-meta">
           <SvgIcon path={ICONS.clock} size={11} />
           Joined {fmtDate(member.joined_at)}
         </span>
+        <div className="atp-card-actions">
+          <button className="atp-action-btn" title="Edit member" onClick={() => console.log("Edit", member.id)}>
+            <SvgIcon path={ICONS.settings} size={12} />
+          </button>
+          <button className="atp-action-btn danger" title="Remove member" onClick={() => console.log("Delete", member.id)}>
+            <SvgIcon path={ICONS.trash} size={12} />
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -826,7 +913,7 @@ const FILTER_OPTS: Array<{ key: FilterKey; label: string; colorClass: string }> 
   { key: "off_duty",   label: "Off Duty",   colorClass: "fv-gray"  },
 ];
 
-export default function ResponderTeamPage() {
+export default function AdminTeamPage() {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState<string | null>(null);
@@ -839,7 +926,7 @@ export default function ResponderTeamPage() {
       const { data, error: err } = await supabase
         .from("profiles")
         .select("id, full_name, email, role, status, unit, avatar_url, phone, joined_at")
-        .in("role", ["responder", "admin"])
+        .in("role", ["responder", "admin", "commander"])
         .order("full_name", { ascending: true });
 
       if (err) throw err;
@@ -854,7 +941,7 @@ export default function ResponderTeamPage() {
   useEffect(() => {
     loadTeam();
     const ch = supabase
-      .channel("rtp-team-presence")
+      .channel("atp-team-presence")
       .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, loadTeam)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
@@ -895,66 +982,66 @@ export default function ResponderTeamPage() {
   return (
     <>
       <style>{STYLES}</style>
-      <div className="rtp-root">
+      <div className="atp-root">
 
         {/* ── Header ── */}
-        <div className="rtp-hd">
+        <div className="atp-hd">
           <div>
-            <div className="rtp-eyebrow">Field Operations</div>
-            <div className="rtp-title">Team</div>
-            <div className="rtp-subtitle">Responder roster &amp; live status</div>
+            <div className="atp-eyebrow">Team Management</div>
+            <div className="atp-title">Responders & Staff</div>
+            <div className="atp-subtitle">Full roster with admin controls</div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {loading && <div className="rtp-spinner" />}
-            <div className="rtp-live">
-              <span className="rtp-live-dot" />
+            {loading && <div className="atp-spinner" />}
+            <div className="atp-live">
+              <span className="atp-live-dot" />
               LIVE ROSTER
             </div>
           </div>
         </div>
 
         {/* ── Stats ── */}
-        <div className="rtp-stats">
+        <div className="atp-stats">
           {statCards.map((s) => (
-            <div key={s.label} className={`rtp-stat ${s.colorClass}`}>
-              <div className="rtp-stat-icon">{s.icon}</div>
-              <div className="rtp-stat-num">
+            <div key={s.label} className={`atp-stat ${s.colorClass}`}>
+              <div className="atp-stat-icon">{s.icon}</div>
+              <div className="atp-stat-num">
                 {loading
-                  ? <div className="rtp-skel rtp-skel-num" />
+                  ? <div className="atp-skel atp-skel-num" />
                   : s.value
                 }
               </div>
-              <div className="rtp-stat-label">{s.label}</div>
+              <div className="atp-stat-label">{s.label}</div>
             </div>
           ))}
         </div>
 
         {/* ── Toolbar ── */}
-        <div className="rtp-toolbar">
-          <div className="rtp-search-wrap">
-            <span className="rtp-search-icon">
+        <div className="atp-toolbar">
+          <div className="atp-search-wrap">
+            <span className="atp-search-icon">
               <SvgIcon path={ICONS.search} size={14} />
             </span>
             <input
-              className="rtp-search"
+              className="atp-search"
               placeholder="Search name, email, unit or role…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <div className="rtp-filter-grp">
+          <div className="atp-filter-grp">
             <SvgIcon path={ICONS.filter} size={13} />
             {FILTER_OPTS.map((f) => {
               const count = f.key === "all" ? counts.total : counts[f.key] ?? 0;
               return (
                 <button
                   key={f.key}
-                  className={`rtp-filter-btn ${f.colorClass} ${filter === f.key ? "active" : ""}`}
+                  className={`atp-filter-btn ${f.colorClass} ${filter === f.key ? "active" : ""}`}
                   onClick={() => setFilter(f.key)}
                 >
                   {f.label}
                   {count > 0 && (
-                    <span className="rtp-filter-count">{count}</span>
+                    <span className="atp-filter-count">{count}</span>
                   )}
                 </button>
               );
@@ -963,26 +1050,26 @@ export default function ResponderTeamPage() {
         </div>
 
         {/* ── Grid ── */}
-        <div className="rtp-grid">
+        <div className="atp-grid">
           {loading ? (
             Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
           ) : error ? (
-            <div className="rtp-empty">
-              <div className="rtp-empty-icon">
+            <div className="atp-empty">
+              <div className="atp-empty-icon">
                 <SvgIcon path={ICONS.activity} size={32} />
               </div>
-              <div className="rtp-empty-text">{error}</div>
-              <button className="rtp-retry-btn" onClick={loadTeam}>
+              <div className="atp-empty-text">{error}</div>
+              <button className="atp-retry-btn" onClick={loadTeam}>
                 <SvgIcon path={ICONS.retry} size={13} />
                 Retry
               </button>
             </div>
           ) : visible.length === 0 ? (
-            <div className="rtp-empty">
-              <div className="rtp-empty-icon">
+            <div className="atp-empty">
+              <div className="atp-empty-icon">
                 <SvgIcon path={ICONS.users} size={36} />
               </div>
-              <div className="rtp-empty-text">
+              <div className="atp-empty-text">
                 {search
                   ? `No results for "${search}"`
                   : "No team members found"}
