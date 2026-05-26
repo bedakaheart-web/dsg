@@ -7,6 +7,13 @@ import directorybg from "../assets/directorybg.png";
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@300;400;500;600&display=swap');
 
+  html, body {
+    overflow-x: hidden !important;
+    width: 100%;
+    max-width: 100vw;
+    margin: 0; padding: 0;
+  }
+
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   .su-root {
@@ -15,8 +22,10 @@ const CSS = `
     font-family: 'DM Sans', sans-serif;
     color: #ddeef8;
     background: linear-gradient(135deg, #0d1b2e 0%, #071a1d 50%, #0a1f28 100%);
-    overflow: hidden;
+    overflow-x: hidden;
     position: relative;
+    width: 100%;
+    max-width: 100vw;
   }
 
   .su-root::after {
@@ -25,7 +34,6 @@ const CSS = `
     background-image: var(--bg-image);
     background-size: cover;
     background-position: center;
-    background-attachment: fixed;
     opacity: 0.12;
     pointer-events: none;
   }
@@ -259,6 +267,7 @@ const CSS = `
     position: relative;
     overflow-y: auto;
     z-index: 1;
+    min-width: 0;
   }
 
   .su-right::before {
@@ -318,6 +327,7 @@ const CSS = `
     border-radius: 12px; padding: 13px 15px;
     font-size: 12.5px; color: #ff8877; margin-bottom: 18px;
     animation: errorShake .35s ease;
+    width: 100%; box-sizing: border-box;
   }
 
   @keyframes errorShake {
@@ -330,7 +340,7 @@ const CSS = `
 
   .su-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
-  .su-field { margin-bottom: 15px; animation: slideUp .5s ease both; }
+  .su-field { margin-bottom: 15px; animation: slideUp .5s ease both; width: 100%; }
   .su-field:nth-child(1) { animation-delay: .2s; }
   .su-field:nth-child(2) { animation-delay: .25s; }
   .su-field:nth-child(3) { animation-delay: .3s; }
@@ -342,7 +352,7 @@ const CSS = `
     text-transform: uppercase; color: rgba(168,216,255,0.32); margin-bottom: 8px;
   }
 
-  .su-input-wrap { position: relative; }
+  .su-input-wrap { position: relative; width: 100%; }
 
   .su-field-icon {
     position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
@@ -365,6 +375,7 @@ const CSS = `
     outline: none;
     caret-color: #00c8e0;
     transition: all .25s ease;
+    box-sizing: border-box;
   }
 
   .su-input::placeholder { color: rgba(168,216,255,0.18); }
@@ -413,6 +424,7 @@ const CSS = `
     margin-top: 10px; margin-bottom: 20px;
     position: relative; overflow: hidden;
     box-shadow: 0 0 30px rgba(232,55,42,0.30);
+    box-sizing: border-box;
   }
 
   .su-btn::before {
@@ -482,6 +494,7 @@ const CSS = `
     transition: all .25s ease;
     box-shadow: 0 0 30px rgba(232,55,42,0.30);
     position: relative; overflow: hidden;
+    box-sizing: border-box;
   }
 
   .su-success-btn::before {
@@ -498,38 +511,159 @@ const CSS = `
     background: linear-gradient(135deg, #f04438 0%, #f85a47 100%);
   }
 
-  /* ── Responsive ── */
+  /* ══════════════════════════════════════
+     TABLET — stack vertically
+     ══════════════════════════════════════ */
   @media (max-width: 920px) {
-    .su-root { flex-direction: column; overflow-y: auto; }
-    .su-left { width: 100%; min-height: auto; padding: 36px 32px 32px; }
+    .su-root {
+      flex-direction: column;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    /* Left panel becomes a compact header bar */
+    .su-left {
+      width: 100%;
+      min-height: auto;
+      padding: 28px 28px 24px;
+      flex-shrink: 0;
+    }
+
     .su-left::after { display: none; }
-    .su-hero { padding-bottom: 24px; }
-    .su-hero-title { font-size: 28px; }
+
+    .su-brand-row { margin-bottom: 20px; }
+
+    .su-hero { padding-bottom: 0; }
+    .su-hero-title { font-size: 26px; }
+    .su-hero-desc { display: none; }   /* hide on tablet too, saves space */
     .su-steps { display: none; }
-    .su-right { min-height: auto; padding: 40px 32px 56px; }
-  }
+    .su-left-footer { margin-top: 16px; }
 
-  @media (max-width: 600px) {
-    .su-left { padding: 24px 20px 20px; }
-    .su-brand-row { margin-bottom: 40px; }
-    .su-hero-title { font-size: 24px; }
-    .su-hero-desc { font-size: 13px; }
-    .su-right { padding: 28px 20px 48px; }
+    .su-right {
+      min-height: auto;
+      flex: 1;
+      padding: 32px 28px 56px;
+      justify-content: flex-start;
+    }
+
     .su-form-wrap { max-width: 100%; }
-    .su-row-2 { grid-template-columns: 1fr; gap: 0; }
-    .su-input, .su-select { padding: 11px 14px 11px 36px; font-size: 13px; }
-    .su-btn { padding: 12px 18px; font-size: 12px; margin-bottom: 16px; }
-    .su-form-title { font-size: 22px; }
-    .su-success-icon { width: 64px; height: 64px; font-size: 28px; }
-    .su-success-title { font-size: 20px; }
   }
 
-  @media (max-width: 360px) {
-    .su-left { padding: 16px 14px 14px; }
-    .su-hero-title { font-size: 22px; }
-    .su-right { padding: 20px 14px 40px; }
+  /* ══════════════════════════════════════
+     MOBILE — OnePlus Nord ~412px
+     ══════════════════════════════════════ */
+  @media (max-width: 600px) {
+    .su-root { flex-direction: column; }
+
+    /* ── Slim top bar on mobile ── */
+    .su-left {
+      width: 100%;
+      min-height: auto;
+      padding: 0;           /* remove all padding — inner content handles it */
+      flex-shrink: 0;
+    }
+
+    /* Compact mobile header strip */
+    .su-mobile-header {
+      display: flex !important;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      background: rgba(7,16,29,0.95);
+      border-bottom: 1px solid rgba(0,200,224,0.14);
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* Hide the original brand row and hero on mobile — we use the compact header */
+    .su-brand-row  { display: none; }
+    .su-hero       { display: none; }
+    .su-left-footer { display: none; }
+    .su-left-lines  { display: none; }
+    .su-left-glow-a { display: none; }
+    .su-left-glow-b { display: none; }
+    .su-left-bg     { display: none; }
+    .su-left::after { display: none; }
+
+    /* ── Right panel becomes the main content ── */
+    .su-right {
+      flex: 1;
+      min-height: auto;
+      padding: 24px 16px 48px;
+      justify-content: flex-start;
+      background: transparent;
+    }
+
+    .su-right::before { display: none; }
+
+    .su-form-wrap {
+      max-width: 100%;
+      width: 100%;
+    }
+
+    .su-back {
+      margin-bottom: 20px;
+      font-size: 12px;
+    }
+
+    .su-form-accent { margin-bottom: 14px; }
+
+    .su-form-title {
+      font-size: 22px;
+      margin-bottom: 4px;
+    }
+
+    .su-form-sub {
+      font-size: 12.5px;
+      margin-bottom: 20px;
+    }
+
+    /* Stack the 2-col rows on mobile */
+    .su-row-2 {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+
+    .su-field { margin-bottom: 13px; }
+
+    .su-input, .su-select {
+      padding: 11px 14px 11px 36px;
+      font-size: 13px;
+      border-radius: 10px;
+    }
+
+    .su-label { font-size: 9.5px; margin-bottom: 6px; }
+
+    .su-btn {
+      padding: 13px 18px;
+      font-size: 12px;
+      margin-top: 8px;
+      margin-bottom: 16px;
+      border-radius: 10px;
+    }
+
+    .su-pw-hint { font-size: 10.5px; }
+
+    .su-error {
+      font-size: 12px;
+      padding: 11px 13px;
+      border-radius: 10px;
+    }
+
+    .su-form-footer { font-size: 12.5px; }
+
+    .su-success-icon { width: 60px; height: 60px; font-size: 26px; }
+    .su-success-title { font-size: 20px; }
+    .su-success-msg { font-size: 13px; }
+  }
+
+  @media (max-width: 400px) {
+    .su-right { padding: 20px 14px 44px; }
     .su-form-title { font-size: 20px; }
-    .su-btn { padding: 11px 16px; }
+    .su-btn { padding: 12px 16px; }
+    .su-input, .su-select { font-size: 12.5px; padding: 10px 13px 10px 34px; }
   }
 `;
 
@@ -557,101 +691,56 @@ function IconLock() {
   return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>;
 }
 
-export default function Signup() {
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    fullName: "", email: "", phone: "", barangay: "", password: "", confirmPassword: ""
-  });
-  const [showPw,        setShowPw]        = useState(false);
-  const [showConfirmPw, setShowConfirmPw] = useState(false);
-  const [loading,       setLoading]       = useState(false);
-  const [error,         setError]         = useState("");
-  const [success,       setSuccess]       = useState(false);
+/* Compact header shown only on mobile (≤600px) via CSS */
+function MobileHeader() {
+  return (
+    <div className="su-mobile-header" style={{ display: "none" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <div style={{
+          width: 36, height: 36, borderRadius: 10,
+          background: "linear-gradient(135deg, rgba(232,55,42,0.15), rgba(0,200,224,0.10))",
+          border: "1px solid rgba(0,200,224,0.25)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          color: "#e8372a", fontSize: 15, flexShrink: 0,
+        }}>
+          <FaShieldAlt />
+        </div>
+        <div style={{
+          fontFamily: "'Syne', sans-serif", fontSize: 16, fontWeight: 900,
+          color: "#F8FAFC", letterSpacing: "-0.03em",
+        }}>
+          Duma<span style={{ color: "#00c8e0" }}>SafeGuide</span>
+        </div>
+      </div>
+      <div style={{
+        display: "inline-flex", alignItems: "center", gap: 6,
+        padding: "5px 10px", borderRadius: 99,
+        background: "rgba(0,200,224,0.10)", border: "1px solid rgba(0,200,224,0.22)",
+        fontSize: 9, fontWeight: 700, letterSpacing: "0.10em", textTransform: "uppercase",
+        color: "rgba(0,200,224,0.85)",
+      }}>
+        <span style={{
+          width: 5, height: 5, borderRadius: "50%", background: "#00c8e0",
+          display: "inline-block",
+        }} />
+        Sign Up
+      </div>
+    </div>
+  );
+}
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    const { fullName, email, phone, barangay, password, confirmPassword } = formData;
-
-    if (!fullName || !email || !phone || !barangay || !password || !confirmPassword) {
-      setError("Please complete all fields.");
-      return;
-    }
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // Step 1: Create the auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
-      if (authError) throw authError;
-      if (!authData.user) throw new Error("Signup failed. Please try again.");
-
-      // Step 2: Upsert the profile row.
-      // Supabase may auto-create a profiles row via trigger on signUp,
-      // so we use upsert (not insert) to avoid duplicate key errors.
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .upsert(
-          {
-            id:           authData.user.id,
-            full_name:    fullName,
-            email,
-            phone_number: phone,
-            barangay,
-            role:         "citizen",
-          },
-          { onConflict: "id" }
-        );
-
-      if (profileError) throw profileError;
-
-      // Step 3: Sign out — Supabase auto-logs in after signUp,
-      // but we want the citizen to go through the login page manually.
-      await supabase.auth.signOut();
-
-      setSuccess(true);
-      setTimeout(() => navigate("/login"), 4000);
-
-    } catch (err: any) {
-      // If it's a duplicate key error but auth succeeded, the account
-      // was created — just treat it as success.
-      const isDuplicate =
-        err.message?.toLowerCase().includes("duplicate") ||
-        err.message?.toLowerCase().includes("already") ||
-        err.code === "23505";
-
-      if (isDuplicate) {
-        await supabase.auth.signOut();
-        setSuccess(true);
-        setTimeout(() => navigate("/login"), 4000);
-        return;
-      }
-
-      setError(err.message || "An unexpected error occurred.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const LeftPanel = () => (
+function LeftPanel() {
+  return (
     <div className="su-left">
-      <div className="su-left-bg" style={{ backgroundImage: `url(${directorybg})` }} />
+      <div className="su-left-bg" />
       <div className="su-left-lines" />
       <div className="su-left-glow-a" />
       <div className="su-left-glow-b" />
 
+      {/* Mobile compact header — shown via CSS on ≤600px */}
+      <MobileHeader />
+
+      {/* Desktop brand row — hidden on mobile via CSS */}
       <div className="su-left-content">
         <div className="su-brand-row">
           <div className="su-logo-ring"><FaShieldAlt /></div>
@@ -659,6 +748,7 @@ export default function Signup() {
         </div>
       </div>
 
+      {/* Desktop hero — hidden on mobile via CSS */}
       <div className="su-hero su-left-content">
         <div className="su-hero-eyebrow">
           <span className="su-hero-dot" />
@@ -707,6 +797,86 @@ export default function Signup() {
       </div>
     </div>
   );
+}
+
+export default function Signup() {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    fullName: "", email: "", phone: "", barangay: "", password: "", confirmPassword: ""
+  });
+  const [showPw,        setShowPw]        = useState(false);
+  const [showConfirmPw, setShowConfirmPw] = useState(false);
+  const [loading,       setLoading]       = useState(false);
+  const [error,         setError]         = useState("");
+  const [success,       setSuccess]       = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    const { fullName, email, phone, barangay, password, confirmPassword } = formData;
+
+    if (!fullName || !email || !phone || !barangay || !password || !confirmPassword) {
+      setError("Please complete all fields.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
+      if (authError) throw authError;
+      if (!authData.user) throw new Error("Signup failed. Please try again.");
+
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .upsert(
+          {
+            id:           authData.user.id,
+            full_name:    fullName,
+            email,
+            phone_number: phone,
+            barangay,
+            role:         "citizen",
+          },
+          { onConflict: "id" }
+        );
+
+      if (profileError) throw profileError;
+
+      await supabase.auth.signOut();
+      setSuccess(true);
+      setTimeout(() => navigate("/login"), 4000);
+
+    } catch (err: any) {
+      const isDuplicate =
+        err.message?.toLowerCase().includes("duplicate") ||
+        err.message?.toLowerCase().includes("already") ||
+        err.code === "23505";
+
+      if (isDuplicate) {
+        await supabase.auth.signOut();
+        setSuccess(true);
+        setTimeout(() => navigate("/login"), 4000);
+        return;
+      }
+
+      setError(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (success) {
     return (
@@ -717,17 +887,13 @@ export default function Signup() {
           <div className="su-right">
             <div className="su-form-wrap">
               <div className="su-success">
-                <div className="su-success-icon">
-                  <FaCheck />
-                </div>
+                <div className="su-success-icon"><FaCheck /></div>
                 <div className="su-success-title">Account Created!</div>
                 <p className="su-success-msg">
                   Welcome to <strong>DumaSafeGuide</strong>!<br/>
                   Your citizen account is ready immediately.
                 </p>
-                <p className="su-success-note">
-                  Redirecting to login in 4 seconds…
-                </p>
+                <p className="su-success-note">Redirecting to login in 4 seconds…</p>
                 <div className="su-success-div" />
                 <Link to="/login" className="su-success-btn">
                   <FaArrowRight size={12} style={{ marginRight: "2px" }} />
