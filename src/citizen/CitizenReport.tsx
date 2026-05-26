@@ -268,6 +268,7 @@ const CSS = `
   .acc-great { background: rgba(46,204,143,.12);  color: #2ECC8F; border: 1px solid rgba(46,204,143,.25); }
   .acc-ok    { background: rgba(255,209,102,.10); color: #FFD166; border: 1px solid rgba(255,209,102,.22); }
   .acc-poor  { background: rgba(255,107,107,.10); color: #FF6B6B; border: 1px solid rgba(255,107,107,.22); }
+  .acc-ip    { background: rgba(123,158,255,.10); color: #7B9EFF; border: 1px solid rgba(123,158,255,.22); }
   .cr-acc-tip { font-size: 11px; color: rgba(255,107,107,.55); }
   .cr-hint { font-size: 12px; color: rgba(238,240,247,.25); line-height: 1.5; }
   .cr-hint--warn { font-size: 11px; color: rgba(255,209,102,.55); }
@@ -510,12 +511,99 @@ const CSS = `
   }
 `;
 
+// ── 1. Check browser permission state before touching GPS ─────────────────
+async function checkGeolocationPermission(): Promise<PermissionState | "unknown"> {
+  try {
+    if ("permissions" in navigator) {
+      const status = await navigator.permissions.query({ name: "geolocation" });
+      return status.state; // "granted" | "denied" | "prompt"
+    }
+  } catch {}
+  return "unknown";
+}
+
+// ── 2. IP-based fallback when GPS is blocked or unavailable ───────────────
+async function ipGeolocationFallback(): Promise<{ lat: string; lng: string } | null> {
+  try {
+    const res  = await fetch("https://ipapi.co/json/");
+    const data = await res.json();
+    if (data?.latitude && data?.longitude) {
+      return {
+        lat: String(data.latitude),
+        lng: String(data.longitude),
+      };
+    }
+  } catch {}
+  return null;
+}
+
+// ── 3. GPS acquisition — fixes silent failure & double-fire ──────────────
+function acquireGPS(
+  onSuccess: (lat: string, lng: string, acc: number) => void,
+  onError:   () => void
+) {
+  if (!navigator.geolocation) { onError(); return; }
+
+  let best:    GeolocationPosition | null = null;
+  let watchId: number | null = null;
+  let done     = false;                        // prevents double-fire
+
+  const finish = () => {
+    if (done) return;
+    done = true;
+    if (watchId !== null) {
+      navigator.geolocation.clearWatch(watchId);
+      watchId = null;
+    }
+    if (best) {
+      onSuccess(
+        best.coords.latitude.toFixed(6),
+        best.coords.longitude.toFixed(6),
+        best.coords.accuracy
+      );
+    } else {
+      onError();
+    }
+  };
+
+  // 25-second budget — enough for a cold GPS start on mobile outdoors
+  const timer = setTimeout(finish, 25_000);
+
+  watchId = navigator.geolocation.watchPosition(
+    (pos) => {
+      // Keep best (most accurate) fix seen so far
+      if (!best || pos.coords.accuracy < best.coords.accuracy) best = pos;
+      // Accept immediately when accuracy is within 15 m
+      if (pos.coords.accuracy <= 15) {
+        clearTimeout(timer);
+        finish();
+      }
+    },
+    (err) => {
+      // PERMISSION_DENIED → will never succeed, bail immediately
+      if (err.code === err.PERMISSION_DENIED) {
+        clearTimeout(timer);
+        finish(); // best is null → calls onError
+        return;
+      }
+      // POSITION_UNAVAILABLE / TIMEOUT → keep whatever best we have;
+      // let the 25-second timer decide
+      if (best) {
+        clearTimeout(timer);
+        finish();
+      }
+    },
+    { enableHighAccuracy: true, timeout: 30_000, maximumAge: 0 }
+  );
+}
+
 export default function CitizenReport() {
   const navigate = useNavigate();
 
   const [location,        setLocation]        = useState("");
   const [address,         setAddress]         = useState<string | null>(null);
   const [locationStatus,  setLocationStatus]  = useState<"idle"|"loading"|"ok"|"error">("idle");
+  const [locationSource,  setLocationSource]  = useState<"gps"|"ip"|null>(null);  // NEW
   const [selectedType,    setSelectedType]    = useState<string | null>(null);
   const [agreed,          setAgreed]          = useState(false);
   const [submitted,       setSubmitted]       = useState(false);
@@ -531,7 +619,7 @@ export default function CitizenReport() {
   const [reporterContact, setReporterContact] = useState("");
   const [description,     setDescription]    = useState("");
 
-  // ── Notification permission state (re-render trigger) ──
+  // ── Notification permission state ──
   const [notifPermission, setNotifPermission] = useState<NotificationPermission>(
     "Notification" in window ? Notification.permission : "granted"
   );
@@ -539,9 +627,13 @@ export default function CitizenReport() {
   const fileRef    = useRef<HTMLInputElement>(null);
   const activeType = INCIDENT_TYPES.find(t => t.value === selectedType);
 
+  // ── Reverse geocode coords → human-readable address ──────────────────────
   async function reverseGeocode(lat: string, lng: string) {
     try {
-      const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=jsonv2&addressdetails=1`, { headers: { "Accept-Language": "en" } });
+      const res  = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=jsonv2&addressdetails=1`,
+        { headers: { "Accept-Language": "en" } }
+      );
       const data = await res.json();
       if (data?.address) {
         const a = data.address;
@@ -551,9 +643,10 @@ export default function CitizenReport() {
         if (a.suburb)          parts.push(a.suburb);
         if (a.village)         parts.push(a.village);
         if (a.barangay)        parts.push(a.barangay);
-        if (a.city || a.town || a.municipality) parts.push(a.city ?? a.town ?? a.municipality);
+        if (a.city || a.town || a.municipality)
+          parts.push(a.city ?? a.town ?? a.municipality);
         if (a.state || a.province) parts.push(a.state ?? a.province);
-        if (a.country)         parts.push(a.country);
+        if (a.country) parts.push(a.country);
         const clean = [...new Set(parts)];
         if (clean.length) { setAddress(clean.join(", ")); return; }
       }
@@ -562,28 +655,59 @@ export default function CitizenReport() {
     setAddress(`Lat ${lat}, Lng ${lng}`);
   }
 
-  function acquireGPS(onSuccess: (lat: string, lng: string, acc: number) => void, onError: () => void) {
-    let best: GeolocationPosition | null = null;
-    let watchId: number | null = null;
-    const stop   = () => { if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; } };
-    const finish = () => { if (!best) { onError(); return; } onSuccess(best.coords.latitude.toFixed(6), best.coords.longitude.toFixed(6), best.coords.accuracy); };
-    const timer  = setTimeout(() => { stop(); finish(); }, 12000);
-    watchId = navigator.geolocation.watchPosition(
-      (pos) => {
-        if (!best || pos.coords.accuracy < best.coords.accuracy) best = pos;
-        if (pos.coords.accuracy <= 15) { clearTimeout(timer); stop(); finish(); }
+  // ── Core location resolver: GPS → IP fallback ─────────────────────────
+  async function resolveLocation() {
+    setLocationStatus("loading");
+    setAddress(null);
+    setGpsAccuracy(null);
+    setLocationSource(null);
+
+    const permState = await checkGeolocationPermission();
+
+    if (permState === "denied") {
+      // GPS blocked — go straight to IP fallback
+      const ip = await ipGeolocationFallback();
+      if (ip) {
+        setLocation(`${ip.lat}, ${ip.lng}`);
+        setGpsAccuracy(null);
+        setLocationSource("ip");
+        setLocationStatus("ok");
+        await reverseGeocode(ip.lat, ip.lng);
+      } else {
+        setLocationStatus("error");
+      }
+      return;
+    }
+
+    // Permission is "granted", "prompt", or unknown → try GPS first
+    acquireGPS(
+      async (lat, lng, acc) => {
+        setLocation(`${lat}, ${lng}`);
+        setGpsAccuracy(acc);
+        setLocationSource("gps");
+        setLocationStatus("ok");
+        await reverseGeocode(lat, lng);
       },
-      () => { clearTimeout(timer); stop(); onError(); },
-      { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+      async () => {
+        // GPS failed — try IP before showing error
+        const ip = await ipGeolocationFallback();
+        if (ip) {
+          setLocation(`${ip.lat}, ${ip.lng}`);
+          setGpsAccuracy(null);
+          setLocationSource("ip");
+          setLocationStatus("ok");
+          await reverseGeocode(ip.lat, ip.lng);
+        } else {
+          setLocationStatus("error");
+        }
+      }
     );
   }
 
+  // ── Auto-detect location on mount ────────────────────────────────────────
   useEffect(() => {
-    setLocationStatus("loading");
-    acquireGPS(async (lat, lng, acc) => {
-      setLocation(`${lat}, ${lng}`); setGpsAccuracy(acc); setLocationStatus("ok");
-      await reverseGeocode(lat, lng);
-    }, () => setLocationStatus("error"));
+    resolveLocation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -598,13 +722,22 @@ export default function CitizenReport() {
     const ext        = safeName.split(".").pop() ?? "bin";
     const uniqueName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
     const filePath   = `evidence/${uniqueName}`;
-    const { error }  = await supabase.storage.from("reports-evidence").upload(filePath, file, { cacheControl: "3600", upsert: false, contentType: file.type || "application/octet-stream" });
+    const { error }  = await supabase.storage
+      .from("reports-evidence")
+      .upload(filePath, file, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: file.type || "application/octet-stream",
+      });
     if (error) {
       setUploadProgress("error");
       let msg = `Upload failed: ${error.message}`;
-      if (error.message?.includes("Bucket not found")) msg = 'Storage bucket "reports-evidence" not found.';
-      else if (error.message?.includes("policy"))      msg = "Upload blocked by storage security policy.";
-      else if (error.message?.includes("too large"))   msg = "File is too large.";
+      if (error.message?.includes("Bucket not found"))
+        msg = 'Storage bucket "reports-evidence" not found.';
+      else if (error.message?.includes("policy"))
+        msg = "Upload blocked by storage security policy.";
+      else if (error.message?.includes("too large"))
+        msg = "File is too large.";
       return { url: null, errorMsg: msg };
     }
     const { data } = supabase.storage.from("reports-evidence").getPublicUrl(filePath);
@@ -624,31 +757,52 @@ export default function CitizenReport() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!agreed || !selectedType) return;
-    setSubmitting(true); setSubmitError(null);
+    setSubmitting(true);
+    setSubmitError(null);
+
     const { data: { user } } = await supabase.auth.getUser();
+
     let evidenceUrl: string | null = null;
     if (fileObject) {
       const { url, errorMsg } = await uploadEvidence(fileObject);
-      if (!url) { setSubmitError(errorMsg ?? "Evidence upload failed."); setSubmitting(false); return; }
+      if (!url) {
+        setSubmitError(errorMsg ?? "Evidence upload failed.");
+        setSubmitting(false);
+        return;
+      }
       evidenceUrl = url;
     }
-    const { data: inserted, error } = await supabase.from("reports").insert({
-      type: selectedType, description: description.trim() || null,
-      location: location || null, address: address || null,
-      reporter_name: reporterName.trim() || null,
-      reporter_contact: reporterContact.trim() || null,
-      status: "pending", user_id: user?.id ?? null,
-      responder_id: null, evidence_url: evidenceUrl,
-    }).select("id").single();
-    if (error) { setSubmitError("Failed to submit report. Please try again."); setSubmitting(false); return; }
+
+    const { data: inserted, error } = await supabase
+      .from("reports")
+      .insert({
+        type:             selectedType,
+        description:      description.trim() || null,
+        location:         location || null,
+        address:          address || null,
+        reporter_name:    reporterName.trim() || null,
+        reporter_contact: reporterContact.trim() || null,
+        status:           "pending",
+        user_id:          user?.id ?? null,
+        responder_id:     null,
+        evidence_url:     evidenceUrl,
+      })
+      .select("id")
+      .single();
+
+    if (error) {
+      setSubmitError("Failed to submit report. Please try again.");
+      setSubmitting(false);
+      return;
+    }
+
     setSubmitting(false);
     setSubmittedId(inserted?.id ?? null);
     setSubmitted(true);
-
-    // ── Prompt for notification permission right after success ──
     await requestNotificationPermission();
   }
 
+  // ── Step progress tracker ─────────────────────────────────────────────────
   useEffect(() => {
     if (agreed && selectedType)                                    setCurrentStep(5);
     else if (fileName)                                             setCurrentStep(4);
@@ -658,6 +812,7 @@ export default function CitizenReport() {
     else                                                           setCurrentStep(0);
   }, [selectedType, locationStatus, fileName, agreed, description]);
 
+  // ── Location field display value ──────────────────────────────────────────
   function gpsValue() {
     if (locationStatus === "loading") return "Acquiring location — please wait…";
     if (locationStatus === "error")   return "Location unavailable — GPS access denied or timed out";
@@ -669,16 +824,22 @@ export default function CitizenReport() {
   }
 
   function resetForm() {
-    setSubmitted(false); setSubmittedId(null); setSelectedType(null); setDescription("");
-    setReporterName(""); setReporterContact(""); setFileName(null);
-    setFileObject(null); setAgreed(false); setUploadProgress("idle");
+    setSubmitted(false);
+    setSubmittedId(null);
+    setSelectedType(null);
+    setDescription("");
+    setReporterName("");
+    setReporterContact("");
+    setFileName(null);
+    setFileObject(null);
+    setAgreed(false);
+    setUploadProgress("idle");
   }
 
-  // ── Notification warning banner (shown on success screen) ──
+  // ── Notification warning banner ───────────────────────────────────────────
   function NotificationWarningBanner() {
     if (!("Notification" in window)) return null;
     if (notifPermission === "granted") return null;
-
     return (
       <div className="cr-notif-banner">
         <span className="cr-notif-banner-icon">⚠️</span>
@@ -717,7 +878,7 @@ export default function CitizenReport() {
     );
   }
 
-  // ── Success screen ──
+  // ── Success screen ────────────────────────────────────────────────────────
   if (submitted) {
     return (
       <>
@@ -734,14 +895,8 @@ export default function CitizenReport() {
                 responders. Authorities have been notified and will respond
                 shortly. Keep your phone nearby for follow-up.
               </p>
-
-              {/* ── Notification + GPS warning banner ── */}
               <NotificationWarningBanner />
-
-              {/* ── Two cards side by side ── */}
               <div className="cr-success-cards">
-
-                {/* Card 1 — Submit another */}
                 <div className="cr-success-card">
                   <div className="cr-success-card-icon">📝</div>
                   <div className="cr-success-card-title">Submit Another Report</div>
@@ -752,8 +907,6 @@ export default function CitizenReport() {
                     Submit Another Report →
                   </button>
                 </div>
-
-                {/* Card 2 — Track this report */}
                 <div className="cr-success-card cr-success-card--track">
                   <div className="cr-success-card-icon">📍</div>
                   <div className="cr-success-card-title">Track My Report</div>
@@ -772,7 +925,6 @@ export default function CitizenReport() {
                     Track Incident Report →
                   </button>
                 </div>
-
               </div>
             </div>
           </div>
@@ -781,6 +933,7 @@ export default function CitizenReport() {
     );
   }
 
+  // ── Main form ─────────────────────────────────────────────────────────────
   return (
     <>
       <style>{CSS}</style>
@@ -837,15 +990,22 @@ export default function CitizenReport() {
             {/* ── Form ── */}
             <form className="cr-form" onSubmit={handleSubmit} noValidate>
 
-              {/* Step 1 — Type */}
+              {/* Step 1 — Incident Type */}
               <div className="cr-card">
-                <div className="cr-card-label"><span className="cr-step-badge">01</span>Incident Type</div>
+                <div className="cr-card-label">
+                  <span className="cr-step-badge">01</span>Incident Type
+                </div>
                 <div className="cr-type-grid">
                   {INCIDENT_TYPES.map(type => (
                     <button
-                      key={type.value} type="button"
+                      key={type.value}
+                      type="button"
                       className={`cr-type-btn${selectedType === type.value ? " active" : ""}`}
-                      style={{ "--ta": type.accent, "--td": `${type.accent}18`, "--tr": type.rgb } as React.CSSProperties}
+                      style={{
+                        "--ta": type.accent,
+                        "--td": `${type.accent}18`,
+                        "--tr": type.rgb,
+                      } as React.CSSProperties}
                       onClick={() => setSelectedType(type.value)}
                     >
                       <span className="cr-type-icon">{type.icon}</span>
@@ -856,33 +1016,55 @@ export default function CitizenReport() {
                 {selectedType && (
                   <div
                     className="cr-type-confirm"
-                    style={{ "--ta": activeType?.accent, "--td": `${activeType?.accent}18` } as React.CSSProperties}
+                    style={{
+                      "--ta": activeType?.accent,
+                      "--td": `${activeType?.accent}18`,
+                    } as React.CSSProperties}
                   >
-                    <span>{activeType?.icon}</span><span>{activeType?.label} selected</span>
+                    <span>{activeType?.icon}</span>
+                    <span>{activeType?.label} selected</span>
                   </div>
                 )}
               </div>
 
               {/* Step 2 — Reporter Info */}
               <div className="cr-card">
-                <div className="cr-card-label"><span className="cr-step-badge">02</span>Reporter Information</div>
+                <div className="cr-card-label">
+                  <span className="cr-step-badge">02</span>Reporter Information
+                </div>
                 <div className="cr-fields">
                   <div className="cr-field">
-                    <label className="cr-label">Full Name <span className="cr-optional">(Optional)</span></label>
-                    <input className="cr-input" type="text" placeholder="e.g. Juan dela Cruz"
-                      value={reporterName} onChange={e => setReporterName(e.target.value)} />
+                    <label className="cr-label">
+                      Full Name <span className="cr-optional">(Optional)</span>
+                    </label>
+                    <input
+                      className="cr-input"
+                      type="text"
+                      placeholder="e.g. Juan dela Cruz"
+                      value={reporterName}
+                      onChange={e => setReporterName(e.target.value)}
+                    />
                   </div>
                   <div className="cr-field">
-                    <label className="cr-label">Contact Number <span className="cr-optional">(Optional)</span></label>
-                    <input className="cr-input" type="tel" placeholder="+63 9XX XXX XXXX"
-                      value={reporterContact} onChange={e => setReporterContact(e.target.value)} />
+                    <label className="cr-label">
+                      Contact Number <span className="cr-optional">(Optional)</span>
+                    </label>
+                    <input
+                      className="cr-input"
+                      type="tel"
+                      placeholder="+63 9XX XXX XXXX"
+                      value={reporterContact}
+                      onChange={e => setReporterContact(e.target.value)}
+                    />
                   </div>
                 </div>
               </div>
 
               {/* Step 3 — Location */}
               <div className="cr-card">
-                <div className="cr-card-label"><span className="cr-step-badge">03</span>Your Location</div>
+                <div className="cr-card-label">
+                  <span className="cr-step-badge">03</span>Your Location
+                </div>
                 <div className="cr-field">
                   <label className="cr-label">Detected Location</label>
                   <div className="cr-loc-row">
@@ -890,55 +1072,88 @@ export default function CitizenReport() {
                       <span className="cr-loc-dot" data-status={locationStatus} />
                       <input
                         className="cr-input cr-input--loc cr-input--readonly"
-                        type="text" readOnly
+                        type="text"
+                        readOnly
                         value={gpsValue()}
                         placeholder="Waiting for GPS…"
                       />
                     </div>
-                    <button type="button" className="cr-gps-btn" onClick={() => {
-                      setLocationStatus("loading"); setAddress(null); setGpsAccuracy(null);
-                      acquireGPS(async (lat, lng, acc) => {
-                        setLocation(`${lat}, ${lng}`); setGpsAccuracy(acc); setLocationStatus("ok");
-                        await reverseGeocode(lat, lng);
-                      }, () => setLocationStatus("error"));
-                    }}>📍 Refresh GPS</button>
+                    <button
+                      type="button"
+                      className="cr-gps-btn"
+                      onClick={resolveLocation}
+                    >
+                      📍 Refresh GPS
+                    </button>
                   </div>
 
                   {locationStatus === "ok" && location && (
                     <div className="cr-coords-badge">
                       <span className="cr-coords-text">🌐 {location}</span>
                       {address && (
-                        <a href={`https://www.google.com/maps?q=${location}`} target="_blank" rel="noopener noreferrer" className="cr-maps-link">
+                        <a
+                          href={`https://www.google.com/maps?q=${location}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="cr-maps-link"
+                        >
                           Verify on Maps →
                         </a>
                       )}
                     </div>
                   )}
+
                   {locationStatus === "loading" && (
                     <div className="cr-gps-acquiring">
                       <span className="cr-gps-pulse" />
                       Searching for GPS signal — keep your device still and outdoors.
                     </div>
                   )}
+
                   {locationStatus === "error" && (
                     <p className="cr-hint cr-hint--warn">
-                      ⚠️ Location access was denied or timed out. Allow location access and tap <strong>Refresh GPS</strong>.
+                      ⚠️ Location access was denied or timed out. Allow location
+                      access and tap <strong>Refresh GPS</strong>.
                     </p>
                   )}
+
                   {locationStatus === "ok" && (
                     <>
                       <div className="cr-acc-badges">
-                        {gpsAccuracy !== null && (
-                          <span className={`cr-acc-badge ${gpsAccuracy <= 20 ? "acc-great" : gpsAccuracy <= 100 ? "acc-ok" : "acc-poor"}`}>
-                            {gpsAccuracy <= 20 ? "✓ High accuracy" : gpsAccuracy <= 100 ? "~ Medium accuracy" : "⚠ Low accuracy"} (±{Math.round(gpsAccuracy)}m)
+                        {/* GPS accuracy badge */}
+                        {locationSource === "gps" && gpsAccuracy !== null && (
+                          <span
+                            className={`cr-acc-badge ${
+                              gpsAccuracy <= 20
+                                ? "acc-great"
+                                : gpsAccuracy <= 100
+                                ? "acc-ok"
+                                : "acc-poor"
+                            }`}
+                          >
+                            {gpsAccuracy <= 20
+                              ? "✓ High accuracy"
+                              : gpsAccuracy <= 100
+                              ? "~ Medium accuracy"
+                              : "⚠ Low accuracy"}{" "}
+                            (±{Math.round(gpsAccuracy)}m)
                           </span>
                         )}
-                        {gpsAccuracy !== null && gpsAccuracy > 100 && (
-                          <span className="cr-acc-tip">Move outdoors for better accuracy</span>
+                        {/* IP-based badge */}
+                        {locationSource === "ip" && (
+                          <span className="cr-acc-badge acc-ip">
+                            📡 Approximate location (IP-based — GPS unavailable)
+                          </span>
+                        )}
+                        {locationSource === "gps" && gpsAccuracy !== null && gpsAccuracy > 100 && (
+                          <span className="cr-acc-tip">
+                            Move outdoors for better accuracy
+                          </span>
                         )}
                       </div>
                       <p className="cr-hint cr-hint--warn">
-                        ⚠️ If the location looks wrong, tap <strong>Refresh GPS</strong> to try again.
+                        ⚠️ If the location looks wrong, tap{" "}
+                        <strong>Refresh GPS</strong> to try again.
                       </p>
                     </>
                   )}
@@ -947,13 +1162,18 @@ export default function CitizenReport() {
 
               {/* Step 4 — Description */}
               <div className="cr-card">
-                <div className="cr-card-label"><span className="cr-step-badge">04</span>Incident Details</div>
+                <div className="cr-card-label">
+                  <span className="cr-step-badge">04</span>Incident Details
+                </div>
                 <div className="cr-field">
                   <label className="cr-label">Detailed Description</label>
                   <textarea
-                    className="cr-textarea" rows={5}
+                    className="cr-textarea"
+                    rows={5}
                     placeholder="Describe what happened — include time, number of people involved, severity, and any other relevant details…"
-                    value={description} onChange={e => setDescription(e.target.value)} required
+                    value={description}
+                    onChange={e => setDescription(e.target.value)}
+                    required
                   />
                 </div>
               </div>
@@ -972,22 +1192,53 @@ export default function CitizenReport() {
                     e.preventDefault();
                     const file = e.dataTransfer.files[0];
                     if (file && fileRef.current) {
-                      const dt = new DataTransfer(); dt.items.add(file);
+                      const dt = new DataTransfer();
+                      dt.items.add(file);
                       fileRef.current.files = dt.files;
-                      setFileName(file.name); setFileObject(file); setUploadProgress("idle");
+                      setFileName(file.name);
+                      setFileObject(file);
+                      setUploadProgress("idle");
                     }
                   }}
                 >
-                  <input ref={fileRef} type="file" accept="image/*,video/*"
-                    style={{ display: "none" }} onChange={handleFileChange} />
-                  {fileName
-                    ? (<><span className="cr-dropzone-icon">📎</span><span className="cr-dropzone-name">{fileName}</span><span className="cr-dropzone-change">Click to change</span></>)
-                    : (<><span className="cr-dropzone-icon">📤</span><span className="cr-dropzone-text">Click to select or drag & drop</span><span className="cr-dropzone-hint">Photos or videos accepted</span></>)
-                  }
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept="image/*,video/*"
+                    style={{ display: "none" }}
+                    onChange={handleFileChange}
+                  />
+                  {fileName ? (
+                    <>
+                      <span className="cr-dropzone-icon">📎</span>
+                      <span className="cr-dropzone-name">{fileName}</span>
+                      <span className="cr-dropzone-change">Click to change</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="cr-dropzone-icon">📤</span>
+                      <span className="cr-dropzone-text">
+                        Click to select or drag &amp; drop
+                      </span>
+                      <span className="cr-dropzone-hint">Photos or videos accepted</span>
+                    </>
+                  )}
                 </div>
-                {uploadProgress === "uploading" && <div className="cr-upload-status cr-upload--uploading">⏳ Uploading evidence…</div>}
-                {uploadProgress === "done"      && <div className="cr-upload-status cr-upload--done">✅ Evidence uploaded successfully</div>}
-                {uploadProgress === "error"     && <div className="cr-upload-status cr-upload--error">❌ Upload failed — please try again</div>}
+                {uploadProgress === "uploading" && (
+                  <div className="cr-upload-status cr-upload--uploading">
+                    ⏳ Uploading evidence…
+                  </div>
+                )}
+                {uploadProgress === "done" && (
+                  <div className="cr-upload-status cr-upload--done">
+                    ✅ Evidence uploaded successfully
+                  </div>
+                )}
+                {uploadProgress === "error" && (
+                  <div className="cr-upload-status cr-upload--error">
+                    ❌ Upload failed — please try again
+                  </div>
+                )}
               </div>
 
               {/* Disclaimer */}
@@ -997,15 +1248,25 @@ export default function CitizenReport() {
                   <span className="cr-disclaimer-title">Legal Acknowledgment</span>
                 </div>
                 <p className="cr-disclaimer-summary">
-                  By submitting this report, you confirm that the information provided is true and accurate to the best of your knowledge.
+                  By submitting this report, you confirm that the information
+                  provided is true and accurate to the best of your knowledge.
                 </p>
                 <label className="cr-check-row">
-                  <input type="checkbox" className="cr-checkbox-hidden" checked={agreed} onChange={e => setAgreed(e.target.checked)} required />
+                  <input
+                    type="checkbox"
+                    className="cr-checkbox-hidden"
+                    checked={agreed}
+                    onChange={e => setAgreed(e.target.checked)}
+                    required
+                  />
                   <div className="cr-checkbox-box">{agreed && "✓"}</div>
                   <span className="cr-check-text">
-                    I understand that submitting <strong>false, misleading, or malicious reports</strong> is punishable under the{" "}
-                    <strong>Cybercrime Prevention Act of 2012 (RA 10175)</strong>, the <strong>Penal Code</strong>, and other applicable
-                    Philippine laws. Penalties may include fines and imprisonment.
+                    I understand that submitting{" "}
+                    <strong>false, misleading, or malicious reports</strong> is
+                    punishable under the{" "}
+                    <strong>Cybercrime Prevention Act of 2012 (RA 10175)</strong>,
+                    the <strong>Penal Code</strong>, and other applicable Philippine
+                    laws. Penalties may include fines and imprisonment.
                   </span>
                 </label>
               </div>
@@ -1014,20 +1275,38 @@ export default function CitizenReport() {
                 <div className="cr-error">
                   <div>⚠️ {submitError}</div>
                   {uploadProgress === "error" && (
-                    <button type="button" className="cr-skip-btn" onClick={() => {
-                      setFileObject(null); setFileName(null); setUploadProgress("idle"); setSubmitError(null);
-                    }}>
+                    <button
+                      type="button"
+                      className="cr-skip-btn"
+                      onClick={() => {
+                        setFileObject(null);
+                        setFileName(null);
+                        setUploadProgress("idle");
+                        setSubmitError(null);
+                      }}
+                    >
                       Remove evidence and submit without it →
                     </button>
                   )}
                 </div>
               )}
 
-              <button type="submit" className="cr-submit" disabled={!agreed || !selectedType || submitting}>
-                {submitting
-                  ? (<><span className="cr-spinner" /><span>Submitting…</span></>)
-                  : (<><span>Submit Incident Report</span><span className="cr-submit-arrow">→</span></>)
-                }
+              <button
+                type="submit"
+                className="cr-submit"
+                disabled={!agreed || !selectedType || submitting}
+              >
+                {submitting ? (
+                  <>
+                    <span className="cr-spinner" />
+                    <span>Submitting…</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Submit Incident Report</span>
+                    <span className="cr-submit-arrow">→</span>
+                  </>
+                )}
               </button>
             </form>
 
@@ -1037,8 +1316,12 @@ export default function CitizenReport() {
                 <div className="cr-sidebar-title">Emergency Hotlines</div>
                 <div className="cr-hotlines">
                   {EMERGENCY_HOTLINES.map(h => (
-                    <a key={h.number} href={`tel:${h.number}`} className="cr-hotline"
-                      style={{ "--hc": h.color } as React.CSSProperties}>
+                    <a
+                      key={h.number}
+                      href={`tel:${h.number}`}
+                      className="cr-hotline"
+                      style={{ "--hc": h.color } as React.CSSProperties}
+                    >
                       <span className="cr-hotline-icon">{h.icon}</span>
                       <div className="cr-hotline-info">
                         <span className="cr-hotline-label">{h.label}</span>
@@ -1053,23 +1336,30 @@ export default function CitizenReport() {
               <div className="cr-sidebar-card cr-sidebar-card--warn">
                 <div className="cr-sidebar-title">⚠️ Emergency Reminder</div>
                 <p className="cr-sidebar-text">
-                  If someone is in immediate danger, call emergency services directly. Do not rely solely on this form in life-threatening situations.
+                  If someone is in immediate danger, call emergency services
+                  directly. Do not rely solely on this form in life-threatening
+                  situations.
                 </p>
               </div>
 
               <div className="cr-sidebar-card cr-sidebar-card--info">
                 <div className="cr-sidebar-title">🛡️ Your Safety Matters</div>
                 <p className="cr-sidebar-text">
-                  Your identity and contact information are kept strictly confidential. You may submit anonymously if preferred.
+                  Your identity and contact information are kept strictly
+                  confidential. You may submit anonymously if preferred.
                 </p>
               </div>
 
               <div className="cr-sidebar-card cr-sidebar-card--track">
                 <div className="cr-sidebar-title">📍 Track Your Report</div>
                 <p className="cr-sidebar-text">
-                  View all your submitted reports and track their status in real-time as authorities respond and investigate.
+                  View all your submitted reports and track their status in
+                  real-time as authorities respond and investigate.
                 </p>
-                <button className="cr-track-btn" onClick={() => navigate("/citizen/history")}>
+                <button
+                  className="cr-track-btn"
+                  onClick={() => navigate("/citizen/history")}
+                >
                   View My Reports →
                 </button>
               </div>
