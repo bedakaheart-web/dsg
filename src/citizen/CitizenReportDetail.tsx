@@ -1,4 +1,3 @@
-// src/citizen/CitizenReportDetail.tsx
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "../js/supabase";
@@ -83,7 +82,7 @@ export default function CitizenReportDetail() {
 
         .rd { min-height: 100vh; font-family: var(--font-body); color: var(--text); position: relative; overflow-x: hidden; }
         .rd-bg { position: fixed; inset: 0; z-index: 0; background-image: url('${pageBg}'); background-size: cover; background-position: center; }
-        .rd-bg::after { content: ''; position: absolute; inset: 0; background: rgba(8,12,20,0.82); }
+        .rd-bg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(160deg, rgba(8,12,20,.92) 0%, rgba(8,12,20,.80) 50%, rgba(8,12,20,.94) 100%); }
         .rd-glow { position: fixed; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
         .rd-glow-1 { position: absolute; width: 600px; height: 600px; border-radius: 50%; background: radial-gradient(circle, rgba(46,204,143,0.07) 0%, transparent 70%); top: -200px; left: -100px; }
         .rd-glow-2 { position: absolute; width: 500px; height: 500px; border-radius: 50%; background: radial-gradient(circle, rgba(123,158,255,0.06) 0%, transparent 70%); bottom: -150px; right: -50px; }
@@ -95,8 +94,8 @@ export default function CitizenReportDetail() {
         .rd-logo { display: flex; align-items: center; gap: 9px; text-decoration: none; }
         .rd-logo-text { font-family: var(--font-display); font-size: 16px; font-weight: 800; letter-spacing: -.01em; color: var(--text); }
         .rd-logo-text span { color: var(--green); }
-        .rd-back { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 500; color: var(--text-3); text-decoration: none; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 7px 14px; background: var(--surface); transition: all .2s; }
-        .rd-back:hover { color: var(--text); border-color: var(--border-2); background: var(--surface-2); }
+        .rd-back { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 500; color: var(--text-3); text-decoration: none; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 7px 14px; background: rgba(15,21,33,.82); transition: all .2s; backdrop-filter: blur(16px); }
+        .rd-back:hover { color: var(--text); border-color: var(--border-2); background: rgba(15,21,33,.95); }
 
         /* Hero */
         .rd-hero { margin-top: 40px; margin-bottom: 28px; animation: fadeUp .6s .05s ease both; }
@@ -112,7 +111,7 @@ export default function CitizenReportDetail() {
         .rd-section-line { flex: 1; height: 1px; background: linear-gradient(90deg, var(--border-2), transparent); }
 
         /* Detail card */
-        .rd-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 20px; animation: fadeUp .6s .1s ease both; backdrop-filter: blur(16px); }
+        .rd-card { background: rgba(15,21,33,.82); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 20px; animation: fadeUp .6s .1s ease both; backdrop-filter: blur(16px); }
         .rd-card-top { padding: 22px 24px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
         .rd-card-top-left { display: flex; align-items: flex-start; gap: 14px; }
         .rd-card-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 16px; }
@@ -140,7 +139,7 @@ export default function CitizenReportDetail() {
         .rd-type-tag { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: capitalize; border-radius: 6px; padding: 3px 9px; display: inline-block; }
 
         /* Evidence image */
-        .rd-evidence-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 20px; animation: fadeUp .6s .15s ease both; backdrop-filter: blur(16px); }
+        .rd-evidence-card { background: rgba(15,21,33,.82); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 20px; animation: fadeUp .6s .15s ease both; backdrop-filter: blur(16px); }
         .rd-evidence-head { padding: 16px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
         .rd-evidence-title { font-family: var(--font-display); font-size: 14px; font-weight: 700; color: var(--text); }
         .rd-evidence-body { padding: 20px 22px; display: flex; flex-direction: column; gap: 12px; }
@@ -152,7 +151,7 @@ export default function CitizenReportDetail() {
         .rd-evidence-empty-text { font-size: 13px; color: var(--text-3); }
 
         /* Responder note card */
-        .rd-note-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; animation: fadeUp .6s .2s ease both; backdrop-filter: blur(16px); margin-bottom: 20px; }
+        .rd-note-card { background: rgba(15,21,33,.82); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; animation: fadeUp .6s .2s ease both; backdrop-filter: blur(16px); margin-bottom: 20px; }
         .rd-note-head { padding: 16px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
         .rd-note-title { font-family: var(--font-display); font-size: 14px; font-weight: 700; color: var(--text); }
         .rd-note-badge { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #2ECC8F; background: rgba(46,204,143,.1); border: 1px solid rgba(46,204,143,.22); border-radius: 20px; padding: 3px 9px; }
@@ -168,7 +167,7 @@ export default function CitizenReportDetail() {
         .rd-note-empty-sub { font-size: 12px; color: var(--text-3); opacity: .7; }
 
         /* Status timeline */
-        .rd-timeline-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; animation: fadeUp .6s .25s ease both; backdrop-filter: blur(16px); }
+        .rd-timeline-card { background: rgba(15,21,33,.82); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; animation: fadeUp .6s .25s ease both; backdrop-filter: blur(16px); }
         .rd-timeline-head { padding: 16px 22px; border-bottom: 1px solid var(--border); }
         .rd-timeline-title { font-family: var(--font-display); font-size: 14px; font-weight: 700; color: var(--text); }
         .rd-timeline-body { padding: 20px 22px; display: flex; flex-direction: column; gap: 0; }

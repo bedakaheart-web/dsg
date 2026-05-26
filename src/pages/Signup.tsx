@@ -6,7 +6,7 @@ import directorybg from "../assets/directorybg.png";
 import dsgLogo from "../assets/dsg_logo.png";
 
 const CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@300;400;500;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
 
   html, body {
     overflow-x: hidden !important;
@@ -20,7 +20,7 @@ const CSS = `
   .su-root {
     min-height: 100vh;
     display: flex;
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     color: #ddeef8;
     background: linear-gradient(135deg, #0d1b2e 0%, #071a1d 50%, #0a1f28 100%);
     overflow-x: hidden;
@@ -141,9 +141,9 @@ const CSS = `
   .su-brand-row:hover .su-logo-ring { transform: scale(1.08) rotate(-5deg); }
 
   .su-brand-name {
-    font-family: 'Syne', sans-serif;
-    font-size: 18px; font-weight: 900;
-    color: #F8FAFC; letter-spacing: -0.03em;
+    font-family: 'Poppins', sans-serif;
+    font-size: 18px; font-weight: 700;
+    color: #F8FAFC; letter-spacing: -0.02em;
   }
 
   .su-brand-name span { color: #00c8e0; }
@@ -163,6 +163,7 @@ const CSS = `
     padding: 6px 12px; border-radius: 99px;
     background: rgba(0,200,224,0.10);
     border: 1px solid rgba(0,200,224,0.25);
+    font-family: 'Inter', sans-serif;
     font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
     color: rgba(0,200,224,0.80);
     margin-bottom: 20px;
@@ -176,9 +177,9 @@ const CSS = `
   @keyframes su-pulse { 0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)} }
 
   .su-hero-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 36px; font-weight: 900;
-    color: #F8FAFC; line-height: 1.08; letter-spacing: -0.03em;
+    font-family: 'Poppins', sans-serif;
+    font-size: 36px; font-weight: 700;
+    color: #F8FAFC; line-height: 1.08; letter-spacing: -0.025em;
     margin-bottom: 18px;
   }
 
@@ -186,7 +187,8 @@ const CSS = `
   .su-hero-title .r { color: #e8372a; }
 
   .su-hero-desc {
-    font-size: 14px; font-weight: 300;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px; font-weight: 400;
     color: rgba(168,216,255,0.45); line-height: 1.8;
     max-width: 340px; margin-bottom: 36px;
   }
@@ -219,12 +221,18 @@ const CSS = `
     background: rgba(0,200,224,0.12);
     border: 1px solid rgba(0,200,224,0.30);
     display: flex; align-items: center; justify-content: center;
-    font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 900; color: #00c8e0;
+    font-family: 'Poppins', sans-serif; font-size: 11px; font-weight: 700; color: #00c8e0;
     margin-top: 1px;
   }
 
-  .su-step-title { font-size: 12.5px; font-weight: 700; color: rgba(168,216,255,0.85); margin-bottom: 3px; letter-spacing: -0.01em; }
-  .su-step-desc  { font-size: 11.5px; color: rgba(168,216,255,0.35); line-height: 1.5; }
+  .su-step-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 12.5px; font-weight: 600; color: rgba(168,216,255,0.85); margin-bottom: 3px; letter-spacing: -0.01em;
+  }
+  .su-step-desc  {
+    font-family: 'Inter', sans-serif;
+    font-size: 11.5px; color: rgba(168,216,255,0.35); line-height: 1.5;
+  }
 
   .su-left-footer {
     position: relative; z-index: 2;
@@ -252,8 +260,11 @@ const CSS = `
     animation: su-pulse 2.5s ease-in-out infinite;
   }
 
-  .su-cert-text { font-size: 11.5px; color: rgba(168,216,255,0.50); }
-  .su-cert-text strong { color: rgba(168,216,255,0.80); font-weight: 700; }
+  .su-cert-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 11.5px; color: rgba(168,216,255,0.50);
+  }
+  .su-cert-text strong { color: rgba(168,216,255,0.80); font-weight: 600; }
 
   /* ── Right Panel ── */
   .su-right {
@@ -287,7 +298,9 @@ const CSS = `
 
   .su-back {
     display: inline-flex; align-items: center; gap: 7px;
-    margin-bottom: 32px; font-size: 12px; font-weight: 600;
+    margin-bottom: 32px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11.5px; font-weight: 600;
     color: rgba(168,216,255,0.45); text-decoration: none;
     transition: all .3s ease;
   }
@@ -309,14 +322,15 @@ const CSS = `
   }
 
   .su-form-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 28px; font-weight: 900;
-    color: #F8FAFC; letter-spacing: -0.03em; margin-bottom: 6px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 28px; font-weight: 700;
+    color: #F8FAFC; letter-spacing: -0.025em; margin-bottom: 6px;
     animation: slideUp .6s .1s cubic-bezier(.22,1,.36,1) both;
   }
 
   .su-form-sub {
-    font-size: 13.5px; font-weight: 300;
+    font-family: 'Inter', sans-serif;
+    font-size: 13.5px; font-weight: 400;
     color: rgba(168,216,255,0.45); margin-bottom: 28px;
     animation: slideUp .6s .15s cubic-bezier(.22,1,.36,1) both;
   }
@@ -326,6 +340,7 @@ const CSS = `
     background: rgba(232,55,42,0.10);
     border: 1px solid rgba(232,55,42,0.28);
     border-radius: 12px; padding: 13px 15px;
+    font-family: 'Inter', sans-serif;
     font-size: 12.5px; color: #ff8877; margin-bottom: 18px;
     animation: errorShake .35s ease;
     width: 100%; box-sizing: border-box;
@@ -349,8 +364,10 @@ const CSS = `
   .su-field:nth-child(5) { animation-delay: .4s; }
 
   .su-label {
-    display: block; font-size: 10px; font-weight: 700; letter-spacing: .14em;
-    text-transform: uppercase; color: rgba(168,216,255,0.32); margin-bottom: 8px;
+    display: block;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px; font-weight: 700; letter-spacing: .04em;
+    text-transform: uppercase; color: rgba(168,216,255,0.64); margin-bottom: 9px;
   }
 
   .su-input-wrap { position: relative; width: 100%; }
@@ -366,12 +383,12 @@ const CSS = `
 
   .su-input, .su-select {
     width: 100%;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(0,200,224,0.12);
+    background: rgba(6, 15, 28, 0.85);
+    border: 1.5px solid rgba(0,200,224,0.16);
     border-radius: 11px;
-    padding: 12px 16px 12px 38px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13.5px;
+    padding: 13px 16px 13px 42px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
     color: #F8FAFC;
     outline: none;
     caret-color: #00c8e0;
@@ -379,15 +396,15 @@ const CSS = `
     box-sizing: border-box;
   }
 
-  .su-input::placeholder { color: rgba(168,216,255,0.18); }
+  .su-input::placeholder { color: rgba(168,216,255,0.22); }
 
   .su-input:focus, .su-select:focus {
-    border-color: rgba(0,200,224,0.35);
-    background: rgba(0,200,224,0.03);
-    box-shadow: 0 0 0 3px rgba(0,200,224,0.07), inset 0 0 0 1px rgba(0,200,224,0.05);
+    border-color: rgba(0,200,224,0.42);
+    background: rgba(0,200,224,0.04);
+    box-shadow: 0 0 0 4px rgba(0,200,224,0.08), inset 0 0 0 1px rgba(0,200,224,0.06);
   }
 
-  .su-input.has-eye { padding-right: 42px; }
+  .su-input.has-eye { padding-right: 44px; }
 
   .su-select {
     appearance: none; cursor: pointer;
@@ -401,22 +418,23 @@ const CSS = `
   .su-eye {
     position: absolute; right: 13px; top: 50%; transform: translateY(-50%);
     background: none; border: none; cursor: pointer; padding: 0;
-    color: rgba(0,200,224,0.25);
+    color: rgba(0,200,224,0.35);
     display: flex; align-items: center;
     transition: color .2s;
   }
 
-  .su-eye:hover { color: rgba(0,200,224,0.60); }
+  .su-eye:hover { color: rgba(0,200,224,0.70); }
 
   .su-pw-hint {
+    font-family: 'Inter', sans-serif;
     font-size: 11px; color: rgba(168,216,255,0.22);
     margin-top: 5px; padding-left: 2px; font-weight: 400;
   }
 
   .su-btn {
-    width: 100%; padding: 14px 20px;
-    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 800;
-    letter-spacing: .08em; text-transform: uppercase;
+    width: 100%; padding: 15px 22px;
+    font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 700;
+    letter-spacing: .10em; text-transform: uppercase;
     border-radius: 11px; border: none;
     background: linear-gradient(135deg, #e8372a 0%, #f04438 100%);
     color: #fff; cursor: pointer;
@@ -424,21 +442,21 @@ const CSS = `
     transition: all .25s ease;
     margin-top: 10px; margin-bottom: 20px;
     position: relative; overflow: hidden;
-    box-shadow: 0 0 30px rgba(232,55,42,0.30);
+    box-shadow: 0 0 32px rgba(232,55,42,0.32), 0 0 0 1px rgba(232,55,42,0.22);
     box-sizing: border-box;
   }
 
   .su-btn::before {
     content: ''; position: absolute; top: 0; left: -100%;
     width: 60%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
-    transform: skewX(-20deg); transition: left .4s ease;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.20), transparent);
+    transform: skewX(-20deg); transition: left .45s ease;
   }
 
   .su-btn:hover:not(:disabled)::before { left: 140%; }
   .su-btn:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 0 45px rgba(232,55,42,0.50);
+    box-shadow: 0 0 50px rgba(232,55,42,0.55), 0 6px 24px rgba(232,55,42,0.35);
     background: linear-gradient(135deg, #f04438 0%, #f85a47 100%);
   }
   .su-btn:active:not(:disabled) { transform: translateY(0); }
@@ -446,15 +464,25 @@ const CSS = `
 
   .su-spinner {
     width: 14px; height: 14px; border-radius: 50%;
-    border: 2px solid rgba(255,255,255,.25); border-top-color: #fff;
+    border: 2px solid rgba(255,255,255,.22); border-top-color: #fff;
     animation: su-spin .65s linear infinite; flex-shrink: 0;
   }
 
   @keyframes su-spin { to { transform: rotate(360deg); } }
 
-  .su-form-footer { text-align: center; font-size: 13px; color: rgba(168,216,255,0.35); }
+  .su-form-footer {
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px; color: rgba(168,216,255,0.50);
+    padding-top: 22px;
+    border-top: 1px solid rgba(0,200,224,0.10);
+  }
   .su-form-footer a { color: #00c8e0; text-decoration: none; font-weight: 700; transition: all .2s ease; }
-  .su-form-footer a:hover { color: #a8d8ff; text-shadow: 0 0 12px rgba(0,200,224,0.25); }
+  .su-form-footer a:hover {
+    color: #a8d8ff;
+    text-shadow: 0 0 14px rgba(0,200,224,0.35);
+    letter-spacing: 0.5px;
+  }
 
   /* ── Success State ── */
   .su-success {
@@ -465,35 +493,44 @@ const CSS = `
 
   .su-success-icon {
     width: 72px; height: 72px; border-radius: 50%;
-    background: rgba(0,200,224,0.12);
-    border: 2px solid rgba(0,200,224,0.35);
+    background: rgba(0,200,224,0.18);
+    border: 2px solid rgba(0,200,224,0.40);
     display: flex; align-items: center; justify-content: center;
     font-size: 32px; margin-bottom: 18px;
-    box-shadow: 0 0 30px rgba(0,200,224,0.20);
+    box-shadow: 0 0 32px rgba(0,200,224,0.25);
     animation: successPop .5s .1s cubic-bezier(.22,1,.36,1) both;
   }
 
   @keyframes successPop {
-    from { transform: scale(.6) rotate(-8deg); opacity: 0; }
+    from { transform: scale(.5) rotate(-15deg); opacity: 0; }
     to   { transform: scale(1)  rotate(0deg);  opacity: 1; }
   }
 
-  .su-success-title { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 900; color: #F8FAFC; margin-bottom: 10px; }
-  .su-success-msg   { font-size: 13.5px; font-weight: 300; color: rgba(168,216,255,0.48); line-height: 1.8; margin-bottom: 8px; max-width: 340px; }
-  .su-success-msg strong { color: #00c8e0; font-weight: 700; }
-  .su-success-note  { font-size: 12px; color: rgba(168,216,255,0.28); margin-bottom: 28px; font-style: italic; }
+  .su-success-title {
+    font-family: 'Poppins', sans-serif;
+    font-size: 24px; font-weight: 700; color: #F8FAFC; margin-bottom: 10px;
+  }
+  .su-success-msg {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px; font-weight: 400; color: rgba(168,216,255,0.60); line-height: 1.7; margin-bottom: 8px; max-width: 340px;
+  }
+  .su-success-msg strong { color: #00c8e0; font-weight: 600; }
+  .su-success-note {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px; color: rgba(168,216,255,0.28); margin-bottom: 28px; font-style: italic;
+  }
   .su-success-div   { width: 100%; height: 1px; background: rgba(0,200,224,0.12); margin-bottom: 24px; }
 
   .su-success-btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 9px;
-    width: 100%; padding: 14px;
-    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 800;
-    letter-spacing: .08em; text-transform: uppercase;
+    width: 100%; padding: 15px;
+    font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 700;
+    letter-spacing: .10em; text-transform: uppercase;
     border-radius: 11px; border: none;
     background: linear-gradient(135deg, #e8372a 0%, #f04438 100%);
     color: #fff; cursor: pointer; text-decoration: none;
     transition: all .25s ease;
-    box-shadow: 0 0 30px rgba(232,55,42,0.30);
+    box-shadow: 0 0 32px rgba(232,55,42,0.32), 0 0 0 1px rgba(232,55,42,0.22);
     position: relative; overflow: hidden;
     box-sizing: border-box;
   }
@@ -501,14 +538,14 @@ const CSS = `
   .su-success-btn::before {
     content: ''; position: absolute; top: 0; left: -100%;
     width: 60%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
-    transform: skewX(-20deg); transition: left .4s ease;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.20), transparent);
+    transform: skewX(-20deg); transition: left .45s ease;
   }
 
   .su-success-btn:hover::before { left: 140%; }
   .su-success-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 0 45px rgba(232,55,42,0.50);
+    box-shadow: 0 0 50px rgba(232,55,42,0.55), 0 6px 24px rgba(232,55,42,0.35);
     background: linear-gradient(135deg, #f04438 0%, #f85a47 100%);
   }
 
@@ -522,7 +559,6 @@ const CSS = `
       overflow-x: hidden;
     }
 
-    /* Left panel becomes a compact header bar */
     .su-left {
       width: 100%;
       min-height: auto;
@@ -536,7 +572,7 @@ const CSS = `
 
     .su-hero { padding-bottom: 0; }
     .su-hero-title { font-size: 26px; }
-    .su-hero-desc { display: none; }   /* hide on tablet too, saves space */
+    .su-hero-desc { display: none; }
     .su-steps { display: none; }
     .su-left-footer { margin-top: 16px; }
 
@@ -556,15 +592,13 @@ const CSS = `
   @media (max-width: 600px) {
     .su-root { flex-direction: column; }
 
-    /* ── Slim top bar on mobile ── */
     .su-left {
       width: 100%;
       min-height: auto;
-      padding: 0;           /* remove all padding — inner content handles it */
+      padding: 0;
       flex-shrink: 0;
     }
 
-    /* Compact mobile header strip */
     .su-mobile-header {
       display: flex !important;
       align-items: center;
@@ -578,7 +612,6 @@ const CSS = `
       box-sizing: border-box;
     }
 
-    /* Hide the original brand row and hero on mobile — we use the compact header */
     .su-brand-row  { display: none; }
     .su-hero       { display: none; }
     .su-left-footer { display: none; }
@@ -588,7 +621,6 @@ const CSS = `
     .su-left-bg     { display: none; }
     .su-left::after { display: none; }
 
-    /* ── Right panel becomes the main content ── */
     .su-right {
       flex: 1;
       min-height: auto;
@@ -604,28 +636,15 @@ const CSS = `
       width: 100%;
     }
 
-    .su-back {
-      margin-bottom: 20px;
-      font-size: 12px;
-    }
+    .su-back { margin-bottom: 20px; font-size: 11px; }
 
     .su-form-accent { margin-bottom: 14px; }
 
-    .su-form-title {
-      font-size: 22px;
-      margin-bottom: 4px;
-    }
+    .su-form-title { font-size: 22px; margin-bottom: 4px; }
 
-    .su-form-sub {
-      font-size: 12.5px;
-      margin-bottom: 20px;
-    }
+    .su-form-sub { font-size: 12.5px; margin-bottom: 20px; }
 
-    /* Stack the 2-col rows on mobile */
-    .su-row-2 {
-      grid-template-columns: 1fr;
-      gap: 0;
-    }
+    .su-row-2 { grid-template-columns: 1fr; gap: 0; }
 
     .su-field { margin-bottom: 13px; }
 
@@ -635,7 +654,7 @@ const CSS = `
       border-radius: 10px;
     }
 
-    .su-label { font-size: 9.5px; margin-bottom: 6px; }
+    .su-label { font-size: 10px; margin-bottom: 6px; }
 
     .su-btn {
       padding: 13px 18px;
@@ -692,15 +711,14 @@ function IconLock() {
   return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>;
 }
 
-/* Compact header shown only on mobile (≤600px) via CSS */
 function MobileHeader() {
   return (
     <div className="su-mobile-header" style={{ display: "none" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
         <img src={dsgLogo} alt="DSG Logo" style={{ width: 36, height: 36, objectFit: "contain" }} />
         <div style={{
-          fontFamily: "'Syne', sans-serif", fontSize: 16, fontWeight: 900,
-          color: "#F8FAFC", letterSpacing: "-0.03em",
+          fontFamily: "'Poppins', sans-serif", fontSize: 16, fontWeight: 700,
+          color: "#F8FAFC", letterSpacing: "-0.02em",
         }}>
           Duma<span style={{ color: "#00c8e0" }}>SafeGuide</span>
         </div>
@@ -709,6 +727,7 @@ function MobileHeader() {
         display: "inline-flex", alignItems: "center", gap: 6,
         padding: "5px 10px", borderRadius: 99,
         background: "rgba(0,200,224,0.10)", border: "1px solid rgba(0,200,224,0.22)",
+        fontFamily: "'Inter', sans-serif",
         fontSize: 9, fontWeight: 700, letterSpacing: "0.10em", textTransform: "uppercase",
         color: "rgba(0,200,224,0.85)",
       }}>
@@ -730,10 +749,8 @@ function LeftPanel() {
       <div className="su-left-glow-a" />
       <div className="su-left-glow-b" />
 
-      {/* Mobile compact header — shown via CSS on ≤600px */}
       <MobileHeader />
 
-      {/* Desktop brand row — hidden on mobile via CSS */}
       <div className="su-left-content">
         <div className="su-brand-row">
           <div className="su-logo-ring">
@@ -743,7 +760,6 @@ function LeftPanel() {
         </div>
       </div>
 
-      {/* Desktop hero — hidden on mobile via CSS */}
       <div className="su-hero su-left-content">
         <div className="su-hero-eyebrow">
           <span className="su-hero-dot" />

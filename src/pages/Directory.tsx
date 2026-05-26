@@ -228,7 +228,7 @@ export default function Directory() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -254,7 +254,7 @@ export default function Directory() {
 
         .dr {
           min-height: 100vh;
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           color: var(--text);
           background: var(--bg);
           position: relative;
@@ -312,8 +312,8 @@ export default function Directory() {
         }
         .dr-logo {
           display: flex; align-items: center; gap: 10px; text-decoration: none;
-          font-family: 'Syne', sans-serif;
-          font-size: 15px; font-weight: 800;
+          font-family: 'Poppins', sans-serif;
+          font-size: 15px; font-weight: 700;
           letter-spacing: 0.12em; text-transform: uppercase;
           color: var(--text);
         }
@@ -328,7 +328,7 @@ export default function Directory() {
           50%      { opacity:.55; transform:scale(.78); }
         }
         .dr-back {
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
           color: var(--text3); text-decoration: none;
           border: 1px solid rgba(168,216,255,0.12); border-radius: 8px;
@@ -344,7 +344,7 @@ export default function Directory() {
           animation: fadeUp 0.7s 0.1s ease both;
         }
         .dr-hero-eyebrow {
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 11px; font-weight: 500;
           letter-spacing: 0.20em; text-transform: uppercase;
           color: var(--red); margin-bottom: 20px;
@@ -357,9 +357,9 @@ export default function Directory() {
 
         /* White headline */
         .dr-hero h1 {
-          font-family: 'Syne', sans-serif;
+          font-family: 'Poppins', sans-serif;
           font-size: clamp(42px, 6vw, 78px);
-          font-weight: 800; line-height: 0.95;
+          font-weight: 700; line-height: 0.95;
           letter-spacing: -0.03em;
           color: #F8FAFC;            /* crisp white */
           margin-bottom: 24px;
@@ -374,8 +374,8 @@ export default function Directory() {
         }
 
         .dr-hero-sub {
-          font-family: 'DM Sans', sans-serif;
-          font-size: 16px; font-weight: 300;
+          font-family: 'Inter', sans-serif;
+          font-size: 16px; font-weight: 400;
           color: rgba(168,216,255,0.70); /* ice blue tint */
           max-width: 520px; line-height: 1.68;
         }
@@ -396,8 +396,8 @@ export default function Directory() {
           50%      { box-shadow: 0 0 38px rgba(232,55,42,0.26); }
         }
         .dr-banner-label {
-          font-family: 'Syne', sans-serif;
-          font-size: 11px; font-weight: 800;
+          font-family: 'Poppins', sans-serif;
+          font-size: 11px; font-weight: 700;
           letter-spacing: 0.14em; text-transform: uppercase;
           color: #ff8a80; white-space: nowrap;
         }
@@ -406,7 +406,7 @@ export default function Directory() {
           display: inline-flex; align-items: center; gap: 5px;
           background: rgba(232,55,42,0.12); border: 1px solid rgba(232,55,42,0.35);
           border-radius: 22px; padding: 7px 14px;
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 13px; font-weight: 500;
           color: #F8FAFC; text-decoration: none;
           transition: all .18s; min-height: 40px;
@@ -425,7 +425,7 @@ export default function Directory() {
         }
         .dr-disclaimer-icon { font-size: 13px; flex-shrink: 0; margin-top: 2px; }
         .dr-disclaimer-text {
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 12px; font-weight: 300;
           color: var(--text2); line-height: 1.65;
         }
@@ -440,8 +440,8 @@ export default function Directory() {
         .dr-section-head { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
         .dr-section-icon { font-size: 18px; }
         .dr-section-head h2 {
-          font-family: 'Syne', sans-serif;
-          font-size: 19px; font-weight: 800;
+          font-family: 'Poppins', sans-serif;
+          font-size: 19px; font-weight: 700;
           letter-spacing: -0.02em; color: #F8FAFC;
         }
         .dr-section-line {
@@ -449,7 +449,7 @@ export default function Directory() {
           background: linear-gradient(90deg, rgba(168,216,255,0.18), transparent);
         }
         .dr-section-count {
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 10px; font-weight: 500;
           letter-spacing: 0.12em; text-transform: uppercase; color: var(--text3);
         }
@@ -479,13 +479,13 @@ export default function Directory() {
 
         .dr-emerg-icon { font-size: 26px; margin-bottom: 10px; position: relative; z-index: 1; }
         .dr-emerg-agency {
-          font-family: 'Syne', sans-serif;
-          font-size: 20px; font-weight: 800;
+          font-family: 'Poppins', sans-serif;
+          font-size: 20px; font-weight: 700;
           letter-spacing: -0.02em; color: var(--accent);
           line-height: 1; position: relative; z-index: 1;
         }
         .dr-emerg-label {
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 10px; font-weight: 500;
           letter-spacing: 0.12em; text-transform: uppercase;
           color: var(--text3); margin-top: 3px; margin-bottom: 14px;
@@ -494,13 +494,13 @@ export default function Directory() {
         .dr-phone-list { display: flex; flex-direction: column; gap: 5px; position: relative; z-index: 1; flex: 1; }
         .dr-phone-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap; }
         .dr-phone-lbl {
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 10px; font-weight: 500;
           letter-spacing: 0.07em; text-transform: uppercase;
           color: var(--text3); min-width: 80px; flex-shrink: 0;
         }
         .dr-phone-num {
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 13px; font-weight: 500;
           color: var(--text2); text-decoration: none; transition: color .15s;
           display: inline-block; padding: 4px 2px;
@@ -511,7 +511,7 @@ export default function Directory() {
         .dr-phone-num.hotline { font-size: 16px; font-weight: 700; color: #ff8a80; }
 
         .dr-emerg-note {
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 11.5px; font-weight: 300;
           color: var(--text3); line-height: 1.55;
           margin-top: 10px; position: relative; z-index: 1;
@@ -519,7 +519,7 @@ export default function Directory() {
         .dr-card-actions { display: flex; gap: 6px; margin-top: 13px; flex-wrap: wrap; position: relative; z-index: 1; }
         .dr-act-btn {
           display: inline-flex; align-items: center; gap: 5px;
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 11px; font-weight: 500;
           letter-spacing: 0.06em; text-transform: uppercase;
           border-radius: 8px; padding: 8px 13px;
@@ -564,7 +564,7 @@ export default function Directory() {
         .dr-hosp-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
         .dr-hosp-tags { display: flex; gap: 5px; flex-wrap: wrap; }
         .dr-hosp-tag {
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 9px; font-weight: 500;
           letter-spacing: 0.12em; text-transform: uppercase;
           color: #A8D8FF; border: 1px solid rgba(168,216,255,0.25);
@@ -572,32 +572,32 @@ export default function Directory() {
         }
         .dr-hosp-tag.gov { color: var(--blue); border-color: rgba(74,144,217,0.25); }
         .dr-hosp-beds {
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 10px; font-weight: 400; color: var(--text3);
           background: rgba(168,216,255,0.04); border: 1px solid var(--border);
           border-radius: 4px; padding: 3px 8px; white-space: nowrap;
         }
         .dr-hosp-name {
-          font-family: 'Syne', sans-serif;
+          font-family: 'Poppins', sans-serif;
           font-size: 15px; font-weight: 700;
           letter-spacing: -0.01em; color: #F8FAFC;
           margin-bottom: 4px; line-height: 1.35;
         }
         .dr-hosp-addr {
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 12px; font-weight: 300;
           color: var(--text3); margin-bottom: 13px; line-height: 1.55;
         }
         .dr-hosp-phones { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
         .dr-hosp-phone-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
         .dr-hosp-phone-lbl {
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 10px; font-weight: 500;
           letter-spacing: 0.07em; text-transform: uppercase;
           color: var(--text3); min-width: 68px; flex-shrink: 0;
         }
         .dr-hosp-phone-num {
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 13px; font-weight: 500;
           color: var(--text2); text-decoration: none; transition: color .15s;
           display: inline-block; padding: 4px 2px;
@@ -606,7 +606,7 @@ export default function Directory() {
         .dr-hosp-phone-num.mobile { color: #A8D8FF; }
         .dr-hosp-phone-num.mobile:hover { color: #F8FAFC; }
         .dr-hosp-note {
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 11.5px; font-weight: 300;
           color: var(--text3); line-height: 1.55; margin-bottom: 13px;
         }
@@ -619,7 +619,7 @@ export default function Directory() {
           background: var(--input-bg);
           border: 1px solid var(--border);
           border-radius: 9px; padding: 11px 38px 11px 38px;
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 14px; font-weight: 400;
           color: #F8FAFC; outline: none; caret-color: #A8D8FF;
           transition: border-color .18s, background .18s;
@@ -635,13 +635,13 @@ export default function Directory() {
           position: absolute; right: 11px; top: 50%; transform: translateY(-50%);
           background: none; border: none; color: var(--text3);
           cursor: pointer; font-size: 20px; line-height: 1; padding: 0;
-          transition: color .18s; font-family: 'DM Sans', sans-serif;
+          transition: color .18s; font-family: 'Inter', sans-serif;
         }
         .dr-bgy-search-clear:hover { color: var(--text2); }
 
         .dr-bgy-stats { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
         .dr-bgy-stat {
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 11px; font-weight: 400; color: var(--text3);
           background: var(--surface); border: 1px solid var(--border);
           border-radius: 6px; padding: 4px 10px; backdrop-filter: blur(8px);
@@ -649,7 +649,7 @@ export default function Directory() {
         .dr-bgy-stat span { color: #A8D8FF; font-weight: 500; }
         .dr-bgy-empty {
           text-align: center; color: var(--text3);
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 14px; font-weight: 300; padding: 48px 0;
         }
 
@@ -668,13 +668,13 @@ export default function Directory() {
           background: var(--surface2);
         }
         .dr-bgy-name {
-          font-family: 'Syne', sans-serif;
+          font-family: 'Poppins', sans-serif;
           font-size: 13px; font-weight: 700;
           letter-spacing: -0.01em; color: #F8FAFC;
         }
         .dr-bgy-badges { display: flex; flex-wrap: wrap; gap: 4px; }
         .dr-bgy-badge {
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 8px; font-weight: 500;
           letter-spacing: 0.10em; text-transform: uppercase;
           padding: 2px 6px; border-radius: 3px; white-space: nowrap;
@@ -686,19 +686,19 @@ export default function Directory() {
         .dr-bgy-info-row { display: flex; align-items: flex-start; gap: 6px; }
         .dr-bgy-info-icon { font-size: 10px; margin-top: 2px; flex-shrink: 0; opacity: .40; }
         .dr-bgy-phone-link {
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 12px; font-weight: 500;
           color: #A8D8FF; text-decoration: none; transition: color .15s;
           display: inline-block; padding: 3px 1px;
         }
         .dr-bgy-phone-link:hover { color: #F8FAFC; }
         .dr-bgy-info-text {
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-weight: 300; color: var(--text3); line-height: 1.45; font-size: 11px;
         }
         .dr-bgy-nav-btn {
           display: inline-flex; align-items: center; gap: 4px;
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 10px; font-weight: 500;
           letter-spacing: 0.06em; text-transform: uppercase;
           color: var(--text3); background: none; border: none; cursor: pointer; padding: 0;

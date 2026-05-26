@@ -49,8 +49,7 @@ export default function About() {
   return (
     <>
       <style>{`
-        /* ── Fonts: Syne 800 (headings) + DM Sans 300/400/500 (body) ── */
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -71,14 +70,13 @@ export default function About() {
 
         .ab {
           min-height: 100vh;
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           color: var(--text);
           background: var(--bg);
           position: relative;
           overflow-x: hidden;
         }
 
-        /* ── Background — exact match pattern ── */
         .ab-bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
         .ab-bg-img {
           width: 100%; height: 100%;
@@ -119,14 +117,12 @@ export default function About() {
           background-size: 200px; opacity: 0.45; pointer-events: none;
         }
 
-        /* ── Layout ── */
         .ab-wrap {
           position: relative; z-index: 1;
           max-width: 1080px; margin: 0 auto;
           padding: 0 28px 120px;
         }
 
-        /* ── Nav ── */
         .ab-nav {
           display: flex; align-items: center; justify-content: space-between;
           padding: 28px 0 0;
@@ -134,8 +130,8 @@ export default function About() {
         }
         .ab-logo {
           display: flex; align-items: center; gap: 10px; text-decoration: none;
-          font-family: 'Syne', sans-serif;
-          font-size: 15px; font-weight: 800;
+          font-family: 'Poppins', sans-serif;
+          font-size: 15px; font-weight: 700;
           letter-spacing: 0.12em; text-transform: uppercase;
           color: var(--text);
         }
@@ -150,7 +146,7 @@ export default function About() {
           50%      { opacity:.55; transform:scale(.78); }
         }
         .ab-back {
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
           color: var(--text3); text-decoration: none;
           border: 1px solid rgba(0,200,224,0.12); border-radius: 8px;
@@ -160,14 +156,13 @@ export default function About() {
         }
         .ab-back:hover { color: var(--text); border-color: rgba(0,200,224,0.30); }
 
-        /* ── Hero ── */
         .ab-hero {
           margin-top: 72px;
           margin-bottom: 52px;
           animation: fadeUp 0.7s 0.1s ease both;
         }
         .ab-hero-eyebrow {
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 11px; font-weight: 500;
           letter-spacing: 0.20em; text-transform: uppercase;
           color: var(--red); margin-bottom: 20px;
@@ -179,9 +174,9 @@ export default function About() {
           background: var(--red); opacity: 0.5;
         }
         .ab-hero h1 {
-          font-family: 'Syne', sans-serif;
+          font-family: 'Poppins', sans-serif;
           font-size: clamp(42px, 6vw, 78px);
-          font-weight: 800; line-height: 0.95;
+          font-weight: 700; line-height: 0.95;
           letter-spacing: -0.03em; color: #F8FAFC;
           margin-bottom: 24px;
         }
@@ -190,14 +185,14 @@ export default function About() {
           -webkit-text-stroke: 0;
         }
         .ab-hero-sub {
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 16px; font-weight: 300;
           color: rgba(160,200,224,0.60);
           max-width: 520px; line-height: 1.68;
         }
         .ab-meta {
           display: inline-flex; align-items: center; gap: 8px;
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 11px; font-weight: 500; letter-spacing: 0.10em; text-transform: uppercase;
           color: var(--text3);
           background: var(--surface); border: 1px solid var(--border);
@@ -211,7 +206,6 @@ export default function About() {
           animation: breathe 2.4s ease infinite;
         }
 
-        /* ── Intro card ── */
         .ab-intro {
           background: var(--surface);
           border: 1px solid var(--border); border-radius: var(--radius);
@@ -224,27 +218,25 @@ export default function About() {
           background: linear-gradient(90deg, var(--red), var(--cyan), transparent);
         }
         .ab-intro-label {
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 10px; font-weight: 500;
           letter-spacing: 0.20em; text-transform: uppercase;
           color: var(--red); margin-bottom: 14px;
         }
         .ab-intro-text {
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 15px; font-weight: 300;
           color: var(--text2); line-height: 1.75;
         }
         .ab-intro-text strong { color: var(--text); font-weight: 500; }
 
-        /* ── Section label ── */
         .ab-label {
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 10px; font-weight: 500;
           letter-spacing: 0.20em; text-transform: uppercase;
           color: var(--text3); margin-bottom: 14px;
         }
 
-        /* ── Pillars grid ── */
         .ab-pillars {
           display: grid; grid-template-columns: repeat(2, 1fr); gap: 13px;
         }
@@ -276,26 +268,25 @@ export default function About() {
         }
         .ab-pillar-icon { font-size: 26px; line-height: 1; }
         .ab-pillar-tag {
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 9px; font-weight: 700;
           letter-spacing: 0.15em; text-transform: uppercase;
           color: var(--p-accent); border: 1px solid var(--p-accent);
           border-radius: 3px; padding: 3px 7px; opacity: .75;
         }
         .ab-pillar-title {
-          font-family: 'Syne', sans-serif;
-          font-size: 18px; font-weight: 800;
+          font-family: 'Poppins', sans-serif;
+          font-size: 18px; font-weight: 700;
           letter-spacing: -0.02em; color: var(--text);
           margin-bottom: 10px; position: relative; z-index: 1;
         }
         .ab-pillar-body {
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 14px; font-weight: 300;
           color: var(--text2); line-height: 1.7;
           position: relative; z-index: 1;
         }
 
-        /* ── Features list ── */
         .ab-features {
           background: var(--surface);
           border: 1px solid var(--border); border-radius: var(--radius);
@@ -317,17 +308,16 @@ export default function About() {
         .ab-feature:hover { background: rgba(0,200,224,0.04); }
         .ab-feature-icon { font-size: 20px; line-height: 1; margin-top: 2px; flex-shrink: 0; }
         .ab-feature-label {
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 14px; font-weight: 500;
           color: var(--text); margin-bottom: 4px; letter-spacing: -0.005em;
         }
         .ab-feature-detail {
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 13px; font-weight: 300;
           color: var(--text3); line-height: 1.65;
         }
 
-        /* ── CTA strip ── */
         .ab-cta {
           background: var(--surface);
           border: 1px solid rgba(232,55,42,0.20);
@@ -342,20 +332,20 @@ export default function About() {
           background: linear-gradient(90deg, var(--red), rgba(232,55,42,0.3), transparent);
         }
         .ab-cta-text h3 {
-          font-family: 'Syne', sans-serif;
-          font-size: 18px; font-weight: 800;
+          font-family: 'Poppins', sans-serif;
+          font-size: 18px; font-weight: 700;
           letter-spacing: -0.02em; color: var(--text);
           margin-bottom: 6px;
         }
         .ab-cta-text p {
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 14px; font-weight: 300;
           color: var(--text3); line-height: 1.5; max-width: 380px;
         }
         .ab-cta-btn {
           flex-shrink: 0;
           display: inline-flex; align-items: center; gap: 10px;
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 12px; font-weight: 500;
           letter-spacing: 0.08em; text-transform: uppercase;
           color: #fff;
@@ -376,7 +366,6 @@ export default function About() {
           to   { opacity: 1; transform: translateY(0); }
         }
 
-        /* ── Responsive ── */
         @media (max-width: 760px) {
           .ab-wrap { padding: 0 18px 100px; }
           .ab-hero h1 { font-size: 38px; }
@@ -394,7 +383,6 @@ export default function About() {
       `}</style>
 
       <div className="ab">
-        {/* ── Background ── */}
         <div className="ab-bg">
           <img src={emergencyBg} alt="" className="ab-bg-img" aria-hidden="true" />
           <div className="ab-bg-overlay" />
@@ -404,7 +392,6 @@ export default function About() {
 
         <div className="ab-wrap">
 
-          {/* ── Nav ── */}
           <nav className="ab-nav">
             <Link to="/" className="ab-logo">
               <span className="ab-logo-dot" />
@@ -412,7 +399,6 @@ export default function About() {
             </Link>
           </nav>
 
-          {/* ── Hero ── */}
           <section className="ab-hero">
             <div className="ab-hero-eyebrow">About Us</div>
             <h1>
@@ -429,7 +415,6 @@ export default function About() {
             </div>
           </section>
 
-          {/* ── Intro ── */}
           <div className="ab-section">
             <div className="ab-intro">
               <div className="ab-intro-label">What is DumaSafeGuide?</div>
@@ -442,7 +427,6 @@ export default function About() {
             </div>
           </div>
 
-          {/* ── Mission & Vision ── */}
           <div className="ab-section">
             <div className="ab-label">Mission &amp; Vision</div>
             <div className="ab-pillars">
@@ -466,7 +450,6 @@ export default function About() {
             </div>
           </div>
 
-          {/* ── Features ── */}
           <div className="ab-section">
             <div className="ab-label">What We Provide</div>
             <div className="ab-features">
@@ -482,7 +465,6 @@ export default function About() {
             </div>
           </div>
 
-          {/* ── CTA ── */}
           <div className="ab-section">
             <div className="ab-cta">
               <div className="ab-cta-text">

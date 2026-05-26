@@ -5,7 +5,7 @@
    matches --ft-page-px site-wide margin token.
 ═══════════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
 
 /* ─────────────────────────────────────────────
    TOKENS
@@ -23,8 +23,8 @@
   --ft-text-lo : rgba(220, 232, 248, 0.28);
   --ft-border  : rgba(74, 144, 217, 0.14);
   --ft-card-bg : rgba(4, 16, 28, 0.30);
-  --ft-font    : 'DM Sans', sans-serif;
-  --ft-display : 'Syne', sans-serif;
+  --ft-font    : 'Inter', sans-serif;
+  --ft-display : 'Poppins', sans-serif;
 }
 
 /* ─────────────────────────────────────────────
@@ -131,6 +131,7 @@
   padding         : 11px 0;
   border-bottom   : 1px solid var(--ft-border);
   margin-bottom   : 28px;
+  font-family     : var(--ft-font);
   font-size       : 11px;
   font-weight     : 500;
   letter-spacing  : 0.06em;
@@ -185,6 +186,7 @@
 }
 .ft-hotlines-hint {
   margin-left    : auto;
+  font-family    : var(--ft-font);
   font-size      : 10px;
   font-weight    : 500;
   letter-spacing : 0.10em;
@@ -271,12 +273,13 @@
 .ft-hc-num {
   font-family    : var(--ft-display);
   font-size      : 20px;
-  font-weight    : 800;
+  font-weight    : 700;
   line-height    : 1;
   color          : var(--hc-color);
   letter-spacing : -0.02em;
 }
 .ft-hc-label {
+  font-family    : var(--ft-font);
   font-size      : 10px;
   font-weight    : 500;
   letter-spacing : 0.08em;
@@ -327,17 +330,18 @@
 .ft-brand-name {
   font-family    : var(--ft-display);
   font-size      : 21px;
-  font-weight    : 800;
+  font-weight    : 700;
   color          : var(--ft-text-hi);
   letter-spacing : -0.02em;
   line-height    : 1;
 }
 .ft-brand-name em     { color: #FF5555; font-style: normal; }
-.ft-brand-name strong { color: var(--ft-cyan); font-weight: 800; }
+.ft-brand-name strong { color: var(--ft-cyan); font-weight: 700; }
 
 .ft-brand-desc {
+  font-family: var(--ft-font);
   font-size  : 13.5px;
-  font-weight: 300;
+  font-weight: 400;
   line-height: 1.75;
   color      : var(--ft-text);
   max-width  : 300px;
@@ -349,6 +353,7 @@
   display      : inline-flex;
   align-items  : center;
   gap          : 7px;
+  font-family  : var(--ft-font);
   font-size    : 10px;
   font-weight  : 500;
   letter-spacing: 0.08em;
@@ -430,7 +435,9 @@
   padding     : 6px 0;
   color       : var(--ft-text);
   text-decoration: none;
+  font-family : var(--ft-font);
   font-size   : 13.5px;
+  font-weight : 400;
   border-radius: 4px;
   transition  : color 0.15s ease, transform 0.15s ease;
 }
@@ -471,16 +478,20 @@
   padding-top     : 4px;
 }
 .ft-copy {
-  font-size  : 12px;
-  color      : var(--ft-text-lo);
-  margin     : 0;
+  font-family  : var(--ft-font);
+  font-size    : 12px;
+  font-weight  : 400;
+  color        : var(--ft-text-lo);
+  margin       : 0;
   letter-spacing: 0.03em;
 }
 .ft-love {
   display     : flex;
   align-items : center;
   gap         : 5px;
+  font-family : var(--ft-font);
   font-size   : 12px;
+  font-weight : 400;
   color       : var(--ft-text-lo);
 }
 

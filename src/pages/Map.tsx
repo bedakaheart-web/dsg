@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
-import Navbar from "../components/Navbar";
+import { useNavigate } from "react-router-dom";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import mapBg from "../assets/mapbg.png";
@@ -59,7 +59,7 @@ function FlyTo({ target }: { target: [number, number] | null }) {
   const map = useMap();
   useEffect(() => {
     if (target) map.flyTo(target, 17, { duration: 1.4, easeLinearity: 0.25 });
-  }, [target]);
+  }, [target, map]);
   return null;
 }
 
@@ -82,23 +82,20 @@ function createIcon(category: string, isSelected = false) {
   });
 }
 
-export default function FacilityLocator() {
+export default function CitizenMap() {
+  const navigate = useNavigate();
   const [flyTarget, setFlyTarget]     = useState<[number, number] | null>(null);
   const [search, setSearch]           = useState("");
   const [activeFilter, setFilter]     = useState<string | null>(null);
   const [selectedId, setSelectedId]   = useState<number | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // ── FIX 2: Store marker refs as L.Marker instances (not React refs to <Marker>)
-  // React-Leaflet v4 <Marker> does NOT forward refs. We use a plain object map
-  // populated via the eventHandlers or a custom ref callback instead.
   const markerInstancesRef = useRef<Record<number, L.Marker>>({});
   const cardRefs = useRef<Record<number, HTMLDivElement>>({});
 
   function handleSelect(loc: Location) {
     setSelectedId(loc.id);
     setFlyTarget([loc.lat, loc.lng]);
-    // After fly animation completes, open popup and scroll card into view
     setTimeout(() => {
       markerInstancesRef.current[loc.id]?.openPopup();
       cardRefs.current[loc.id]?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -119,17 +116,17 @@ export default function FacilityLocator() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
+
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
           --page-px: clamp(24px, 6vw, 148px);
-          --navbar-h: 64px;
         }
 
         .fl-root {
-          height: calc(100vh - var(--navbar-h));
-          font-family: 'DM Sans', sans-serif;
+          height: 100vh;
+          font-family: 'Inter', sans-serif;
           color: #ddeef8;
           display: flex;
           flex-direction: column;
@@ -153,6 +150,36 @@ export default function FacilityLocator() {
           66%      { transform: scale(1.07) translate(10px,-14px); }
         }
 
+        .fl-topbar {
+          position: relative; z-index: 100; flex-shrink: 0;
+          padding: 16px var(--page-px);
+          background: rgba(6,15,28,0.85);
+          border-bottom: 1px solid rgba(0,200,224,0.10);
+          backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+          display: flex; align-items: center; gap: 16px;
+          animation: slideDown 0.5s ease both;
+        }
+        @keyframes slideDown {
+          from { opacity:0; transform:translateY(-12px); }
+          to   { opacity:1; transform:translateY(0); }
+        }
+
+        .fl-back-btn {
+          display: inline-flex; align-items: center; gap: 8px;
+          padding: 8px 14px; border-radius: 8px;
+          background: rgba(0,200,224,0.08); border: 1px solid rgba(0,200,224,0.20);
+          color: #00c8e0; font-family: 'Inter', sans-serif; font-size: 13px;
+          font-weight: 500; letter-spacing: 0.03em;
+          cursor: pointer; transition: all 0.2s ease;
+          -webkit-tap-highlight-color: transparent;
+        }
+        .fl-back-btn:hover {
+          background: rgba(0,200,224,0.15);
+          border-color: rgba(0,200,224,0.35);
+          transform: translateX(-2px);
+        }
+        .fl-back-btn:active { transform: scale(0.97); }
+
         .fl-header {
           position: relative; z-index: 10; flex-shrink: 0;
           padding: 20px var(--page-px) 18px;
@@ -162,25 +189,24 @@ export default function FacilityLocator() {
           display: flex; align-items: center; gap: 20px;
           animation: slideDown 0.5s ease both;
         }
-        @keyframes slideDown {
-          from { opacity:0; transform:translateY(-12px); }
-          to   { opacity:1; transform:translateY(0); }
-        }
+
         .fl-header-left { flex: 1; min-width: 0; }
         .fl-eyebrow {
+          font-family: 'Inter', sans-serif;
           font-size: 10px; font-weight: 500; letter-spacing: 0.22em; text-transform: uppercase;
           color: #e8372a; margin-bottom: 6px;
           display: flex; align-items: center; gap: 8px;
         }
         .fl-eyebrow-line { width: 28px; height: 1px; background: #e8372a; opacity: 0.6; }
         .fl-header h1 {
-          font-family: 'Syne', sans-serif;
+          font-family: 'Poppins', sans-serif;
           font-size: clamp(22px, 3.2vw, 36px);
-          font-weight: 800; letter-spacing: -0.025em; line-height: 1;
+          font-weight: 700; letter-spacing: -0.025em; line-height: 1;
           color: #F8FAFC;
         }
         .fl-header h1 .accent { color: #A8D8FF; }
         .fl-header-sub {
+          font-family: 'Inter', sans-serif;
           font-size: 12px; font-weight: 300;
           color: rgba(168,216,255,0.50); margin-top: 6px; line-height: 1.5;
         }
@@ -193,10 +219,11 @@ export default function FacilityLocator() {
           border-radius: 10px; min-width: 64px;
         }
         .fl-hstat-val {
-          font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800;
+          font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 700;
           color: #F8FAFC; line-height: 1;
         }
         .fl-hstat-label {
+          font-family: 'Inter', sans-serif;
           font-size: 9px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
           color: rgba(168,216,255,0.38); margin-top: 4px; text-align: center;
         }
@@ -213,12 +240,13 @@ export default function FacilityLocator() {
         }
         .fl-filterbar::-webkit-scrollbar { display: none; }
         .fl-filter-label {
+          font-family: 'Inter', sans-serif;
           font-size: 9px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
           color: rgba(168,216,255,0.25); flex-shrink: 0; margin-right: 4px;
         }
         .fl-pill {
           display: inline-flex; align-items: center; gap: 5px;
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 11px; font-weight: 500; letter-spacing: 0.04em;
           border-radius: 20px; padding: 6px 14px;
           cursor: pointer; border: none; flex-shrink: 0;
@@ -265,7 +293,7 @@ export default function FacilityLocator() {
           width: 100%; background: rgba(6,15,28,0.90);
           border: 1px solid rgba(0,200,224,0.10);
           border-radius: 9px; padding: 9px 12px 9px 32px;
-          font-family: 'DM Sans', sans-serif; font-size: 12px; color: #c8e4f4;
+          font-family: 'Inter', sans-serif; font-size: 12px; color: #c8e4f4;
           outline: none; caret-color: #00c8e0;
           transition: border-color 0.18s, box-shadow 0.18s;
         }
@@ -278,6 +306,7 @@ export default function FacilityLocator() {
 
         .fl-sidebar-meta {
           padding: 7px 14px 6px;
+          font-family: 'Inter', sans-serif;
           font-size: 10px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
           color: rgba(168,216,255,0.22); flex-shrink: 0;
           border-bottom: 1px solid rgba(0,200,224,0.05);
@@ -308,6 +337,7 @@ export default function FacilityLocator() {
           position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
           z-index: 7;
           display: flex; flex-direction: column; align-items: center; gap: 2px;
+          font-family: 'Inter', sans-serif;
           font-size: 9px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
           color: rgba(0,200,224,0.70);
           animation: bounceDown 2s ease-in-out infinite;
@@ -340,10 +370,11 @@ export default function FacilityLocator() {
         }
         .fl-cat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
         .fl-cat-title {
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 9px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; flex: 1;
         }
         .fl-cat-badge {
+          font-family: 'Inter', sans-serif;
           font-size: 9px; font-weight: 600; color: rgba(160,200,224,0.32);
           background: rgba(0,200,224,0.04); border: 1px solid rgba(0,200,224,0.09);
           border-radius: 4px; padding: 1px 6px;
@@ -373,10 +404,11 @@ export default function FacilityLocator() {
         }
         .fl-card.is-selected { border-left-width: 4px; }
         .fl-card-name {
-          font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700;
+          font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: 700;
           color: #e8f4ff; margin-bottom: 3px; line-height: 1.3; position: relative; z-index: 1;
         }
         .fl-card-addr {
+          font-family: 'Inter', sans-serif;
           font-size: 10px; font-weight: 300; color: rgba(160,200,224,0.32);
           margin-bottom: 7px; line-height: 1.4; position: relative; z-index: 1;
         }
@@ -385,12 +417,14 @@ export default function FacilityLocator() {
           position: relative; z-index: 1;
         }
         .fl-card-phone {
+          font-family: 'Inter', sans-serif;
           display: inline-flex; align-items: center; gap: 4px;
           font-size: 11px; font-weight: 500; text-decoration: none;
           transition: opacity 0.15s;
         }
         .fl-card-phone:hover { opacity: 0.72; }
         .fl-card-nav-btn {
+          font-family: 'Inter', sans-serif;
           font-size: 9px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
           padding: 4px 9px; border-radius: 5px; cursor: pointer;
           background: var(--cat-bg); color: var(--cat-color);
@@ -401,6 +435,7 @@ export default function FacilityLocator() {
 
         .fl-empty {
           text-align: center; padding: 48px 16px;
+          font-family: 'Inter', sans-serif;
           font-size: 12px; font-weight: 300; color: rgba(160,200,224,0.20);
         }
         .fl-empty-icon { font-size: 32px; margin-bottom: 10px; }
@@ -408,7 +443,6 @@ export default function FacilityLocator() {
         .fl-map-panel {
           flex: 1; position: relative; overflow: hidden;
         }
-        /* ── FIX 3: Ensure Leaflet container fills the panel fully ── */
         .fl-map-panel .leaflet-container {
           width: 100%; height: 100%; background: #0d1b2e;
         }
@@ -431,26 +465,34 @@ export default function FacilityLocator() {
         .leaflet-popup-close-button:hover { color: #374151 !important; }
         .fl-popup-head { padding: 14px 16px 10px; border-bottom: 1px solid #f3f4f6; }
         .fl-popup-cat {
+          font-family: 'Inter', sans-serif;
           font-size: 9px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
           margin-bottom: 4px; display: flex; align-items: center; gap: 5px;
         }
-        .fl-popup-name { font-family:'Syne',sans-serif; font-size:14px; font-weight:700; color:#111827; line-height:1.3; }
+        .fl-popup-name {
+          font-family: 'Poppins', sans-serif;
+          font-size: 14px; font-weight: 700; color: #111827; line-height: 1.3;
+        }
         .fl-popup-body { padding: 10px 16px 14px; }
         .fl-popup-row {
           display: flex; align-items: flex-start; gap: 6px;
+          font-family: 'Inter', sans-serif;
           font-size: 12px; color: #6b7280; margin-bottom: 5px; line-height: 1.45;
         }
-        .fl-popup-phone { font-size:13px; font-weight:500; text-decoration:none; transition:opacity 0.15s; }
+        .fl-popup-phone {
+          font-family: 'Inter', sans-serif;
+          font-size: 13px; font-weight: 500; text-decoration: none; transition: opacity 0.15s;
+        }
         .fl-popup-phone:hover { opacity: 0.75; }
         .fl-popup-btn {
           width: 100%; margin-top: 10px;
-          font-family:'DM Sans',sans-serif; font-size:11px; font-weight:600;
-          letter-spacing:0.08em; text-transform:uppercase;
-          border-radius:8px; padding:10px; cursor:pointer; border:none; color:#fff;
-          display:flex; align-items:center; justify-content:center; gap:6px;
+          font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600;
+          letter-spacing: 0.08em; text-transform: uppercase;
+          border-radius: 8px; padding: 10px; cursor: pointer; border: none; color: #fff;
+          display: flex; align-items: center; justify-content: center; gap: 6px;
           transition: opacity 0.18s, transform 0.18s;
         }
-        .fl-popup-btn:hover { opacity:0.88; transform:translateY(-1px); }
+        .fl-popup-btn:hover { opacity: 0.88; transform: translateY(-1px); }
 
         .fl-map-legend {
           position: absolute; top: 14px; right: 14px; z-index: 400;
@@ -459,11 +501,13 @@ export default function FacilityLocator() {
           padding: 12px 14px; box-shadow: 0 4px 18px rgba(0,0,0,0.13); min-width: 170px;
         }
         .fl-legend-title {
+          font-family: 'Inter', sans-serif;
           font-size: 8px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
           color: #9ca3af; margin-bottom: 9px;
         }
         .fl-legend-row {
           display: flex; align-items: center; gap: 7px;
+          font-family: 'Inter', sans-serif;
           font-size: 11px; font-weight: 500; color: #374151; margin-bottom: 6px;
         }
         .fl-legend-row:last-child { margin-bottom: 0; }
@@ -488,8 +532,14 @@ export default function FacilityLocator() {
           0%,100% { box-shadow: 0 0 0 0 rgba(232,55,42,0.5); }
           50%      { box-shadow: 0 0 0 4px rgba(232,55,42,0); }
         }
-        .fl-live-title { font-family:'Syne',sans-serif; font-size:11px; font-weight:700; color:#111827; }
-        .fl-live-sub { font-size:10px; color:#6b7280; line-height:1.4; }
+        .fl-live-title {
+          font-family: 'Poppins', sans-serif;
+          font-size: 11px; font-weight: 700; color: #111827;
+        }
+        .fl-live-sub {
+          font-family: 'Inter', sans-serif;
+          font-size: 10px; color: #6b7280; line-height: 1.4;
+        }
 
         .fl-sidebar-toggle {
           display: none;
@@ -521,7 +571,8 @@ export default function FacilityLocator() {
           .fl-map-legend { top: 10px; right: 10px; min-width: 150px; }
         }
         @media (max-width: 480px) {
-          :root { --navbar-h: 56px; }
+          .fl-topbar { padding: 12px 16px; }
+          .fl-back-btn { padding: 6px 10px; font-size: 12px; }
           .fl-header { padding: 12px 16px 10px; gap: 10px; }
           .fl-header h1 { font-size: 18px; }
           .fl-header-sub { display: none; }
@@ -539,6 +590,7 @@ export default function FacilityLocator() {
           .fl-header h1 { font-size: 16px; }
           .fl-hstat-val { font-size: 13px; }
           .fl-hstat { min-width: 40px; padding: 5px 6px; }
+          .fl-back-btn { padding: 5px 8px; font-size: 11px; }
         }
 
         .fl-drawer-backdrop {
@@ -549,12 +601,17 @@ export default function FacilityLocator() {
         .fl-drawer-backdrop.is-open { display: block; }
       `}</style>
 
-      <Navbar />
-
       <div className="fl-root">
         <div className="fl-bg">
           <img src={mapBg} alt="" className="fl-bg-img" aria-hidden="true" />
           <div className="fl-bg-overlay" />
+        </div>
+
+        {/* ── TOPBAR WITH BACK BUTTON ── */}
+        <div className="fl-topbar">
+          <button className="fl-back-btn" onClick={() => navigate(-1)}>
+            ← Back to Dashboard
+          </button>
         </div>
 
         {/* ── HEADER ── */}
@@ -705,8 +762,6 @@ export default function FacilityLocator() {
               />
               <FlyTo target={flyTarget} />
 
-              {/* ── FIX 2: Use eventHandlers to grab the native L.Marker instance
-                  instead of ref={} which doesn't work on react-leaflet v4 Marker ── */}
               {filtered.map((loc) => {
                 const cfg = CAT_CONFIG[loc.category];
                 return (
@@ -720,7 +775,7 @@ export default function FacilityLocator() {
                     }}
                   >
                     <Popup minWidth={230} maxWidth={280}>
-                      <div style={{ fontFamily: "'DM Sans', sans-serif" }}>
+                      <div style={{ fontFamily: "'Inter', sans-serif" }}>
                         <div className="fl-popup-head">
                           <div className="fl-popup-cat" style={{ color: cfg.color }}>{cfg.icon} {cfg.label}</div>
                           <div className="fl-popup-name">{loc.label}</div>

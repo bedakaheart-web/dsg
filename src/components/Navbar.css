@@ -1,6 +1,6 @@
 /* src/components/Navbar.css */
 
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
 
 .navbar-container {
   position: fixed;
@@ -71,9 +71,9 @@
 }
 
 .logo-text {
-  font-family: 'Syne', sans-serif;
+  font-family: 'Poppins', sans-serif;
   font-size: 20px;
-  font-weight: 800;
+  font-weight: 700;
   color: #ffffff;
   letter-spacing: -0.02em;
   text-decoration: none;
@@ -87,7 +87,7 @@
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   transition: color 0.2s ease;
   letter-spacing: 0.01em;
   outline: none;
@@ -107,7 +107,7 @@
   border-radius: 6px;
   font-size: 13px;
   font-weight: 600;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   cursor: pointer;
   transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
   letter-spacing: 0.02em;
@@ -127,7 +127,7 @@
   border-radius: 6px;
   font-size: 13px;
   font-weight: 700 !important;
-  font-family: 'Syne', sans-serif;
+  font-family: 'Poppins', sans-serif;
   letter-spacing: 0.04em;
   transition: background 0.2s, box-shadow 0.2s;
 }
@@ -225,9 +225,9 @@
   filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.5));
 }
 .nav-drawer-brand-name {
-  font-family: 'Syne', sans-serif;
+  font-family: 'Poppins', sans-serif;
   font-size: 16px;
-  font-weight: 800;
+  font-weight: 700;
   color: #ffffff;
   letter-spacing: -0.02em;
 }
@@ -266,18 +266,19 @@
   border-radius: 50%;
   background: linear-gradient(135deg, #2ECC8F, #7B9EFF);
   display: flex; align-items: center; justify-content: center;
-  font-family: 'Syne', sans-serif;
-  font-size: 12px; font-weight: 800;
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px; font-weight: 700;
   color: #0b0f1a; flex-shrink: 0;
 }
 .nav-drawer-user-info { flex: 1; min-width: 0; }
 .nav-drawer-user-name {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13px; font-weight: 600;
   color: rgba(238, 240, 247, 0.85);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .nav-drawer-user-role {
+  font-family: 'Inter', sans-serif;
   font-size: 10px; font-weight: 500;
   letter-spacing: 0.1em; text-transform: uppercase;
   color: rgba(46, 204, 143, 0.65);
@@ -314,7 +315,7 @@
   border-radius: 8px;
   color: rgba(238, 240, 247, 0.6);
   text-decoration: none;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px; font-weight: 500;
   transition: background 0.2s, color 0.2s, padding-left 0.2s;
   border: 1px solid transparent;
@@ -335,7 +336,7 @@
   border: 1px solid rgba(214, 40, 40, 0.3);
   border-radius: 8px;
   color: rgba(255, 100, 100, 0.85);
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13px; font-weight: 600;
   letter-spacing: 0.04em;
   cursor: pointer;
@@ -396,18 +397,19 @@
   border-radius: 50%;
   background: linear-gradient(135deg, #2ECC8F, #7B9EFF);
   display: flex; align-items: center; justify-content: center;
-  font-family: 'Syne', sans-serif;
-  font-size: 9px; font-weight: 800;
+  font-family: 'Poppins', sans-serif;
+  font-size: 9px; font-weight: 700;
   color: #0b0f1a; flex-shrink: 0;
 }
 .csb-name {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12px; font-weight: 500;
   color: rgba(238, 240, 247, 0.55);
   max-width: 100px;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .csb-role-chip {
+  font-family: 'Inter', sans-serif;
   font-size: 9.5px; font-weight: 700;
   letter-spacing: 0.1em; text-transform: uppercase;
   color: rgba(46, 204, 143, 0.75);

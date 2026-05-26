@@ -1,4 +1,3 @@
-// src/citizen/CitizenReport.tsx
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import pagesBackground from "../assets/pagesbackground.png";

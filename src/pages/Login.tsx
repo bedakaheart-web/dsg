@@ -6,7 +6,7 @@ import logoImage from "../assets/dsg.logo.png";
 import directorybg from "../assets/directorybg.png";
 
 const CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Syne:wght@700;800;900&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -15,7 +15,7 @@ const CSS = `
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     background: linear-gradient(135deg, #0d1b2e 0%, #071a1d 50%, #0a1f28 100%);
     padding: 24px;
     position: relative;
@@ -51,7 +51,7 @@ const CSS = `
   /* ── Back to home button ── */
   .lg-back {
     display: inline-flex; align-items: center; gap: 6px;
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 11.5px; font-weight: 600;
     color: rgba(168, 216, 255, 0.45);
     text-decoration: none;
@@ -62,9 +62,7 @@ const CSS = `
     animation: slideUp .5s .05s cubic-bezier(.22,1,.36,1) both;
   }
 
-  .lg-back:hover {
-    color: #00c8e0;
-  }
+  .lg-back:hover { color: #00c8e0; }
 
   .lg-back-arrow {
     font-size: 13px;
@@ -72,9 +70,7 @@ const CSS = `
     line-height: 1;
   }
 
-  .lg-back:hover .lg-back-arrow {
-    transform: translateX(-3px);
-  }
+  .lg-back:hover .lg-back-arrow { transform: translateX(-3px); }
 
   .lg-back-divider {
     height: 1px;
@@ -186,16 +182,16 @@ const CSS = `
   .lg-brand-logo-img img { width: 100%; height: 100%; object-fit: contain; }
 
   .lg-brand-logo-name {
-    font-family: 'Syne', sans-serif;
-    font-size: 17px; font-weight: 900;
+    font-family: 'Poppins', sans-serif;
+    font-size: 17px; font-weight: 700;
     color: #f8fafc; letter-spacing: -0.02em;
   }
 
   .lg-brand-logo-name span { color: #00c8e0; }
 
   .lg-brand-headline {
-    font-family: 'Syne', sans-serif;
-    font-size: 36px; font-weight: 900;
+    font-family: 'Poppins', sans-serif;
+    font-size: 36px; font-weight: 700;
     color: #f8fafc; line-height: 1.08;
     letter-spacing: -0.025em;
     margin-bottom: 20px;
@@ -210,6 +206,7 @@ const CSS = `
   .lg-brand-headline .accent { color: #00c8e0; }
 
   .lg-brand-desc {
+    font-family: 'Inter', sans-serif;
     font-size: 14.5px; font-weight: 400;
     color: rgba(200, 228, 244, 0.52);
     line-height: 1.8; max-width: 340px;
@@ -224,8 +221,8 @@ const CSS = `
   }
 
   .lg-brand-stat-val {
-    font-family: 'Syne', sans-serif;
-    font-size: 28px; font-weight: 900;
+    font-family: 'Poppins', sans-serif;
+    font-size: 28px; font-weight: 700;
     color: #f8fafc; line-height: 1;
     margin-bottom: 5px;
   }
@@ -233,6 +230,7 @@ const CSS = `
   .lg-brand-stat-val em { color: #00c8e0; font-style: normal; }
 
   .lg-brand-stat-label {
+    font-family: 'Inter', sans-serif;
     font-size: 10.5px; font-weight: 600;
     color: rgba(168, 216, 255, 0.38);
     text-transform: uppercase; letter-spacing: .12em;
@@ -245,6 +243,7 @@ const CSS = `
 
   .lg-brand-badge {
     display: inline-flex; align-items: center; gap: 9px;
+    font-family: 'Inter', sans-serif;
     font-size: 12px; color: rgba(168, 216, 255, 0.50);
     animation: slideUp .7s .35s cubic-bezier(.22,1,.36,1) both;
   }
@@ -286,6 +285,7 @@ const CSS = `
   }
 
   .lg-form-eyebrow {
+    font-family: 'Inter', sans-serif;
     font-size: 10px; font-weight: 800;
     letter-spacing: .18em; text-transform: uppercase;
     color: #00c8e0; margin-bottom: 14px;
@@ -300,13 +300,14 @@ const CSS = `
   }
 
   .lg-form-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 28px; font-weight: 900;
+    font-family: 'Poppins', sans-serif;
+    font-size: 28px; font-weight: 700;
     color: #f8fafc; letter-spacing: -0.025em;
     margin-bottom: 7px;
   }
 
   .lg-form-sub {
+    font-family: 'Inter', sans-serif;
     font-size: 13.5px; font-weight: 400;
     color: rgba(168, 216, 255, 0.52);
   }
@@ -323,6 +324,7 @@ const CSS = `
     border: 1px solid rgba(232, 55, 42, 0.28);
     border-radius: 12px;
     padding: 13px 15px;
+    font-family: 'Inter', sans-serif;
     font-size: 12.5px;
     color: #ff7f6b;
     margin-bottom: 20px;
@@ -349,6 +351,7 @@ const CSS = `
 
   .lg-label {
     display: block;
+    font-family: 'Inter', sans-serif;
     font-size: 11px; font-weight: 700;
     color: rgba(168, 216, 255, 0.64);
     margin-bottom: 9px;
@@ -374,7 +377,7 @@ const CSS = `
     border: 1.5px solid rgba(0, 200, 224, 0.16);
     border-radius: 11px;
     padding: 13px 16px 13px 42px;
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 14px;
     color: #f8fafc;
     outline: none;
@@ -410,6 +413,7 @@ const CSS = `
 
   .lg-remember {
     display: flex; align-items: center; gap: 8px;
+    font-family: 'Inter', sans-serif;
     font-size: 12.5px;
     color: rgba(168, 216, 255, 0.55);
     cursor: pointer; user-select: none;
@@ -428,6 +432,7 @@ const CSS = `
   .lg-remember input[type="checkbox"]:hover { border-color: rgba(0, 200, 224, 0.50); }
 
   .lg-forgot {
+    font-family: 'Inter', sans-serif;
     font-size: 12.5px; font-weight: 700;
     color: #00c8e0; text-decoration: none;
     transition: all .25s ease;
@@ -442,8 +447,8 @@ const CSS = `
   .lg-btn {
     width: 100%;
     padding: 15px 22px;
-    font-family: 'Syne', sans-serif;
-    font-size: 13px; font-weight: 800;
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px; font-weight: 700;
     letter-spacing: 0.1em; text-transform: uppercase;
     border-radius: 11px; border: none;
     background: linear-gradient(135deg, #e8372a 0%, #f04438 100%);
@@ -488,6 +493,7 @@ const CSS = `
 
   .lg-form-footer {
     text-align: center;
+    font-family: 'Inter', sans-serif;
     font-size: 13px;
     color: rgba(168, 216, 255, 0.50);
     padding-top: 22px;
@@ -530,11 +536,12 @@ const CSS = `
   }
 
   .lg-success-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 24px; font-weight: 900; color: #f8fafc; margin-bottom: 10px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 24px; font-weight: 700; color: #f8fafc; margin-bottom: 10px;
   }
 
   .lg-success-sub {
+    font-family: 'Inter', sans-serif;
     font-size: 14px;
     color: rgba(168, 216, 255, 0.60);
     line-height: 1.7;
@@ -543,6 +550,7 @@ const CSS = `
   .lg-checking {
     display: flex; align-items: center; justify-content: center;
     gap: 12px; padding: 60px 0;
+    font-family: 'Inter', sans-serif;
     font-size: 13.5px; color: rgba(168, 216, 255, 0.55);
     position: relative; z-index: 1;
   }

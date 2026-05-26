@@ -202,7 +202,7 @@ export default function Homepage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@300;400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap');
 
         /* ══════════════════════════════════════
            SCROLL FIX — allow full page scroll
@@ -228,7 +228,7 @@ export default function Homepage() {
         .hp-root {
           min-height: 100vh;
           height: auto;                  /* KEY: let content grow freely */
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           color: #ddeef8;
           overflow-x: hidden;
           overflow-y: visible;           /* KEY: don't trap scroll here */
@@ -410,12 +410,12 @@ export default function Homepage() {
         }
 
         .hp-badge-text {
-          font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500;
+          font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500;
           letter-spacing: 0.08em; color: rgba(200,225,245,0.70);
         }
         .hp-badge-sep { width: 1.5px; height: 16px; background: rgba(232,55,42,0.30); flex-shrink: 0; }
         .hp-badge-911 {
-          font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 900;
+          font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: 700;
           letter-spacing: 0.1em; color: #e8372a;
           animation: glowPulse 1.6s ease-in-out infinite;
         }
@@ -448,7 +448,7 @@ export default function Homepage() {
         }
 
         .hp-hero-eyebrow {
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 11px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase;
           color: #e8372a; margin-bottom: 22px;
           display: flex; align-items: center; gap: 12px;
@@ -461,9 +461,9 @@ export default function Homepage() {
         }
 
         .hp-hero h1 {
-          font-family: 'Syne', sans-serif;
+          font-family: 'Poppins', sans-serif;
           font-size: clamp(38px, 6.5vw, 84px);
-          font-weight: 900;
+          font-weight: 700;
           line-height: 0.92;
           letter-spacing: -0.03em;
           color: #F8FAFC;
@@ -474,7 +474,7 @@ export default function Homepage() {
         .hp-hero h1 .accent { color: #A8D8FF; }
 
         .hp-hero-sub {
-          font-size: 16px; font-weight: 300;
+          font-size: 16px; font-weight: 400;
           color: rgba(168, 216, 255, 0.75);
           max-width: 420px; line-height: 1.75; margin-bottom: 40px;
           animation: slideUp .8s .25s cubic-bezier(.22,1,.36,1) both;
@@ -484,7 +484,7 @@ export default function Homepage() {
           display: inline-flex; align-items: center; justify-content: center; gap: 12px;
           background: linear-gradient(135deg, #e8372a 0%, #f04438 100%);
           color: #fff; text-decoration: none;
-          font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 800;
+          font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 600;
           letter-spacing: 0.08em; text-transform: uppercase;
           padding: 15px 32px; border-radius: 10px;
           transition: all .3s cubic-bezier(.22,1,.36,1);
@@ -541,12 +541,12 @@ export default function Homepage() {
           width: 1px; background: rgba(0,200,224,0.12);
         }
         .hp-stat-value {
-          font-family: 'Syne', sans-serif;
-          font-size: 32px; font-weight: 900;
+          font-family: 'Poppins', sans-serif;
+          font-size: 32px; font-weight: 700;
           color: #F8FAFC; line-height: 1;
           margin-bottom: 8px;
         }
-        .hp-stat-suffix { font-size: 18px; color: #A8D8FF; margin-left: 3px; font-weight: 800; }
+        .hp-stat-suffix { font-size: 18px; color: #A8D8FF; margin-left: 3px; font-weight: 600; }
         .hp-stat-label {
           font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
           text-transform: uppercase; color: rgba(168,216,255,0.50);
@@ -607,18 +607,18 @@ export default function Homepage() {
           position: relative; z-index: 1;
         }
         .hp-auth-title {
-          font-family: 'Syne', sans-serif;
-          font-size: 24px; font-weight: 900;
+          font-family: 'Poppins', sans-serif;
+          font-size: 24px; font-weight: 700;
           color: #F8FAFC; margin-bottom: 6px;
         }
         .hp-auth-subtitle {
-          font-size: 13.5px; font-weight: 300;
+          font-size: 13.5px; font-weight: 400;
           color: rgba(168,216,255,0.60);
           margin-bottom: 28px; line-height: 1.6;
         }
         .hp-auth-field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; width: 100%; }
         .hp-auth-label {
-          font-family: 'DM Sans', sans-serif; font-size: 10.5px; font-weight: 700;
+          font-family: 'Inter', sans-serif; font-size: 10.5px; font-weight: 600;
           letter-spacing: 0.12em; text-transform: uppercase;
           color: rgba(168,216,255,0.50);
         }
@@ -626,7 +626,7 @@ export default function Homepage() {
           background: rgba(6,15,28,0.85);
           border: 1px solid rgba(0,200,224,0.14);
           border-radius: 10px; padding: 12px 16px;
-          font-family: 'DM Sans', sans-serif; font-size: 14px; color: #c8e4f4;
+          font-family: 'Inter', sans-serif; font-size: 14px; color: #c8e4f4;
           outline: none; caret-color: #00c8e0;
           transition: all .25s ease;
           width: 100%;
@@ -655,7 +655,7 @@ export default function Homepage() {
           border: 1.5px solid rgba(0,200,224,0.25);
         }
         .hp-auth-forgot {
-          font-size: 12.5px; font-weight: 700; color: #00c8e0; text-decoration: none;
+          font-size: 12.5px; font-weight: 600; color: #00c8e0; text-decoration: none;
           transition: all .25s;
         }
         .hp-auth-forgot:hover {
@@ -682,7 +682,7 @@ export default function Homepage() {
           width: 100%; padding: 14px 22px; border: none; border-radius: 10px;
           background: linear-gradient(135deg, #e8372a 0%, #f04438 100%);
           color: #fff;
-          font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 800;
+          font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 600;
           letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer;
           transition: all .25s cubic-bezier(.22,1,.36,1);
           box-shadow: 0 0 32px rgba(232,55,42,0.28);
@@ -718,7 +718,7 @@ export default function Homepage() {
           border: 1.5px solid rgba(168,216,255,0.30);
           border-radius: 10px; background: rgba(168,216,255,0.06);
           color: #A8D8FF;
-          font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 800;
+          font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 600;
           letter-spacing: 0.08em; text-transform: uppercase;
           text-align: center; text-decoration: none;
           transition: all .25s cubic-bezier(.22,1,.36,1);
@@ -741,7 +741,7 @@ export default function Homepage() {
           overflow: hidden;
         }
         .hp-divider-label {
-          font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 600;
+          font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600;
           letter-spacing: 0.20em; text-transform: uppercase;
           color: rgba(168,216,255,0.40); white-space: nowrap;
         }
@@ -817,7 +817,7 @@ export default function Homepage() {
           box-shadow: 0 0 28px var(--accent-alpha);
         }
         .hp-card-tag {
-          font-family: 'DM Sans', sans-serif; font-size: 9px; font-weight: 800;
+          font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 700;
           letter-spacing: 0.14em; color: var(--accent-color);
           border: 1px solid var(--accent-color);
           border-radius: 4px; padding: 3px 8px; opacity: 0.75;
@@ -826,11 +826,11 @@ export default function Homepage() {
         }
         .hp-card:hover .hp-card-tag { opacity: 1; }
         .hp-card-title {
-          font-family: 'Syne', sans-serif; font-size: 19px; font-weight: 800;
+          font-family: 'Poppins', sans-serif; font-size: 19px; font-weight: 600;
           color: #F8FAFC; position: relative; z-index: 1;
         }
         .hp-card-desc {
-          font-size: 13px; font-weight: 300;
+          font-size: 13px; font-weight: 400;
           color: rgba(168,216,255,0.62); line-height: 1.6;
           position: relative; z-index: 1; flex: 1;
         }
@@ -863,7 +863,7 @@ export default function Homepage() {
         }
         .hp-ticker-label {
           flex-shrink: 0;
-          font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 900;
+          font-family: 'Poppins', sans-serif; font-size: 10px; font-weight: 700;
           letter-spacing: 0.20em; text-transform: uppercase;
           color: #e8372a; padding: 0 18px;
           border-right: 1.5px solid rgba(232,55,42,0.28);
@@ -887,7 +887,7 @@ export default function Homepage() {
           to   { transform: translateZ(0) translateX(-50%); }
         }
         .hp-ticker-item {
-          font-family: 'DM Sans', sans-serif; font-size: 12.5px; font-weight: 400;
+          font-family: 'Inter', sans-serif; font-size: 12.5px; font-weight: 400;
           letter-spacing: 0.05em; color: rgba(168,216,255,0.58);
           flex-shrink: 0;
         }

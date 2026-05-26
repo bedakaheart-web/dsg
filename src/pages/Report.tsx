@@ -513,7 +513,7 @@ export default function Report() {
 
 // ─── STYLES ──────────────────────────────────────────────────────────────────
 const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -537,7 +537,7 @@ const styles = `
 
   .rp-root {
     min-height: 100vh;
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     color: var(--text);
     background: var(--bg);
     position: relative;
@@ -596,7 +596,7 @@ const styles = `
     animation: rpFadeUp 0.55s ease both;
   }
   .rp-eyebrow {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 11px; font-weight: 500;
     letter-spacing: 0.20em; text-transform: uppercase;
     color: var(--red); margin-bottom: 16px;
@@ -605,9 +605,9 @@ const styles = `
   .rp-eyebrow::after { content: ''; display: block; width: 40px; height: 1px; background: var(--red); opacity: 0.5; }
 
   .rp-title {
-    font-family: 'Syne', sans-serif;
+    font-family: 'Poppins', sans-serif;
     font-size: clamp(34px, 5.5vw, 72px);
-    font-weight: 800; letter-spacing: -0.03em;
+    font-weight: 700; letter-spacing: -0.03em;
     color: #F8FAFC; line-height: 0.97;
     margin-bottom: 16px;
   }
@@ -619,7 +619,7 @@ const styles = `
   }
 
   .rp-sub {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 16px; font-weight: 300;
     color: rgba(160,200,224,0.60); max-width: 480px; line-height: 1.68;
     margin-bottom: 28px;
@@ -635,19 +635,19 @@ const styles = `
   .rp-banner-icon { font-size: 24px; flex-shrink: 0; }
   .rp-banner-content { flex: 1; }
   .rp-banner-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 13px; font-weight: 800; letter-spacing: -0.02em;
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px; font-weight: 700; letter-spacing: -0.02em;
     color: var(--green); margin-bottom: 4px;
   }
   .rp-banner-text {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 12px; font-weight: 300; color: rgba(160,200,224,0.55);
     line-height: 1.5; margin: 0;
   }
   .rp-banner-text strong { font-weight: 500; color: rgba(46,204,143,0.80); }
   .rp-banner-cta {
     display: inline-flex; align-items: center; gap: 6px;
-    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600;
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600;
     color: var(--green); background: rgba(46,204,143,0.12);
     border: 1px solid rgba(46,204,143,0.25); border-radius: 8px;
     padding: 8px 14px; text-decoration: none;
@@ -677,14 +677,14 @@ const styles = `
     width: 24px; height: 24px; border-radius: 50%;
     border: 1px solid var(--border2); background: rgba(13,27,46,0.60);
     display: flex; align-items: center; justify-content: center;
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 10px; font-weight: 500; color: var(--text3);
     transition: all 0.3s ease; flex-shrink: 0;
   }
   .rp-step-item--done .rp-step-dot  { background: rgba(46,204,143,0.15); border-color: var(--green); color: var(--green); }
   .rp-step-item--active .rp-step-dot { background: rgba(232,55,42,0.15); border-color: var(--red); color: var(--red); box-shadow: 0 0 8px rgba(232,55,42,0.30); }
   .rp-step-label {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 11px; font-weight: 400;
     color: var(--text3); white-space: nowrap; transition: color 0.3s ease;
   }
@@ -716,18 +716,18 @@ const styles = `
   .rp-card:nth-child(5) { animation-delay: 0.32s; }
 
   .rp-card-label {
-    font-family: 'Syne', sans-serif;
-    font-size: 13px; font-weight: 800;
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px; font-weight: 700;
     color: var(--text); display: flex; align-items: center; gap: 10px;
     letter-spacing: -0.02em;
   }
   .rp-step-badge {
-    font-family: 'Syne', sans-serif;
-    font-size: 10px; font-weight: 700; letter-spacing: 0.10em;
+    font-family: 'Poppins', sans-serif;
+    font-size: 10px; font-weight: 600; letter-spacing: 0.10em;
     color: var(--text3); border: 1px solid var(--border2);
     border-radius: 4px; padding: 2px 6px;
   }
-  .rp-optional { font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 300; color: var(--text3); margin-left: 4px; }
+  .rp-optional { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 300; color: var(--text3); margin-left: 4px; }
 
   .rp-type-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .rp-type-btn {
@@ -735,15 +735,15 @@ const styles = `
     border-radius: 9px; padding: 12px 10px;
     display: flex; flex-direction: column; align-items: center; gap: 7px;
     cursor: pointer; transition: transform 0.20s, border-color 0.20s, background 0.20s;
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
   }
   .rp-type-btn:hover { transform: translateY(-2px); border-color: var(--t-accent); background: var(--t-alpha); }
   .rp-type-btn--active { border-color: var(--t-accent) !important; background: var(--t-alpha) !important; transform: translateY(-2px); box-shadow: 0 0 20px rgba(var(--t-accent), 0.25); }
   .rp-type-icon { font-size: 20px; }
-  .rp-type-label { font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 500; color: var(--text2); text-align: center; line-height: 1.3; }
+  .rp-type-label { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500; color: var(--text2); text-align: center; line-height: 1.3; }
   .rp-type-confirm {
     display: flex; align-items: center; gap: 8px;
-    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500;
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500;
     color: var(--t-accent); background: var(--t-alpha);
     border: 1px solid var(--t-accent); border-radius: 7px; padding: 8px 14px;
     animation: rpFadeUp 0.3s ease both;
@@ -752,14 +752,14 @@ const styles = `
   .rp-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .rp-field { display: flex; flex-direction: column; gap: 8px; }
   .rp-label {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 10px; font-weight: 500; letter-spacing: 0.20em; text-transform: uppercase;
     color: var(--text3);
   }
   .rp-input {
     background: var(--input-bg); border: 1px solid var(--border);
     border-radius: 8px; padding: 11px 13px;
-    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 400;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 400;
     color: var(--text); outline: none; width: 100%;
     transition: border-color 0.18s, background 0.18s;
     caret-color: var(--cyan);
@@ -769,7 +769,7 @@ const styles = `
   .rp-textarea {
     background: var(--input-bg); border: 1px solid var(--border);
     border-radius: 8px; padding: 11px 13px;
-    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 300;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 300;
     color: var(--text); outline: none; width: 100%; resize: vertical; line-height: 1.6;
     transition: border-color 0.18s, background 0.18s; caret-color: var(--cyan);
   }
@@ -809,7 +809,7 @@ const styles = `
     flex-shrink: 0;
     background: rgba(0,200,224,0.08); border: 1px solid rgba(0,200,224,0.20);
     border-radius: 7px; padding: 9px 12px;
-    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500;
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500;
     color: var(--cyan); cursor: pointer; white-space: nowrap;
     transition: background 0.18s, border-color 0.18s;
     min-height: 44px; align-self: stretch;
@@ -824,24 +824,24 @@ const styles = `
   }
   .rp-coords-icon { font-size: 12px; flex-shrink: 0; }
   .rp-coords-text {
-    font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 400;
+    font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 400;
     color: var(--text3); font-variant-numeric: tabular-nums; flex: 1;
   }
 
-  .rp-gps-acquiring { display: flex; align-items: center; gap: 9px; margin-top: 8px; font-family: 'DM Sans', sans-serif; font-size: 12px; color: rgba(245,200,66,0.65); line-height: 1.5; }
+  .rp-gps-acquiring { display: flex; align-items: center; gap: 9px; margin-top: 8px; font-family: 'Inter', sans-serif; font-size: 12px; color: rgba(245,200,66,0.65); line-height: 1.5; }
   .rp-gps-pulse { width: 10px; height: 10px; border-radius: 50%; background: var(--yellow); flex-shrink: 0; animation: gpsPulse 1.1s ease infinite; }
   @keyframes gpsPulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.3; transform:scale(0.7); } }
 
   .rp-gps-badges { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
-  .rp-acc-badge { font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; }
+  .rp-acc-badge { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; }
   .acc-great { background: rgba(46,204,143,0.12); color: var(--green); border: 1px solid rgba(46,204,143,0.25); }
   .acc-ok    { background: rgba(245,200,66,0.10); color: var(--yellow); border: 1px solid rgba(245,200,66,0.22); }
   .acc-poor  { background: rgba(232,55,42,0.10);  color: var(--red);    border: 1px solid rgba(232,55,42,0.22); }
-  .rp-acc-tip { font-family: 'DM Sans', sans-serif; font-size: 11px; color: rgba(232,55,42,0.60); }
+  .rp-acc-tip { font-family: 'Inter', sans-serif; font-size: 11px; color: rgba(232,55,42,0.60); }
 
   .rp-maps-verify {
     display: inline-flex; align-items: center; gap: 4px;
-    font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 500;
+    font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500;
     color: var(--cyan);
     text-decoration: none;
     transition: opacity 0.18s;
@@ -849,7 +849,7 @@ const styles = `
   }
   .rp-maps-verify:hover { opacity: 0.75; }
 
-  .rp-hint { font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 300; color: var(--text3); line-height: 1.5; }
+  .rp-hint { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 300; color: var(--text3); line-height: 1.5; }
   .rp-hint--warn { font-size: 11px; color: rgba(245,200,66,0.60); }
 
   .rp-dropzone {
@@ -859,10 +859,10 @@ const styles = `
   }
   .rp-dropzone:hover { border-color: rgba(0,200,224,0.35); background: rgba(0,200,224,0.03); }
   .rp-dropzone-icon { font-size: 24px; }
-  .rp-dropzone-text  { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 400; color: var(--text2); }
-  .rp-dropzone-name  { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; color: var(--cyan); }
-  .rp-dropzone-hint, .rp-dropzone-change { font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 300; color: var(--text3); }
-  .rp-upload-status { font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; padding: 8px 12px; border-radius: 7px; }
+  .rp-dropzone-text  { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 400; color: var(--text2); }
+  .rp-dropzone-name  { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; color: var(--cyan); }
+  .rp-dropzone-hint, .rp-dropzone-change { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 300; color: var(--text3); }
+  .rp-upload-status { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500; padding: 8px 12px; border-radius: 7px; }
   .rp-upload-status--uploading { background: rgba(245,200,66,0.08); color: var(--yellow); border: 1px solid rgba(245,200,66,0.20); }
   .rp-upload-status--done      { background: rgba(46,204,143,0.08); color: var(--green);  border: 1px solid rgba(46,204,143,0.20); }
   .rp-upload-status--error     { background: rgba(232,55,42,0.08);  color: var(--red);    border: 1px solid rgba(232,55,42,0.20); }
@@ -876,8 +876,8 @@ const styles = `
   }
   .rp-disclaimer-header { display: flex; align-items: center; gap: 8px; }
   .rp-disclaimer-icon { font-size: 16px; }
-  .rp-disclaimer-title { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: rgba(245,200,66,0.80); }
-  .rp-disclaimer-summary { font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 400; color: var(--text3); line-height: 1.5; margin: 0; }
+  .rp-disclaimer-title { font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: rgba(245,200,66,0.80); }
+  .rp-disclaimer-summary { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 400; color: var(--text3); line-height: 1.5; margin: 0; }
   .rp-check-label { display: flex; align-items: flex-start; gap: 12px; cursor: pointer; }
   .rp-checkbox { display: none; }
   .rp-check-box {
@@ -885,22 +885,22 @@ const styles = `
     border: 1px solid rgba(245,200,66,0.35); border-radius: 4px;
     background: rgba(245,200,66,0.06);
     display: flex; align-items: center; justify-content: center;
-    font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 500; color: var(--yellow);
+    font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500; color: var(--yellow);
     margin-top: 1px; transition: background 0.2s, border-color 0.2s;
   }
-  .rp-check-text { font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 300; color: var(--text3); line-height: 1.6; }
+  .rp-check-text { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 300; color: var(--text3); line-height: 1.6; }
   .rp-check-text strong { font-weight: 500; color: rgba(245,200,66,0.70); }
 
   .rp-error-banner {
     background: rgba(232,55,42,0.08); border: 1px solid rgba(232,55,42,0.25);
     border-radius: 8px; padding: 12px 16px;
-    font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--red);
+    font-family: 'Inter', sans-serif; font-size: 13px; color: var(--red);
     animation: rpFadeUp 0.3s ease both;
   }
   .rp-skip-evidence-btn {
     display: inline-block; margin-top: 8px; padding: 7px 14px;
     background: rgba(232,55,42,0.12); border: 1px solid rgba(232,55,42,0.30);
-    border-radius: 7px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500;
+    border-radius: 7px; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500;
     color: var(--red); cursor: pointer; transition: background 0.18s;
   }
   .rp-skip-evidence-btn:hover { background: rgba(232,55,42,0.22); }
@@ -908,7 +908,7 @@ const styles = `
   .rp-submit {
     display: flex; align-items: center; justify-content: center; gap: 12px;
     width: 100%; padding: 15px 24px;
-    font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 800;
+    font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 700;
     letter-spacing: 0.06em; text-transform: uppercase;
     color: #0b0f1a; background: var(--green);
     border: none; border-radius: 10px; cursor: pointer;
@@ -947,14 +947,14 @@ const styles = `
   .rp-sidebar-card--info  { background: rgba(0,200,224,0.05);  border-color: rgba(0,200,224,0.14);  }
   .rp-sidebar-card--track { background: rgba(46,204,143,0.05); border-color: rgba(46,204,143,0.14); }
   .rp-sidebar-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 12px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
     color: var(--text);
   }
-  .rp-sidebar-text { font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 300; color: var(--text3); line-height: 1.65; margin: 0; }
+  .rp-sidebar-text { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 300; color: var(--text3); line-height: 1.65; margin: 0; }
   .rp-track-link {
     display: inline-block; margin-top: 8px;
-    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500;
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500;
     color: var(--green); background: rgba(46,204,143,0.08);
     border: 1px solid rgba(46,204,143,0.20); border-radius: 7px;
     padding: 8px 12px; text-decoration: none; width: fit-content;
@@ -973,9 +973,9 @@ const styles = `
   .rp-hotline:hover { background: rgba(13,27,46,0.88); border-color: var(--h-color, var(--border2)); }
   .rp-hotline-icon { font-size: 16px; }
   .rp-hotline-info { display: flex; flex-direction: column; flex: 1; }
-  .rp-hotline-label { font-family: 'DM Sans', sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); }
-  .rp-hotline-number { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 800; color: var(--text); }
-  .rp-hotline-call { font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 500; color: var(--h-color, var(--text3)); opacity: 0.7; }
+  .rp-hotline-label { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); }
+  .rp-hotline-number { font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 700; color: var(--text); }
+  .rp-hotline-call { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500; color: var(--h-color, var(--text3)); opacity: 0.7; }
 
   .rp-success { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 60px 24px 40px; animation: rpFadeUp 0.5s ease both; }
   .rp-success-icon {
@@ -984,8 +984,8 @@ const styles = `
     display: flex; align-items: center; justify-content: center;
     font-size: 26px; color: var(--green); margin-bottom: 24px;
   }
-  .rp-success-title { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; color: var(--text); margin-bottom: 12px; }
-  .rp-success-sub { font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 300; color: var(--text3); max-width: 480px; line-height: 1.65; margin-bottom: 40px; }
+  .rp-success-title { font-family: 'Poppins', sans-serif; font-size: 32px; font-weight: 700; color: var(--text); margin-bottom: 12px; }
+  .rp-success-sub { font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 300; color: var(--text3); max-width: 480px; line-height: 1.65; margin-bottom: 40px; }
 
   .rp-success-actions {
     display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 500px; width: 100%; margin: 0 auto 20px; justify-items: center;
@@ -999,13 +999,13 @@ const styles = `
     width: 100%; max-width: 400px;
   }
   .rp-success-card-icon { font-size: 32px; }
-  .rp-success-card-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 800; color: var(--text); letter-spacing: -0.02em; }
-  .rp-success-card-text { font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 300; color: var(--text3); line-height: 1.5; margin: 0; }
+  .rp-success-card-title { font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
+  .rp-success-card-text { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 300; color: var(--text3); line-height: 1.5; margin: 0; }
 
   .rp-btn-primary {
     display: inline-flex; align-items: center;
     margin-top: 8px;
-    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600;
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600;
     color: #0b0f1a; background: var(--green);
     border: none; border-radius: 7px;
     padding: 9px 16px; text-decoration: none; cursor: pointer;

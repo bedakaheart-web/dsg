@@ -1,4 +1,4 @@
-// src/components/Navbar.tsx (FIXED)
+// src/components/Navbar.tsx
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate, useLocation } from "react-router-dom";
@@ -92,8 +92,6 @@ export default function Navbar() {
 
     loadCounts();
 
-    // ✅ FIX: Use Date.now() so each mount gets a fresh channel name,
-    //         avoiding "cannot add callbacks after subscribe()" crash
     const ch = supabase
       .channel(`navbar-citizen-counts-${Date.now()}`)
       .on(
@@ -103,9 +101,7 @@ export default function Navbar() {
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(ch);
-    };
+    return () => { supabase.removeChannel(ch); };
   }, [user]);
 
   // ── FIX: Unread alerts — unique channel name prevents collision ──────────
@@ -123,15 +119,12 @@ export default function Navbar() {
     };
     loadAlerts();
 
-    // ✅ FIX: Use Date.now() so each mount gets a fresh channel name
     const ch = supabase
       .channel(`navbar-alerts-${Date.now()}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "alerts" },
-        () => {
-          setUnreadAlerts(prev => prev + 1);
-        }
+        () => { setUnreadAlerts(prev => prev + 1); }
       )
       .on(
         "postgres_changes",
@@ -140,9 +133,7 @@ export default function Navbar() {
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(ch);
-    };
+    return () => { supabase.removeChannel(ch); };
   }, [user]);
 
   const fetchRole = async (userId: string) => {
@@ -288,7 +279,7 @@ export default function Navbar() {
                 cursor: "pointer", padding: "8px 18px", borderRadius: "8px",
                 border: "1px solid rgba(255,107,107,0.3)", background: "rgba(255,107,107,0.08)",
                 color: "#FF6B6B", fontSize: "13px", fontWeight: 600,
-                fontFamily: "'Instrument Sans', sans-serif",
+                fontFamily: "'Inter', sans-serif",
                 transition: "all 0.2s", whiteSpace: "nowrap",
               }}
               onMouseEnter={e => {
@@ -317,7 +308,7 @@ export default function Navbar() {
 // CitizenNavbar — exclusive navbar shown only when logged in as citizen
 // ─────────────────────────────────────────────────────────────────────────────
 const CITIZEN_NAV_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@500;700;800;900&family=Instrument+Sans:wght@400;500;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
 
   .cn-bar {
     position: fixed; top: 0; left: 0; right: 0; z-index: 99999;
@@ -328,7 +319,7 @@ const CITIZEN_NAV_CSS = `
     border-bottom: 1px solid rgba(255,255,255,0.07);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    font-family: 'Instrument Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     transition: background 0.25s, border-color 0.25s, box-shadow 0.25s;
   }
   .cn-bar.scrolled {
@@ -339,12 +330,16 @@ const CITIZEN_NAV_CSS = `
 
   .cn-brand { display: flex; align-items: center; gap: 9px; text-decoration: none; flex-shrink: 0; }
   .cn-brand-logo { width: 28px; height: 28px; object-fit: contain; }
-  .cn-brand-name { font-family: 'Cabinet Grotesk', sans-serif; font-size: 15px; font-weight: 900; letter-spacing: -.03em; color: #eef0f7; }
+  .cn-brand-name {
+    font-family: 'Poppins', sans-serif;
+    font-size: 15px; font-weight: 700;
+    letter-spacing: -.02em; color: #eef0f7;
+  }
   .cn-brand-name span { color: #2ECC8F; }
 
   .cn-links { display: flex; align-items: center; gap: 2px; list-style: none; }
   .cn-links a {
-    font-family: 'Instrument Sans', sans-serif; font-size: 12.5px; font-weight: 500;
+    font-family: 'Inter', sans-serif; font-size: 12.5px; font-weight: 500;
     color: rgba(238,240,247,0.45); text-decoration: none;
     padding: 6px 11px; border-radius: 7px;
     transition: color 0.15s, background 0.15s; white-space: nowrap;
@@ -355,7 +350,7 @@ const CITIZEN_NAV_CSS = `
   .cn-sep { width: 1px; height: 16px; background: rgba(255,255,255,0.08); margin: 0 6px; flex-shrink: 0; }
 
   .cn-report {
-    font-family: 'Instrument Sans', sans-serif; font-size: 12px; font-weight: 600;
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600;
     color: rgba(238,240,247,0.85); background: rgba(46,204,143,0.1);
     border: 1px solid rgba(46,204,143,0.2); border-radius: 7px; padding: 6px 13px;
     text-decoration: none; white-space: nowrap; letter-spacing: .01em;
@@ -377,7 +372,7 @@ const CITIZEN_NAV_CSS = `
     position: absolute; top: -4px; right: -4px;
     min-width: 15px; height: 15px; border-radius: 50%;
     background: #EF5B5B; color: #fff; font-size: 8px; font-weight: 800;
-    font-family: 'Instrument Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     display: flex; align-items: center; justify-content: center;
     padding: 0 3px; border: 2px solid #080c14;
     animation: cn-pop 0.22s cubic-bezier(.34,1.56,.64,1) both;
@@ -394,18 +389,23 @@ const CITIZEN_NAV_CSS = `
   .cn-avatar {
     width: 24px; height: 24px; border-radius: 6px; background: #1a9e6a;
     display: flex; align-items: center; justify-content: center;
-    font-size: 9px; font-weight: 800; color: #060a10;
-    font-family: 'Cabinet Grotesk', sans-serif; flex-shrink: 0;
+    font-size: 9px; font-weight: 700; color: #060a10;
+    font-family: 'Poppins', sans-serif; flex-shrink: 0;
   }
-  .cn-user-name { font-size: 12px; font-weight: 600; color: rgba(238,240,247,0.75); max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cn-user-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px; font-weight: 600; color: rgba(238,240,247,0.75);
+    max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
   .cn-role-chip {
+    font-family: 'Inter', sans-serif;
     font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
     color: rgba(46,204,143,0.65); background: rgba(46,204,143,0.07);
     border: 1px solid rgba(46,204,143,0.14); border-radius: 20px; padding: 2px 6px;
   }
 
   .cn-logout {
-    font-family: 'Instrument Sans', sans-serif; font-size: 12px; font-weight: 600;
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600;
     padding: 6px 13px; border-radius: 7px;
     border: 1px solid rgba(255,255,255,0.08); background: transparent;
     color: rgba(238,240,247,0.3); cursor: pointer; white-space: nowrap;
@@ -427,7 +427,7 @@ const CITIZEN_NAV_CSS = `
     background: rgba(10,14,24,0.99); border-left: 1px solid rgba(255,255,255,0.07);
     z-index: 99999; display: flex; flex-direction: column;
     transform: translateX(100%); transition: transform 0.28s cubic-bezier(.22,1,.36,1);
-    font-family: 'Instrument Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
   }
   .cn-drawer.open { transform: translateX(0); }
 
@@ -444,15 +444,22 @@ const CITIZEN_NAV_CSS = `
   .cn-drawer-avatar {
     width: 36px; height: 36px; border-radius: 9px; background: #1a9e6a;
     display: flex; align-items: center; justify-content: center;
-    font-size: 12px; font-weight: 800; color: #060a10;
-    font-family: 'Cabinet Grotesk', sans-serif; flex-shrink: 0;
+    font-size: 12px; font-weight: 700; color: #060a10;
+    font-family: 'Poppins', sans-serif; flex-shrink: 0;
   }
-  .cn-drawer-uname { font-size: 13px; font-weight: 600; color: #eef0f7; }
-  .cn-drawer-urole { font-size: 10.5px; color: rgba(238,240,247,0.3); margin-top: 2px; letter-spacing: .04em; }
+  .cn-drawer-uname {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px; font-weight: 600; color: #eef0f7;
+  }
+  .cn-drawer-urole {
+    font-family: 'Inter', sans-serif;
+    font-size: 10.5px; color: rgba(238,240,247,0.3); margin-top: 2px; letter-spacing: .04em;
+  }
 
   .cn-drawer-nav { flex: 1; overflow-y: auto; padding: 8px 10px; display: flex; flex-direction: column; gap: 1px; }
   .cn-drawer-nav a {
     display: flex; align-items: center; gap: 11px;
+    font-family: 'Inter', sans-serif;
     font-size: 13px; font-weight: 500; color: rgba(238,240,247,0.5);
     text-decoration: none; padding: 10px 11px; border-radius: 8px;
     transition: color 0.15s, background 0.15s;
@@ -464,7 +471,7 @@ const CITIZEN_NAV_CSS = `
   .cn-drawer-footer { padding: 14px 18px; border-top: 1px solid rgba(255,255,255,0.06); }
   .cn-drawer-logout {
     width: 100%; padding: 10px;
-    font-family: 'Instrument Sans', sans-serif; font-size: 12.5px; font-weight: 600;
+    font-family: 'Inter', sans-serif; font-size: 12.5px; font-weight: 600;
     border-radius: 8px; border: 1px solid rgba(255,107,107,0.22);
     background: rgba(255,107,107,0.06); color: #FF6B6B; cursor: pointer; transition: all 0.15s;
   }
@@ -472,6 +479,7 @@ const CITIZEN_NAV_CSS = `
 
   .cn-drawer-bell {
     display: flex; align-items: center; gap: 11px;
+    font-family: 'Inter', sans-serif;
     font-size: 13px; font-weight: 500; color: rgba(238,240,247,0.5);
     text-decoration: none; padding: 10px 11px; border-radius: 8px;
     transition: color 0.15s, background 0.15s;
@@ -479,7 +487,9 @@ const CITIZEN_NAV_CSS = `
   .cn-drawer-bell:hover { color: #eef0f7; background: rgba(255,255,255,0.05); }
   .cn-drawer-bell.cn-active { color: #2ECC8F; background: rgba(46,204,143,0.08); }
   .cn-drawer-bell-count {
-    margin-left: auto; font-size: 10px; font-weight: 700;
+    margin-left: auto;
+    font-family: 'Inter', sans-serif;
+    font-size: 10px; font-weight: 700;
     background: rgba(239,91,91,0.12); color: #EF5B5B;
     border: 1px solid rgba(239,91,91,0.22); border-radius: 20px; padding: 2px 7px;
   }
@@ -550,8 +560,8 @@ function CitizenNavbar({
               <span style={{ fontSize: 12, color: "#2ECC8F" }}>🛡</span>
             </div>
             <span style={{
-              fontFamily: "'Cabinet Grotesk', sans-serif",
-              fontWeight: 900, fontSize: 15, letterSpacing: "-.02em", color: "#eef0f7",
+              fontFamily: "'Poppins', sans-serif",
+              fontWeight: 700, fontSize: 15, letterSpacing: "-.02em", color: "#eef0f7",
             }}>
               Duma<span style={{ color: "#2ECC8F" }}>SafeGuide</span>
             </span>

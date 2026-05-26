@@ -25,10 +25,9 @@ const GO_BAG_ITEMS = [
   { id: 20, category: "Communication",  label: "Local hazard map and evacuation route"      },
 ];
 
-// Each hotline entry: label shown + number to dial (clean digits only for tel:)
 interface HotlineEntry {
   label: string;
-  number: string; // the actual dialable number
+  number: string;
 }
 
 const DISASTERS = [
@@ -254,7 +253,7 @@ export default function SafetyTips() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -275,22 +274,21 @@ export default function SafetyTips() {
 
         .st {
           min-height: 100vh;
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           color: var(--text);
           background: var(--bg);
           position: relative;
           overflow-x: hidden;
         }
 
-        .st-bg { position: fixed; inset: 0; z-index: 0; }
+        .st-bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
         .st-bg-img {
-  width: 100%; height: 100%;
-  object-fit: cover; object-position: center; display: block;
-  transform-origin: center center;
-  animation: bgDrift 26s ease-in-out infinite;
-  will-change: transform;
-}
-.st-bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
+          width: 100%; height: 100%;
+          object-fit: cover; object-position: center; display: block;
+          transform-origin: center center;
+          animation: bgDrift 26s ease-in-out infinite;
+          will-change: transform;
+        }
         .st-bg-overlay {
           position: absolute; inset: 0;
           background: linear-gradient(
@@ -304,13 +302,14 @@ export default function SafetyTips() {
           pointer-events: none;
         }
 
-@keyframes bgDrift {
-  0%   { transform: scale(1.08) translate(0px,   0px);   }
-  25%  { transform: scale(1.11) translate(-12px, -14px); }
-  50%  { transform: scale(1.10) translate(-8px,  -22px); }
-  75%  { transform: scale(1.12) translate(18px,  -8px);  }
-  100% { transform: scale(1.08) translate(0px,   0px);   }
-}
+        @keyframes bgDrift {
+          0%   { transform: scale(1.08) translate(0px,   0px);   }
+          25%  { transform: scale(1.11) translate(-12px, -14px); }
+          50%  { transform: scale(1.10) translate(-8px,  -22px); }
+          75%  { transform: scale(1.12) translate(18px,  -8px);  }
+          100% { transform: scale(1.08) translate(0px,   0px);   }
+        }
+
         .st-bg-atmosphere {
           position: absolute; inset: 0; pointer-events: none;
           background:
@@ -337,7 +336,7 @@ export default function SafetyTips() {
         }
         .st-logo {
           display: flex; align-items: center; gap: 10px; text-decoration: none;
-          font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 800;
+          font-family: 'Poppins', sans-serif; font-size: 15px; font-weight: 700;
           letter-spacing: 0.12em; text-transform: uppercase; color: var(--text);
         }
         .st-logo-dot {
@@ -347,7 +346,7 @@ export default function SafetyTips() {
         }
         @keyframes breathe { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:.55; transform:scale(.78); } }
         .st-back {
-          font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 500;
+          font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500;
           letter-spacing: 0.08em; text-transform: uppercase;
           color: var(--text3); text-decoration: none;
           border: 1px solid rgba(0,200,224,0.12); border-radius: 8px;
@@ -363,19 +362,19 @@ export default function SafetyTips() {
           animation: fadeUp 0.7s 0.1s ease both;
         }
         .st-hero-eyebrow {
-          font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 500;
+          font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500;
           letter-spacing: 0.20em; text-transform: uppercase;
           color: var(--red); margin-bottom: 20px;
           display: flex; align-items: center; gap: 10px;
         }
         .st-hero-eyebrow::after { content: ''; display: block; width: 40px; height: 1px; background: var(--red); opacity: 0.5; }
         .st-hero h1 {
-          font-family: 'Syne', sans-serif; font-size: clamp(42px, 6vw, 78px);
-          font-weight: 800; line-height: 0.95; letter-spacing: -0.03em; color: #F8FAFC; margin-bottom: 24px;
+          font-family: 'Poppins', sans-serif; font-size: clamp(42px, 6vw, 78px);
+          font-weight: 700; line-height: 0.95; letter-spacing: -0.03em; color: #F8FAFC; margin-bottom: 24px;
         }
         .st-hero h1 .accent { color: #A8D8FF; -webkit-text-stroke: 0; }
         .st-hero-sub {
-          font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 300;
+          font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 300;
           color: rgba(160,200,224,0.60); max-width: 520px; line-height: 1.68;
         }
 
@@ -395,7 +394,7 @@ export default function SafetyTips() {
         .st-tabs::-webkit-scrollbar { display: none; }
         .st-tab {
           flex-shrink: 0; display: flex; align-items: center; gap: 7px;
-          font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500;
+          font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500;
           letter-spacing: .04em; padding: 8px 16px; border-radius: 9px;
           border: 1px solid transparent; cursor: pointer; transition: all .18s;
           color: var(--text3); background: transparent; min-height: 44px;
@@ -430,16 +429,16 @@ export default function SafetyTips() {
           background: var(--d-dim); border: 1px solid var(--d-border);
         }
         .st-panel-name {
-          font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800;
+          font-family: 'Poppins', sans-serif; font-size: 24px; font-weight: 700;
           letter-spacing: -.03em; color: var(--text);
         }
         .st-panel-signal {
-          font-family: 'DM Sans', sans-serif; font-size: 10px; font-weight: 500;
+          font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 500;
           letter-spacing: .16em; text-transform: uppercase;
           color: var(--d-color); margin-top: 5px; opacity: .75;
         }
 
-        /* ── HOTLINES — now real tappable call links ── */
+        /* ── HOTLINES ── */
         .st-hotlines {
           display: flex; gap: 8px; flex-wrap: wrap;
           flex-shrink: 0;
@@ -448,12 +447,12 @@ export default function SafetyTips() {
           display: inline-flex; align-items: center; gap: 6px;
           background: var(--d-dim); border: 1px solid var(--d-border);
           border-radius: 9px; padding: 10px 16px;
-          font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+          font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600;
           color: var(--d-color); text-decoration: none;
           white-space: nowrap; cursor: pointer;
           transition: background 0.18s, transform 0.15s, box-shadow 0.18s;
           -webkit-tap-highlight-color: transparent;
-          min-height: 44px; /* WCAG touch target */
+          min-height: 44px;
         }
         .st-hotline-btn:hover,
         .st-hotline-btn:active {
@@ -471,7 +470,7 @@ export default function SafetyTips() {
         .st-phase-btn {
           display: flex; align-items: center; justify-content: center; gap: 8px;
           flex-direction: column;
-          font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500;
+          font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500;
           letter-spacing: .04em; padding: 14px 12px; border-radius: var(--radius);
           cursor: pointer; border: 1px solid rgba(0,200,224,0.08);
           background: var(--surface); backdrop-filter: blur(18px);
@@ -511,14 +510,14 @@ export default function SafetyTips() {
           transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,0.35);
         }
         .st-tip-num {
-          font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 700;
+          font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700;
           min-width: 28px; height: 28px; border-radius: 7px;
           display: flex; align-items: center; justify-content: center;
           background: var(--d-dim); color: var(--d-color);
           flex-shrink: 0; margin-top: 1px; letter-spacing: .04em;
         }
         .st-tip-text {
-          font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 300;
+          font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 300;
           line-height: 1.65; color: var(--text2);
         }
         .st-tip-text strong { color: var(--text); font-weight: 500; }
@@ -538,9 +537,15 @@ export default function SafetyTips() {
           background: radial-gradient(ellipse 60% 120% at 0% 50%, rgba(232,55,42,0.06) 0%, transparent 70%);
           pointer-events: none;
         }
-        .st-gobag-title { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; letter-spacing: -.03em; color: var(--text); }
+        .st-gobag-title {
+          font-family: 'Poppins', sans-serif; font-size: 24px; font-weight: 700;
+          letter-spacing: -.03em; color: var(--text);
+        }
         .st-gobag-title span { color: #A8D8FF; -webkit-text-stroke: 0; }
-        .st-gobag-sub { font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 300; color: var(--text2); margin-top: 6px; max-width: 440px; line-height: 1.65; }
+        .st-gobag-sub {
+          font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 300;
+          color: var(--text2); margin-top: 6px; max-width: 440px; line-height: 1.65;
+        }
 
         .st-progress-card {
           background: var(--surface); border: 1px solid rgba(0,200,224,0.08);
@@ -548,9 +553,11 @@ export default function SafetyTips() {
           backdrop-filter: blur(18px);
         }
         .st-progress-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-        .st-progress-label { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 400; color: var(--text2); }
+        .st-progress-label {
+          font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 400; color: var(--text2);
+        }
         .st-progress-pct {
-          font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; letter-spacing: -.04em;
+          font-family: 'Poppins', sans-serif; font-size: 26px; font-weight: 700; letter-spacing: -.04em;
           background: linear-gradient(135deg, var(--red), var(--cyan));
           -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
         }
@@ -564,7 +571,7 @@ export default function SafetyTips() {
 
         .st-cat-filter { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px; }
         .st-cat-btn {
-          font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 500;
+          font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500;
           letter-spacing: .07em; text-transform: uppercase; padding: 6px 14px;
           border-radius: 20px; border: 1px solid rgba(0,200,224,0.08);
           background: var(--surface); backdrop-filter: blur(8px);
@@ -593,13 +600,22 @@ export default function SafetyTips() {
           background: linear-gradient(135deg, var(--red), var(--cyan));
           border-color: transparent; box-shadow: 0 0 12px rgba(232,55,42,0.30);
         }
-        .st-check-cat { font-family: 'DM Sans', sans-serif; font-size: 9px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--cyan); opacity: .7; margin-bottom: 2px; }
-        .st-check-label { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 300; line-height: 1.45; color: var(--text2); transition: all .2s; }
+        .st-check-cat {
+          font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 500;
+          letter-spacing: .14em; text-transform: uppercase; color: var(--cyan); opacity: .7; margin-bottom: 2px;
+        }
+        .st-check-label {
+          font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 300;
+          line-height: 1.45; color: var(--text2); transition: all .2s;
+        }
         .st-check-item.checked .st-check-label { color: var(--text3); text-decoration: line-through; }
-        .st-check-num { font-family: 'DM Sans', sans-serif; font-size: 10px; font-weight: 500; color: var(--text3); flex-shrink: 0; margin-left: auto; min-width: 28px; text-align: right; }
+        .st-check-num {
+          font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 500;
+          color: var(--text3); flex-shrink: 0; margin-left: auto; min-width: 28px; text-align: right;
+        }
 
         .st-reset {
-          margin-top: 20px; font-family: 'DM Sans', sans-serif;
+          margin-top: 20px; font-family: 'Inter', sans-serif;
           font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase;
           color: var(--text3); background: var(--surface); backdrop-filter: blur(8px);
           border: 1px solid rgba(0,200,224,0.08); border-radius: 8px;
@@ -617,13 +633,11 @@ export default function SafetyTips() {
           .st-hero h1 { font-size: clamp(32px, 8vw, 52px); }
           .st-hero-sub { font-size: 14px; }
 
-          /* Header card: stack title + hotlines vertically */
           .st-panel-header-card {
             grid-template-columns: 1fr;
             gap: 16px;
             padding: 18px 16px;
           }
-          /* Hotlines wrap into rows of 2 on mobile */
           .st-hotlines { width: 100%; }
           .st-hotline-btn { flex: 1 1 calc(50% - 4px); justify-content: center; font-size: 12px; }
 
@@ -638,7 +652,6 @@ export default function SafetyTips() {
         }
 
         @media (max-width: 400px) {
-          /* Hotlines stack full width on very small phones */
           .st-hotline-btn { flex: 1 1 100%; }
           .st-panel-icon { width: 44px; height: 44px; font-size: 22px; }
           .st-panel-name { font-size: 20px; }
@@ -721,7 +734,6 @@ export default function SafetyTips() {
                   </div>
                 </div>
 
-                {/* ── HOTLINES: each number is a real tel: link ── */}
                 <div className="st-hotlines">
                   {disaster.hotlines.map((h) => (
                     <a
@@ -756,8 +768,8 @@ export default function SafetyTips() {
               <div className="st-tips">
                 {disaster[activePhase].map((tip, i) => {
                   const dot  = tip.indexOf(" — ");
-                  const main = dot > -1 ? tip.slice(0, dot) : tip;
-                  const rest = dot > -1 ? tip.slice(dot)   : "";
+                  const main = tip.slice(0, dot > -1 ? dot : tip.length);
+                  const rest = dot > -1 ? tip.slice(dot) : "";
                   return (
                     <div key={i} className="st-tip" style={{ animationDelay: `${i * 0.045}s` }}>
                       <div className="st-tip-num">{String(i + 1).padStart(2,"0")}</div>

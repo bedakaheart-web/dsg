@@ -22,6 +22,14 @@ import dsgLogo  from "../assets/dsg.logo.png";
 import footerBg from "../assets/footer.png";
 
 /* ─────────────────────────────────────────
+   FONT INJECTION — Inter + Poppins
+   (matches Login, Signup, and Navbar)
+───────────────────────────────────────── */
+const FONT_CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
+`;
+
+/* ─────────────────────────────────────────
    TYPES
 ───────────────────────────────────────── */
 interface FooterLink {
@@ -53,19 +61,19 @@ const FOOTER_NAV: FooterColumn[] = [
   {
     heading: "Navigate",
     links: [
-      { label: "Safety Map",        to: "/map",        icon: <FaMapMarkedAlt size={11} /> },
-      { label: "Report Incident",   to: "/report",     icon: <FaClipboardList size={11} /> },
-      { label: "Safety Tips",       to: "/safetytips", icon: <FaLightbulb size={11} /> },
-      { label: "Emergency Contacts",to: "/directory",  icon: <FaAddressBook size={11} /> },
+      { label: "Safety Map",         to: "/map",        icon: <FaMapMarkedAlt size={11} /> },
+      { label: "Report Incident",    to: "/report",     icon: <FaClipboardList size={11} /> },
+      { label: "Safety Tips",        to: "/safetytips", icon: <FaLightbulb size={11} /> },
+      { label: "Emergency Contacts", to: "/directory",  icon: <FaAddressBook size={11} /> },
     ],
   },
   {
     heading: "About",
     links: [
-      { label: "About DumaSafeGuide", to: "/about",   icon: <FaInfoCircle size={11} /> },
-      { label: "Resources",           to: "/resources",icon: <FaBook size={11} /> },
-      { label: "Privacy Policy",      to: "/privacy",  icon: <FaLock size={11} /> },
-      { label: "Terms of Use",        to: "/terms",    icon: <FaFileAlt size={11} /> },
+      { label: "About DumaSafeGuide", to: "/about",    icon: <FaInfoCircle size={11} /> },
+      { label: "Resources",           to: "/resources", icon: <FaBook size={11} /> },
+      { label: "Privacy Policy",      to: "/privacy",   icon: <FaLock size={11} /> },
+      { label: "Terms of Use",        to: "/terms",     icon: <FaFileAlt size={11} /> },
     ],
   },
 ];
@@ -93,6 +101,9 @@ export default function Footer() {
 
   return (
     <footer className="ft">
+
+      {/* Font injection */}
+      <style>{FONT_CSS}</style>
 
       {/* Textured photo scrim */}
       <div className="ft-scrim" style={{ backgroundImage: `url(${footerBg})` }} />
