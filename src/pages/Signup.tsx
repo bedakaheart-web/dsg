@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "../js/supabase";
-import { FaEye, FaEyeSlash, FaShieldAlt, FaCheck, FaArrowRight } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaCheck, FaArrowRight } from "react-icons/fa";
 import directorybg from "../assets/directorybg.png";
+import dsgLogo from "../assets/dsg_logo.png";
 
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@300;400;500;600&display=swap');
@@ -129,12 +130,12 @@ const CSS = `
 
   .su-logo-ring {
     width: 44px; height: 44px; border-radius: 12px;
-    background: linear-gradient(135deg, rgba(232,55,42,0.12), rgba(0,200,224,0.08));
-    border: 1px solid rgba(0,200,224,0.25);
+    background: transparent;
+    border: none;
     display: flex; align-items: center; justify-content: center;
-    color: #e8372a; font-size: 18px; flex-shrink: 0;
-    box-shadow: 0 0 20px rgba(0,200,224,0.10);
+    flex-shrink: 0;
     transition: transform .3s ease;
+    overflow: hidden;
   }
 
   .su-brand-row:hover .su-logo-ring { transform: scale(1.08) rotate(-5deg); }
@@ -696,15 +697,7 @@ function MobileHeader() {
   return (
     <div className="su-mobile-header" style={{ display: "none" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-        <div style={{
-          width: 36, height: 36, borderRadius: 10,
-          background: "linear-gradient(135deg, rgba(232,55,42,0.15), rgba(0,200,224,0.10))",
-          border: "1px solid rgba(0,200,224,0.25)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          color: "#e8372a", fontSize: 15, flexShrink: 0,
-        }}>
-          <FaShieldAlt />
-        </div>
+        <img src={dsgLogo} alt="DSG Logo" style={{ width: 36, height: 36, objectFit: "contain" }} />
         <div style={{
           fontFamily: "'Syne', sans-serif", fontSize: 16, fontWeight: 900,
           color: "#F8FAFC", letterSpacing: "-0.03em",
@@ -743,7 +736,9 @@ function LeftPanel() {
       {/* Desktop brand row — hidden on mobile via CSS */}
       <div className="su-left-content">
         <div className="su-brand-row">
-          <div className="su-logo-ring"><FaShieldAlt /></div>
+          <div className="su-logo-ring">
+            <img src={dsgLogo} alt="DumaSafeGuide Logo" style={{ width: 44, height: 44, objectFit: "contain" }} />
+          </div>
           <div className="su-brand-name">Duma<span>SafeGuide</span></div>
         </div>
       </div>
