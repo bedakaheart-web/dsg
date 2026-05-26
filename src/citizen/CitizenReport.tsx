@@ -54,8 +54,19 @@ const CSS = `
     display: flex; align-items: center; justify-content: center; min-height: 80vh;
   }
 
+  /* ── Back Button ── */
+  .cr-back-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 16px; margin-bottom: 20px;
+    background: rgba(15,21,33,.82); border: 1px solid rgba(255,255,255,.07);
+    border-radius: 10px; font-size: 13px; font-weight: 600;
+    color: #2ECC8F; text-decoration: none; cursor: pointer;
+    transition: all 0.2s; margin-top: 20px;
+  }
+  .cr-back-btn:hover { background: rgba(46,204,143,.08); border-color: rgba(46,204,143,.20); }
+
   /* ── Hero ── */
-  .cr-hero { margin-top: 52px; margin-bottom: 28px; }
+  .cr-hero { margin-top: 12px; margin-bottom: 28px; }
   .cr-hero-tag {
     display: inline-flex; align-items: center; gap: 7px;
     font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
@@ -394,39 +405,6 @@ const CSS = `
   .cr-hotline-number { font-family: 'Cabinet Grotesk', sans-serif; font-size: 14px; font-weight: 800; color: #eef0f7; }
   .cr-hotline-call { font-size: 11px; font-weight: 600; color: var(--hc); opacity: .70; }
 
-  /* ── Notification Warning Banner ── */
-  .cr-notif-banner {
-    display: flex; align-items: flex-start; gap: 14px;
-    background: rgba(255,209,102,.06);
-    border: 1px solid rgba(255,209,102,.22);
-    border-radius: 14px; padding: 16px 18px;
-    margin-bottom: 28px; width: 100%; max-width: 780px;
-    text-align: left; animation: cr-up .5s ease .12s both;
-  }
-  .cr-notif-banner-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
-  .cr-notif-banner-body { flex: 1; }
-  .cr-notif-banner-title {
-    font-family: 'Cabinet Grotesk', sans-serif;
-    font-size: 13px; font-weight: 800; letter-spacing: -.01em;
-    color: #FFD166; margin-bottom: 6px;
-  }
-  .cr-notif-banner-text {
-    font-size: 12px; color: rgba(238,240,247,.40); line-height: 1.65; margin: 0;
-  }
-  .cr-notif-banner-text strong { color: rgba(255,209,102,.75); font-weight: 600; }
-  .cr-notif-banner-blocked {
-    font-size: 11px; color: rgba(255,107,107,.65);
-    margin-top: 8px; line-height: 1.5;
-  }
-  .cr-notif-enable-btn {
-    flex-shrink: 0; background: rgba(255,209,102,.10);
-    border: 1px solid rgba(255,209,102,.28); border-radius: 9px;
-    padding: 9px 16px; font-size: 12px; font-weight: 600;
-    color: #FFD166; cursor: pointer; white-space: nowrap;
-    transition: background .18s; align-self: flex-start;
-  }
-  .cr-notif-enable-btn:hover { background: rgba(255,209,102,.20); }
-
   /* ── Success ── */
   .cr-success {
     display: flex; flex-direction: column; align-items: center; text-align: center;
@@ -489,12 +467,8 @@ const CSS = `
     .cr-hotlines { flex-direction: row; flex-wrap: wrap; }
     .cr-hotline { flex: 1 1 calc(50% - 4px); }
     .cr-inner { padding: 0 16px 80px; }
-    .cr-banner { flex-direction: column; align-items: flex-start; }
-    .cr-banner-btn { width: 100%; justify-content: center; }
     .cr-steps { -webkit-mask-image: none; mask-image: none; }
     .cr-success-cards { flex-direction: column; align-items: center; }
-    .cr-notif-banner { flex-direction: column; }
-    .cr-notif-enable-btn { width: 100%; justify-content: center; text-align: center; }
   }
   @media (max-width: 560px) {
     .cr-fields { grid-template-columns: 1fr; }
@@ -510,18 +484,18 @@ const CSS = `
   }
 `;
 
-// ── 1. Check browser permission state before touching GPS ─────────────────
+// ── Geolocation helpers ──────────────────────────────────────────────────────
+
 async function checkGeolocationPermission(): Promise<PermissionState | "unknown"> {
   try {
     if ("permissions" in navigator) {
       const status = await navigator.permissions.query({ name: "geolocation" });
-      return status.state; // "granted" | "denied" | "prompt"
+      return status.state;
     }
   } catch {}
   return "unknown";
 }
 
-// ── 2. IP-based fallback when GPS is blocked or unavailable ───────────────
 async function ipGeolocationFallback(): Promise<{ lat: string; lng: string } | null> {
   try {
     const res  = await fetch("https://ipapi.co/json/");
@@ -536,7 +510,6 @@ async function ipGeolocationFallback(): Promise<{ lat: string; lng: string } | n
   return null;
 }
 
-// ── 3. GPS acquisition — fixes silent failure & double-fire ──────────────
 function acquireGPS(
   onSuccess: (lat: string, lng: string, acc: number) => void,
   onError:   () => void
@@ -545,7 +518,7 @@ function acquireGPS(
 
   let best:    GeolocationPosition | null = null;
   let watchId: number | null = null;
-  let done     = false;                        // prevents double-fire
+  let done     = false;
 
   const finish = () => {
     if (done) return;
@@ -565,28 +538,22 @@ function acquireGPS(
     }
   };
 
-  // 25-second budget — enough for a cold GPS start on mobile outdoors
   const timer = setTimeout(finish, 25_000);
 
   watchId = navigator.geolocation.watchPosition(
     (pos) => {
-      // Keep best (most accurate) fix seen so far
       if (!best || pos.coords.accuracy < best.coords.accuracy) best = pos;
-      // Accept immediately when accuracy is within 15 m
       if (pos.coords.accuracy <= 15) {
         clearTimeout(timer);
         finish();
       }
     },
     (err) => {
-      // PERMISSION_DENIED → will never succeed, bail immediately
       if (err.code === err.PERMISSION_DENIED) {
         clearTimeout(timer);
-        finish(); // best is null → calls onError
+        finish();
         return;
       }
-      // POSITION_UNAVAILABLE / TIMEOUT → keep whatever best we have;
-      // let the 25-second timer decide
       if (best) {
         clearTimeout(timer);
         finish();
@@ -602,7 +569,7 @@ export default function CitizenReport() {
   const [location,        setLocation]        = useState("");
   const [address,         setAddress]         = useState<string | null>(null);
   const [locationStatus,  setLocationStatus]  = useState<"idle"|"loading"|"ok"|"error">("idle");
-  const [locationSource,  setLocationSource]  = useState<"gps"|"ip"|null>(null);  // NEW
+  const [locationSource,  setLocationSource]  = useState<"gps"|"ip"|null>(null);
   const [selectedType,    setSelectedType]    = useState<string | null>(null);
   const [agreed,          setAgreed]          = useState(false);
   const [submitted,       setSubmitted]       = useState(false);
@@ -618,15 +585,9 @@ export default function CitizenReport() {
   const [reporterContact, setReporterContact] = useState("");
   const [description,     setDescription]    = useState("");
 
-  // ── Notification permission state ──
-  const [notifPermission, setNotifPermission] = useState<NotificationPermission>(
-    "Notification" in window ? Notification.permission : "granted"
-  );
-
   const fileRef    = useRef<HTMLInputElement>(null);
   const activeType = INCIDENT_TYPES.find(t => t.value === selectedType);
 
-  // ── Reverse geocode coords → human-readable address ──────────────────────
   async function reverseGeocode(lat: string, lng: string) {
     try {
       const res  = await fetch(
@@ -654,7 +615,6 @@ export default function CitizenReport() {
     setAddress(`Lat ${lat}, Lng ${lng}`);
   }
 
-  // ── Core location resolver: GPS → IP fallback ─────────────────────────
   async function resolveLocation() {
     setLocationStatus("loading");
     setAddress(null);
@@ -664,7 +624,6 @@ export default function CitizenReport() {
     const permState = await checkGeolocationPermission();
 
     if (permState === "denied") {
-      // GPS blocked — go straight to IP fallback
       const ip = await ipGeolocationFallback();
       if (ip) {
         setLocation(`${ip.lat}, ${ip.lng}`);
@@ -678,7 +637,6 @@ export default function CitizenReport() {
       return;
     }
 
-    // Permission is "granted", "prompt", or unknown → try GPS first
     acquireGPS(
       async (lat, lng, acc) => {
         setLocation(`${lat}, ${lng}`);
@@ -688,7 +646,6 @@ export default function CitizenReport() {
         await reverseGeocode(lat, lng);
       },
       async () => {
-        // GPS failed — try IP before showing error
         const ip = await ipGeolocationFallback();
         if (ip) {
           setLocation(`${ip.lat}, ${ip.lng}`);
@@ -703,10 +660,8 @@ export default function CitizenReport() {
     );
   }
 
-  // ── Auto-detect location on mount ────────────────────────────────────────
   useEffect(() => {
     resolveLocation();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -742,15 +697,6 @@ export default function CitizenReport() {
     const { data } = supabase.storage.from("reports-evidence").getPublicUrl(filePath);
     setUploadProgress("done");
     return { url: data?.publicUrl ?? null, errorMsg: null };
-  }
-
-  // ── Request notification permission after successful submit ──
-  async function requestNotificationPermission() {
-    if (!("Notification" in window)) return;
-    if (Notification.permission === "default") {
-      const result = await Notification.requestPermission();
-      setNotifPermission(result);
-    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -798,10 +744,8 @@ export default function CitizenReport() {
     setSubmitting(false);
     setSubmittedId(inserted?.id ?? null);
     setSubmitted(true);
-    await requestNotificationPermission();
   }
 
-  // ── Step progress tracker ─────────────────────────────────────────────────
   useEffect(() => {
     if (agreed && selectedType)                                    setCurrentStep(5);
     else if (fileName)                                             setCurrentStep(4);
@@ -811,7 +755,6 @@ export default function CitizenReport() {
     else                                                           setCurrentStep(0);
   }, [selectedType, locationStatus, fileName, agreed, description]);
 
-  // ── Location field display value ──────────────────────────────────────────
   function gpsValue() {
     if (locationStatus === "loading") return "Acquiring location — please wait…";
     if (locationStatus === "error")   return "Location unavailable — GPS access denied or timed out";
@@ -835,48 +778,6 @@ export default function CitizenReport() {
     setUploadProgress("idle");
   }
 
-  // ── Notification warning banner ───────────────────────────────────────────
-  function NotificationWarningBanner() {
-    if (!("Notification" in window)) return null;
-    if (notifPermission === "granted") return null;
-    return (
-      <div className="cr-notif-banner">
-        <span className="cr-notif-banner-icon">⚠️</span>
-        <div className="cr-notif-banner-body">
-          <div className="cr-notif-banner-title">
-            Enable Notifications &amp; Location Access
-          </div>
-          <p className="cr-notif-banner-text">
-            To receive real-time updates on your report and allow accurate GPS
-            tracking, please{" "}
-            <strong>enable notifications and location access</strong>{" "}
-            in your browser or device settings. Without these, you may miss
-            important responder updates and your location may not be detected
-            correctly when submitting future reports.
-          </p>
-          {notifPermission === "denied" && (
-            <p className="cr-notif-banner-blocked">
-              🔒 Notifications are currently blocked. Go to your browser
-              Settings → Site Permissions → Notifications and allow this site,
-              then reload the page.
-            </p>
-          )}
-        </div>
-        {notifPermission === "default" && (
-          <button
-            className="cr-notif-enable-btn"
-            onClick={async () => {
-              const result = await Notification.requestPermission();
-              setNotifPermission(result);
-            }}
-          >
-            Enable Now →
-          </button>
-        )}
-      </div>
-    );
-  }
-
   // ── Success screen ────────────────────────────────────────────────────────
   if (submitted) {
     return (
@@ -894,7 +795,6 @@ export default function CitizenReport() {
                 responders. Authorities have been notified and will respond
                 shortly. Keep your phone nearby for follow-up.
               </p>
-              <NotificationWarningBanner />
               <div className="cr-success-cards">
                 <div className="cr-success-card">
                   <div className="cr-success-card-icon">📝</div>
@@ -941,6 +841,15 @@ export default function CitizenReport() {
         <div className="cr-glow"><div className="cr-glow-a" /><div className="cr-glow-b" /></div>
 
         <div className="cr-inner">
+
+          {/* ── Back Button ── */}
+          <button
+            className="cr-back-btn"
+            onClick={() => navigate("/citizen/dashboard")}
+            aria-label="Back to dashboard"
+          >
+            ← Back to Dashboard
+          </button>
 
           {/* ── Hero ── */}
           <section className="cr-hero">
@@ -1119,7 +1028,6 @@ export default function CitizenReport() {
                   {locationStatus === "ok" && (
                     <>
                       <div className="cr-acc-badges">
-                        {/* GPS accuracy badge */}
                         {locationSource === "gps" && gpsAccuracy !== null && (
                           <span
                             className={`cr-acc-badge ${
@@ -1138,7 +1046,6 @@ export default function CitizenReport() {
                             (±{Math.round(gpsAccuracy)}m)
                           </span>
                         )}
-                        {/* IP-based badge */}
                         {locationSource === "ip" && (
                           <span className="cr-acc-badge acc-ip">
                             📡 Approximate location (IP-based — GPS unavailable)

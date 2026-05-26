@@ -1,5 +1,6 @@
 // src/citizen/CitizenSafetyTips.tsx
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import pagesBackground from "../assets/pagesbackground.png";
 
 const GO_BAG_ITEMS = [
@@ -254,8 +255,34 @@ const CSS = `
     padding: 0 24px 100px;
   }
 
+  /* ── Back button ── */
+  .cst-back-btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 12px; font-weight: 600; letter-spacing: .06em;
+    color: rgba(238,240,247,.35); text-decoration: none;
+    background: rgba(15,21,33,.82); backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,.07); border-radius: 10px;
+    padding: 9px 16px; margin-bottom: 24px; margin-top: 52px;
+    transition: color .2s, border-color .2s, background .2s, transform .15s;
+    width: fit-content;
+  }
+  .cst-back-btn:hover {
+    color: #eef0f7;
+    border-color: rgba(255,255,255,.16);
+    background: rgba(22,29,46,.9);
+    transform: translateX(-2px);
+  }
+  .cst-back-arrow {
+    font-size: 14px; line-height: 1;
+    transition: transform .2s;
+  }
+  .cst-back-btn:hover .cst-back-arrow {
+    transform: translateX(-3px);
+  }
+
   /* ── Hero ── */
-  .cst-hero { margin-top: 52px; margin-bottom: 36px; }
+  .cst-hero { margin-bottom: 36px; }
   .cst-hero-tag {
     display: inline-flex; align-items: center; gap: 7px;
     font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
@@ -526,7 +553,7 @@ const CSS = `
   @media (max-width: 680px) {
     .cst-inner { padding: 0 16px 80px; }
     .cst-tabs-wrap { margin: 0 -16px 28px; padding: 0 16px; }
-    .cst-hero { margin-top: 40px; margin-bottom: 28px; }
+    .cst-back-btn { margin-top: 36px; }
     .cst-panel-header { grid-template-columns: 1fr; gap: 16px; padding: 18px 16px; }
     .cst-hotlines { width: 100%; }
     .cst-hotline-btn { flex: 1 1 calc(50% - 4px); justify-content: center; font-size: 12px; }
@@ -575,6 +602,12 @@ export default function CitizenSafetyTips() {
         </div>
 
         <div className="cst-inner">
+
+          {/* ── Back to Dashboard button ── */}
+          <Link to="/citizen/dashboard" className="cst-back-btn">
+            <span className="cst-back-arrow">←</span>
+            Back to Dashboard
+          </Link>
 
           {/* ── Hero ── */}
           <section className="cst-hero">
