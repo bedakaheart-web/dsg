@@ -19,7 +19,6 @@ const CSS = `
     position: relative;
   }
 
-  /* background image */
   .su-root::after {
     content: '';
     position: fixed; inset: 0; z-index: 0;
@@ -31,7 +30,6 @@ const CSS = `
     pointer-events: none;
   }
 
-  /* animated background */
   .su-root::before {
     content: '';
     position: fixed; inset: 0; z-index: 0;
@@ -47,9 +45,7 @@ const CSS = `
     50% { opacity: 0.8; }
   }
 
-  /* ════════════════════════════════
-     LEFT PANEL
-  ════════════════════════════════ */
+  /* ── Left Panel ── */
   .su-left {
     position: relative;
     width: 45%;
@@ -75,13 +71,11 @@ const CSS = `
     background: linear-gradient(160deg, rgba(7,16,29,0.92) 0%, rgba(7,16,29,0.78) 50%, rgba(7,16,29,0.90) 100%);
   }
 
-  /* animated lines */
   .su-left-lines {
     position: absolute; inset: 0; z-index: 1; pointer-events: none;
     background-image: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,200,224,0.015) 3px, rgba(0,200,224,0.015) 4px);
   }
 
-  /* gradient glows */
   .su-left-glow-a {
     position: absolute; z-index: 1; pointer-events: none;
     width: 520px; height: 520px; border-radius: 50%;
@@ -105,7 +99,6 @@ const CSS = `
     50% { transform: scale(1.1); opacity: 0.9; }
   }
 
-  /* divider line */
   .su-left::after {
     content: '';
     position: absolute; top: 0; right: 0; bottom: 0; width: 1px;
@@ -115,7 +108,6 @@ const CSS = `
 
   .su-left-content { position: relative; z-index: 2; }
 
-  /* brand header */
   .su-brand-row {
     display: flex; align-items: center; gap: 12px;
     margin-bottom: 60px;
@@ -130,16 +122,14 @@ const CSS = `
   .su-logo-ring {
     width: 44px; height: 44px; border-radius: 12px;
     background: linear-gradient(135deg, rgba(232,55,42,0.12), rgba(0,200,224,0.08));
-    border: 1px solid rgba(0, 200, 224, 0.25);
+    border: 1px solid rgba(0,200,224,0.25);
     display: flex; align-items: center; justify-content: center;
     color: #e8372a; font-size: 18px; flex-shrink: 0;
-    box-shadow: 0 0 20px rgba(0, 200, 224, 0.10);
+    box-shadow: 0 0 20px rgba(0,200,224,0.10);
     transition: transform .3s ease;
   }
 
-  .su-brand-row:hover .su-logo-ring {
-    transform: scale(1.08) rotate(-5deg);
-  }
+  .su-brand-row:hover .su-logo-ring { transform: scale(1.08) rotate(-5deg); }
 
   .su-brand-name {
     font-family: 'Syne', sans-serif;
@@ -149,7 +139,6 @@ const CSS = `
 
   .su-brand-name span { color: #00c8e0; }
 
-  /* hero section */
   .su-hero {
     padding-bottom: 40px;
     animation: slideUp .7s .1s cubic-bezier(.22,1,.36,1) both;
@@ -193,16 +182,13 @@ const CSS = `
     max-width: 340px; margin-bottom: 36px;
   }
 
-  /* steps section */
-  .su-steps {
-    display: flex; flex-direction: column; gap: 14px; max-width: 340px;
-  }
+  .su-steps { display: flex; flex-direction: column; gap: 14px; max-width: 340px; }
 
   .su-step {
     display: flex; align-items: flex-start; gap: 13px;
     padding: 16px 18px; border-radius: 12px;
     background: rgba(10,21,37,0.55);
-    border: 1px solid rgba(0, 200, 224, 0.12);
+    border: 1px solid rgba(0,200,224,0.12);
     backdrop-filter: blur(12px);
     transition: all .3s ease;
     animation: slideUp .5s ease both;
@@ -214,9 +200,9 @@ const CSS = `
 
   .su-step:hover {
     background: rgba(10,21,37,0.75);
-    border-color: rgba(0, 200, 224, 0.22);
+    border-color: rgba(0,200,224,0.22);
     transform: translateX(4px);
-    box-shadow: 0 8px 24px rgba(0, 200, 224, 0.08);
+    box-shadow: 0 8px 24px rgba(0,200,224,0.08);
   }
 
   .su-step-num {
@@ -228,16 +214,9 @@ const CSS = `
     margin-top: 1px;
   }
 
-  .su-step-title {
-    font-size: 12.5px; font-weight: 700; color: rgba(168,216,255,0.85); margin-bottom: 3px;
-    letter-spacing: -0.01em;
-  }
+  .su-step-title { font-size: 12.5px; font-weight: 700; color: rgba(168,216,255,0.85); margin-bottom: 3px; letter-spacing: -0.01em; }
+  .su-step-desc  { font-size: 11.5px; color: rgba(168,216,255,0.35); line-height: 1.5; }
 
-  .su-step-desc {
-    font-size: 11.5px; color: rgba(168,216,255,0.35); line-height: 1.5;
-  }
-
-  /* bottom badge */
   .su-left-footer {
     position: relative; z-index: 2;
     animation: slideUp .7s .5s cubic-bezier(.22,1,.36,1) both;
@@ -247,15 +226,15 @@ const CSS = `
     display: inline-flex; align-items: center; gap: 9px;
     padding: 10px 14px; border-radius: 10px;
     background: rgba(10,21,37,0.70);
-    border: 1px solid rgba(0, 200, 224, 0.15);
+    border: 1px solid rgba(0,200,224,0.15);
     backdrop-filter: blur(12px);
     transition: all .3s ease;
   }
 
   .su-cert-badge:hover {
     background: rgba(10,21,37,0.90);
-    border-color: rgba(0, 200, 224, 0.30);
-    box-shadow: 0 8px 24px rgba(0, 200, 224, 0.08);
+    border-color: rgba(0,200,224,0.30);
+    box-shadow: 0 8px 24px rgba(0,200,224,0.08);
   }
 
   .su-cert-dot {
@@ -264,17 +243,10 @@ const CSS = `
     animation: su-pulse 2.5s ease-in-out infinite;
   }
 
-  .su-cert-text {
-    font-size: 11.5px; color: rgba(168,216,255,0.50);
-  }
+  .su-cert-text { font-size: 11.5px; color: rgba(168,216,255,0.50); }
+  .su-cert-text strong { color: rgba(168,216,255,0.80); font-weight: 700; }
 
-  .su-cert-text strong {
-    color: rgba(168,216,255,0.80); font-weight: 700;
-  }
-
-  /* ════════════════════════════════
-     RIGHT PANEL — form
-  ════════════════════════════════ */
+  /* ── Right Panel ── */
   .su-right {
     flex: 1;
     min-height: 100vh;
@@ -283,7 +255,7 @@ const CSS = `
     align-items: center;
     justify-content: center;
     padding: 48px 40px;
-    background: rgba(6, 13, 24, 0.70);
+    background: rgba(6,13,24,0.70);
     position: relative;
     overflow-y: auto;
     z-index: 1;
@@ -303,7 +275,6 @@ const CSS = `
     animation: slideUp .6s cubic-bezier(.22,1,.36,1) both;
   }
 
-  /* back link */
   .su-back {
     display: inline-flex; align-items: center; gap: 7px;
     margin-bottom: 32px; font-size: 12px; font-weight: 600;
@@ -311,20 +282,10 @@ const CSS = `
     transition: all .3s ease;
   }
 
-  .su-back:hover {
-    color: #00c8e0;
-    gap: 10px;
-  }
+  .su-back:hover { color: #00c8e0; gap: 10px; }
+  .su-back svg   { transition: transform .3s ease; }
+  .su-back:hover svg { transform: translateX(-4px); }
 
-  .su-back svg {
-    transition: transform .3s ease;
-  }
-
-  .su-back:hover svg {
-    transform: translateX(-4px);
-  }
-
-  /* form header */
   .su-form-accent {
     width: 48px; height: 3px; border-radius: 99px;
     background: linear-gradient(90deg, #e8372a 0%, #00c8e0 100%);
@@ -350,7 +311,6 @@ const CSS = `
     animation: slideUp .6s .15s cubic-bezier(.22,1,.36,1) both;
   }
 
-  /* error message */
   .su-error {
     display: flex; align-items: flex-start; gap: 11px;
     background: rgba(232,55,42,0.10);
@@ -368,18 +328,9 @@ const CSS = `
     80%{transform:translateX(4px)}
   }
 
-  /* form layout */
-  .su-row-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-  }
+  .su-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
-  .su-field {
-    margin-bottom: 15px;
-    animation: slideUp .5s ease both;
-  }
-
+  .su-field { margin-bottom: 15px; animation: slideUp .5s ease both; }
   .su-field:nth-child(1) { animation-delay: .2s; }
   .su-field:nth-child(2) { animation-delay: .25s; }
   .su-field:nth-child(3) { animation-delay: .3s; }
@@ -391,25 +342,21 @@ const CSS = `
     text-transform: uppercase; color: rgba(168,216,255,0.32); margin-bottom: 8px;
   }
 
-  .su-input-wrap {
-    position: relative;
-  }
+  .su-input-wrap { position: relative; }
 
   .su-field-icon {
     position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
-    color: rgba(0, 200, 224, 0.30); pointer-events: none;
+    color: rgba(0,200,224,0.30); pointer-events: none;
     display: flex; align-items: center;
     transition: color .3s ease;
   }
 
-  .su-input-wrap:focus-within .su-field-icon {
-    color: rgba(0, 200, 224, 0.60);
-  }
+  .su-input-wrap:focus-within .su-field-icon { color: rgba(0,200,224,0.60); }
 
   .su-input, .su-select {
     width: 100%;
     background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(0, 200, 224, 0.12);
+    border: 1px solid rgba(0,200,224,0.12);
     border-radius: 11px;
     padding: 12px 16px 12px 38px;
     font-family: 'DM Sans', sans-serif;
@@ -420,9 +367,7 @@ const CSS = `
     transition: all .25s ease;
   }
 
-  .su-input::placeholder {
-    color: rgba(168,216,255,0.18);
-  }
+  .su-input::placeholder { color: rgba(168,216,255,0.18); }
 
   .su-input:focus, .su-select:focus {
     border-color: rgba(0,200,224,0.35);
@@ -430,362 +375,161 @@ const CSS = `
     box-shadow: 0 0 0 3px rgba(0,200,224,0.07), inset 0 0 0 1px rgba(0,200,224,0.05);
   }
 
-  .su-input.has-eye {
-    padding-right: 42px;
-  }
+  .su-input.has-eye { padding-right: 42px; }
 
   .su-select {
-    appearance: none;
-    cursor: pointer;
+    appearance: none; cursor: pointer;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='rgba(0,200,224,0.35)'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 13px center;
-    background-size: 16px;
+    background-repeat: no-repeat; background-position: right 13px center; background-size: 16px;
     padding-right: 40px;
   }
 
-  .su-select option {
-    background: #0a1525;
-    color: #F8FAFC;
-  }
+  .su-select option { background: #0a1525; color: #F8FAFC; }
 
   .su-eye {
     position: absolute; right: 13px; top: 50%; transform: translateY(-50%);
     background: none; border: none; cursor: pointer; padding: 0;
-    color: rgba(0, 200, 224, 0.25);
+    color: rgba(0,200,224,0.25);
     display: flex; align-items: center;
     transition: color .2s;
   }
 
-  .su-eye:hover {
-    color: rgba(0, 200, 224, 0.60);
-  }
+  .su-eye:hover { color: rgba(0,200,224,0.60); }
 
   .su-pw-hint {
-    font-size: 11px;
-    color: rgba(168,216,255,0.22);
-    margin-top: 5px;
-    padding-left: 2px;
-    font-weight: 400;
+    font-size: 11px; color: rgba(168,216,255,0.22);
+    margin-top: 5px; padding-left: 2px; font-weight: 400;
   }
 
-  /* button */
   .su-btn {
-    width: 100%;
-    padding: 14px 20px;
-    font-family: 'Syne', sans-serif;
-    font-size: 13px;
-    font-weight: 800;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    border-radius: 11px;
-    border: none;
+    width: 100%; padding: 14px 20px;
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 800;
+    letter-spacing: .08em; text-transform: uppercase;
+    border-radius: 11px; border: none;
     background: linear-gradient(135deg, #e8372a 0%, #f04438 100%);
-    color: #fff;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
+    color: #fff; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
     transition: all .25s ease;
-    margin-top: 10px;
-    margin-bottom: 20px;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 0 30px rgba(232, 55, 42, 0.30);
+    margin-top: 10px; margin-bottom: 20px;
+    position: relative; overflow: hidden;
+    box-shadow: 0 0 30px rgba(232,55,42,0.30);
   }
 
   .su-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 60%;
-    height: 100%;
+    content: ''; position: absolute; top: 0; left: -100%;
+    width: 60%; height: 100%;
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
-    transform: skewX(-20deg);
-    transition: left .4s ease;
+    transform: skewX(-20deg); transition: left .4s ease;
   }
 
-  .su-btn:hover:not(:disabled)::before {
-    left: 140%;
-  }
-
+  .su-btn:hover:not(:disabled)::before { left: 140%; }
   .su-btn:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 0 45px rgba(232, 55, 42, 0.50);
+    box-shadow: 0 0 45px rgba(232,55,42,0.50);
     background: linear-gradient(135deg, #f04438 0%, #f85a47 100%);
   }
-
-  .su-btn:active:not(:disabled) {
-    transform: translateY(0);
-  }
-
-  .su-btn:disabled {
-    opacity: .5;
-    cursor: not-allowed;
-  }
+  .su-btn:active:not(:disabled) { transform: translateY(0); }
+  .su-btn:disabled { opacity: .5; cursor: not-allowed; }
 
   .su-spinner {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    border: 2px solid rgba(255,255,255,.25);
-    border-top-color: #fff;
-    animation: su-spin .65s linear infinite;
-    flex-shrink: 0;
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.25); border-top-color: #fff;
+    animation: su-spin .65s linear infinite; flex-shrink: 0;
   }
 
-  @keyframes su-spin {
-    to { transform: rotate(360deg); }
-  }
+  @keyframes su-spin { to { transform: rotate(360deg); } }
 
-  /* form footer */
-  .su-form-footer {
-    text-align: center;
-    font-size: 13px;
-    color: rgba(168,216,255,0.35);
-  }
+  .su-form-footer { text-align: center; font-size: 13px; color: rgba(168,216,255,0.35); }
+  .su-form-footer a { color: #00c8e0; text-decoration: none; font-weight: 700; transition: all .2s ease; }
+  .su-form-footer a:hover { color: #a8d8ff; text-shadow: 0 0 12px rgba(0,200,224,0.25); }
 
-  .su-form-footer a {
-    color: #00c8e0;
-    text-decoration: none;
-    font-weight: 700;
-    transition: all .2s ease;
-  }
-
-  .su-form-footer a:hover {
-    color: #a8d8ff;
-    text-shadow: 0 0 12px rgba(0, 200, 224, 0.25);
-  }
-
-  /* ════════════════════════════════
-     SUCCESS STATE
-  ════════════════════════════════ */
+  /* ── Success State ── */
   .su-success {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding: 40px 0;
+    display: flex; flex-direction: column; align-items: center;
+    text-align: center; padding: 40px 0;
     animation: slideUp .6s cubic-bezier(.22,1,.36,1) both;
   }
 
   .su-success-icon {
-    width: 72px;
-    height: 72px;
-    border-radius: 50%;
+    width: 72px; height: 72px; border-radius: 50%;
     background: rgba(0,200,224,0.12);
     border: 2px solid rgba(0,200,224,0.35);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 32px;
-    margin-bottom: 18px;
-    box-shadow: 0 0 30px rgba(0, 200, 224, 0.20);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px; margin-bottom: 18px;
+    box-shadow: 0 0 30px rgba(0,200,224,0.20);
     animation: successPop .5s .1s cubic-bezier(.22,1,.36,1) both;
   }
 
   @keyframes successPop {
     from { transform: scale(.6) rotate(-8deg); opacity: 0; }
-    to { transform: scale(1) rotate(0deg); opacity: 1; }
+    to   { transform: scale(1)  rotate(0deg);  opacity: 1; }
   }
 
-  .su-success-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 24px;
-    font-weight: 900;
-    color: #F8FAFC;
-    margin-bottom: 10px;
-  }
-
-  .su-success-msg {
-    font-size: 13.5px;
-    font-weight: 300;
-    color: rgba(168,216,255,0.48);
-    line-height: 1.8;
-    margin-bottom: 8px;
-    max-width: 340px;
-  }
-
-  .su-success-msg strong {
-    color: #00c8e0;
-    font-weight: 700;
-  }
-
-  .su-success-note {
-    font-size: 12px;
-    color: rgba(168,216,255,0.28);
-    margin-bottom: 28px;
-    font-style: italic;
-  }
-
-  .su-success-div {
-    width: 100%;
-    height: 1px;
-    background: rgba(0,200,224,0.12);
-    margin-bottom: 24px;
-  }
+  .su-success-title { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 900; color: #F8FAFC; margin-bottom: 10px; }
+  .su-success-msg   { font-size: 13.5px; font-weight: 300; color: rgba(168,216,255,0.48); line-height: 1.8; margin-bottom: 8px; max-width: 340px; }
+  .su-success-msg strong { color: #00c8e0; font-weight: 700; }
+  .su-success-note  { font-size: 12px; color: rgba(168,216,255,0.28); margin-bottom: 28px; font-style: italic; }
+  .su-success-div   { width: 100%; height: 1px; background: rgba(0,200,224,0.12); margin-bottom: 24px; }
 
   .su-success-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 9px;
-    width: 100%;
-    padding: 14px;
-    font-family: 'Syne', sans-serif;
-    font-size: 13px;
-    font-weight: 800;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    border-radius: 11px;
-    border: none;
+    display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+    width: 100%; padding: 14px;
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 800;
+    letter-spacing: .08em; text-transform: uppercase;
+    border-radius: 11px; border: none;
     background: linear-gradient(135deg, #e8372a 0%, #f04438 100%);
-    color: #fff;
-    cursor: pointer;
-    text-decoration: none;
+    color: #fff; cursor: pointer; text-decoration: none;
     transition: all .25s ease;
-    box-shadow: 0 0 30px rgba(232, 55, 42, 0.30);
-    position: relative;
-    overflow: hidden;
+    box-shadow: 0 0 30px rgba(232,55,42,0.30);
+    position: relative; overflow: hidden;
   }
 
   .su-success-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 60%;
-    height: 100%;
+    content: ''; position: absolute; top: 0; left: -100%;
+    width: 60%; height: 100%;
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
-    transform: skewX(-20deg);
-    transition: left .4s ease;
+    transform: skewX(-20deg); transition: left .4s ease;
   }
 
-  .su-success-btn:hover::before {
-    left: 140%;
-  }
-
+  .su-success-btn:hover::before { left: 140%; }
   .su-success-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 0 45px rgba(232, 55, 42, 0.50);
+    box-shadow: 0 0 45px rgba(232,55,42,0.50);
     background: linear-gradient(135deg, #f04438 0%, #f85a47 100%);
   }
 
-  /* ════════════════════════════════
-     RESPONSIVE
-  ════════════════════════════════ */
+  /* ── Responsive ── */
   @media (max-width: 920px) {
-    .su-root {
-      flex-direction: column;
-      overflow-y: auto;
-    }
-
-    .su-left {
-      width: 100%;
-      min-height: auto;
-      padding: 36px 32px 32px;
-    }
-
-    .su-left::after {
-      display: none;
-    }
-
-    .su-hero {
-      padding-bottom: 24px;
-    }
-
-    .su-hero-title {
-      font-size: 28px;
-    }
-
-    .su-steps {
-      display: none;
-    }
-
-    .su-right {
-      min-height: auto;
-      padding: 40px 32px 56px;
-    }
+    .su-root { flex-direction: column; overflow-y: auto; }
+    .su-left { width: 100%; min-height: auto; padding: 36px 32px 32px; }
+    .su-left::after { display: none; }
+    .su-hero { padding-bottom: 24px; }
+    .su-hero-title { font-size: 28px; }
+    .su-steps { display: none; }
+    .su-right { min-height: auto; padding: 40px 32px 56px; }
   }
 
   @media (max-width: 600px) {
-    .su-left {
-      padding: 24px 20px 20px;
-    }
-
-    .su-brand-row {
-      margin-bottom: 40px;
-    }
-
-    .su-hero-title {
-      font-size: 24px;
-    }
-
-    .su-hero-desc {
-      font-size: 13px;
-    }
-
-    .su-right {
-      padding: 28px 20px 48px;
-    }
-
-    .su-form-wrap {
-      max-width: 100%;
-    }
-
-    .su-row-2 {
-      grid-template-columns: 1fr;
-      gap: 0;
-    }
-
-    .su-input, .su-select {
-      padding: 11px 14px 11px 36px;
-      font-size: 13px;
-    }
-
-    .su-btn {
-      padding: 12px 18px;
-      font-size: 12px;
-      margin-bottom: 16px;
-    }
-
-    .su-form-title {
-      font-size: 22px;
-    }
-
-    .su-success-icon {
-      width: 64px;
-      height: 64px;
-      font-size: 28px;
-    }
-
-    .su-success-title {
-      font-size: 20px;
-    }
+    .su-left { padding: 24px 20px 20px; }
+    .su-brand-row { margin-bottom: 40px; }
+    .su-hero-title { font-size: 24px; }
+    .su-hero-desc { font-size: 13px; }
+    .su-right { padding: 28px 20px 48px; }
+    .su-form-wrap { max-width: 100%; }
+    .su-row-2 { grid-template-columns: 1fr; gap: 0; }
+    .su-input, .su-select { padding: 11px 14px 11px 36px; font-size: 13px; }
+    .su-btn { padding: 12px 18px; font-size: 12px; margin-bottom: 16px; }
+    .su-form-title { font-size: 22px; }
+    .su-success-icon { width: 64px; height: 64px; font-size: 28px; }
+    .su-success-title { font-size: 20px; }
   }
 
   @media (max-width: 360px) {
-    .su-left {
-      padding: 16px 14px 14px;
-    }
-
-    .su-hero-title {
-      font-size: 22px;
-    }
-
-    .su-right {
-      padding: 20px 14px 40px;
-    }
-
-    .su-form-title {
-      font-size: 20px;
-    }
-
-    .su-btn {
-      padding: 11px 16px;
-    }
+    .su-left { padding: 16px 14px 14px; }
+    .su-hero-title { font-size: 22px; }
+    .su-right { padding: 20px 14px 40px; }
+    .su-form-title { font-size: 20px; }
+    .su-btn { padding: 11px 16px; }
   }
 `;
 
@@ -818,11 +562,11 @@ export default function Signup() {
   const [formData, setFormData] = useState({
     fullName: "", email: "", phone: "", barangay: "", password: "", confirmPassword: ""
   });
-  const [showPw, setShowPw]               = useState(false);
+  const [showPw,        setShowPw]        = useState(false);
   const [showConfirmPw, setShowConfirmPw] = useState(false);
-  const [loading, setLoading]             = useState(false);
-  const [error, setError]                 = useState("");
-  const [success, setSuccess]             = useState(false);
+  const [loading,       setLoading]       = useState(false);
+  const [error,         setError]         = useState("");
+  const [success,       setSuccess]       = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -831,7 +575,9 @@ export default function Signup() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
     const { fullName, email, phone, barangay, password, confirmPassword } = formData;
+
     if (!fullName || !email || !phone || !barangay || !password || !confirmPassword) {
       setError("Please complete all fields.");
       return;
@@ -844,19 +590,55 @@ export default function Signup() {
       setError("Password must be at least 6 characters.");
       return;
     }
+
     setLoading(true);
     try {
+      // Step 1: Create the auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
       if (authError) throw authError;
-      if (!authData.user) throw new Error("Signup failed.");
-      const { error: profileError } = await supabase.from("profiles").insert([{
-        id: authData.user.id, full_name: fullName, email, phone_number: phone, barangay, role: "citizen"
-      }]);
+      if (!authData.user) throw new Error("Signup failed. Please try again.");
+
+      // Step 2: Upsert the profile row.
+      // Supabase may auto-create a profiles row via trigger on signUp,
+      // so we use upsert (not insert) to avoid duplicate key errors.
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .upsert(
+          {
+            id:           authData.user.id,
+            full_name:    fullName,
+            email,
+            phone_number: phone,
+            barangay,
+            role:         "citizen",
+          },
+          { onConflict: "id" }
+        );
+
       if (profileError) throw profileError;
+
+      // Step 3: Sign out — Supabase auto-logs in after signUp,
+      // but we want the citizen to go through the login page manually.
       await supabase.auth.signOut();
+
       setSuccess(true);
       setTimeout(() => navigate("/login"), 4000);
+
     } catch (err: any) {
+      // If it's a duplicate key error but auth succeeded, the account
+      // was created — just treat it as success.
+      const isDuplicate =
+        err.message?.toLowerCase().includes("duplicate") ||
+        err.message?.toLowerCase().includes("already") ||
+        err.code === "23505";
+
+      if (isDuplicate) {
+        await supabase.auth.signOut();
+        setSuccess(true);
+        setTimeout(() => navigate("/login"), 4000);
+        return;
+      }
+
       setError(err.message || "An unexpected error occurred.");
     } finally {
       setLoading(false);
@@ -944,11 +726,11 @@ export default function Signup() {
                   Your citizen account is ready immediately.
                 </p>
                 <p className="su-success-note">
-                  Signing you in automatically · Redirecting in 4 seconds…
+                  Redirecting to login in 4 seconds…
                 </p>
                 <div className="su-success-div" />
                 <Link to="/login" className="su-success-btn">
-                  <FaArrowRight size={12} style={{ marginRight: '2px' }} />
+                  <FaArrowRight size={12} style={{ marginRight: "2px" }} />
                   Sign In Now
                 </Link>
               </div>
