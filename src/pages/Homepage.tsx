@@ -215,9 +215,10 @@ export default function Homepage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@300;400;500;600&display=swap');
 
-        /* ── Global overflow lock ── */
+        /* ── FIX: Explicitly allow vertical scroll, block only horizontal ── */
         html, body {
           overflow-x: hidden !important;
+          overflow-y: auto !important;
           width: 100%;
           max-width: 100vw;
         }
@@ -232,6 +233,7 @@ export default function Homepage() {
           font-family: 'DM Sans', sans-serif;
           color: #ddeef8;
           overflow-x: hidden;
+          overflow-y: auto; /* FIX: allow vertical scroll */
           position: relative;
           width: 100%;
           max-width: 100vw;
@@ -290,7 +292,7 @@ export default function Homepage() {
           50% { opacity: 0.85; }
         }
 
-        /* ── Orbs — clipped so they never cause horizontal scroll ── */
+        /* ── Orbs ── */
         .hp-orb {
           position: fixed;
           border-radius: 50%;
@@ -300,7 +302,6 @@ export default function Homepage() {
           will-change: transform;
           transform: translateZ(0);
           filter: blur(60px);
-          /* Prevent orbs from expanding the scrollable area */
           max-width: 100vw;
         }
         .hp-orb-1 {
@@ -875,7 +876,6 @@ export default function Homepage() {
           animation: slideUp .8s .45s cubic-bezier(.22,1,.36,1) both;
           width: 100%;
           box-sizing: border-box;
-          /* Prevent ticker from expanding page width */
           contain: layout style;
         }
         .hp-ticker-label {
@@ -896,7 +896,6 @@ export default function Homepage() {
           white-space: nowrap;
           will-change: transform;
           transform: translateZ(0);
-          /* The track itself scrolls inside the clipped ticker */
           flex-shrink: 0;
         }
         .hp-ticker:hover .hp-ticker-track { animation-play-state: paused; }
@@ -1080,8 +1079,8 @@ export default function Homepage() {
         }
       `}</style>
 
-      {/* Outer wrapper locks horizontal overflow at the very top level */}
-      <div style={{ overflowX: "hidden", width: "100%", maxWidth: "100vw" }}>
+      {/* FIX: overflowY set to "auto" to allow vertical scrolling */}
+      <div style={{ overflowX: "hidden", overflowY: "auto", width: "100%", maxWidth: "100vw" }}>
         <div className="hp-root">
 
           {/* ── Background ── */}
