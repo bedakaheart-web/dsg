@@ -122,14 +122,12 @@ export default function Homepage() {
       async (event, session) => {
         if (event !== "INITIAL_SESSION") return;
         if (!session?.user) return;
-
         try {
           const { data: profile } = await supabase
             .from("profiles")
             .select("role")
             .eq("id", session.user.id)
             .single();
-
           const role = profile?.role?.trim().toLowerCase();
           if (role && ROLE_REDIRECT[role]) {
             navigate(ROLE_REDIRECT[role], { replace: true });
@@ -139,7 +137,6 @@ export default function Homepage() {
         }
       }
     );
-
     return () => subscription.unsubscribe();
   }, [navigate]);
 
@@ -159,23 +156,19 @@ export default function Homepage() {
     }
     setLoading(true);
     setError(null);
-
     try {
       const { data: authData, error: authError } =
         await supabase.auth.signInWithPassword({ email, password });
-
       if (authError || !authData.user) {
         setError(authError?.message || "Login failed.");
         setLoading(false);
         return;
       }
-
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("role")
         .eq("id", authData.user.id)
         .single();
-
       if (profileError || !profile?.role) {
         await new Promise(res => setTimeout(res, 1500));
         const { data: retryProfile } = await supabase
@@ -183,25 +176,21 @@ export default function Homepage() {
           .select("role")
           .eq("id", authData.user.id)
           .single();
-
         if (!retryProfile?.role) {
           setError("Profile not ready yet. Please wait a moment and try again.");
           setLoading(false);
           return;
         }
-
         const role = retryProfile.role.trim().toLowerCase();
         setLoading(false);
         await new Promise(res => setTimeout(res, 100));
         navigate(ROLE_REDIRECT[role] ?? "/citizen/dashboard", { replace: true });
         return;
       }
-
       const role = profile.role.trim().toLowerCase();
       setLoading(false);
       await new Promise(res => setTimeout(res, 100));
       navigate(ROLE_REDIRECT[role] ?? "/citizen/dashboard", { replace: true });
-
     } catch (err: any) {
       setError(err.message || "Login failed.");
       setLoading(false);
@@ -215,10 +204,18 @@ export default function Homepage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@300;400;500;600&display=swap');
 
-        /* ── FIX: Explicitly allow vertical scroll, block only horizontal ── */
-        html, body {
+        /* ══════════════════════════════════════
+           SCROLL FIX — allow full page scroll
+           The background is position:fixed so it
+           never scrolls; only the content does.
+        ══════════════════════════════════════ */
+        html,
+        body,
+        #root {
           overflow-x: hidden !important;
-          overflow-y: auto !important;
+          overflow-y: auto !important;   /* KEY: never block vertical scroll */
+          height: auto !important;       /* KEY: never lock to viewport height */
+          min-height: 100vh;
           width: 100%;
           max-width: 100vw;
         }
@@ -230,16 +227,17 @@ export default function Homepage() {
 
         .hp-root {
           min-height: 100vh;
+          height: auto;                  /* KEY: let content grow freely */
           font-family: 'DM Sans', sans-serif;
           color: #ddeef8;
           overflow-x: hidden;
-          overflow-y: auto; /* FIX: allow vertical scroll */
+          overflow-y: visible;           /* KEY: don't trap scroll here */
           position: relative;
           width: 100%;
           max-width: 100vw;
         }
 
-        /* ── Background ── */
+        /* ── Background — fixed so it never scrolls ── */
         .hp-bg {
           position: fixed; inset: 0; z-index: -1;
           overflow: hidden;
@@ -286,7 +284,6 @@ export default function Homepage() {
           75%  { transform: translateZ(0) scale(1.11) translate(8px, -6px); }
           100% { transform: translateZ(0) scale(1.08) translate(0px, 0px); }
         }
-
         @keyframes atmosphereDrift {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.85; }
@@ -433,7 +430,7 @@ export default function Homepage() {
           z-index: 1;
           max-width: 1100px;
           margin: 0 auto;
-          padding: 0 20px;
+          padding: 0 20px 60px;
           width: 100%;
           box-sizing: border-box;
           overflow-x: hidden;
@@ -538,9 +535,7 @@ export default function Homepage() {
           position: relative; min-width: 0;
           transition: all .3s ease;
         }
-        .hp-stat:hover {
-          background: rgba(0,200,224,0.05);
-        }
+        .hp-stat:hover { background: rgba(0,200,224,0.05); }
         .hp-stat + .hp-stat::before {
           content: ''; position: absolute; left: 0; top: 18%; bottom: 18%;
           width: 1px; background: rgba(0,200,224,0.12);
@@ -602,18 +597,15 @@ export default function Homepage() {
           95%  { opacity: 1; }
           100% { top: 100%; opacity: 0; }
         }
-
         .hp-auth-watermark {
           position: absolute; bottom: -20px; right: -20px;
           font-size: 130px; color: rgba(0,200,224,0.03);
           pointer-events: none; z-index: 0;
           line-height: 1;
         }
-
         .hp-auth-panel > *:not(.hp-auth-scan):not(.hp-auth-watermark) {
           position: relative; z-index: 1;
         }
-
         .hp-auth-title {
           font-family: 'Syne', sans-serif;
           font-size: 24px; font-weight: 900;
@@ -624,7 +616,6 @@ export default function Homepage() {
           color: rgba(168,216,255,0.60);
           margin-bottom: 28px; line-height: 1.6;
         }
-
         .hp-auth-field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; width: 100%; }
         .hp-auth-label {
           font-family: 'DM Sans', sans-serif; font-size: 10.5px; font-weight: 700;
@@ -647,7 +638,6 @@ export default function Homepage() {
           box-shadow: 0 0 0 3.5px rgba(0,200,224,0.08);
           background: rgba(0,200,224,0.03);
         }
-
         .hp-auth-row {
           display: flex; align-items: center; justify-content: space-between;
           margin-bottom: 24px; gap: 10px; flex-wrap: wrap;
@@ -672,7 +662,6 @@ export default function Homepage() {
           color: #A8D8FF;
           text-shadow: 0 0 12px rgba(0,200,224,0.35);
         }
-
         .hp-auth-error {
           font-size: 12px; color: #ff7f6b;
           background: rgba(232,55,42,0.12);
@@ -689,7 +678,6 @@ export default function Homepage() {
           60%     { transform: translateX(-4px); }
           80%     { transform: translateX(4px); }
         }
-
         .hp-auth-btn {
           width: 100%; padding: 14px 22px; border: none; border-radius: 10px;
           background: linear-gradient(135deg, #e8372a 0%, #f04438 100%);
@@ -716,7 +704,6 @@ export default function Homepage() {
         }
         .hp-auth-btn:active:not(:disabled) { transform: translateY(0); }
         .hp-auth-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
         .hp-auth-or {
           display: flex; align-items: center; gap: 14px; margin: 20px 0;
           width: 100%; box-sizing: border-box;
@@ -726,7 +713,6 @@ export default function Homepage() {
           font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
           color: rgba(168,216,255,0.35); white-space: nowrap;
         }
-
         .hp-auth-create {
           display: block; width: 100%; padding: 14px;
           border: 1.5px solid rgba(168,216,255,0.30);
@@ -773,7 +759,6 @@ export default function Homepage() {
           width: 100%;
           box-sizing: border-box;
         }
-
         .hp-card {
           position: relative;
           background: rgba(13,27,46,0.70);
@@ -794,7 +779,6 @@ export default function Homepage() {
         .hp-card:nth-child(2) { animation-delay: 0.38s; }
         .hp-card:nth-child(3) { animation-delay: 0.46s; }
         .hp-card:nth-child(4) { animation-delay: 0.54s; }
-
         .hp-card::before {
           content: ''; position: absolute; inset: 0;
           background: radial-gradient(ellipse 100% 70% at 10% 0%, var(--accent-alpha), transparent 75%);
@@ -816,7 +800,6 @@ export default function Homepage() {
         }
         .hp-card:hover::before { opacity: 1; }
         .hp-card:hover::after  { opacity: 1; }
-
         .hp-card-header {
           display: flex; align-items: center; justify-content: space-between;
         }
@@ -938,10 +921,9 @@ export default function Homepage() {
           to   { opacity: 1; transform: translateY(0); }
         }
 
-        /* ════════════════════════════════════════
-           RESPONSIVE BREAKPOINTS
-           ════════════════════════════════════════ */
-
+        /* ══════════════════════════════════════
+           RESPONSIVE
+        ══════════════════════════════════════ */
         @media (max-width: 860px) {
           .hp-hero {
             grid-template-columns: 1fr;
@@ -953,113 +935,37 @@ export default function Homepage() {
           .hp-nav-badge { justify-content: center; }
         }
 
-        /* ── OnePlus Nord & similar ~412px devices ── */
         @media (max-width: 600px) {
-          .hp-inner { padding: 0 14px; }
-
-          .hp-badge-row {
-            padding-top: 12px;
-            justify-content: stretch;
-          }
-          .hp-badge-slot {
-            width: 100%;
-            max-width: 100%;
-          }
-          .hp-nav-badge {
-            padding: 10px 16px;
-            width: 100%;
-            justify-content: center;
-          }
+          .hp-inner { padding: 0 14px 48px; }
+          .hp-badge-row { padding-top: 12px; justify-content: stretch; }
+          .hp-badge-slot { width: 100%; max-width: 100%; }
+          .hp-nav-badge { padding: 10px 16px; width: 100%; justify-content: center; }
           .hp-badge-text { font-size: 11px; }
           .hp-badge-911 { font-size: 15px; }
-
-          .hp-ticker {
-            border-radius: 10px;
-            padding: 10px 0;
-          }
-          .hp-ticker-label {
-            padding: 0 12px;
-            margin-right: 12px;
-            font-size: 9px;
-          }
+          .hp-ticker { border-radius: 10px; padding: 10px 0; }
+          .hp-ticker-label { padding: 0 12px; margin-right: 12px; font-size: 9px; }
           .hp-ticker-item { font-size: 11.5px; }
-
-          .hp-hero {
-            margin-top: 16px;
-            margin-bottom: 36px;
-            gap: 24px;
-          }
-          .hp-hero h1 {
-            font-size: clamp(34px, 9vw, 52px);
-            margin-bottom: 14px;
-            line-height: 0.95;
-          }
-          .hp-hero-sub {
-            font-size: 14px;
-            margin-bottom: 22px;
-            line-height: 1.65;
-          }
-          .hp-hero-eyebrow {
-            font-size: 10px;
-            margin-bottom: 14px;
-          }
-          .hp-hero-cta {
-            padding: 13px 22px;
-            font-size: 12px;
-            width: 100%;
-            justify-content: center;
-          }
-
-          .hp-auth-panel {
-            padding: 22px 16px 20px;
-            border-radius: 14px;
-          }
+          .hp-hero { margin-top: 16px; margin-bottom: 36px; gap: 24px; }
+          .hp-hero h1 { font-size: clamp(34px, 9vw, 52px); margin-bottom: 14px; line-height: 0.95; }
+          .hp-hero-sub { font-size: 14px; margin-bottom: 22px; line-height: 1.65; }
+          .hp-hero-eyebrow { font-size: 10px; margin-bottom: 14px; }
+          .hp-hero-cta { padding: 13px 22px; font-size: 12px; width: 100%; justify-content: center; }
+          .hp-auth-panel { padding: 22px 16px 20px; border-radius: 14px; }
           .hp-auth-title { font-size: 20px; }
-          .hp-auth-subtitle {
-            font-size: 12.5px;
-            margin-bottom: 20px;
-          }
-          .hp-auth-input {
-            padding: 11px 13px;
-            font-size: 13px;
-          }
-          .hp-auth-btn {
-            padding: 13px;
-            font-size: 12px;
-          }
-          .hp-auth-create {
-            padding: 13px;
-            font-size: 12px;
-          }
+          .hp-auth-subtitle { font-size: 12.5px; margin-bottom: 20px; }
+          .hp-auth-input { padding: 11px 13px; font-size: 13px; }
+          .hp-auth-btn { padding: 13px; font-size: 12px; }
+          .hp-auth-create { padding: 13px; font-size: 12px; }
           .hp-auth-row { margin-bottom: 18px; }
-
-          .hp-stats {
-            margin-top: 28px;
-          }
+          .hp-stats { margin-top: 28px; }
           .hp-stat { padding: 14px 8px; }
           .hp-stat-value { font-size: 24px; }
           .hp-stat-suffix { font-size: 14px; }
-          .hp-stat-label {
-            font-size: 9px;
-            letter-spacing: 0.04em;
-          }
-
+          .hp-stat-label { font-size: 9px; letter-spacing: 0.04em; }
           .hp-divider { margin-bottom: 24px; }
-
-          .hp-grid {
-            gap: 12px;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-          }
-          .hp-card {
-            padding: 18px 14px;
-            gap: 10px;
-            border-radius: 12px;
-          }
-          .hp-card-icon {
-            width: 42px;
-            height: 42px;
-            border-radius: 10px;
-          }
+          .hp-grid { gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+          .hp-card { padding: 18px 14px; gap: 10px; border-radius: 12px; }
+          .hp-card-icon { width: 42px; height: 42px; border-radius: 10px; }
           .hp-card-icon svg { width: 20px !important; height: 20px !important; }
           .hp-card-title { font-size: 15px; }
           .hp-card-desc { font-size: 11.5px; }
@@ -1068,7 +974,7 @@ export default function Homepage() {
         }
 
         @media (max-width: 400px) {
-          .hp-inner { padding: 0 12px; }
+          .hp-inner { padding: 0 12px 40px; }
           .hp-grid { grid-template-columns: 1fr; }
           .hp-card { padding: 16px 14px; }
           .hp-card-title { font-size: 15px; }
@@ -1079,11 +985,18 @@ export default function Homepage() {
         }
       `}</style>
 
-      {/* FIX: overflowY set to "auto" to allow vertical scrolling */}
-      <div style={{ overflowX: "hidden", overflowY: "auto", width: "100%", maxWidth: "100vw" }}>
+      {/* ── Outermost wrapper — never clips vertical scroll ── */}
+      <div style={{
+        overflowX: "hidden",
+        overflowY: "visible",   /* KEY: visible so scroll propagates to html/body */
+        width: "100%",
+        maxWidth: "100vw",
+        minHeight: "100vh",
+        height: "auto",
+      }}>
         <div className="hp-root">
 
-          {/* ── Background ── */}
+          {/* ── Fixed background ── */}
           <div className="hp-bg">
             <img src={homepageBg} alt="" className="hp-bg-img" aria-hidden="true" />
             <div className="hp-bg-overlay" />
@@ -1128,22 +1041,18 @@ export default function Homepage() {
             <section className="hp-hero">
               <div className="hp-hero-copy">
                 <div className="hp-hero-eyebrow">Community Safety Platform</div>
-
                 <h1>
                   Emergency<br />
                   <span className="accent">Response</span> at Your Fingertips
                 </h1>
-
                 <p className="hp-hero-sub">
                   A centralized safety platform for the City of Gentle People. Fast access
                   to hotlines, facilities, and safety guidelines.
                 </p>
-
                 <Link to="/report" className="hp-hero-cta">
                   Report an Incident
                   <span className="hp-hero-cta-arrow">→</span>
                 </Link>
-
                 <div className="hp-stats" ref={statsRef}>
                   {STATS.map((s) => (
                     <StatCounter
@@ -1163,12 +1072,10 @@ export default function Homepage() {
                 <div className="hp-auth-watermark">
                   <FaShieldAlt />
                 </div>
-
                 <div className="hp-auth-title">Welcome Back</div>
                 <div className="hp-auth-subtitle">
                   Login to access the DumaSafeGuide emergency dashboard.
                 </div>
-
                 <div className="hp-auth-field">
                   <label className="hp-auth-label">Email Address</label>
                   <input
@@ -1180,7 +1087,6 @@ export default function Homepage() {
                     autoComplete="email"
                   />
                 </div>
-
                 <div className="hp-auth-field">
                   <label className="hp-auth-label">Password</label>
                   <div style={{ position: "relative", width: "100%" }}>
@@ -1212,7 +1118,6 @@ export default function Homepage() {
                     </button>
                   </div>
                 </div>
-
                 <div className="hp-auth-row">
                   <label className="hp-auth-remember">
                     <input type="checkbox" /> Remember me
@@ -1221,9 +1126,7 @@ export default function Homepage() {
                     Forgot Password?
                   </Link>
                 </div>
-
                 {error && <div className="hp-auth-error">⚠ {error}</div>}
-
                 <button
                   className="hp-auth-btn"
                   onClick={handleLogin}
@@ -1231,13 +1134,11 @@ export default function Homepage() {
                 >
                   {loading ? "Signing in…" : "Login Account"}
                 </button>
-
                 <div className="hp-auth-or">
                   <span className="hp-auth-or-line" />
                   <span className="hp-auth-or-text">No account yet?</span>
                   <span className="hp-auth-or-line" />
                 </div>
-
                 <Link to="/signup" className="hp-auth-create">
                   Create Account →
                 </Link>
