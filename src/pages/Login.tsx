@@ -50,38 +50,37 @@ const CSS = `
 
   /* ── Back to home button ── */
   .lg-back {
-    position: fixed;
-    top: 20px; left: 20px;
-    z-index: 10;
-    display: inline-flex; align-items: center; gap: 7px;
+    display: inline-flex; align-items: center; gap: 6px;
     font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 12px; font-weight: 600;
-    color: rgba(168, 216, 255, 0.55);
-    background: rgba(6, 15, 28, 0.70);
-    border: 1px solid rgba(0, 200, 224, 0.14);
-    border-radius: 10px;
-    padding: 8px 14px;
+    font-size: 11.5px; font-weight: 600;
+    color: rgba(168, 216, 255, 0.45);
     text-decoration: none;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    transition: all .22s ease;
-    animation: slideDown .6s cubic-bezier(.22,1,.36,1) both;
+    transition: color .2s ease;
+    margin-bottom: 28px;
+    position: relative; z-index: 1;
+    width: fit-content;
+    animation: slideUp .5s .05s cubic-bezier(.22,1,.36,1) both;
   }
 
   .lg-back:hover {
     color: #00c8e0;
-    border-color: rgba(0, 200, 224, 0.32);
-    background: rgba(0, 200, 224, 0.07);
-    transform: translateX(-2px);
   }
 
   .lg-back-arrow {
-    font-size: 11px;
-    transition: transform .22s ease;
+    font-size: 13px;
+    transition: transform .2s ease;
+    line-height: 1;
   }
 
   .lg-back:hover .lg-back-arrow {
     transform: translateX(-3px);
+  }
+
+  .lg-back-divider {
+    height: 1px;
+    background: linear-gradient(90deg, rgba(0, 200, 224, 0.10), transparent);
+    margin-bottom: 28px;
+    position: relative; z-index: 1;
   }
 
   /* ── Page layout ── */
@@ -573,7 +572,7 @@ const CSS = `
     .lg-input { padding: 11px 14px 11px 38px; font-size: 13px; }
     .lg-btn { padding: 13px 18px; font-size: 12px; margin-bottom: 18px; }
     .lg-form-footer { font-size: 12px; }
-    .lg-back { top: 12px; left: 12px; font-size: 11px; padding: 7px 11px; }
+    .lg-back { font-size: 11px; }
   }
 
   @media (max-width: 360px) {
@@ -670,12 +669,6 @@ export default function Login() {
       <style>{CSS}</style>
       <div className="lg-root" style={{ '--bg-image': `url(${directorybg})` } as React.CSSProperties}>
 
-        {/* ── Back to Home ── */}
-        <Link to="/" className="lg-back">
-          <span className="lg-back-arrow">←</span>
-          Back to Home
-        </Link>
-
         <div className="lg-page">
 
           {/* ── Left branding panel ── */}
@@ -742,6 +735,10 @@ export default function Login() {
               </div>
             ) : (
               <>
+                <Link to="/" className="lg-back">
+                  <span className="lg-back-arrow">←</span>
+                  Back to Home
+                </Link>
                 <div className="lg-form-header">
                   <div className="lg-form-eyebrow">Secure Sign In</div>
                   <div className="lg-form-title">Sign In</div>
