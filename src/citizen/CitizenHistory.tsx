@@ -1,223 +1,331 @@
 // src/citizen/CitizenHistory.tsx
-// ✅ FIXED:
-//   - Query now uses .eq("user_id", ...) — matches Dashboard, returns correct reports
-//   - Route link now uses /citizen/history/:id — matches CitizenReportDetail route
-//   - Removed dead citizen_id column reference
-//   - Enhanced design: Syne + DM Sans, cleaner cards, better empty state
+// ✅ Unified with Admin & Responder dashboard design system
+// • Same CSS variables, shell, sidebar, topbar, stat cards
+// • Same fonts, animations, spacing, component patterns
 
 import { useEffect, useState } from "react";
 import { supabase } from "../js/supabase";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   FaFileAlt, FaClock, FaSpinner, FaCheckCircle,
   FaExclamationCircle, FaChevronRight, FaInbox,
+  FaMapMarkedAlt, FaLightbulb, FaHistory,
+  FaBell, FaBars, FaTimes, FaSignOutAlt,
 } from "react-icons/fa";
-import pagesBackground from "../assets/pagesbackground.png";
+import dsgLogo from "../assets/dsg.logo.png";
+import footerBg from "../assets/footer.png";
 
-const STATUS_CFG: Record<string, { label: string; color: string; bg: string; tip: string }> = {
-  "pending":     { label: "Pending",     color: "#FFB400", bg: "rgba(255,180,0,0.1)",   tip: "Awaiting responder review"                    },
-  "in-progress": { label: "In Progress", color: "#6382FF", bg: "rgba(99,130,255,0.1)",  tip: "A responder is currently handling this report" },
-  "resolved":    { label: "Resolved",    color: "#20C997", bg: "rgba(32,201,151,0.1)",  tip: "This report has been resolved"                 },
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface Report {
+  id: string;
+  description: string;
+  type: string;
+  status: "pending" | "in-progress" | "resolved";
+  created_at: string;
+}
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const TYPE_META: Record<string, { icon: string; color: string }> = {
+  fire:     { icon: "🔥", color: "#FF3B30" },
+  accident: { icon: "🚗", color: "#FF9500" },
+  flood:    { icon: "🌊", color: "#0066FF" },
+  crime:    { icon: "🚨", color: "#FF2D55" },
+  medical:  { icon: "🏥", color: "#00B074" },
+  other:    { icon: "⚠️", color: "#9CA3AF" },
 };
 
-const TYPE_COLORS: Record<string, string> = {
-  fire:    "#FF5C5C",
-  flood:   "#6382FF",
-  crime:   "#FF9F43",
-  medical: "#20C997",
-  accident:"#FFB400",
+const STATUS_META: Record<string, { label: string; color: string; bg: string; border: string }> = {
+  pending:       { label: "PENDING",     color: "#FF3B30", bg: "rgba(255,59,48,.08)",  border: "rgba(255,59,48,.25)"  },
+  "in-progress": { label: "IN PROGRESS", color: "#FF9500", bg: "rgba(255,149,0,.08)", border: "rgba(255,149,0,.25)"  },
+  resolved:      { label: "RESOLVED",    color: "#00B074", bg: "rgba(0,176,116,.08)", border: "rgba(0,176,116,.25)"  },
 };
 
-const CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+// ─── Styles ───────────────────────────────────────────────────────────────────
 
-  .ch {
-    min-height: 100vh;
-    font-family: 'DM Sans', sans-serif;
-    color: #e8ecf5;
-    position: relative;
-    overflow-x: hidden;
-    background: #060a12;
-  }
+const STYLES = `
+:root {
+  --primary:        #0066FF;
+  --success:        #00B074;
+  --warning:        #FF9500;
+  --danger:         #FF3B30;
+  --bg:             #FAFBFC;
+  --surface:        #FFFFFF;
+  --border:         #E5E7EB;
+  --text:           #1F2937;
+  --text-secondary: #6B7280;
+  --text-tertiary:  #9CA3AF;
+}
 
-  /* Background */
-  .ch-bg {
-    position: fixed; inset: 0; z-index: 0;
-    background-size: cover; background-position: center;
-  }
-  .ch-bg::after {
-    content: ''; position: absolute; inset: 0;
-    background: linear-gradient(165deg, rgba(6,10,18,.95) 0%, rgba(6,10,18,.82) 45%, rgba(6,10,18,.95) 100%);
-  }
-  .ch-glow { position: fixed; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
-  .ch-glow-1 { position: absolute; width: 650px; height: 650px; border-radius: 50%; background: radial-gradient(circle, rgba(32,201,151,.06) 0%, transparent 65%); top: -220px; left: -120px; }
-  .ch-glow-2 { position: absolute; width: 500px; height: 500px; border-radius: 50%; background: radial-gradient(circle, rgba(99,130,255,.05) 0%, transparent 65%); bottom: -150px; right: -70px; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  .ch-inner { position: relative; z-index: 2; max-width: 1100px; margin: 0 auto; padding: 0 28px 100px; }
+@keyframes fadeIn  { from { opacity: 0; transform: translateY(8px);   } to { opacity: 1; transform: none; } }
+@keyframes slideIn { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: none; } }
+@keyframes pulse   { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+@keyframes spin    { to { transform: rotate(360deg); } }
 
-  /* Nav */
-  .ch-nav { display: flex; align-items: center; justify-content: space-between; padding: 28px 0 0; }
-  .ch-logo { display: flex; align-items: center; gap: 9px; text-decoration: none; }
-  .ch-logo-text { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 800; letter-spacing: -.01em; color: #e8ecf5; }
-  .ch-logo-text span { color: #20C997; }
-  .ch-back {
-    display: inline-flex; align-items: center; gap: 7px;
-    font-size: 12px; font-weight: 500; color: rgba(232,236,245,.35);
-    text-decoration: none; border: 1px solid rgba(255,255,255,.07);
-    border-radius: 8px; padding: 8px 15px;
-    background: rgba(12,18,30,.85); transition: all .2s;
-    backdrop-filter: blur(12px);
-  }
-  .ch-back:hover { color: #e8ecf5; border-color: rgba(255,255,255,.15); background: rgba(18,25,42,.9); }
+/* ── Portal shell ── */
+.ch-portal {
+  position: fixed; inset: 0; z-index: 9000; overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--text); background: var(--bg);
+  background-image: url('${footerBg}');
+  background-size: cover; background-position: center;
+  background-attachment: fixed; background-repeat: no-repeat;
+}
+.ch-portal::before {
+  content: ''; position: fixed; inset: 0;
+  background: linear-gradient(135deg, rgba(250,251,252,0.85) 0%, rgba(255,255,255,0.9) 50%, rgba(250,251,252,0.85) 100%);
+  pointer-events: none; z-index: 1;
+}
 
-  /* Hero */
-  .ch-hero { margin-top: 50px; margin-bottom: 34px; }
-  .ch-hero-tag {
-    display: inline-flex; align-items: center; gap: 8px;
-    font-size: 10.5px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase;
-    color: #20C997; margin-bottom: 14px;
-  }
-  .ch-hero-tag-dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: #20C997; box-shadow: 0 0 9px #20C997;
-    animation: ch-pulse 2.4s ease infinite;
-  }
-  @keyframes ch-pulse { 0%,100%{opacity:1;transform:scale(1);}50%{opacity:.35;transform:scale(.7);} }
-  .ch-hero-heading {
-    font-family: 'Syne', sans-serif;
-    font-size: clamp(28px, 4vw, 44px);
-    font-weight: 800; line-height: 1.04;
-    letter-spacing: -.04em; color: #e8ecf5; margin-bottom: 8px;
-  }
-  .ch-hero-heading em { font-style: normal; color: #20C997; }
-  .ch-hero-sub { font-size: 13.5px; color: rgba(232,236,245,.3); font-weight: 300; }
+.ch-shell { display: flex; height: 100%; width: 100%; position: relative; z-index: 2; }
 
-  /* Stats */
-  .ch-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 34px; }
-  @media(max-width:680px){ .ch-stats { grid-template-columns: repeat(2,1fr); } }
-  .ch-stat {
-    background: rgba(12,18,30,.85); border: 1px solid rgba(255,255,255,.06);
-    border-radius: 16px; padding: 22px 20px;
-    position: relative; overflow: hidden;
-    transition: border-color .25s, transform .25s;
-    backdrop-filter: blur(18px);
-  }
-  .ch-stat:hover { border-color: rgba(255,255,255,.12); transform: translateY(-3px); }
-  .ch-stat-bar { position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--sc); opacity: .5; }
-  .ch-stat-glow { position: absolute; top: -30px; right: -30px; width: 90px; height: 90px; border-radius: 50%; background: radial-gradient(circle, var(--sc) 0%, transparent 70%); opacity: .06; pointer-events: none; }
-  .ch-stat-label { font-size: 10px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: rgba(232,236,245,.22); margin-bottom: 14px; }
-  .ch-stat-row { display: flex; align-items: flex-end; justify-content: space-between; }
-  .ch-stat-value { font-family: 'Syne', sans-serif; font-size: 40px; font-weight: 800; line-height: 1; color: var(--sc); letter-spacing: -.05em; }
-  .ch-stat-icon { font-size: 18px; color: var(--sc); opacity: .15; }
+/* ── Mobile overlay ── */
+.ch-overlay { display: none; position: fixed; inset: 0; z-index: 190; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+.ch-overlay.open { display: block; }
 
-  /* Section head */
-  .ch-sec { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
-  .ch-sec-label { font-size: 10px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: rgba(232,236,245,.22); white-space: nowrap; }
-  .ch-sec-line { flex: 1; height: 1px; background: linear-gradient(90deg, rgba(255,255,255,.08), transparent); }
-  .ch-sec-count {
-    font-size: 10.5px; font-weight: 600; color: rgba(232,236,245,.28);
-    background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07);
-    border-radius: 20px; padding: 3px 11px; white-space: nowrap;
-  }
+/* ── Sidebar ── */
+.ch-sidebar {
+  width: 260px; flex-shrink: 0;
+  background: var(--surface); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  height: 100%; position: fixed; left: 0; top: 0; z-index: 200;
+  overflow: hidden; transition: transform 0.3s ease;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+}
+.ch-logo { padding: 20px 16px; display: flex; align-items: center; gap: 12px; flex-shrink: 0; border-bottom: 1px solid var(--border); }
+.ch-logo-img  { width: 40px; height: 40px; object-fit: contain; border-radius: 8px; }
+.ch-logo-name { font-size: 15px; font-weight: 700; color: var(--text); white-space: nowrap; }
+.ch-logo-sub  { font-size: 11px; color: var(--text-tertiary); margin-top: 3px; display: flex; align-items: center; gap: 6px; }
+.ch-pip { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--success); animation: pulse 2s ease infinite; flex-shrink: 0; }
 
-  /* Report list */
-  .ch-list { display: flex; flex-direction: column; gap: 8px; }
+.ch-sidebar-close {
+  display: none; margin-left: auto; flex-shrink: 0;
+  background: transparent; border: 1px solid var(--border); border-radius: 6px;
+  width: 28px; height: 28px; align-items: center; justify-content: center;
+  color: var(--text-tertiary); cursor: pointer; transition: all 0.2s;
+}
+.ch-sidebar-close:hover { background: var(--bg); color: var(--text); }
 
-  .ch-card {
-    background: rgba(12,18,30,.85); border: 1px solid rgba(255,255,255,.06);
-    border-radius: 14px; overflow: hidden;
-    text-decoration: none; color: inherit;
-    display: flex; align-items: stretch;
-    transition: border-color .22s, transform .22s, background .22s;
-    backdrop-filter: blur(18px);
-  }
-  .ch-card:hover { border-color: rgba(255,255,255,.13); transform: translateX(4px); background: rgba(18,25,42,.9); }
-  .ch-card-accent { width: 3px; flex-shrink: 0; background: var(--cc); opacity: .55; }
-  .ch-card-body { display: flex; align-items: center; gap: 14px; padding: 16px 20px; flex: 1; min-width: 0; }
-  .ch-card-icon {
-    width: 38px; height: 38px; border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px; flex-shrink: 0;
-  }
-  .ch-card-info { flex: 1; min-width: 0; }
-  .ch-card-desc {
-    font-family: 'Syne', sans-serif; font-size: 13.5px; font-weight: 700;
-    color: #e8ecf5; letter-spacing: -.01em;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 5px;
-  }
-  .ch-card-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .ch-card-date { font-size: 11px; color: rgba(232,236,245,.25); }
-  .ch-card-type {
-    font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: capitalize;
-    border-radius: 5px; padding: 2px 8px;
-  }
-  .ch-card-right { display: flex; align-items: center; gap: 12px; padding-right: 20px; flex-shrink: 0; }
-  .ch-status {
-    display: inline-flex; align-items: center; gap: 5px;
-    font-size: 10.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase;
-    border-radius: 20px; padding: 4px 11px; cursor: help;
-  }
-  .ch-status-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
-  .ch-chevron { color: rgba(232,236,245,.2); font-size: 10px; transition: color .2s, transform .2s; }
-  .ch-card:hover .ch-chevron { color: rgba(232,236,245,.5); transform: translateX(2px); }
+.ch-nav-scroll { flex: 1; overflow-y: auto; padding: 8px 10px; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+.ch-nav-label {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11px; font-weight: 600; color: var(--text-tertiary);
+  letter-spacing: 0.5px; text-transform: uppercase; padding: 12px 8px 6px;
+}
+.ch-nav-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
-  /* Empty */
-  .ch-empty {
-    display: flex; flex-direction: column; align-items: center;
-    justify-content: center; padding: 72px 24px; gap: 10px; text-align: center;
-    background: rgba(12,18,30,.85); border: 1px solid rgba(255,255,255,.06);
-    border-radius: 20px; backdrop-filter: blur(18px);
-  }
-  .ch-empty-icon {
-    width: 58px; height: 58px; border-radius: 16px;
-    background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 22px; color: rgba(232,236,245,.22); margin-bottom: 4px;
-  }
-  .ch-empty-title { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; color: rgba(232,236,245,.45); }
-  .ch-empty-sub { font-size: 13px; color: rgba(232,236,245,.22); max-width: 280px; line-height: 1.65; }
-  .ch-empty-btn {
-    margin-top: 8px; font-size: 13px; font-weight: 600; color: #20C997;
-    text-decoration: none; border: 1px solid rgba(32,201,151,.28); border-radius: 9px;
-    padding: 10px 22px; background: rgba(32,201,151,.06);
-    display: inline-flex; align-items: center; gap: 7px; transition: all .2s;
-  }
-  .ch-empty-btn:hover { background: rgba(32,201,151,.13); border-color: rgba(32,201,151,.45); }
+.ch-nav-btn {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 10px 12px; border-radius: 8px; border: 1px solid transparent;
+  font-size: 13px; font-weight: 500; color: var(--text-secondary);
+  background: transparent; cursor: pointer; margin-bottom: 2px;
+  text-align: left; transition: all 0.2s; text-decoration: none;
+}
+.ch-nav-btn:hover  { background: var(--bg); color: var(--text); border-color: var(--border); }
+.ch-nav-btn.active {
+  background: linear-gradient(135deg, var(--primary) 0%, #0052cc 100%);
+  color: white; border-color: transparent; font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0,102,255,0.2);
+}
+.ch-nav-ic { font-size: 15px; flex-shrink: 0; color: var(--text-tertiary); display: flex; align-items: center; transition: color 0.2s; }
+.ch-nav-btn.active .ch-nav-ic { color: white; }
+.ch-badge { margin-left: auto; background: var(--danger); color: white; font-size: 10px; min-width: 20px; height: 20px; border-radius: 10px; padding: 0 6px; display: flex; align-items: center; justify-content: center; font-weight: 600; animation: pulse 2s ease infinite; }
 
-  /* Loading */
-  .ch-loading {
-    display: flex; align-items: center; justify-content: center;
-    gap: 10px; padding: 72px;
-    color: rgba(232,236,245,.25); font-size: 13px;
-    background: rgba(12,18,30,.85); border: 1px solid rgba(255,255,255,.06);
-    border-radius: 20px; backdrop-filter: blur(18px);
-  }
-  .ch-spin {
-    width: 16px; height: 16px;
-    border: 2px solid rgba(32,201,151,.18); border-top-color: #20C997;
-    border-radius: 50%; animation: ch-spin .75s linear infinite;
-  }
-  @keyframes ch-spin { to { transform: rotate(360deg); } }
+.ch-sidebar-foot { padding: 12px 10px 16px; border-top: 1px solid var(--border); flex-shrink: 0; }
+.ch-user-card { display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; }
+.ch-avatar    { width: 32px; height: 32px; border-radius: 6px; flex-shrink: 0; background: linear-gradient(135deg, var(--primary) 0%, #0052cc 100%); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 11px; color: white; }
+.ch-user-name   { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ch-user-status { font-size: 10px; color: var(--success); display: flex; align-items: center; gap: 5px; margin-top: 2px; }
+.ch-logout-btn  { display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-weight: 500; color: var(--text-secondary); cursor: pointer; transition: all 0.2s; }
+.ch-logout-btn:hover { background: var(--danger); color: white; border-color: var(--danger); }
 
-  @media(max-width:600px){
-    .ch-card-type { display: none; }
-    .ch-card-right { gap: 8px; padding-right: 14px; }
-  }
+/* ── Main ── */
+.ch-main {
+  margin-left: 260px; flex: 1;
+  display: flex; flex-direction: column;
+  min-width: 0; height: 100vh; overflow-y: auto; overflow-x: hidden;
+  background: var(--bg); position: relative; z-index: 1;
+}
+
+.ch-topbar {
+  height: 56px; display: flex; align-items: center; padding: 0 24px;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100; gap: 12px; flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.ch-hamburger { display: none; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; width: 32px; height: 32px; align-items: center; justify-content: center; color: var(--text-secondary); cursor: pointer; transition: all 0.2s; flex-shrink: 0; font-size: 14px; }
+.ch-hamburger:hover { background: var(--surface); border-color: var(--text-secondary); color: var(--text); }
+.ch-crumb        { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text-tertiary); }
+.ch-crumb-sep    { color: var(--text-tertiary); }
+.ch-crumb-active { color: var(--text); font-weight: 600; }
+.ch-crumb-hide   { white-space: nowrap; }
+.ch-topbar-right { margin-left: auto; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.ch-clock  { font-size: 12px; font-weight: 500; color: var(--text-secondary); background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; white-space: nowrap; }
+.ch-icon-btn { width: 32px; height: 32px; border-radius: 6px; border: 1px solid var(--border); background: transparent; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); cursor: pointer; font-size: 13px; transition: all 0.2s; }
+.ch-icon-btn:hover { background: var(--bg); color: var(--text); }
+
+/* ── Page ── */
+.ch-page { flex: 1; padding: 24px; overflow-x: hidden; min-width: 0; }
+.ch-page > div { animation: fadeIn 0.4s ease-out both; }
+
+/* ── Page header ── */
+.ch-page-hd { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
+.ch-eyebrow { font-size: 11px; color: var(--primary); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 6px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.ch-eyebrow::before { content: ''; display: block; width: 20px; height: 2px; background: var(--primary); }
+.ch-title    { font-size: 32px; color: var(--text); letter-spacing: -0.5px; line-height: 1.1; font-weight: 700; }
+.ch-subtitle { font-size: 11px; color: var(--text-tertiary); margin-top: 4px; }
+
+/* ── Stat Grid ── */
+.ch-stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.ch-stat {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 20px; position: relative; overflow: hidden; transition: all 0.3s;
+  animation: fadeIn 0.5s ease-out both;
+}
+.ch-stat:nth-child(2) { animation-delay: 0.05s; }
+.ch-stat:nth-child(3) { animation-delay: 0.10s; }
+.ch-stat:nth-child(4) { animation-delay: 0.15s; }
+.ch-stat:hover { transform: translateY(-4px); border-color: var(--primary); box-shadow: 0 8px 16px rgba(0,102,255,0.1); }
+.ch-stat::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--card-accent); }
+.ch-stat-icon  { font-size: 18px; color: var(--card-accent); margin-bottom: 12px; opacity: 0.85; }
+.ch-stat-num   { font-size: 32px; line-height: 1; margin-bottom: 6px; letter-spacing: -0.5px; font-weight: 700; color: var(--card-accent); }
+.ch-stat-label { font-size: 11px; color: var(--text-secondary); letter-spacing: 0.3px; text-transform: uppercase; font-weight: 500; }
+
+/* ── Panel ── */
+.ch-panel {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden; animation: slideIn 0.5s ease-out both;
+  position: relative;
+}
+.ch-panel::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--primary); }
+.ch-panel-hd {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+.ch-panel-title { font-size: 11px; color: var(--text-secondary); letter-spacing: 0.5px; text-transform: uppercase; font-weight: 600; }
+.ch-panel-tag   { font-size: 9px; color: var(--primary); border: 1px solid var(--primary); border-radius: 4px; padding: 3px 8px; background: rgba(0,102,255,0.05); font-weight: 600; }
+
+/* ── Report rows ── */
+.ch-list { display: flex; flex-direction: column; }
+
+.ch-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px 20px; border-bottom: 1px solid var(--border);
+  text-decoration: none; color: inherit;
+  transition: background 0.15s; cursor: pointer;
+}
+.ch-row:last-child { border-bottom: none; }
+.ch-row:hover { background: var(--bg); }
+
+.ch-row-icon {
+  width: 36px; height: 36px; border-radius: 8px; flex-shrink: 0;
+  border: 1px solid var(--border); display: flex; align-items: center;
+  justify-content: center; font-size: 16px; background: var(--bg);
+}
+.ch-row-body { flex: 1; min-width: 0; }
+.ch-row-desc {
+  font-size: 13px; font-weight: 600; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px;
+}
+.ch-row-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ch-row-date { font-size: 11px; color: var(--text-tertiary); }
+.ch-row-type {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.05em; text-transform: capitalize;
+  border-radius: 4px; padding: 2px 8px;
+}
+.ch-row-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.ch-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.05em;
+  text-transform: uppercase; border-radius: 6px; padding: 4px 10px; border: 1px solid;
+}
+.ch-pill-dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.ch-chevron  { color: var(--text-tertiary); font-size: 10px; transition: transform 0.2s; }
+.ch-row:hover .ch-chevron { transform: translateX(2px); color: var(--text-secondary); }
+
+/* ── Empty ── */
+.ch-empty {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 60px 24px; gap: 8px; text-align: center;
+}
+.ch-empty-icon  { font-size: 28px; color: var(--text-tertiary); margin-bottom: 4px; opacity: 0.4; }
+.ch-empty-title { font-size: 15px; font-weight: 600; color: var(--text-secondary); }
+.ch-empty-sub   { font-size: 13px; color: var(--text-tertiary); max-width: 280px; line-height: 1.6; }
+.ch-empty-link  {
+  margin-top: 12px; font-size: 12px; font-weight: 600; color: var(--primary);
+  text-decoration: none; border: 1px solid var(--primary); border-radius: 8px;
+  padding: 8px 16px; background: transparent;
+  display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;
+}
+.ch-empty-link:hover { background: rgba(0,102,255,0.06); }
+
+/* ── Loading ── */
+.ch-loading { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 56px; color: var(--text-tertiary); font-size: 13px; }
+.ch-spinner { display: inline-block; width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border); border-top-color: var(--primary); animation: spin 0.8s linear infinite; }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .ch-sidebar { transform: translateX(-100%); width: min(260px, 90vw); box-shadow: 4px 0 12px rgba(0,0,0,0.1); }
+  .ch-sidebar.open { transform: translateX(0); }
+  .ch-sidebar-close { display: flex; }
+  .ch-hamburger { display: flex; }
+  .ch-main { margin-left: 0; }
+  .ch-topbar { padding: 0 16px; }
+  .ch-crumb-hide { display: none; }
+  .ch-page { padding: 16px; }
+  .ch-title { font-size: 26px; }
+  .ch-stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .ch-stat-num { font-size: 24px; }
+  .ch-clock { display: none; }
+}
+@media (max-width: 420px) {
+  .ch-page { padding: 14px 12px; }
+  .ch-row-type { display: none; }
+}
 `;
 
+// ─── Clock hook ───────────────────────────────────────────────────────────────
+
+function usePHTClock() {
+  const [time, setTime] = useState("");
+  useEffect(() => {
+    const tick = () => {
+      const n = new Date();
+      const p = (v: number) => String(v).padStart(2, "0");
+      setTime(`${p(n.getHours())}:${p(n.getMinutes())}:${p(n.getSeconds())} PHT`);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+  return time;
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
 export default function CitizenHistory() {
-  const [reports, setReports] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const clock    = usePHTClock();
+
+  const [reports,     setReports]     = useState<Report[]>([]);
+  const [user,        setUser]        = useState<any>(null);
+  const [loading,     setLoading]     = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+
     const fetchReports = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
+      const { data: { user: u } } = await supabase.auth.getUser();
+      if (u) {
         const { data, error } = await supabase
           .from("reports")
           .select("*")
-          .eq("user_id", user.id)                        // ✅ FIXED: was citizen_id — now matches Dashboard
+          .eq("user_id", u.id)
           .order("created_at", { ascending: false });
         if (!error) setReports(data || []);
       }
@@ -226,136 +334,238 @@ export default function CitizenHistory() {
     fetchReports();
   }, []);
 
-  const total    = reports.length;
-  const pending  = reports.filter(r => r.status === "pending").length;
-  const inProg   = reports.filter(r => r.status === "in-progress").length;
-  const resolved = reports.filter(r => r.status === "resolved").length;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setSidebarOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = sidebarOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [sidebarOpen]);
+
+  const stats = {
+    total:      reports.length,
+    pending:    reports.filter(r => r.status === "pending").length,
+    inProgress: reports.filter(r => r.status === "in-progress").length,
+    resolved:   reports.filter(r => r.status === "resolved").length,
+  };
+
+  const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Citizen";
+  const initials    = displayName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/login", { replace: true });
+  };
+
+  const statCards = [
+    { label: "Total Filed",  value: stats.total,      accent: "#0066FF", icon: <FaFileAlt />     },
+    { label: "Pending",      value: stats.pending,    accent: "#FF3B30", icon: <FaCheckCircle /> },
+    { label: "In Progress",  value: stats.inProgress, accent: "#FF9500", icon: <FaSpinner />     },
+    { label: "Resolved",     value: stats.resolved,   accent: "#00B074", icon: <FaCheckCircle /> },
+  ];
 
   return (
     <>
-      <style>{CSS}</style>
-      <div className="ch">
-        <div className="ch-bg" style={{ backgroundImage: `url(${pagesBackground})` }} />
-        <div className="ch-glow"><div className="ch-glow-1" /><div className="ch-glow-2" /></div>
+      <style>{STYLES}</style>
+      <div className="ch-portal">
+        <div className="ch-shell">
 
-        <div className="ch-inner">
+          {/* Mobile overlay */}
+          <div
+            className={`ch-overlay${sidebarOpen ? " open" : ""}`}
+            onClick={() => setSidebarOpen(false)}
+            aria-hidden="true"
+          />
 
-          {/* Nav */}
-          <nav className="ch-nav">
-            <Link to="/" className="ch-logo">
-              <span className="ch-logo-text">CITI<span>ZEN</span></span>
-            </Link>
-            <Link to="/citizen/dashboard" className="ch-back">← Dashboard</Link>
-          </nav>
+          {/* ── Sidebar ── */}
+          <aside className={`ch-sidebar${sidebarOpen ? " open" : ""}`} aria-label="Navigation">
+            <div className="ch-logo">
+              <img src={dsgLogo} alt="DumaSafeGuide" className="ch-logo-img" />
+              <div>
+                <div className="ch-logo-name">DumaSafeGuide</div>
+                <div className="ch-logo-sub"><span className="ch-pip" />CITIZEN</div>
+              </div>
+              <button className="ch-sidebar-close" onClick={() => setSidebarOpen(false)} aria-label="Close">
+                <FaTimes />
+              </button>
+            </div>
 
-          {/* Hero */}
-          <section className="ch-hero">
-            <div className="ch-hero-tag"><span className="ch-hero-tag-dot" />My Reports</div>
-            <h1 className="ch-hero-heading">Report <em>History</em></h1>
-            <p className="ch-hero-sub">Every incident you've submitted, in one place.</p>
-          </section>
+            <nav className="ch-nav-scroll">
+              <div className="ch-nav-label">Portal</div>
+              <Link to="/citizen/dashboard" className="ch-nav-btn">
+                <span className="ch-nav-ic"><FaHistory /></span>
+                Overview
+              </Link>
 
-          {/* Stats */}
-          <div className="ch-stats">
-            {[
-              { label: "Total Filed",  value: total,    color: "#e8ecf5", icon: <FaFileAlt />     },
-              { label: "Pending",      value: pending,  color: "#FFB400", icon: <FaClock />       },
-              { label: "In Progress",  value: inProg,   color: "#6382FF", icon: <FaSpinner />     },
-              { label: "Resolved",     value: resolved, color: "#20C997", icon: <FaCheckCircle /> },
-            ].map(s => (
-              <div key={s.label} className="ch-stat" style={{ "--sc": s.color } as React.CSSProperties}>
-                <div className="ch-stat-bar" />
-                <div className="ch-stat-glow" />
-                <div className="ch-stat-label">{s.label}</div>
-                <div className="ch-stat-row">
-                  <div className="ch-stat-value">{s.value}</div>
-                  <div className="ch-stat-icon">{s.icon}</div>
+              <div className="ch-nav-label">Actions</div>
+              <Link to="/citizen/report" className="ch-nav-btn">
+                <span className="ch-nav-ic"><FaFileAlt /></span>
+                File Report
+              </Link>
+              <Link to="/citizen/history" className="ch-nav-btn active">
+                <span className="ch-nav-ic"><FaHistory /></span>
+                My Reports
+                {stats.total > 0 && <span className="ch-badge">{stats.total}</span>}
+              </Link>
+              <Link to="/citizen/map" className="ch-nav-btn">
+                <span className="ch-nav-ic"><FaMapMarkedAlt /></span>
+                Safety Map
+              </Link>
+              <Link to="/citizen/safetytips" className="ch-nav-btn">
+                <span className="ch-nav-ic"><FaLightbulb /></span>
+                Safety Tips
+              </Link>
+            </nav>
+
+            <div className="ch-sidebar-foot">
+              <div className="ch-user-card">
+                <div className="ch-avatar">{initials}</div>
+                <div style={{ minWidth: 0 }}>
+                  <div className="ch-user-name">{displayName}</div>
+                  <div className="ch-user-status"><span className="ch-pip" />CITIZEN</div>
                 </div>
               </div>
-            ))}
-          </div>
-
-          {/* Section head */}
-          <div className="ch-sec">
-            <span className="ch-sec-label">All Reports</span>
-            <span className="ch-sec-line" />
-            <span className="ch-sec-count">{total} total</span>
-          </div>
-
-          {/* List */}
-          {loading ? (
-            <div className="ch-loading"><div className="ch-spin" />Loading your reports…</div>
-          ) : reports.length === 0 ? (
-            <div className="ch-empty">
-              <div className="ch-empty-icon"><FaInbox /></div>
-              <div className="ch-empty-title">No reports yet</div>
-              <p className="ch-empty-sub">
-                You haven't submitted any incident reports. Help keep your community safe by filing one.
-              </p>
-              <Link to="/report" className="ch-empty-btn">
-                <FaFileAlt size={12} /> File a Report
-              </Link>
+              <button className="ch-logout-btn" onClick={handleLogout}>
+                <FaSignOutAlt size={12} /> Sign Out
+              </button>
             </div>
-          ) : (
-            <div className="ch-list">
-              {reports.map(report => {
-                const s = STATUS_CFG[report.status] ?? {
-                  label: report.status, color: "rgba(232,236,245,.5)",
-                  bg: "rgba(255,255,255,.06)", tip: "",
-                };
-                const tc = TYPE_COLORS[report.type?.toLowerCase()] || "rgba(232,236,245,.28)";
-                return (
-                  <Link
-                    key={report.id}
-                    to={`/citizen/history/${report.id}`}   // ✅ FIXED: matches CitizenReportDetail route
-                    className="ch-card"
-                    style={{ "--cc": s.color } as React.CSSProperties}
-                  >
-                    <div className="ch-card-accent" />
-                    <div className="ch-card-body">
-                      <div
-                        className="ch-card-icon"
-                        style={{ background: `${tc}12`, border: `1px solid ${tc}25`, color: tc }}
-                      >
-                        <FaExclamationCircle />
-                      </div>
-                      <div className="ch-card-info">
-                        <div className="ch-card-desc" title={report.description}>
-                          {report.description || "No description"}
-                        </div>
-                        <div className="ch-card-meta">
-                          <span className="ch-card-date">
-                            {new Date(report.created_at).toLocaleDateString("en-PH", {
-                              month: "short", day: "numeric", year: "numeric",
-                            })}
-                          </span>
-                          {report.type && (
-                            <span
-                              className="ch-card-type"
-                              style={{ color: tc, background: `${tc}10`, border: `1px solid ${tc}22` }}
-                            >
-                              {report.type}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="ch-card-right">
-                      <span
-                        className="ch-status"
-                        style={{ color: s.color, background: s.bg }}
-                        title={s.tip}
-                      >
-                        <span className="ch-status-dot" />{s.label}
-                      </span>
-                      <FaChevronRight className="ch-chevron" />
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
+          </aside>
 
+          {/* ── Main ── */}
+          <div className="ch-main">
+
+            {/* Topbar */}
+            <div className="ch-topbar">
+              <button className="ch-hamburger" onClick={() => setSidebarOpen(true)} aria-label="Open navigation">
+                <FaBars />
+              </button>
+              <div className="ch-crumb">
+                <span className="ch-crumb-hide">DUMASAFEGUIDE</span>
+                <span className="ch-crumb-sep ch-crumb-hide">/</span>
+                <span className="ch-crumb-hide">CITIZEN</span>
+                <span className="ch-crumb-sep ch-crumb-hide">/</span>
+                <span className="ch-crumb-active">My Reports</span>
+              </div>
+              <div className="ch-topbar-right">
+                <span className="ch-clock">{clock}</span>
+                <button className="ch-icon-btn" aria-label="Notifications">
+                  <FaBell size={13} />
+                </button>
+              </div>
+            </div>
+
+            {/* Page content */}
+            <div className="ch-page">
+              <div>
+                {/* Header */}
+                <div className="ch-page-hd">
+                  <div>
+                    <div className="ch-eyebrow">Citizen Portal</div>
+                    <div className="ch-title">My Reports</div>
+                    <div className="ch-subtitle">ALL SUBMITTED INCIDENT REPORTS</div>
+                  </div>
+                </div>
+
+                {/* Stats */}
+                <div className="ch-stat-grid">
+                  {statCards.map(c => (
+                    <div
+                      key={c.label}
+                      className="ch-stat"
+                      style={{ "--card-accent": c.accent } as React.CSSProperties}
+                    >
+                      <div className="ch-stat-icon">{c.icon}</div>
+                      <div className="ch-stat-num">{loading ? "—" : c.value}</div>
+                      <div className="ch-stat-label">{c.label}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Reports panel */}
+                <div className="ch-panel">
+                  <div className="ch-panel-hd">
+                    <span className="ch-panel-title">All Reports</span>
+                    <span className="ch-panel-tag">{loading ? "…" : `${stats.total} TOTAL`}</span>
+                  </div>
+
+                  {loading ? (
+                    <div className="ch-loading">
+                      <div className="ch-spinner" /> Loading reports…
+                    </div>
+                  ) : reports.length === 0 ? (
+                    <div className="ch-empty">
+                      <div className="ch-empty-icon"><FaInbox /></div>
+                      <div className="ch-empty-title">No reports yet</div>
+                      <p className="ch-empty-sub">
+                        You haven't submitted any incident reports. Help keep your community safe by filing one.
+                      </p>
+                      <Link to="/citizen/report" className="ch-empty-link">
+                        <FaFileAlt size={11} /> File a Report
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="ch-list">
+                      {reports.map(r => {
+                        const tm = TYPE_META[r.type?.toLowerCase()] ?? TYPE_META.other;
+                        const sm = STATUS_META[r.status]            ?? STATUS_META.pending;
+                        return (
+                          <div
+                            key={r.id}
+                            className="ch-row"
+                            onClick={() => navigate(`/citizen/history/${r.id}`)}
+                          >
+                            <div className="ch-row-icon">{tm.icon}</div>
+                            <div className="ch-row-body">
+                              <div className="ch-row-desc" title={r.description}>
+                                {r.description || "No description"}
+                              </div>
+                              <div className="ch-row-meta">
+                                <span className="ch-row-date">
+                                  {new Date(r.created_at).toLocaleDateString("en-PH", {
+                                    month: "short", day: "numeric", year: "numeric",
+                                  })}
+                                </span>
+                                {r.type && (
+                                  <span
+                                    className="ch-row-type"
+                                    style={{
+                                      color: tm.color,
+                                      background: `${tm.color}12`,
+                                      border: `1px solid ${tm.color}25`,
+                                    }}
+                                  >
+                                    {r.type}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="ch-row-right">
+                              <span
+                                className="ch-pill"
+                                style={{
+                                  color: sm.color,
+                                  background: sm.bg,
+                                  borderColor: sm.border,
+                                }}
+                              >
+                                <span className="ch-pill-dot" />
+                                {sm.label}
+                              </span>
+                              <FaChevronRight className="ch-chevron" />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </>

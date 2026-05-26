@@ -1,8 +1,6 @@
 // src/citizen/CitizenDashboard.tsx
 // ✅ Unified with Admin & Responder dashboard design system
-// • Same CSS variables, shell, sidebar, topbar, stat cards, panels
-// • Same animations, fonts, spacing, component patterns
-// • Citizen-specific: report filing, my reports, safety map, safety tips
+// • NEW: Alerts unread counter — clears once user visits the alerts page
 
 import { useEffect, useState } from "react";
 import { supabase } from "../js/supabase";
@@ -10,7 +8,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   FaFileAlt, FaMapMarkedAlt, FaHistory, FaLightbulb,
   FaCheckCircle, FaClock, FaSpinner, FaExclamationTriangle,
-  FaBell, FaBars, FaTimes, FaSignOutAlt, FaChevronRight,
+  FaBell, FaBars, FaTimes, FaSignOutAlt, FaInfoCircle,
 } from "react-icons/fa";
 import dsgLogo from "../assets/dsg.logo.png";
 import footerBg from "../assets/footer.png";
@@ -25,6 +23,14 @@ interface Report {
   created_at: string;
 }
 
+interface Alert {
+  id: string;
+  title: string;
+  message: string;
+  type: string;
+  created_at: string;
+}
+
 interface User {
   id: string;
   email: string;
@@ -32,6 +38,8 @@ interface User {
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
+
+const ALERTS_READ_KEY = "cd_alerts_last_read";
 
 const TYPE_META: Record<string, { icon: string; color: string }> = {
   fire:     { icon: "🔥", color: "#FF3B30" },
@@ -44,13 +52,38 @@ const TYPE_META: Record<string, { icon: string; color: string }> = {
 
 const STATUS_META: Record<string, { label: string; color: string; bg: string; border: string }> = {
   pending:       { label: "PENDING",     color: "#FF3B30", bg: "rgba(255,59,48,.08)",  border: "rgba(255,59,48,.25)"  },
-  "in-progress": { label: "IN PROGRESS", color: "#FF9500", bg: "rgba(255,149,0,.08)", border: "rgba(255,149,0,.25)"  },
-  resolved:      { label: "RESOLVED",    color: "#00B074", bg: "rgba(0,176,116,.08)", border: "rgba(0,176,116,.25)"  },
+  "in-progress": { label: "IN PROGRESS", color: "#FF9500", bg: "rgba(255,149,0,.08)",  border: "rgba(255,149,0,.25)"  },
+  resolved:      { label: "RESOLVED",    color: "#00B074", bg: "rgba(0,176,116,.08)",  border: "rgba(0,176,116,.25)"  },
+};
+
+const ALERT_TYPE_META: Record<string, { color: string; bg: string; border: string; label: string; icon: JSX.Element }> = {
+  danger:  { color: "#FF3B30", bg: "rgba(255,59,48,0.08)",  border: "rgba(255,59,48,0.2)",  label: "Danger",    icon: <FaExclamationTriangle /> },
+  warning: { color: "#FF9500", bg: "rgba(255,149,0,0.08)",  border: "rgba(255,149,0,0.2)",  label: "Warning",   icon: <FaExclamationTriangle /> },
+  info:    { color: "#0066FF", bg: "rgba(0,102,255,0.08)",  border: "rgba(0,102,255,0.2)",  label: "Info",      icon: <FaInfoCircle /> },
+  success: { color: "#00B074", bg: "rgba(0,176,116,0.08)",  border: "rgba(0,176,116,0.2)",  label: "All Clear", icon: <FaCheckCircle /> },
 };
 
 const TYPE_LIST = ["fire", "flood", "medical", "crime", "accident", "other"];
 
-// ─── Styles — identical design tokens to Admin & Responder ────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function getUnreadCount(alerts: Alert[]): number {
+  try {
+    const lastRead = localStorage.getItem(ALERTS_READ_KEY);
+    if (!lastRead) return alerts.length;
+    return alerts.filter(a => new Date(a.created_at) > new Date(lastRead)).length;
+  } catch {
+    return 0;
+  }
+}
+
+function markAlertsRead() {
+  try {
+    localStorage.setItem(ALERTS_READ_KEY, new Date().toISOString());
+  } catch {}
+}
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
 
 const STYLES = `
 :root {
@@ -78,7 +111,6 @@ const STYLES = `
   position: fixed; inset: 0; z-index: 9000; overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: var(--text); background: var(--bg);
-  background-image: url('${footerBg}');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
@@ -227,7 +259,7 @@ const STYLES = `
 .cd-stat-label { font-size: 11px; color: var(--text-secondary); letter-spacing: 0.3px; text-transform: uppercase; font-weight: 500; }
 .cd-stat-delta { position: absolute; top: 12px; right: 12px; font-size: 9px; border: 1px solid var(--card-accent); border-radius: 4px; padding: 2px 6px; color: var(--card-accent); opacity: 0.6; }
 
-/* ── Alert banner ── */
+/* ── Alert banner (pending reports notice) ── */
 .cd-alert {
   display: flex; align-items: center; gap: 14px;
   background: var(--surface); border: 1px solid var(--border);
@@ -245,38 +277,58 @@ const STYLES = `
 .cd-alert-link:hover { background: rgba(255,149,0,0.08); }
 
 /* ── Panels ── */
-.cd-panels-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-@media (max-width: 1120px) { .cd-panels-row { grid-template-columns: 1fr; } }
+.cd-panels-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+@media (max-width: 1280px) { .cd-panels-row { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 900px)  { .cd-panels-row { grid-template-columns: 1fr; } }
 
 .cd-panel {
   background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
   padding: 20px; min-width: 0; animation: slideIn 0.5s ease-out both;
+  position: relative; overflow: hidden;
 }
-.cd-panel:nth-child(2) { animation-delay: 0.1s; }
-.cd-panel.pa-blue::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--primary); }
-.cd-panel.pa-red  { position: relative; overflow: hidden; }
-.cd-panel.pa-red::before  { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--danger); }
-.cd-panel.pa-blue { position: relative; overflow: hidden; }
+.cd-panel:nth-child(2) { animation-delay: 0.08s; }
+.cd-panel:nth-child(3) { animation-delay: 0.16s; }
+.cd-panel::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+.cd-panel.pa-red::before    { background: var(--danger); }
+.cd-panel.pa-amber::before  { background: var(--warning); }
+.cd-panel.pa-blue::before   { background: var(--primary); }
 
-.cd-panel-hd    { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.cd-panel-hd    { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); gap: 8px; flex-wrap: wrap; }
 .cd-panel-title { font-size: 11px; color: var(--text-secondary); letter-spacing: 0.5px; text-transform: uppercase; font-weight: 600; }
 .cd-panel-tag   { font-size: 9px; color: var(--primary); border: 1px solid var(--primary); border-radius: 4px; padding: 3px 8px; background: rgba(0,102,255,0.05); font-weight: 600; }
 
-/* ── Incident items (matches responder style) ── */
+/* ── Incident items ── */
 .cd-inc-item { padding: 14px 0; border-bottom: 1px solid var(--border); }
 .cd-inc-item:last-child { border-bottom: none; padding-bottom: 0; }
 .cd-inc-row  { display: flex; align-items: flex-start; gap: 12px; cursor: pointer; }
-.cd-inc-row:hover .cd-inc-type { opacity: 0.8; }
-
 .cd-inc-icon { width: 36px; height: 36px; border-radius: 8px; flex-shrink: 0; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 16px; background: var(--bg); }
 .cd-inc-body { flex: 1; min-width: 0; }
 .cd-inc-type { font-size: 13px; font-weight: 700; text-transform: capitalize; margin-bottom: 4px; }
 .cd-inc-loc  { font-size: 12px; color: var(--text-secondary); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin-bottom: 6px; }
-
 .cd-pill     { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; padding: 4px 10px; border-radius: 6px; border: 1px solid; font-weight: 600; }
 .cd-pill-dot { width: 4px; height: 4px; border-radius: 50%; flex-shrink: 0; background: currentColor; }
-
 .cd-inc-time { font-size: 10px; color: var(--text-tertiary); margin-top: 6px; }
+
+/* ── Barangay Alert items ── */
+.cd-al-item { padding: 12px 0; border-bottom: 1px solid var(--border); }
+.cd-al-item:last-child { border-bottom: none; padding-bottom: 0; }
+.cd-al-row  { display: flex; align-items: flex-start; gap: 12px; }
+.cd-al-icon { width: 36px; height: 36px; border-radius: 8px; flex-shrink: 0; border: 1px solid; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.cd-al-body { flex: 1; min-width: 0; }
+.cd-al-title { font-size: 13px; font-weight: 700; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cd-al-msg  { font-size: 12px; color: var(--text-secondary); line-height: 1.5; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin-bottom: 6px; }
+.cd-al-foot { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cd-al-time { font-size: 10px; color: var(--text-tertiary); margin-left: auto; display: flex; align-items: center; gap: 4px; }
+.cd-al-new  { font-size: 9px; font-weight: 700; color: var(--success); background: rgba(0,176,116,0.08); border: 1px solid rgba(0,176,116,0.25); border-radius: 20px; padding: 2px 7px; display: inline-flex; align-items: center; gap: 3px; }
+.cd-al-new-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--success); animation: pulse 2s ease infinite; }
+
+.cd-view-all {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  margin-top: 14px; font-size: 12px; font-weight: 600; color: var(--warning);
+  text-decoration: none; border: 1px solid var(--warning); border-radius: 8px;
+  padding: 8px 16px; background: transparent; transition: all 0.2s; width: 100%;
+}
+.cd-view-all:hover { background: rgba(255,149,0,0.08); }
 
 /* ── Bar chart ── */
 .cd-bar-item  { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
@@ -306,7 +358,6 @@ const STYLES = `
 /* ── Utility ── */
 .cd-spinner { display: inline-block; width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border); border-top-color: var(--primary); animation: spin 0.8s linear infinite; }
 .cd-empty   { text-align: center; padding: 48px 24px; font-size: 12px; letter-spacing: 0.3px; color: var(--text-secondary); text-transform: uppercase; }
-
 .cd-empty-inner { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .cd-empty-icon  { font-size: 28px; opacity: 0.3; margin-bottom: 4px; }
 .cd-empty-link  {
@@ -340,7 +391,7 @@ const STYLES = `
 }
 `;
 
-// ─── Clock hook (same as Admin/Responder) ─────────────────────────────────────
+// ─── Clock hook ───────────────────────────────────────────────────────────────
 
 function usePHTClock() {
   const [time, setTime] = useState("");
@@ -365,50 +416,60 @@ function formatRelative(ts: string) {
   return new Date(ts).toLocaleDateString("en-PH", { month: "short", day: "numeric" });
 }
 
-// ─── Nav items ────────────────────────────────────────────────────────────────
-
-const NAV = [
-  { id: "overview",  label: "Overview",    icon: <FaHistory />,      to: null          },
-  { id: "report",    label: "File Report", icon: <FaFileAlt />,      to: "/report"     },
-  { id: "history",   label: "My Reports",  icon: <FaHistory />,      to: "/citizen/history" },
-  { id: "map",       label: "Safety Map",  icon: <FaMapMarkedAlt />, to: "/map"        },
-  { id: "tips",      label: "Safety Tips", icon: <FaLightbulb />,    to: "/safetytips" },
-];
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function CitizenDashboard() {
   const navigate = useNavigate();
   const clock = usePHTClock();
 
-  const [reports,      setReports]      = useState<Report[]>([]);
-  const [user,         setUser]         = useState<User | null>(null);
-  const [loading,      setLoading]      = useState(true);
-  const [sidebarOpen,  setSidebarOpen]  = useState(false);
-  const [activeNav,    setActiveNav]    = useState("overview");
+  const [reports,     setReports]     = useState<Report[]>([]);
+  const [alerts,      setAlerts]      = useState<Alert[]>([]);
+  const [newAlertIds, setNewAlertIds] = useState<Set<string>>(new Set());
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [user,        setUser]        = useState<User | null>(null);
+  const [loading,     setLoading]     = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [activeNav,   setActiveNav]   = useState("overview");
+
+  // Recompute unread count whenever alerts change
+  useEffect(() => {
+    setUnreadCount(getUnreadCount(alerts));
+  }, [alerts]);
 
   // ── Init ──
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user as any));
 
-    const loadReports = async () => {
+    const loadData = async () => {
       try {
         const { data: { user: u } } = await supabase.auth.getUser();
         if (!u) return;
-        const { data } = await supabase
+
+        // Load reports
+        const { data: reportData } = await supabase
           .from("reports")
           .select("id, description, type, status, created_at")
           .eq("user_id", u.id)
           .order("created_at", { ascending: false });
-        setReports((data as Report[]) || []);
+        setReports((reportData as Report[]) || []);
+
+        // Load alerts
+        const { data: alertData } = await supabase
+          .from("alerts")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(5);
+        setAlerts((alertData as Alert[]) ?? []);
+
       } finally {
         setLoading(false);
       }
     };
 
-    loadReports();
+    loadData();
 
-    const channel = supabase
+    // Reports realtime
+    const reportChannel = supabase
       .channel("cd-reports-live")
       .on("postgres_changes", { event: "*", schema: "public", table: "reports" },
         ({ eventType, new: nr, old: or }) => {
@@ -422,7 +483,33 @@ export default function CitizenDashboard() {
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    // Alerts realtime
+    const alertChannel = supabase
+      .channel("cd-alerts-live")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "alerts" },
+        (payload) => {
+          const a = payload.new as Alert;
+          setAlerts(prev => {
+            if (prev.some(x => x.id === a.id)) return prev;
+            return [a, ...prev].slice(0, 5);
+          });
+          setNewAlertIds(prev => new Set(prev).add(a.id));
+          setTimeout(() => {
+            setNewAlertIds(prev => { const n = new Set(prev); n.delete(a.id); return n; });
+          }, 5000);
+        }
+      )
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "alerts" },
+        (payload) => {
+          setAlerts(prev => prev.filter(a => a.id !== payload.old.id));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(reportChannel);
+      supabase.removeChannel(alertChannel);
+    };
   }, []);
 
   useEffect(() => {
@@ -450,7 +537,6 @@ export default function CitizenDashboard() {
     acc[t] = (acc[t] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
-
   const maxCount = Math.max(...TYPE_LIST.map(t => typeCounts[t] ?? 0), 1);
 
   // ── User display ──
@@ -459,17 +545,17 @@ export default function CitizenDashboard() {
   const initials    = displayName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
 
   const statCards = [
-    { label: "Total Filed",  value: stats.total,      accent: "#0066FF", icon: <FaFileAlt />,          delta: "ALL TIME" },
-    { label: "Pending",      value: stats.pending,    accent: "#FF3B30", icon: <FaExclamationTriangle/>,delta: "REVIEW"   },
-    { label: "In Progress",  value: stats.inProgress, accent: "#FF9500", icon: <FaSpinner />,           delta: undefined  },
-    { label: "Resolved",     value: stats.resolved,   accent: "#00B074", icon: <FaCheckCircle />,       delta: undefined  },
+    { label: "Total Filed",  value: stats.total,      accent: "#0066FF", icon: <FaFileAlt />,           delta: "ALL TIME" },
+    { label: "Pending",      value: stats.pending,    accent: "#FF3B30", icon: <FaExclamationTriangle />, delta: "REVIEW"   },
+    { label: "In Progress",  value: stats.inProgress, accent: "#FF9500", icon: <FaSpinner />,            delta: undefined  },
+    { label: "Resolved",     value: stats.resolved,   accent: "#00B074", icon: <FaCheckCircle />,        delta: undefined  },
   ];
 
   const quickActions = [
-    { label: "File Report", icon: "📝", to: "/report",           colorClass: "qv-red"   },
-    { label: "Safety Map",  icon: "🗺️", to: "/map",              colorClass: "qv-green" },
-    { label: "My Reports",  icon: "📂", to: "/citizen/history",   colorClass: "qv-blue"  },
-    { label: "Safety Tips", icon: "💡", to: "/safetytips",        colorClass: "qv-amber" },
+    { label: "File Report", icon: "📝", to: "/report",          colorClass: "qv-red"   },
+    { label: "Safety Map",  icon: "🗺️", to: "/map",             colorClass: "qv-green" },
+    { label: "My Reports",  icon: "📂", to: "/citizen/history",  colorClass: "qv-blue"  },
+    { label: "Safety Tips", icon: "💡", to: "/safetytips",       colorClass: "qv-amber" },
   ];
 
   const handleLogout = async () => {
@@ -477,10 +563,17 @@ export default function CitizenDashboard() {
     navigate("/login", { replace: true });
   };
 
+  // Mark alerts as read and navigate
+  const handleViewAllAlerts = () => {
+    markAlertsRead();
+    setUnreadCount(0);
+    navigate("/citizen/alerts");
+  };
+
   return (
     <>
       <style>{STYLES}</style>
-      <div className="cd-portal">
+      <div className="cd-portal" style={{ backgroundImage: `url(${footerBg})` }}>
         <div className="cd-shell">
 
           {/* Mobile overlay */}
@@ -506,7 +599,6 @@ export default function CitizenDashboard() {
             <nav className="cd-nav-scroll">
               <div className="cd-nav-label">Portal</div>
 
-              {/* Overview — stays in page */}
               <button
                 className={`cd-nav-btn${activeNav === "overview" ? " active" : ""}`}
                 onClick={() => { setActiveNav("overview"); setSidebarOpen(false); }}
@@ -517,24 +609,45 @@ export default function CitizenDashboard() {
 
               <div className="cd-nav-label">Actions</div>
 
-              {/* External nav links */}
-              {[
-                { id: "report",  label: "File Report", icon: <FaFileAlt />,       to: "/report",          badge: null                     },
-                { id: "history", label: "My Reports",  icon: <FaHistory />,       to: "/citizen/history", badge: stats.total || null      },
-                { id: "map",     label: "Safety Map",  icon: <FaMapMarkedAlt />,  to: "/map",             badge: null                     },
-                { id: "tips",    label: "Safety Tips", icon: <FaLightbulb />,     to: "/safetytips",      badge: null                     },
-              ].map(item => (
-                <Link
-                  key={item.id}
-                  to={item.to}
-                  className="cd-nav-btn"
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <span className="cd-nav-ic">{item.icon}</span>
-                  <span>{item.label}</span>
-                  {item.badge ? <span className="cd-badge">{item.badge}</span> : null}
-                </Link>
-              ))}
+              {/* File Report */}
+              <Link to="/report" className="cd-nav-btn" onClick={() => setSidebarOpen(false)}>
+                <span className="cd-nav-ic"><FaFileAlt /></span>
+                <span>File Report</span>
+              </Link>
+
+              {/* My Reports */}
+              <Link to="/citizen/history" className="cd-nav-btn" onClick={() => setSidebarOpen(false)}>
+                <span className="cd-nav-ic"><FaHistory /></span>
+                <span>My Reports</span>
+                {stats.total > 0 && <span className="cd-badge">{stats.total}</span>}
+              </Link>
+
+              {/* Barangay Alerts — badge only shows unread count */}
+              <Link
+                to="/citizen/alerts"
+                className="cd-nav-btn"
+                onClick={() => {
+                  markAlertsRead();
+                  setUnreadCount(0);
+                  setSidebarOpen(false);
+                }}
+              >
+                <span className="cd-nav-ic"><FaBell /></span>
+                <span>Barangay Alerts</span>
+                {unreadCount > 0 && <span className="cd-badge">{unreadCount}</span>}
+              </Link>
+
+              {/* Safety Map */}
+              <Link to="/map" className="cd-nav-btn" onClick={() => setSidebarOpen(false)}>
+                <span className="cd-nav-ic"><FaMapMarkedAlt /></span>
+                <span>Safety Map</span>
+              </Link>
+
+              {/* Safety Tips */}
+              <Link to="/safetytips" className="cd-nav-btn" onClick={() => setSidebarOpen(false)}>
+                <span className="cd-nav-ic"><FaLightbulb /></span>
+                <span>Safety Tips</span>
+              </Link>
             </nav>
 
             <div className="cd-sidebar-foot">
@@ -575,10 +688,16 @@ export default function CitizenDashboard() {
               <div className="cd-topbar-right">
                 <span className="cd-clock">{clock}</span>
                 <div className="cd-notif-wrap">
-                  <button className="cd-icon-btn" aria-label="Notifications">
+                  {/* Bell navigates to alerts and marks as read */}
+                  <button
+                    className="cd-icon-btn"
+                    aria-label="Notifications"
+                    onClick={handleViewAllAlerts}
+                  >
                     <FaBell size={13} />
                   </button>
-                  {stats.pending > 0 && <span className="cd-notif-dot" />}
+                  {/* Dot only shows when there are unread alerts OR pending reports */}
+                  {(stats.pending > 0 || unreadCount > 0) && <span className="cd-notif-dot" />}
                 </div>
               </div>
             </div>
@@ -599,7 +718,7 @@ export default function CitizenDashboard() {
                   </div>
                 </div>
 
-                {/* Alert banner */}
+                {/* Pending reports banner */}
                 {stats.pending > 0 && (
                   <div className="cd-alert">
                     <span className="cd-alert-text">
@@ -627,10 +746,10 @@ export default function CitizenDashboard() {
                   ))}
                 </div>
 
-                {/* Two-panel layout */}
+                {/* Three-panel layout */}
                 <div className="cd-panels-row">
 
-                  {/* Left: Recent Reports */}
+                  {/* Panel 1: Recent Reports */}
                   <div className="cd-panel pa-red" style={{ maxHeight: 480, overflowY: "auto" }}>
                     <div className="cd-panel-hd">
                       <span className="cd-panel-title">My Recent Reports</span>
@@ -662,24 +781,10 @@ export default function CitizenDashboard() {
                             <div className="cd-inc-row">
                               <div className="cd-inc-icon">{tm.icon}</div>
                               <div className="cd-inc-body">
-                                <div
-                                  className="cd-inc-type"
-                                  style={{ color: tm.color }}
-                                >
-                                  {r.type}
-                                </div>
-                                <div className="cd-inc-loc">
-                                  📄 {r.description || "No description"}
-                                </div>
+                                <div className="cd-inc-type" style={{ color: tm.color }}>{r.type}</div>
+                                <div className="cd-inc-loc">📄 {r.description || "No description"}</div>
                                 <div>
-                                  <span
-                                    className="cd-pill"
-                                    style={{
-                                      background: sm.bg,
-                                      color: sm.color,
-                                      borderColor: sm.border,
-                                    }}
-                                  >
+                                  <span className="cd-pill" style={{ background: sm.bg, color: sm.color, borderColor: sm.border }}>
                                     <span className="cd-pill-dot" />
                                     {sm.label}
                                   </span>
@@ -693,7 +798,78 @@ export default function CitizenDashboard() {
                     )}
                   </div>
 
-                  {/* Right: Breakdown + Quick Actions */}
+                  {/* Panel 2: Barangay Alerts */}
+                  <div className="cd-panel pa-amber" style={{ maxHeight: 480, overflowY: "auto" }}>
+                    <div className="cd-panel-hd">
+                      <span className="cd-panel-title">Barangay Alerts</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <div className="cd-live-tag" style={{ fontSize: 9, padding: "3px 8px" }}>
+                          <span className="cd-live-dot" />LIVE
+                        </div>
+                        <span
+                          className="cd-panel-tag"
+                          style={{ color: "var(--warning)", borderColor: "var(--warning)", background: "rgba(255,149,0,0.05)" }}
+                        >
+                          {unreadCount > 0 ? `${unreadCount} UNREAD` : "ALL READ"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {loading ? (
+                      <div className="cd-empty"><div className="cd-spinner" style={{ margin: "0 auto" }} /></div>
+                    ) : alerts.length === 0 ? (
+                      <div className="cd-empty">
+                        <div className="cd-empty-inner">
+                          <div className="cd-empty-icon">🔔</div>
+                          <div>NO ACTIVE ALERTS</div>
+                          <p style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 4, textTransform: "none" }}>
+                            Updates automatically in real-time.
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        {alerts.map(a => {
+                          const am = ALERT_TYPE_META[a.type] ?? ALERT_TYPE_META.info;
+                          const isNew = newAlertIds.has(a.id);
+                          return (
+                            <div key={a.id} className="cd-al-item">
+                              <div className="cd-al-row">
+                                <div className="cd-al-icon" style={{ background: am.bg, color: am.color, borderColor: am.border }}>
+                                  {am.icon}
+                                </div>
+                                <div className="cd-al-body">
+                                  <div className="cd-al-title" style={{ color: am.color }}>{a.title || "Alert"}</div>
+                                  <div className="cd-al-msg">{a.message}</div>
+                                  <div className="cd-al-foot">
+                                    <span className="cd-pill" style={{ background: am.bg, color: am.color, borderColor: am.border }}>
+                                      <span className="cd-pill-dot" />
+                                      {am.label}
+                                    </span>
+                                    {isNew && (
+                                      <span className="cd-al-new">
+                                        <span className="cd-al-new-dot" />NEW
+                                      </span>
+                                    )}
+                                    <span className="cd-al-time">
+                                      <FaClock size={9} />
+                                      {formatRelative(a.created_at)}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                        {/* Clicking this marks all as read */}
+                        <button className="cd-view-all" onClick={handleViewAllAlerts}>
+                          View all alerts →
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Panel 3: Breakdown + Quick Actions */}
                   <div className="cd-panel pa-blue">
                     <div className="cd-panel-hd">
                       <span className="cd-panel-title">Incident Breakdown</span>
@@ -710,13 +886,7 @@ export default function CitizenDashboard() {
                             <span style={{ textTransform: "capitalize" }}>{t}</span>
                           </span>
                           <div className="cd-bar-track">
-                            <div
-                              className="cd-bar-fill"
-                              style={{
-                                width: `${(count / maxCount) * 100}%`,
-                                background: tm.color,
-                              }}
-                            />
+                            <div className="cd-bar-fill" style={{ width: `${(count / maxCount) * 100}%`, background: tm.color }} />
                           </div>
                           <span className="cd-bar-val">{count}</span>
                         </div>
@@ -728,11 +898,7 @@ export default function CitizenDashboard() {
                     <div className="cd-panel-title" style={{ marginBottom: 12 }}>Quick Actions</div>
                     <div className="cd-qgrid">
                       {quickActions.map(q => (
-                        <Link
-                          key={q.to}
-                          to={q.to}
-                          className={`cd-qbtn ${q.colorClass}`}
-                        >
+                        <Link key={q.to} to={q.to} className={`cd-qbtn ${q.colorClass}`}>
                           <span className="cd-qbtn-ic">{q.icon}</span>
                           {q.label}
                         </Link>

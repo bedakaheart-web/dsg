@@ -74,8 +74,29 @@ const CSS = `
 
   .ca-inner { position: relative; z-index: 2; max-width: 860px; margin: 0 auto; padding: 0 24px 80px; }
 
+  /* Back button */
+  .ca-back {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-top: 32px; margin-bottom: 0;
+    font-size: 12px; font-weight: 600;
+    color: rgba(238,240,247,0.4);
+    text-decoration: none;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 7px 14px;
+    background: rgba(255,255,255,0.03);
+    transition: all 0.2s;
+    font-family: 'Instrument Sans', sans-serif;
+    letter-spacing: 0.02em;
+  }
+  .ca-back:hover {
+    color: rgba(238,240,247,0.75);
+    background: rgba(255,255,255,0.07);
+    border-color: rgba(255,255,255,0.15);
+  }
+
   /* Hero */
-  .ca-hero { margin-top: 48px; margin-bottom: 32px; }
+  .ca-hero { margin-top: 20px; margin-bottom: 32px; }
   .ca-hero-tag { display: inline-flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: #2ECC8F; margin-bottom: 16px; }
   .ca-hero-dot { width: 6px; height: 6px; border-radius: 50%; background: #2ECC8F; box-shadow: 0 0 8px #2ECC8F; animation: ca-pulse 2.2s ease infinite; }
   @keyframes ca-pulse { 0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(.75);} }
@@ -224,6 +245,12 @@ export default function CitizenAlertsPage() {
         </div>
 
         <div className="ca-inner">
+
+          {/* Back button */}
+          <Link to="/citizen/dashboard" className="ca-back">
+            <FaChevronLeft size={10} />
+            Back to Dashboard
+          </Link>
 
           {/* Hero */}
           <section className="ca-hero">

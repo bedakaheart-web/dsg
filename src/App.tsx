@@ -73,27 +73,25 @@ export default function App() {
           <Route path="/signup"          element={<Signup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
 
-          {/* ── ADMIN portal ─────────────────────────────────── */}
+          {/* ── ADMIN portal — no Layout ─────────────────────── */}
           <Route element={<ProtectedRoute allowedRole="admin" />}>
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
           </Route>
 
-          {/* ── CITIZEN portal ───────────────────────────────── */}
+          {/* ── CITIZEN portal — no Layout ───────────────────── */}
           <Route element={<ProtectedRoute allowedRole="citizen" />}>
-            <Route element={<Layout />}>
-              <Route path="/citizen/dashboard"   element={<CitizenDashboard />} />
-              <Route path="/citizen/alerts"      element={<CitizenAlertsPage />} />
-              <Route path="/citizen/history"     element={<CitizenHistory />} />
-              <Route path="/citizen/history/:id" element={<CitizenReportDetail />} />
-              <Route path="/citizen/map"         element={<CitizenMap />} />
-              <Route path="/citizen/directory"   element={<CitizenDirectory />} />
-              <Route path="/citizen/safetytips"  element={<CitizenSafetyTips />} />
-              <Route path="/citizen/about"       element={<CitizenAbout />} />
-              <Route path="/citizen/report"      element={<CitizenReport />} />
-            </Route>
+            <Route path="/citizen/dashboard"   element={<CitizenDashboard />} />
+            <Route path="/citizen/alerts"      element={<CitizenAlertsPage />} />
+            <Route path="/citizen/history"     element={<CitizenHistory />} />
+            <Route path="/citizen/history/:id" element={<CitizenReportDetail />} />
+            <Route path="/citizen/map"         element={<CitizenMap />} />
+            <Route path="/citizen/directory"   element={<CitizenDirectory />} />
+            <Route path="/citizen/safetytips"  element={<CitizenSafetyTips />} />
+            <Route path="/citizen/about"       element={<CitizenAbout />} />
+            <Route path="/citizen/report"      element={<CitizenReport />} />
           </Route>
 
-          {/* ── RESPONDER portal ─────────────────────────────── */}
+          {/* ── RESPONDER portal — no Layout ─────────────────── */}
           <Route element={<ProtectedRoute allowedRole="responder" />}>
             <Route path="/responder/dashboard"  element={<RespondersDashboard />} />
             <Route path="/responder/alerts"     element={<ResponderAlertsPage />} />
