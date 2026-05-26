@@ -22,7 +22,6 @@ const CSS = `
     overflow: hidden;
   }
 
-  /* background image */
   .lg-root::after {
     content: '';
     position: fixed; inset: 0; z-index: 0;
@@ -34,7 +33,6 @@ const CSS = `
     pointer-events: none;
   }
 
-  /* animated background atmosphere */
   .lg-root::before {
     content: '';
     position: fixed; inset: 0; z-index: 0;
@@ -48,6 +46,42 @@ const CSS = `
   @keyframes atmosphereDrift {
     0%, 100% { opacity: 1; transform: scale(1); }
     50% { opacity: 0.85; transform: scale(1.02); }
+  }
+
+  /* ── Back to home button ── */
+  .lg-back {
+    position: fixed;
+    top: 20px; left: 20px;
+    z-index: 10;
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 12px; font-weight: 600;
+    color: rgba(168, 216, 255, 0.55);
+    background: rgba(6, 15, 28, 0.70);
+    border: 1px solid rgba(0, 200, 224, 0.14);
+    border-radius: 10px;
+    padding: 8px 14px;
+    text-decoration: none;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition: all .22s ease;
+    animation: slideDown .6s cubic-bezier(.22,1,.36,1) both;
+  }
+
+  .lg-back:hover {
+    color: #00c8e0;
+    border-color: rgba(0, 200, 224, 0.32);
+    background: rgba(0, 200, 224, 0.07);
+    transform: translateX(-2px);
+  }
+
+  .lg-back-arrow {
+    font-size: 11px;
+    transition: transform .22s ease;
+  }
+
+  .lg-back:hover .lg-back-arrow {
+    transform: translateX(-3px);
   }
 
   /* ── Page layout ── */
@@ -99,7 +133,6 @@ const CSS = `
     background: radial-gradient(ellipse 90% 110% at 50% -10%, rgba(0,200,224,0.10) 0%, transparent 60%);
   }
 
-  /* decorative geometric accent */
   .lg-panel-geo {
     position: absolute; z-index: 1;
     bottom: -100px; right: -100px;
@@ -279,14 +312,12 @@ const CSS = `
     color: rgba(168, 216, 255, 0.52);
   }
 
-  /* rule */
   .lg-rule {
     height: 1px; background: linear-gradient(90deg, rgba(0, 200, 224, 0.10), transparent);
     margin-bottom: 32px;
     position: relative; z-index: 1;
   }
 
-  /* error */
   .lg-error {
     display: flex; align-items: flex-start; gap: 11px;
     background: rgba(232, 55, 42, 0.12);
@@ -308,7 +339,6 @@ const CSS = `
     80%{transform:translateX(4px)}
   }
 
-  /* fields */
   .lg-field {
     margin-bottom: 20px;
     position: relative; z-index: 1;
@@ -327,9 +357,7 @@ const CSS = `
     text-transform: uppercase;
   }
 
-  .lg-input-wrap {
-    position: relative;
-  }
+  .lg-input-wrap { position: relative; }
 
   .lg-field-icon {
     position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
@@ -339,9 +367,7 @@ const CSS = `
     transition: color .25s ease;
   }
 
-  .lg-input-wrap:focus-within .lg-field-icon {
-    color: rgba(0, 200, 224, 0.65);
-  }
+  .lg-input-wrap:focus-within .lg-field-icon { color: rgba(0, 200, 224, 0.65); }
 
   .lg-input {
     width: 100%;
@@ -356,9 +382,7 @@ const CSS = `
     transition: all .25s ease;
   }
 
-  .lg-input::placeholder {
-    color: rgba(168, 216, 255, 0.22);
-  }
+  .lg-input::placeholder { color: rgba(168, 216, 255, 0.22); }
 
   .lg-input:focus {
     border-color: rgba(0, 200, 224, 0.42);
@@ -366,9 +390,7 @@ const CSS = `
     box-shadow: 0 0 0 4px rgba(0, 200, 224, 0.08), inset 0 0 0 1px rgba(0, 200, 224, 0.06);
   }
 
-  .lg-input.has-eye {
-    padding-right: 44px;
-  }
+  .lg-input.has-eye { padding-right: 44px; }
 
   .lg-eye {
     position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
@@ -378,11 +400,8 @@ const CSS = `
     transition: color .25s ease;
   }
 
-  .lg-eye:hover {
-    color: rgba(0, 200, 224, 0.70);
-  }
+  .lg-eye:hover { color: rgba(0, 200, 224, 0.70); }
 
-  /* helper row */
   .lg-helper-row {
     display: flex; align-items: center; justify-content: space-between;
     margin-bottom: 28px; margin-top: 8px;
@@ -394,28 +413,20 @@ const CSS = `
     display: flex; align-items: center; gap: 8px;
     font-size: 12.5px;
     color: rgba(168, 216, 255, 0.55);
-    cursor: pointer;
-    user-select: none;
+    cursor: pointer; user-select: none;
     transition: color .2s ease;
   }
 
-  .lg-remember:hover {
-    color: rgba(168, 216, 255, 0.75);
-  }
+  .lg-remember:hover { color: rgba(168, 216, 255, 0.75); }
 
   .lg-remember input[type="checkbox"] {
-    accent-color: #00c8e0;
-    cursor: pointer;
-    width: 16px;
-    height: 16px;
+    accent-color: #00c8e0; cursor: pointer;
+    width: 16px; height: 16px;
     border: 1.5px solid rgba(0, 200, 224, 0.32);
-    border-radius: 4px;
-    transition: all .2s ease;
+    border-radius: 4px; transition: all .2s ease;
   }
 
-  .lg-remember input[type="checkbox"]:hover {
-    border-color: rgba(0, 200, 224, 0.50);
-  }
+  .lg-remember input[type="checkbox"]:hover { border-color: rgba(0, 200, 224, 0.50); }
 
   .lg-forgot {
     font-size: 12.5px; font-weight: 700;
@@ -429,14 +440,12 @@ const CSS = `
     letter-spacing: 0.5px;
   }
 
-  /* button */
   .lg-btn {
     width: 100%;
     padding: 15px 22px;
     font-family: 'Syne', sans-serif;
     font-size: 13px; font-weight: 800;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    letter-spacing: 0.1em; text-transform: uppercase;
     border-radius: 11px; border: none;
     background: linear-gradient(135deg, #e8372a 0%, #f04438 100%);
     color: #fff;
@@ -459,9 +468,7 @@ const CSS = `
     transition: left 0.45s ease;
   }
 
-  .lg-btn:hover:not(:disabled)::before {
-    left: 140%;
-  }
+  .lg-btn:hover:not(:disabled)::before { left: 140%; }
 
   .lg-btn:hover:not(:disabled) {
     background: linear-gradient(135deg, #f04438 0%, #f85a47 100%);
@@ -469,14 +476,8 @@ const CSS = `
     box-shadow: 0 0 50px rgba(232, 55, 42, 0.55), 0 6px 24px rgba(232, 55, 42, 0.35);
   }
 
-  .lg-btn:active:not(:disabled) {
-    transform: translateY(0);
-  }
-
-  .lg-btn:disabled {
-    opacity: .5;
-    cursor: not-allowed;
-  }
+  .lg-btn:active:not(:disabled) { transform: translateY(0); }
+  .lg-btn:disabled { opacity: .5; cursor: not-allowed; }
 
   .lg-spinner {
     width: 14px; height: 14px; border-radius: 50%;
@@ -486,7 +487,6 @@ const CSS = `
 
   @keyframes lg-spin { to { transform: rotate(360deg); } }
 
-  /* footer */
   .lg-form-footer {
     text-align: center;
     font-size: 13px;
@@ -498,10 +498,8 @@ const CSS = `
   }
 
   .lg-form-footer a {
-    color: #00c8e0;
-    font-weight: 700;
-    text-decoration: none;
-    transition: all .25s ease;
+    color: #00c8e0; font-weight: 700;
+    text-decoration: none; transition: all .25s ease;
   }
 
   .lg-form-footer a:hover {
@@ -510,7 +508,6 @@ const CSS = `
     letter-spacing: 0.5px;
   }
 
-  /* success */
   .lg-success {
     display: flex; flex-direction: column; align-items: center;
     text-align: center; padding: 28px 0;
@@ -544,7 +541,6 @@ const CSS = `
     line-height: 1.7;
   }
 
-  /* checking */
   .lg-checking {
     display: flex; align-items: center; justify-content: center;
     gap: 12px; padding: 60px 0;
@@ -565,65 +561,25 @@ const CSS = `
       max-width: 500px;
       border-radius: 20px;
     }
-
-    .lg-brand-panel {
-      display: none;
-    }
-
-    .lg-form-panel {
-      border-left: none;
-      border-radius: 20px;
-    }
+    .lg-brand-panel { display: none; }
+    .lg-form-panel { border-left: none; border-radius: 20px; }
   }
 
   @media (max-width: 480px) {
-    .lg-root {
-      padding: 16px;
-      align-items: flex-start;
-      padding-top: 32px;
-    }
-
-    .lg-page {
-      min-height: auto;
-      border-radius: 16px;
-    }
-
-    .lg-form-panel {
-      padding: 36px 26px;
-    }
-
-    .lg-form-title {
-      font-size: 24px;
-    }
-
-    .lg-input {
-      padding: 11px 14px 11px 38px;
-      font-size: 13px;
-    }
-
-    .lg-btn {
-      padding: 13px 18px;
-      font-size: 12px;
-      margin-bottom: 18px;
-    }
-
-    .lg-form-footer {
-      font-size: 12px;
-    }
+    .lg-root { padding: 16px; align-items: flex-start; padding-top: 32px; }
+    .lg-page { min-height: auto; border-radius: 16px; }
+    .lg-form-panel { padding: 36px 26px; }
+    .lg-form-title { font-size: 24px; }
+    .lg-input { padding: 11px 14px 11px 38px; font-size: 13px; }
+    .lg-btn { padding: 13px 18px; font-size: 12px; margin-bottom: 18px; }
+    .lg-form-footer { font-size: 12px; }
+    .lg-back { top: 12px; left: 12px; font-size: 11px; padding: 7px 11px; }
   }
 
   @media (max-width: 360px) {
-    .lg-form-panel {
-      padding: 28px 18px;
-    }
-
-    .lg-form-title {
-      font-size: 22px;
-    }
-
-    .lg-input {
-      font-size: 12px;
-    }
+    .lg-form-panel { padding: 28px 18px; }
+    .lg-form-title { font-size: 22px; }
+    .lg-input { font-size: 12px; }
   }
 `;
 
@@ -713,6 +669,13 @@ export default function Login() {
     <>
       <style>{CSS}</style>
       <div className="lg-root" style={{ '--bg-image': `url(${directorybg})` } as React.CSSProperties}>
+
+        {/* ── Back to Home ── */}
+        <Link to="/" className="lg-back">
+          <span className="lg-back-arrow">←</span>
+          Back to Home
+        </Link>
+
         <div className="lg-page">
 
           {/* ── Left branding panel ── */}
