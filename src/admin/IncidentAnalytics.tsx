@@ -7,12 +7,12 @@ const IA_STYLE = `
   --success:  #00B074;
   --warning:  #FF9500;
   --danger:   #FF3B30;
-  --bg:       #FAFBFC;
-  --surface:  #FFFFFF;
-  --border:   #E5E7EB;
-  --text:     #1F2937;
-  --text-secondary: #6B7280;
-  --text-tertiary:  #9CA3AF;
+  --bg:       #0d1117;
+  --surface:  rgba(15,21,33,0.82);
+  --border:   rgba(255,255,255,0.07);
+  --text:     #eef0f7;
+  --text-secondary: rgba(238,240,247,0.55);
+  --text-tertiary:  rgba(238,240,247,0.28);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -167,7 +167,7 @@ const IA_STYLE = `
 .ia-vbar-bar:hover::after {
   content: attr(data-val);
   position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
-  background: var(--text); border: 1px solid var(--border);
+  background: rgba(15,21,33,0.95); border: 1px solid rgba(255,255,255,0.12);
   border-radius: 6px; padding: 4px 8px;
   font-size: 11px; font-weight: 600; color: #fff;
   white-space: nowrap; pointer-events: none; margin-bottom: 6px;
@@ -421,10 +421,10 @@ export default function IncidentAnalytics() {
                   return el;
                 })}
                 <text x="60" y="56" textAnchor="middle"
-                  fill="var(--text)" fontSize="20" fontWeight="700"
+                  fill="#eef0f7" fontSize="20" fontWeight="700"
                   fontFamily="inherit">{total}</text>
                 <text x="60" y="71" textAnchor="middle"
-                  fill="var(--text-tertiary)" fontSize="10"
+                  fill="rgba(238,240,247,0.28)" fontSize="10"
                   fontFamily="inherit">TOTAL</text>
               </svg>
 

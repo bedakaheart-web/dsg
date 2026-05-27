@@ -65,12 +65,12 @@ const STYLES = `
   --warning: #FF9500;
   --danger:  #FF3B30;
   --purple:  #8B5CF6;
-  --bg:      #FAFBFC;
-  --surface: #FFFFFF;
-  --border:  #E5E7EB;
-  --text:    #1F2937;
-  --text-secondary: #6B7280;
-  --text-tertiary:  #9CA3AF;
+  --bg:      #0d1117;
+  --surface: rgba(15,21,33,0.82);
+  --border:  rgba(255,255,255,0.07);
+  --text:    #eef0f7;
+  --text-secondary: rgba(238,240,247,0.55);
+  --text-tertiary:  rgba(238,240,247,0.28);
 }
 
 @keyframes rtp-fadeIn  { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
@@ -85,7 +85,7 @@ const STYLES = `
 .rtp-root {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: var(--text);
-  background: var(--bg);
+  background: rgba(8,12,20,0.93);
   min-height: 100vh;
 }
 
@@ -228,7 +228,7 @@ const STYLES = `
 
 /* ── Skeleton ── */
 .rtp-skel {
-  background: linear-gradient(90deg, #f0f2f5 25%, #e4e7ec 50%, #f0f2f5 75%);
+  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.10) 50%, rgba(255,255,255,0.05) 75%);
   background-size: 400% 100%;
   animation: rtp-shimmer 1.4s ease infinite;
   border-radius: 6px;
@@ -496,7 +496,7 @@ const STYLES = `
   justify-content: center;
   gap: 6px;
   padding: 8px;
-  background: var(--bg);
+  background: rgba(8,12,20,0.93);
   border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 12px;
@@ -610,7 +610,7 @@ const STYLES = `
 .rtp-retry-btn {
   margin-top: 4px;
   padding: 8px 20px;
-  background: var(--bg);
+  background: rgba(8,12,20,0.93);
   border: 1px solid var(--border);
   border-radius: 8px;
   color: var(--text-secondary);
@@ -684,7 +684,7 @@ function SkeletonCard() {
         <div className="rtp-skel rtp-skel-line" />
         <div className="rtp-skel rtp-skel-lsm" />
       </div>
-      <div style={{ height: 34, borderRadius: 8, background: "#f0f2f5" }} />
+      <div style={{ height: 34, borderRadius: 8, background: "rgba(255,255,255,0.05)" }} />
     </div>
   );
 }

@@ -117,12 +117,12 @@ const STYLE = `
   --success:  #00B074;
   --warning:  #FF9500;
   --danger:   #FF3B30;
-  --bg:       #FAFBFC;
-  --surface:  #FFFFFF;
-  --border:   #E5E7EB;
-  --text:     #1F2937;
-  --text-secondary: #6B7280;
-  --text-tertiary:  #9CA3AF;
+  --bg:       #0d1117;
+  --surface:  rgba(15,21,33,0.82);
+  --border:   rgba(255,255,255,0.07);
+  --text:     #eef0f7;
+  --text-secondary: rgba(238,240,247,0.55);
+  --text-tertiary:  rgba(238,240,247,0.28);
 }
 
 @keyframes fadeIn  { from { opacity: 0; transform: translateY(6px);  } to { opacity: 1; transform: none; } }
@@ -134,7 +134,7 @@ const STYLE = `
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 .ip-root {
-  background: var(--bg);
+  background: rgba(8,12,20,0.93);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: var(--text);
   padding: 0;
@@ -156,7 +156,7 @@ const STYLE = `
 /* ── Filter pills ── */
 .ip-filters {
   display: flex; gap: 4px;
-  background: var(--surface); border: 1px solid var(--border);
+  background: rgba(15,21,33,0.82); border: 1px solid rgba(255,255,255,0.07);
   border-radius: 10px; padding: 5px;
 }
 .ip-filter-btn {
@@ -165,7 +165,7 @@ const STYLE = `
   cursor: pointer; transition: all 0.2s;
   background: transparent; color: var(--text-secondary);
 }
-.ip-filter-btn:hover { background: var(--bg); color: var(--text); border-color: var(--border); }
+.ip-filter-btn:hover { background: rgba(255,255,255,0.05); color: #eef0f7; border-color: rgba(255,255,255,0.12); }
 .ip-filter-btn.active-pending {
   background: linear-gradient(135deg, var(--danger) 0%, #cc2e24 100%);
   color: white; border-color: transparent;
@@ -185,7 +185,7 @@ const STYLE = `
 /* ── Stats ── */
 .ip-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
 .ip-stat {
-  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  background: rgba(15,21,33,0.82); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px;
   padding: 18px 20px; position: relative; overflow: hidden; transition: all 0.3s;
 }
 .ip-stat:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.06); }
@@ -204,7 +204,7 @@ const STYLE = `
 
 /* ── Incident card ── */
 .ip-card {
-  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  background: rgba(15,21,33,0.82); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px;
   overflow: hidden; transition: all 0.3s; animation: fadeIn 0.4s ease-out both;
   box-shadow: 0 1px 2px rgba(0,0,0,0.04);
 }
@@ -332,7 +332,7 @@ const STYLE = `
   animation: fadeIn 0.2s ease;
 }
 .ip-modal {
-  background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+  background: rgba(15,21,33,0.82); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px;
   width: 100%; max-width: 440px; max-height: 90vh; overflow-y: auto;
   animation: modalIn 0.28s cubic-bezier(0.34,1.56,0.64,1) both;
   box-shadow: 0 20px 40px rgba(0,0,0,0.15);
@@ -343,7 +343,7 @@ const STYLE = `
 /* Modal header */
 .ip-modal-hd {
   padding: 20px 24px; border-bottom: 1px solid var(--border);
-  display: flex; align-items: flex-start; gap: 14px; background: var(--bg);
+  display: flex; align-items: flex-start; gap: 14px; background: rgba(8,12,20,0.93);
 }
 .ip-modal-icon {
   width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
@@ -369,7 +369,7 @@ const STYLE = `
   cursor: pointer; background: transparent; border: 1px solid var(--border);
   color: var(--text-secondary); transition: all 0.2s; letter-spacing: 0.3px; text-transform: uppercase;
 }
-.ip-modal-cancel:hover { border-color: var(--text-secondary); color: var(--text); background: var(--bg); }
+.ip-modal-cancel:hover { border-color: rgba(255,255,255,0.20); color: #eef0f7; background: rgba(255,255,255,0.05); }
 
 .ip-modal-confirm {
   font-size: 11px; font-weight: 700; padding: 10px 16px; border-radius: 8px;
@@ -389,10 +389,10 @@ const STYLE = `
 }
 .ip-responder-option {
   display: flex; align-items: center; gap: 12px; padding: 12px 14px;
-  border-radius: 10px; border: 1px solid var(--border); background: var(--bg);
+  border-radius: 10px; border: 1px solid var(--border); background: rgba(8,12,20,0.93);
   cursor: pointer; transition: all 0.16s;
 }
-.ip-responder-option:hover { background: rgba(0,102,255,0.04); border-color: rgba(0,102,255,0.3); }
+.ip-responder-option:hover { background: rgba(0,102,255,0.10); border-color: rgba(0,102,255,0.3); }
 .ip-responder-option.selected { background: rgba(0,102,255,0.06); border-color: var(--primary); }
 .ip-responder-avatar {
   width: 36px; height: 36px; border-radius: 9px; flex-shrink: 0;
@@ -408,7 +408,7 @@ const STYLE = `
 
 /* Incident summary strip in modal */
 .ip-modal-strip {
-  background: var(--bg); border: 1px solid var(--border); border-radius: 9px;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 9px;
   padding: 12px 14px; margin-bottom: 18px; font-size: 12px; color: var(--text-secondary);
   line-height: 1.5;
 }

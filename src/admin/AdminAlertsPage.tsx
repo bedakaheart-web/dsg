@@ -188,12 +188,12 @@ const AL_STYLE = `
   --success:  #00B074;
   --warning:  #FF9500;
   --danger:   #FF3B30;
-  --bg:       #FAFBFC;
-  --surface:  #FFFFFF;
-  --border:   #E5E7EB;
-  --text:     #1F2937;
-  --text-secondary: #6B7280;
-  --text-tertiary:  #9CA3AF;
+  --bg:       #0d1117;
+  --surface:  rgba(15,21,33,0.82);
+  --border:   rgba(255,255,255,0.07);
+  --text:     #eef0f7;
+  --text-secondary: rgba(238,240,247,0.55);
+  --text-tertiary:  rgba(238,240,247,0.28);
 }
 
 @keyframes alFadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; } }
@@ -203,7 +203,7 @@ const AL_STYLE = `
 * { box-sizing: border-box; margin:0; padding:0; }
 
 .al-root {
-  background: var(--bg);
+  background: rgba(8,12,20,0.93);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: var(--text);
   width: 100%; min-width: 0;
@@ -352,7 +352,7 @@ const AL_STYLE = `
   transition: background .15s;
 }
 .al-log-row:last-child { border-bottom: none; }
-.al-log-row:hover { background: var(--bg); }
+.al-log-row:hover { background: rgba(255,255,255,0.03); }
 .al-log-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
 .al-log-content { flex: 1; min-width: 0; }
 .al-log-title-text {
@@ -457,10 +457,10 @@ const AL_STYLE = `
 .al-tpl-card {
   padding: 11px 12px; border-radius: 9px;
   border: 1px solid transparent; cursor: pointer;
-  transition: all .16s; margin-bottom: 4px; background: var(--bg);
+  transition: all .16s; margin-bottom: 4px; background: rgba(8,12,20,0.93);
 }
 .al-tpl-card:last-child { margin-bottom: 0; }
-.al-tpl-card:hover { background: var(--surface); border-color: var(--border); transform: translateX(2px); }
+.al-tpl-card:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.12); transform: translateX(2px); }
 .al-tpl-card-top {
   display: flex; align-items: center; gap: 8px;
   margin-bottom: 5px; flex-wrap: wrap;

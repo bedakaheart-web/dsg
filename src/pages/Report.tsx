@@ -249,7 +249,6 @@ export default function Report() {
 
           {/* ── Hero ── */}
           <section className="rp-hero">
-            <div className="rp-eyebrow">Reporting a live incident</div>
             <h1 className="rp-title">
               Report an <span className="accent">Incident</span>
             </h1>
@@ -551,7 +550,7 @@ const styles = `
     animation: bgDrift 32s ease-in-out infinite;
     will-change: transform;
   }
-  .rp-bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
+  .rp-bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
 
   @keyframes bgDrift {
     0%   { transform: scale(1.08) translate(0px,   0px);   }

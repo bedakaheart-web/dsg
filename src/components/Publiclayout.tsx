@@ -5,20 +5,25 @@
 //
 // ⚠️  This is ONLY used for public routes in App.tsx.
 //     Citizen / Responder / Admin dashboards are NOT touched.
+//     Navbar and Footer are hidden on /login and /signup — those pages
+//     have their own internal navigation.
 
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import Navbar from "./Navbar";
 
-// ── Footer ────────────────────────────────────────────────────────────────────
-// Inline so you don't need a separate file. Matches the dark theme of your app.
+// ── Pages that manage their own layout (no shared Navbar / Footer) ────────────
+const AUTH_PATHS = ["/login", "/signup", "/forgot-password"];
 
+// ── Footer ────────────────────────────────────────────────────────────────────
 function PublicFooter() {
   return (
     <>
       <style>{`
         .pf-root {
-          background: rgba(4, 10, 20, 0.98);
+          position: relative;
+          z-index: 2;
+          background: transparent;
           border-top: 1px solid rgba(0, 200, 224, 0.10);
           padding: 48px 5% 28px;
           font-family: 'Inter', sans-serif;
@@ -212,8 +217,19 @@ export default function PublicLayout({ children, isHomepage = false }: PublicLay
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
+  // Hide shared Navbar + Footer on auth pages — they have their own internal nav
+  const isAuthPage = AUTH_PATHS.includes(location.pathname);
+
+  if (isAuthPage) {
+    return (
+      <div style={{ minHeight: "100vh", background: "transparent" }}>
+        {children}
+      </div>
+    );
+  }
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "transparent" }}>
       {/* Navbar sits on top of everything via position:fixed — no extra div needed */}
       <Navbar />
 
@@ -225,7 +241,10 @@ export default function PublicLayout({ children, isHomepage = false }: PublicLay
       */}
       <main style={{
         flex: 1,
+        background: "transparent",
         paddingTop: isHomepage ? 0 : "70px",
+        position: "relative",
+        zIndex: 1,
       }}>
         {children}
       </main>

@@ -262,7 +262,7 @@ export default function Directory() {
           overflow-x: hidden;
         }
 
-        .dr-bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
+        .dr-bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
         .dr-bg-img {
           width: 100%; height: 100%;
           object-fit: cover; object-position: center; display: block;
@@ -750,16 +750,10 @@ export default function Directory() {
         <div className="dr-wrap">
 
           {/* Nav */}
-          <nav className="dr-nav">
-            <Link to="/" className="dr-logo">
-              <span className="dr-logo-dot" />
-            </Link>
-            <Link to="/resources" className="dr-back">← Resources</Link>
-          </nav>
 
           {/* Hero — Option E */}
           <section className="dr-hero">
-            <div className="dr-hero-eyebrow">Emergency Directory</div>
+        
             <h1>
               Stay <span className="accent">Connected</span>,<br />
               Stay <span className="accent">Safe</span>

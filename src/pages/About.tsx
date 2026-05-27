@@ -77,7 +77,7 @@ export default function About() {
           overflow-x: hidden;
         }
 
-        .ab-bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
+        .ab-bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
         .ab-bg-img {
           width: 100%; height: 100%;
           object-fit: cover; object-position: center; display: block;
@@ -394,13 +394,11 @@ export default function About() {
 
           <nav className="ab-nav">
             <Link to="/" className="ab-logo">
-              <span className="ab-logo-dot" />
-              DumaSafeGuide
             </Link>
           </nav>
 
           <section className="ab-hero">
-            <div className="ab-hero-eyebrow">About Us</div>
+          
             <h1>
               About <span className="accent">DumaSafe</span><br />
               <span className="accent">Guide</span>

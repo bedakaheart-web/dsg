@@ -1,5 +1,5 @@
-import About from "./pages/AboutDumaSafeGuide";
 import { lazy, Suspense, useEffect, useState } from 'react';
+const About = lazy(() => import("./pages/About"));
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicLayout   from './components/Publiclayout';
@@ -149,11 +149,8 @@ export default function App() {
           <Route path="/responder/team"      element={<ProtectedRoute allowedRole="responder"><ResponderTeam /></ProtectedRoute>} />
 
           {/* ── Convenience redirects ─────────────────────────────────────── */}
+              <Route path="/about" element={<PublicLayout><About /></PublicLayout>} />
               <Route path="/report" element={<PublicLayout><Report /></PublicLayout>} />
-              : <Navigate to="/" replace />}
-          />
-          <Route path="/safetytips" element={<Navigate to="/citizen/safetytips" replace />} />
-
           {/* ── Catch-all ─────────────────────────────────────────────────── */}
           <Route path="*" element={<Navigate to="/" replace />} />
 

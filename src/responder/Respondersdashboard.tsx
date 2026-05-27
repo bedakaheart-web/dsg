@@ -95,12 +95,12 @@ const STYLES = `
   --success:        #00B074;
   --warning:        #FF9500;
   --danger:         #FF3B30;
-  --bg:             #FAFBFC;
-  --surface:        #FFFFFF;
-  --border:         #E5E7EB;
-  --text:           #1F2937;
-  --text-secondary: #6B7280;
-  --text-tertiary:  #9CA3AF;
+  --bg:             #0d1117;
+  --surface:        rgba(15,21,33,0.82);
+  --border:         rgba(255,255,255,0.07);
+  --text:           #eef0f7;
+  --text-secondary: rgba(238,240,247,0.55);
+  --text-tertiary:  rgba(238,240,247,0.28);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -120,7 +120,7 @@ const STYLES = `
   position: absolute; inset: 0; z-index: 0;
   background-size: cover; background-position: center; background-repeat: no-repeat; pointer-events: none;
 }
-.rd-bg::after { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.42); }
+.rd-bg::after { content: ''; position: absolute; inset: 0; background: rgba(8,12,20,0.93); }
 
 .rd-shell { display: flex; height: 100%; width: 100%; position: relative; z-index: 1; }
 
@@ -191,7 +191,7 @@ const STYLES = `
 .rd-logout-btn:hover { background: var(--danger); color: white; border-color: var(--danger); }
 
 /* ── Main ── */
-.rd-main { margin-left: 260px; flex: 1; display: flex; flex-direction: column; position: relative; z-index: 1; height: 100%; min-width: 0; overflow: hidden; background: var(--bg); }
+.rd-main { margin-left: 260px; flex: 1; display: flex; flex-direction: column; position: relative; z-index: 1; height: 100%; min-width: 0; overflow: hidden; background: transparent; }
 
 .rd-topbar { height: 56px; display: flex; align-items: center; padding: 0 24px; background: var(--surface); border-bottom: 1px solid var(--border); position: relative; z-index: 100; gap: 12px; flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
 

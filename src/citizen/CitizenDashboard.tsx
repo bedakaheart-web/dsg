@@ -12,7 +12,7 @@ import {
   FaCheckCircle, FaClock, FaSpinner, FaExclamationTriangle,
   FaBell, FaBars, FaTimes, FaSignOutAlt, FaInfoCircle,
 } from "react-icons/fa";
-import dsgLogo from "../assets/dsg_logo.png";
+import dsgLogo from "../assets/dsg.logo.png";
 import pagesBackground from "../assets/pagesbackground.png";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -254,9 +254,9 @@ export default function CitizenDashboard() {
   return (
     <div style={{ minHeight: "100vh", backgroundImage: `linear-gradient(rgba(8,12,20,0.93), rgba(8,12,20,0.93)), url(${pagesBackground})`, backgroundSize: "cover", backgroundPosition: "center", backgroundAttachment: "fixed", backgroundRepeat: "no-repeat", backgroundColor: "#080c14", color: "#eef0f7", fontFamily: "'Instrument Sans', sans-serif" }}>
       {/* Sidebar */}
-      <aside style={{ position: "fixed", left: 0, top: 0, width: "260px", height: "100vh", backgroundColor: "rgba(8,12,20,0.88)", borderRight: "1px solid rgba(255,255,255,0.07)", display: "flex", flexDirection: "column", zIndex: 200 }}>
+      <aside style={{ position: "fixed", left: 0, top: 0, width: "260px", height: "100vh", backgroundColor: "rgba(8,12,20,0.95)", borderRight: "1px solid rgba(255,255,255,0.10)", display: "flex", flexDirection: "column", zIndex: 200 }}>
         <div style={{ padding: "20px 16px", display: "flex", alignItems: "center", gap: "12px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-          <img src={dsgLogo} alt="DSG" style={{ width: "40px", height: "40px", borderRadius: "8px", filter: "drop-shadow(0 0 8px rgba(255,255,255,0.6))" }} />
+          <img src={dsgLogo} alt="DSG" style={{ width: "40px", height: "40px", borderRadius: "8px", filter: "none" }} />
           <div>
             <div style={{ fontSize: "15px", fontWeight: "800", color: "#eef0f7" }}>DumaSafeGuide</div>
             <div style={{ fontSize: "10px", color: "#2ECC8F", marginTop: "2px", fontWeight: "600" }}>● CITIZEN</div>

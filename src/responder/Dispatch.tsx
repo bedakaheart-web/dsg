@@ -50,26 +50,26 @@ const DISPATCH_STYLES = `
   --info:           #0369A1;
 
   /* Backgrounds */
-  --bg-primary:     #FAFBFC;
-  --bg-secondary:   #F3F4F6;
-  --surface:        #FFFFFF;
+  --bg-primary:     #0d1117;
+  --bg-secondary:   rgba(15,21,33,0.82);
+  --surface:        rgba(15,21,33,0.82);
   
   /* Text */
-  --text-primary:   #111827;
-  --text-secondary: #4B5563;
-  --text-tertiary:  #9CA3AF;
+  --text-primary:   #eef0f7;
+  --text-secondary: rgba(238,240,247,0.55);
+  --text-tertiary:  rgba(238,240,247,0.28);
   
   /* Borders & Accents */
-  --border-light:   #E5E7EB;
-  --border-med:     #D1D5DB;
-  --border-dark:    #9CA3AF;
+  --border-light:   rgba(255,255,255,0.07);
+  --border-med:     rgba(255,255,255,0.12);
+  --border-dark:    rgba(255,255,255,0.20);
   
   /* Semantic */
   --error:          #DC2626;
-  --success-bg:     #ECFDF5;
-  --warning-bg:     #FEF3C7;
-  --error-bg:       #FEE2E2;
-  --info-bg:        #EFF6FF;
+  --success-bg:     rgba(46,204,143,0.08);
+  --warning-bg:     rgba(245,200,66,0.08);
+  --error-bg:       rgba(239,91,91,0.08);
+  --info-bg:        rgba(91,141,239,0.08);
 }
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
@@ -85,7 +85,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Ne
   font-family: inherit;
   color: var(--text-primary);
   min-height: 100vh;
-  background: var(--bg-primary);
+  background: rgba(8,12,20,0.93);
   padding: 28px;
   font-size: 14px;
   line-height: 1.5;

@@ -25,7 +25,7 @@ import AdminAlertsPage from "./AdminAlertsPage";
 import IncidentsPage from "./IncidentsPage";
 import IncidentAnalytics from "./IncidentAnalytics";
 import RespondersPage from "./RespondersPage";
-import AdminTeamPage from "./AdminTeaPage";
+import AdminTeamPage from "./AdminTeamPage";
 
 import dsgLogo from "../assets/dsg.logo.png";
 import footerBg from "../assets/footer.png"; // ✅ Import background
@@ -90,12 +90,12 @@ const DASH_STYLE = `
   --success:  #00B074;
   --warning:  #FF9500;
   --danger:   #FF3B30;
-  --bg:       #FAFBFC;
-  --surface:  #FFFFFF;
-  --border:   #E5E7EB;
-  --text:     #1F2937;
-  --text-secondary: #6B7280;
-  --text-tertiary:  #9CA3AF;
+  --bg:       #0d1117;
+  --surface:  rgba(15,21,33,0.82);
+  --border:   rgba(255,255,255,0.07);
+  --text:     #eef0f7;
+  --text-secondary: rgba(238,240,247,0.55);
+  --text-tertiary:  rgba(238,240,247,0.28);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -121,7 +121,7 @@ const DASH_STYLE = `
   content: '';
   position: fixed;
   inset: 0;
-  background: linear-gradient(135deg, rgba(250, 251, 252, 0.85) 0%, rgba(255, 255, 255, 0.9) 50%, rgba(250, 251, 252, 0.85) 100%);
+  background: linear-gradient(135deg, rgba(8,12,20,0.93), rgba(8,12,20,0.93));
   pointer-events: none;
   z-index: 1;
 }

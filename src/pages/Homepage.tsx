@@ -1,6 +1,6 @@
 // src/pages/Homepage.tsx
 import { Link, useNavigate } from "react-router-dom";
-import { useState, useEffect, useRef, Fragment } from "react";
+import { useState, useEffect, useRef } from "react";
 import { FaMapMarkedAlt, FaUsers, FaLightbulb, FaPhoneAlt, FaEye, FaEyeSlash, FaShieldAlt } from "react-icons/fa";
 import { supabase } from "../js/supabase";
 import homepageBg from "../assets/homepage.bg.jpg";
@@ -46,14 +46,6 @@ const STATS = [
   { value: 5,  label: "Avg. Response (min)", suffix: "m" },
 ];
 
-const TICKER_ITEMS = [
-  "🔴 STAY ALERT — Monitor local advisories",
-  "📡 LIVE — Incident tracking active",
-  "🚨 HOTLINE — Call 911 for emergencies",
-  "🌧️ FLOOD — Check safe routes on the map",
-  "🛡️ PREPARED — Review your barangay safety tips",
-  "📍 REPORT — File incidents directly from your dashboard",
-];
 
 const ROLE_REDIRECT: Record<string, string> = {
   admin:     "/admin/dashboard",
@@ -197,7 +189,6 @@ export default function Homepage() {
     }
   };
 
-  const tickerItems = [...TICKER_ITEMS, ...TICKER_ITEMS];
 
   return (
     <>
@@ -1013,13 +1004,51 @@ export default function Homepage() {
             {/* ── Ticker ── */}
             <div className="hp-ticker">
               <div className="hp-ticker-label">LIVE</div>
+
               <div className="hp-ticker-track">
-                {tickerItems.map((item, i) => (
-                  <Fragment key={i}>
-                    <span className="hp-ticker-item">{item}</span>
-                    <span className="hp-ticker-dot" />
-                  </Fragment>
-                ))}
+                <span className="hp-ticker-item">
+                  Emergency response system active
+                </span>
+
+                <span className="hp-ticker-dot" />
+
+                <span className="hp-ticker-item">
+                  Safety monitoring online 24\/7
+                </span>
+
+                <span className="hp-ticker-dot" />
+
+                <span className="hp-ticker-item">
+                  Hotline services available
+                </span>
+
+                <span className="hp-ticker-dot" />
+
+                <span className="hp-ticker-item">
+                  Community alerts enabled
+                </span>
+
+                <span className="hp-ticker-item">
+                  Emergency response system active
+                </span>
+
+                <span className="hp-ticker-dot" />
+
+                <span className="hp-ticker-item">
+                  Safety monitoring online 24\/7
+                </span>
+
+                <span className="hp-ticker-dot" />
+
+                <span className="hp-ticker-item">
+                  Hotline services available
+                </span>
+
+                <span className="hp-ticker-dot" />
+
+                <span className="hp-ticker-item">
+                  Community alerts enabled
+                </span>
               </div>
             </div>
 
@@ -1161,7 +1190,7 @@ export default function Homepage() {
                   style={{
                     "--accent-color": card.accent,
                     "--accent-alpha": `${card.accent}20`,
-                  } as React.CSSProperties}
+                  } as CSSProperties}
                 >
                   <div className="hp-card-header">
                     <div className="hp-card-icon">{card.icon}</div>

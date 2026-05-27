@@ -135,7 +135,7 @@ export default function CitizenMap() {
           background: #060f1c;
         }
 
-        .fl-bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+        .fl-bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
         .fl-bg-img {
           width: 100%; height: 100%; object-fit: cover; object-position: center;
           animation: bgDrift 40s ease-in-out infinite; will-change: transform;
@@ -618,8 +618,7 @@ export default function CitizenMap() {
         <header className="fl-header">
           <div className="fl-header-left">
             <div className="fl-eyebrow">
-              <span className="fl-eyebrow-line" />
-              Facility Locator
+            
             </div>
             <h1>Find Help <span className="accent">Near You</span></h1>
             <p className="fl-header-sub">Emergency services, hospitals &amp; evacuation centers across Dumaguete City</p>

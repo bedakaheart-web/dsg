@@ -22,27 +22,32 @@ const CSS = `
     display: flex;
     font-family: 'Inter', sans-serif;
     color: #ddeef8;
-    background: linear-gradient(135deg, #0d1b2e 0%, #071a1d 50%, #0a1f28 100%);
     overflow-x: hidden;
     position: relative;
     width: 100%;
     max-width: 100vw;
+    /* FIXED: dark base so background image never bleeds through as white */
+    background: #07101d;
   }
 
+  /* Layer 1 — background photo at reduced opacity */
   .su-root::after {
     content: '';
     position: fixed; inset: 0; z-index: 0;
     background-image: var(--bg-image);
     background-size: cover;
     background-position: center;
-    opacity: 0.12;
+    /* FIXED: raised from 0.12 → 0.22 so the image is visible but not washed out */
+    opacity: 0.22;
     pointer-events: none;
   }
 
+  /* Layer 2 — dark gradient overlay that dims the whole page */
   .su-root::before {
     content: '';
     position: fixed; inset: 0; z-index: 0;
-    background-image:
+    background:
+      linear-gradient(180deg, rgba(7,16,29,0.78) 0%, rgba(7,16,29,0.68) 50%, rgba(7,16,29,0.82) 100%),
       radial-gradient(circle at 20% 20%, rgba(0,200,224,0.08) 0%, transparent 50%),
       radial-gradient(circle at 80% 80%, rgba(232,55,42,0.06) 0%, transparent 50%);
     animation: atmosphereDrift 25s ease-in-out infinite;
@@ -66,6 +71,8 @@ const CSS = `
     overflow: hidden;
     flex-shrink: 0;
     z-index: 1;
+    /* FIXED: unified surface opacity to match About page */
+    background: rgba(13, 27, 46, 0.72);
   }
 
   .su-left-bg {
@@ -77,7 +84,7 @@ const CSS = `
   .su-left-bg::after {
     content: '';
     position: absolute; inset: 0;
-    background: linear-gradient(160deg, rgba(7,16,29,0.92) 0%, rgba(7,16,29,0.78) 50%, rgba(7,16,29,0.90) 100%);
+    background: linear-gradient(160deg, rgba(7,16,29,0.72) 0%, rgba(7,16,29,0.58) 50%, rgba(7,16,29,0.70) 100%);
   }
 
   .su-left-lines {
@@ -198,7 +205,8 @@ const CSS = `
   .su-step {
     display: flex; align-items: flex-start; gap: 13px;
     padding: 16px 18px; border-radius: 12px;
-    background: rgba(10,21,37,0.55);
+    /* FIXED: unified step card opacity to match About page surface */
+    background: rgba(13, 27, 46, 0.72);
     border: 1px solid rgba(0,200,224,0.12);
     backdrop-filter: blur(12px);
     transition: all .3s ease;
@@ -210,7 +218,7 @@ const CSS = `
   .su-step:nth-child(3) { animation-delay: .4s; }
 
   .su-step:hover {
-    background: rgba(10,21,37,0.75);
+    background: rgba(13, 27, 46, 0.88);
     border-color: rgba(0,200,224,0.22);
     transform: translateX(4px);
     box-shadow: 0 8px 24px rgba(0,200,224,0.08);
@@ -242,14 +250,15 @@ const CSS = `
   .su-cert-badge {
     display: inline-flex; align-items: center; gap: 9px;
     padding: 10px 14px; border-radius: 10px;
-    background: rgba(10,21,37,0.70);
+    /* FIXED: unified badge opacity to match About page surface */
+    background: rgba(13, 27, 46, 0.72);
     border: 1px solid rgba(0,200,224,0.15);
     backdrop-filter: blur(12px);
     transition: all .3s ease;
   }
 
   .su-cert-badge:hover {
-    background: rgba(10,21,37,0.90);
+    background: rgba(13, 27, 46, 0.88);
     border-color: rgba(0,200,224,0.30);
     box-shadow: 0 8px 24px rgba(0,200,224,0.08);
   }
@@ -275,7 +284,8 @@ const CSS = `
     align-items: center;
     justify-content: center;
     padding: 48px 40px;
-    background: rgba(6,13,24,0.70);
+    /* FIXED: unified surface opacity to match About page */
+    background: rgba(13, 27, 46, 0.72);
     position: relative;
     overflow-y: auto;
     z-index: 1;
@@ -383,7 +393,8 @@ const CSS = `
 
   .su-input, .su-select {
     width: 100%;
-    background: rgba(6, 15, 28, 0.85);
+    /* FIXED: unified input background to match About page surface */
+    background: rgba(13, 27, 46, 0.88);
     border: 1.5px solid rgba(0,200,224,0.16);
     border-radius: 11px;
     padding: 13px 16px 13px 42px;
@@ -411,6 +422,8 @@ const CSS = `
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='rgba(0,200,224,0.35)'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
     background-repeat: no-repeat; background-position: right 13px center; background-size: 16px;
     padding-right: 40px;
+    /* FIXED: keep unified bg even on select */
+    background-color: rgba(13, 27, 46, 0.88);
   }
 
   .su-select option { background: #0a1525; color: #F8FAFC; }
@@ -604,7 +617,8 @@ const CSS = `
       align-items: center;
       justify-content: space-between;
       padding: 14px 16px;
-      background: rgba(7,16,29,0.95);
+      /* FIXED: unified mobile header opacity */
+      background: rgba(13, 27, 46, 0.95);
       border-bottom: 1px solid rgba(0,200,224,0.14);
       position: relative;
       z-index: 2;

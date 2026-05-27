@@ -16,7 +16,6 @@ const CSS = `
     align-items: center;
     justify-content: center;
     font-family: 'Inter', sans-serif;
-    background: linear-gradient(135deg, #0d1b2e 0%, #071a1d 50%, #0a1f28 100%);
     padding: 24px;
     position: relative;
     overflow: hidden;
@@ -72,13 +71,6 @@ const CSS = `
 
   .lg-back:hover .lg-back-arrow { transform: translateX(-3px); }
 
-  .lg-back-divider {
-    height: 1px;
-    background: linear-gradient(90deg, rgba(0, 200, 224, 0.10), transparent);
-    margin-bottom: 28px;
-    position: relative; z-index: 1;
-  }
-
   /* ── Page layout ── */
   .lg-page {
     position: relative; z-index: 1;
@@ -86,7 +78,8 @@ const CSS = `
     display: grid;
     grid-template-columns: 1.1fr 440px;
     gap: 0;
-    background: rgba(13, 27, 46, 0.85);
+    /* FIXED: unified surface opacity to match About page */
+    background: rgba(13, 27, 46, 0.72);
     border-radius: 24px;
     border: 1px solid rgba(0, 200, 224, 0.18);
     box-shadow:
@@ -112,7 +105,7 @@ const CSS = `
     flex-direction: column;
     justify-content: space-between;
     padding: 60px 56px;
-    background: linear-gradient(135deg, #0a2540 0%, #0d1b2e 50%, #051a24 100%);
+    background: linear-gradient(135deg, rgba(10,37,64,0.88) 0%, rgba(13,27,46,0.82) 50%, rgba(5,26,36,0.88) 100%);
     overflow: hidden;
   }
 
@@ -263,7 +256,8 @@ const CSS = `
     flex-direction: column;
     justify-content: center;
     padding: 56px 48px;
-    background: rgba(6, 15, 28, 0.65);
+    /* FIXED: unified surface opacity to match About page */
+    background: rgba(13, 27, 46, 0.72);
     border-left: 1px solid rgba(0, 200, 224, 0.12);
     position: relative;
   }
@@ -373,7 +367,8 @@ const CSS = `
 
   .lg-input {
     width: 100%;
-    background: rgba(6, 15, 28, 0.85);
+    /* FIXED: unified input background to match About page surface */
+    background: rgba(13, 27, 46, 0.88);
     border: 1.5px solid rgba(0, 200, 224, 0.16);
     border-radius: 11px;
     padding: 13px 16px 13px 42px;
