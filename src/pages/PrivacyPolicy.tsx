@@ -105,7 +105,7 @@ export default function PrivacyPolicy() {
         }
 
         /* ── Background — exact match to About page ── */
-        .pp-bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
+        .pp-bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
         .pp-bg-img {
           width: 100%; height: 100%;
           object-fit: cover; object-position: center; display: block;

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import pagesBackground from "../assets/pagesbackground.jpg";
+import pagesBackground from "../assets/pagesbackground.png";
 import { supabase } from "../js/supabase";
 
 const INCIDENT_TYPES = [

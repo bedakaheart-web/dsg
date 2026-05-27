@@ -13,7 +13,7 @@ import {
   FaBell, FaBars, FaTimes, FaSignOutAlt, FaInfoCircle,
 } from "react-icons/fa";
 import dsgLogo from "../assets/dsg_logo.png";
-import pagesBackground from "../assets/pagesbackground.jpg";
+import pagesBackground from "../assets/pagesbackground.png";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

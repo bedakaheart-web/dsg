@@ -86,7 +86,7 @@ export default function Resources() {
 
         .rs {
           min-height: 100vh;
-          font-family: 'Inter', sans-serif;
+          font-family: 'DM Sans', sans-serif;
           color: var(--text);
           background: var(--bg);
           position: relative;
@@ -145,9 +145,36 @@ export default function Resources() {
         }
 
         /* ── Nav ── */
+        .rs-nav {
+          display: flex; align-items: center; justify-content: space-between;
+          padding: 28px 0 0;
+          animation: fadeUp .5s ease both;
+        }
+        .rs-logo {
+          display: flex; align-items: center; gap: 10px; text-decoration: none;
+          font-family: 'Syne', sans-serif;
+          font-size: 15px; font-weight: 800;
+          letter-spacing: 0.12em; text-transform: uppercase;
+          color: var(--text);
+        }
+        .rs-logo-dot {
+          width: 8px; height: 8px; border-radius: 50%;
+          background: var(--red);
+          box-shadow: 0 0 12px var(--red), 0 0 24px rgba(232,55,42,0.4);
+          animation: breathe 2.4s ease infinite;
+        }
         @keyframes breathe {
           0%,100% { opacity:1; transform:scale(1); }
           50%      { opacity:.55; transform:scale(.78); }
+        }
+        .rs-back {
+          font-family: 'DM Sans', sans-serif;
+          font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+          color: var(--text3); text-decoration: none;
+          border: 1px solid rgba(0,200,224,0.12); border-radius: 8px;
+          padding: 8px 16px; transition: all .2s;
+          background: rgba(13,27,46,0.60); backdrop-filter: blur(18px);
+          display: flex; align-items: center; gap: 6px;
         }
         .rs-back:hover { color: var(--text); border-color: rgba(0,200,224,0.30); }
 
@@ -158,7 +185,7 @@ export default function Resources() {
           animation: fadeUp 0.7s 0.1s ease both;
         }
         .rs-hero-eyebrow {
-          font-family: 'Inter', sans-serif;
+          font-family: 'DM Sans', sans-serif;
           font-size: 11px; font-weight: 500;
           letter-spacing: 0.20em; text-transform: uppercase;
           color: var(--red); margin-bottom: 20px;
@@ -170,7 +197,7 @@ export default function Resources() {
           background: var(--red); opacity: 0.5;
         }
         .rs-hero h1 {
-          font-family: 'Poppins', sans-serif;
+          font-family: 'Syne', sans-serif;
           font-size: clamp(42px, 6vw, 78px);
           font-weight: 800; line-height: 0.95;
           letter-spacing: -0.03em; color: #F8FAFC;
@@ -181,7 +208,7 @@ export default function Resources() {
           -webkit-text-stroke: 0;
         }
         .rs-hero-sub {
-          font-family: 'Inter', sans-serif;
+          font-family: 'DM Sans', sans-serif;
           font-size: 16px; font-weight: 300;
           color: rgba(160,200,224,0.60);
           max-width: 460px; line-height: 1.68;
@@ -230,7 +257,7 @@ export default function Resources() {
         }
         .rs-icon { font-size: 30px; line-height: 1; }
         .rs-tag {
-          font-family: 'Inter', sans-serif;
+          font-family: 'DM Sans', sans-serif;
           font-size: 9px; font-weight: 700;
           letter-spacing: 0.15em; text-transform: uppercase;
           color: var(--rs-accent);
@@ -240,13 +267,13 @@ export default function Resources() {
         }
 
         .rs-card-title {
-          font-family: 'Poppins', sans-serif;
+          font-family: 'Syne', sans-serif;
           font-size: 20px; font-weight: 800;
           letter-spacing: -0.02em; color: var(--text);
           margin-bottom: 10px; position: relative; z-index: 1;
         }
         .rs-card-desc {
-          font-family: 'Inter', sans-serif;
+          font-family: 'DM Sans', sans-serif;
           font-size: 14px; font-weight: 300;
           color: var(--text2); line-height: 1.7;
           margin-bottom: 24px; position: relative; z-index: 1; flex: 1;
@@ -264,7 +291,7 @@ export default function Resources() {
         .rs-link {
           display: flex; align-items: center;
           justify-content: space-between;
-          font-family: 'Inter', sans-serif;
+          font-family: 'DM Sans', sans-serif;
           font-size: 13px; font-weight: 400;
           color: var(--text3); text-decoration: none;
           padding: 8px 0;
@@ -297,20 +324,20 @@ export default function Resources() {
           background: linear-gradient(90deg, var(--red), rgba(232,55,42,0.3), transparent);
         }
         .rs-cta-text h3 {
-          font-family: 'Poppins', sans-serif;
+          font-family: 'Syne', sans-serif;
           font-size: 18px; font-weight: 800;
           letter-spacing: -0.02em; color: var(--text);
           margin-bottom: 6px;
         }
         .rs-cta-text p {
-          font-family: 'Inter', sans-serif;
+          font-family: 'DM Sans', sans-serif;
           font-size: 14px; font-weight: 300;
           color: var(--text3); line-height: 1.5; max-width: 380px;
         }
         .rs-cta-btn {
           flex-shrink: 0;
           display: inline-flex; align-items: center; gap: 10px;
-          font-family: 'Inter', sans-serif;
+          font-family: 'DM Sans', sans-serif;
           font-size: 12px; font-weight: 500;
           letter-spacing: 0.08em; text-transform: uppercase;
           color: #fff;
@@ -359,6 +386,12 @@ export default function Resources() {
 
         <div className="rs-wrap">
 
+          <nav className="rs-nav">
+            <Link to="/" className="rs-logo">
+              <span className="rs-logo-dot" />
+            
+            </Link>
+          </nav>
 
           <section className="rs-hero">
             <div className="rs-hero-eyebrow">Knowledge Hub</div>

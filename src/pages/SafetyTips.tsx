@@ -281,7 +281,7 @@ export default function SafetyTips() {
           overflow-x: hidden;
         }
 
-        .st-bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
+        .st-bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
         .st-bg-img {
           width: 100%; height: 100%;
           object-fit: cover; object-position: center; display: block;

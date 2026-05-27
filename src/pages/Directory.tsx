@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Footer from "../components/Footer";
 import { Link } from "react-router-dom";
 import directoryBg from "../assets/directorybg.png";
 
@@ -261,7 +262,7 @@ export default function Directory() {
           overflow-x: hidden;
         }
 
-        .dr-bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
+        .dr-bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
         .dr-bg-img {
           width: 100%; height: 100%;
           object-fit: cover; object-position: center; display: block;
@@ -974,7 +975,7 @@ export default function Directory() {
               </div>
             )}
           </div>
-
+         
         </div>
       </div>
     </>

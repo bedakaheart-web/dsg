@@ -247,7 +247,7 @@ export default function PartnerAgencies() {
 
         /* ── Background ── */
         .pa-bg {
-          position: fixed; inset: 0; z-index: 0;
+          position: absolute; inset: 0; z-index: 0;
           background-size: cover;
           background-position: center;
           background-repeat: no-repeat;

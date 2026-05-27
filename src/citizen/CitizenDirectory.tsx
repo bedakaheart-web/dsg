@@ -1,10 +1,8 @@
-// src/citizen/CitizenDirectory.tsx
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../js/supabase";
-import dsgLogo from "../assets/dsg.logo.png";
-import pagesBackground from "../assets/pagesbackground.jpg";
-
+import dsgLogo from "../assets/dsg_logo.png";
+import './citizenPages.css';
 interface PhoneEntry { label: string; number: string; }
 interface EmergencyAgency {
   agency: string; label: string; address: string; icon: string; accent: string;
@@ -118,7 +116,7 @@ export default function CitizenDirectory() {
   });
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#080c14", color: "#eef0f7", fontFamily: "'Instrument Sans', sans-serif" }}>
+    <div className="citizen-page">
 
       {/* ── Sidebar ── */}
       <aside style={{ position: "fixed", left: 0, top: 0, width: "260px", height: "100vh", backgroundColor: "rgba(8,12,20,0.95)", borderRight: "1px solid rgba(255,255,255,0.07)", display: "flex", flexDirection: "column", zIndex: 200 }}>

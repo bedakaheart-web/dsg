@@ -135,7 +135,7 @@ export default function CitizenMap() {
           background: #060f1c;
         }
 
-        .fl-bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+        .fl-bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
         .fl-bg-img {
           width: 100%; height: 100%; object-fit: cover; object-position: center;
           animation: bgDrift 40s ease-in-out infinite; will-change: transform;
