@@ -3,7 +3,7 @@ import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import { useNavigate } from "react-router-dom";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import mapBg from "../assets/mapbg.png";
+import mapBg from "../assets/pagesbackground.jpg";
 
 // ── FIX 1: Leaflet default icon broken by bundlers (Vite/webpack) ──
 // Without this, markers show as broken images or don't appear at all.

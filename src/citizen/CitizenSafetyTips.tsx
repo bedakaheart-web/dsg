@@ -1,7 +1,7 @@
 // src/citizen/CitizenSafetyTips.tsx
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import pagesBackground from "../assets/pagesbackground.png";
+import pagesBackground from "../assets/pagesbackground.jpg";
 
 const GO_BAG_ITEMS = [
   { id: 1,  category: "Water & Food",   label: "3-day water supply (1 gal/person/day)"     },

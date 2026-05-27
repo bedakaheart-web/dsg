@@ -5,7 +5,7 @@ import {
   FaBellSlash, FaExclamationTriangle, FaInfoCircle,
   FaCheckCircle, FaClock, FaChevronLeft,
 } from "react-icons/fa";
-import pagesBackground from "../assets/pagesbackground.png";
+import pagesBackground from "../assets/pagesbackground.jpg";
 
 interface Alert {
   id: string;

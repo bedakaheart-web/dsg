@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../js/supabase";
 import dsgLogo from "../assets/dsg.logo.png";
+import pagesBackground from "../assets/pagesbackground.jpg";
 
 interface PhoneEntry { label: string; number: string; }
 interface EmergencyAgency {

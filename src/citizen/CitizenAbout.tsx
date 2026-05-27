@@ -1,6 +1,6 @@
 // src/citizen/CitizenAbout.tsx
 import { Link } from "react-router-dom";
-import pagesBackground from "../assets/pagesbackground.png";
+import pagesBackground from "../assets/pagesbackground.jpg";
 import {
   FaShieldAlt, FaBullseye, FaEye, FaMapMarkerAlt,
   FaPhoneAlt, FaClipboardList, FaHandshake, FaChevronRight,

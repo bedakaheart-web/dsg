@@ -2,6 +2,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../js/supabase";
 import dsgLogo from "../assets/dsg.logo.png";
+import pagesBackground from "../assets/pagesbackground.jpg";
 
 const NAV_LINK: React.CSSProperties = {
   display: "flex", alignItems: "center", gap: "10px",
@@ -89,7 +90,6 @@ export default function CitizenResources() {
             </div>
           ))}
         </div>
-
         {/* Emergency CTA */}
         <div style={{ marginTop: "32px", backgroundColor: "rgba(232,55,42,0.07)", border: "1px solid rgba(232,55,42,0.2)", borderRadius: "14px", padding: "28px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "20px", flexWrap: "wrap" }}>
           <div>
