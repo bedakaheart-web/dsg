@@ -1,10 +1,222 @@
-// src/pages/Homepage.tsx
+// src/pages/Homepage.enhanced.tsx
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { FaMapMarkedAlt, FaUsers, FaLightbulb, FaPhoneAlt, FaEye, FaEyeSlash, FaShieldAlt } from "react-icons/fa";
+import { FaMapMarkedAlt, FaUsers, FaLightbulb, FaPhoneAlt, FaEye, FaEyeSlash, FaShieldAlt, FaArrowRight } from "react-icons/fa";
 import { supabase } from "../js/supabase";
 import homepageBg from "../assets/homepage.bg.jpg";
 
+
+function EmergencyRunner() {
+  const alerts = [
+    "🔴  ADVISORY: Typhoon Signal No. 1 raised for Negros Occidental — monitor official updates",
+    "🚨  INCIDENT: Vehicular accident reported along Lacson St — avoid the area",
+    "⚠️  REMINDER: Hotline 911 is active 24/7 — do not use for non-emergencies",
+    "🔴  ADVISORY: Flash flood watch in effect for low-lying barangays — stay alert",
+  ];
+
+  return (
+    <>
+      <style>{`
+        .hp-runner {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          z-index: 999;
+          height: 38px;
+          background: rgba(7, 16, 29, 0.92);
+          border-bottom: 1px solid rgba(232, 55, 42, 0.35);
+          backdrop-filter: blur(14px);
+          -webkit-backdrop-filter: blur(14px);
+          display: flex;
+          align-items: center;
+          overflow: hidden;
+          box-shadow: 0 2px 20px rgba(232, 55, 42, 0.12);
+        }
+
+        .hp-runner::after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(232, 55, 42, 0.6), rgba(0, 200, 224, 0.4), transparent);
+          animation: runnerGlow 4s ease-in-out infinite;
+        }
+
+        @keyframes runnerGlow {
+          0%, 100% { opacity: 0.5; }
+          50% { opacity: 1; }
+        }
+
+        .hp-runner-badge {
+          flex-shrink: 0;
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          padding: 0 14px 0 16px;
+          height: 100%;
+          background: linear-gradient(135deg, rgba(232, 55, 42, 0.22), rgba(232, 55, 42, 0.10));
+          border-right: 1px solid rgba(232, 55, 42, 0.30);
+          position: relative;
+          z-index: 2;
+        }
+
+        .hp-runner-dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: #e8372a;
+          animation: runnerPulse 1.4s ease-in-out infinite;
+          box-shadow: 0 0 6px rgba(232, 55, 42, 0.8);
+          flex-shrink: 0;
+        }
+
+        @keyframes runnerPulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.45; transform: scale(0.7); }
+        }
+
+        .hp-runner-badge-label {
+          font-family: 'Space Mono', monospace;
+          font-size: 9.5px;
+          font-weight: 700;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          color: #e8372a;
+          white-space: nowrap;
+        }
+
+        .hp-runner-track {
+          flex: 1;
+          overflow: hidden;
+          position: relative;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          mask-image: linear-gradient(90deg, transparent 0%, black 5%, black 95%, transparent 100%);
+          -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 5%, black 95%, transparent 100%);
+        }
+
+        .hp-runner-tape {
+          display: flex;
+          align-items: center;
+          gap: 0;
+          white-space: nowrap;
+          animation: runnerScroll 38s linear infinite;
+          will-change: transform;
+        }
+
+        .hp-runner-tape:hover {
+          animation-play-state: paused;
+        }
+
+        @keyframes runnerScroll {
+          0%   { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+
+        .hp-runner-item {
+          font-family: 'Inter', sans-serif;
+          font-size: 12px;
+          font-weight: 400;
+          color: rgba(168, 216, 255, 0.80);
+          padding: 0 40px;
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          letter-spacing: 0.01em;
+        }
+
+        .hp-runner-sep {
+          display: inline-block;
+          width: 4px;
+          height: 4px;
+          border-radius: 50%;
+          background: rgba(0, 200, 224, 0.35);
+          margin: 0 8px;
+          vertical-align: middle;
+          flex-shrink: 0;
+        }
+
+        .hp-runner-mute {
+          flex-shrink: 0;
+          padding: 0 12px;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          border-left: 1px solid rgba(0, 200, 224, 0.10);
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+
+        .hp-runner-mute:hover {
+          background: rgba(0, 200, 224, 0.06);
+        }
+
+        .hp-runner-mute svg {
+          width: 13px;
+          height: 13px;
+          color: rgba(168, 216, 255, 0.30);
+          transition: color 0.2s;
+        }
+
+        .hp-runner-mute:hover svg {
+          color: rgba(168, 216, 255, 0.70);
+        }
+
+        /* Push hp-inner down so runner doesn't overlap content */
+        .hp-runner-spacer {
+          height: 38px;
+          width: 100%;
+          flex-shrink: 0;
+        }a
+return (
+  <>
+    <EmergencyRunner />
+    {/* ── Outermost wrapper ── */}
+    <div style={{ overflowX: "hidden", ... }}>
+      <div className="hp-root">
+        {/* ADD THIS right after hp-root opens: */}
+        <div className="hp-runner-spacer" />
+
+        {/* ...rest of your existing JSX unchanged... */}
+
+`}</style>
+
+      <div className="hp-runner" role="marquee" aria-label="Emergency alerts ticker">
+        <div className="hp-runner-badge">
+          <span className="hp-runner-dot" aria-hidden="true" />
+          <span className="hp-runner-badge-label">Live</span>
+        </div>
+        <div className="hp-runner-track">
+          {/* Duplicate tape for seamless loop */}
+          <div className="hp-runner-tape" aria-hidden="true">
+            {[...alerts, ...alerts].map((alert, i) => (
+              <span key={i} className="hp-runner-item">
+                {alert}
+                <span className="hp-runner-sep" />
+              </span>
+            ))}
+          </div>
+        </div>
+        <div
+          className="hp-runner-mute"
+          title="Dismiss ticker"
+          role="button"
+          tabIndex={0}
+          aria-label="Dismiss emergency ticker"
+        >
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+            <line x1="2" y1="2" x2="12" y2="12" />
+            <line x1="12" y1="2" x2="2" y2="12" />
+          </svg>
+        </div>
+      </div>
+    </>
+  );
+}
 const cards = [
   {
     icon: <FaMapMarkedAlt size={28} />,
@@ -42,15 +254,14 @@ const cards = [
 
 const STATS = [
   { value: 30, label: "Barangays Covered", suffix: "" },
-  { value: 24, label: "Hour Response",     suffix: "/7" },
-  { value: 5,  label: "Avg. Response (min)", suffix: "m" },
+  { value: 24, label: "Hour Response", suffix: "/7" },
+  { value: 5, label: "Avg. Response (min)", suffix: "m" },
 ];
 
-
 const ROLE_REDIRECT: Record<string, string> = {
-  admin:     "/admin/dashboard",
+  admin: "/admin/dashboard",
   responder: "/responder/dashboard",
-  citizen:   "/citizen/dashboard",
+  citizen: "/citizen/dashboard",
 };
 
 function useCounter(target: number, duration = 1800, start = false) {
@@ -101,13 +312,14 @@ function StatCounter({
 
 export default function Homepage() {
   const navigate = useNavigate();
-  const [email, setEmail]               = useState("");
-  const [password, setPassword]         = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading]           = useState(false);
-  const [error, setError]               = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [statsVisible, setStatsVisible] = useState(false);
   const statsRef = useRef<HTMLDivElement>(null);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -134,7 +346,9 @@ export default function Homepage() {
 
   useEffect(() => {
     const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setStatsVisible(true); },
+      ([entry]) => {
+        if (entry.isIntersecting) setStatsVisible(true);
+      },
       { threshold: 0.4 }
     );
     if (statsRef.current) observer.observe(statsRef.current);
@@ -162,7 +376,7 @@ export default function Homepage() {
         .eq("id", authData.user.id)
         .single();
       if (profileError || !profile?.role) {
-        await new Promise(res => setTimeout(res, 1500));
+        await new Promise((res) => setTimeout(res, 1500));
         const { data: retryProfile } = await supabase
           .from("profiles")
           .select("role")
@@ -175,13 +389,13 @@ export default function Homepage() {
         }
         const role = retryProfile.role.trim().toLowerCase();
         setLoading(false);
-        await new Promise(res => setTimeout(res, 100));
+        await new Promise((res) => setTimeout(res, 100));
         navigate(ROLE_REDIRECT[role] ?? "/citizen/dashboard", { replace: true });
         return;
       }
       const role = profile.role.trim().toLowerCase();
       setLoading(false);
-      await new Promise(res => setTimeout(res, 100));
+      await new Promise((res) => setTimeout(res, 100));
       navigate(ROLE_REDIRECT[role] ?? "/citizen/dashboard", { replace: true });
     } catch (err: any) {
       setError(err.message || "Login failed.");
@@ -189,23 +403,18 @@ export default function Homepage() {
     }
   };
 
-
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap');
 
         /* ══════════════════════════════════════
            SCROLL FIX — allow full page scroll
-           The background is position:fixed so it
-           never scrolls; only the content does.
         ══════════════════════════════════════ */
-        html,
-        body,
-        #root {
+        html, body, #root {
           overflow-x: hidden !important;
-          overflow-y: auto !important;   /* KEY: never block vertical scroll */
-          height: auto !important;       /* KEY: never lock to viewport height */
+          overflow-y: auto !important;
+          height: auto !important;
           min-height: 100vh;
           width: 100%;
           max-width: 100vw;
@@ -218,11 +427,11 @@ export default function Homepage() {
 
         .hp-root {
           min-height: 100vh;
-          height: auto;                  /* KEY: let content grow freely */
+          height: auto;
           font-family: 'Inter', sans-serif;
           color: #ddeef8;
           overflow-x: hidden;
-          overflow-y: visible;           /* KEY: don't trap scroll here */
+          overflow-y: visible;
           position: relative;
           width: 100%;
           max-width: 100vw;
@@ -230,51 +439,66 @@ export default function Homepage() {
 
         /* ── Background — fixed so it never scrolls ── */
         .hp-bg {
-          position: fixed; inset: 0; z-index: -1;
+          position: fixed;
+          inset: 0;
+          z-index: -1;
           overflow: hidden;
           will-change: transform;
           transform: translateZ(0);
         }
+
         .hp-bg-img {
-          width: 100%; height: 100%;
-          object-fit: cover; object-position: center bottom; display: block;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center bottom;
+          display: block;
           transform-origin: center center;
           animation: bgDrift 30s ease-in-out infinite;
           will-change: transform;
           transform: translateZ(0) scale(1.08);
         }
+
         .hp-bg-overlay {
-          position: absolute; inset: 0;
+          position: absolute;
+          inset: 0;
           background: linear-gradient(
             180deg,
-            rgba(7,16,29,0.87) 0%,
-            rgba(7,16,29,0.72) 40%,
-            rgba(7,16,29,0.87) 75%,
-            rgba(7,16,29,0.98) 100%
+            rgba(7, 16, 29, 0.87) 0%,
+            rgba(7, 16, 29, 0.72) 40%,
+            rgba(7, 16, 29, 0.87) 75%,
+            rgba(7, 16, 29, 0.98) 100%
           );
         }
+
         .hp-bg-atmosphere {
-          position: absolute; inset: 0;
+          position: absolute;
+          inset: 0;
           background:
-            radial-gradient(ellipse 70% 60% at 10% 0%,  rgba(232,55,42,0.14)  0%, transparent 65%),
-            radial-gradient(ellipse 60% 70% at 90% 100%, rgba(0,200,224,0.10)  0%, transparent 70%),
-            radial-gradient(ellipse 50% 50% at 55% 45%,  rgba(13,27,46,0.50)   0%, transparent 60%);
+            radial-gradient(ellipse 70% 60% at 10% 0%, rgba(232, 55, 42, 0.14) 0%, transparent 65%),
+            radial-gradient(ellipse 60% 70% at 90% 100%, rgba(0, 200, 224, 0.10) 0%, transparent 70%),
+            radial-gradient(ellipse 50% 50% at 55% 45%, rgba(13, 27, 46, 0.50) 0%, transparent 60%);
           pointer-events: none;
           animation: atmosphereDrift 20s ease-in-out infinite;
         }
+
         .hp-bg-grain {
-          position: absolute; inset: 0;
+          position: absolute;
+          inset: 0;
           background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
-          background-size: 200px; opacity: 0.45; pointer-events: none;
+          background-size: 200px;
+          opacity: 0.45;
+          pointer-events: none;
         }
 
         @keyframes bgDrift {
-          0%   { transform: translateZ(0) scale(1.08) translate(0px, 0px); }
-          25%  { transform: translateZ(0) scale(1.11) translate(-12px, -8px); }
-          50%  { transform: translateZ(0) scale(1.10) translate(-6px, -14px); }
-          75%  { transform: translateZ(0) scale(1.11) translate(8px, -6px); }
+          0% { transform: translateZ(0) scale(1.08) translate(0px, 0px); }
+          25% { transform: translateZ(0) scale(1.11) translate(-12px, -8px); }
+          50% { transform: translateZ(0) scale(1.10) translate(-6px, -14px); }
+          75% { transform: translateZ(0) scale(1.11) translate(8px, -6px); }
           100% { transform: translateZ(0) scale(1.08) translate(0px, 0px); }
         }
+
         @keyframes atmosphereDrift {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.85; }
@@ -292,127 +516,41 @@ export default function Homepage() {
           filter: blur(60px);
           max-width: 100vw;
         }
+
         .hp-orb-1 {
-          width: 300px; height: 300px;
-          background: radial-gradient(circle, rgba(232,55,42,0.09) 0%, transparent 70%);
-          top: 5%; left: -8%;
+          width: 300px;
+          height: 300px;
+          background: radial-gradient(circle, rgba(232, 55, 42, 0.09) 0%, transparent 70%);
+          top: 5%;
+          left: -8%;
           animation-duration: 22s;
         }
+
         .hp-orb-2 {
-          width: 260px; height: 260px;
-          background: radial-gradient(circle, rgba(0,200,224,0.08) 0%, transparent 70%);
-          bottom: 15%; right: -6%;
-          animation-duration: 28s; animation-delay: -10s;
+          width: 260px;
+          height: 260px;
+          background: radial-gradient(circle, rgba(0, 200, 224, 0.08) 0%, transparent 70%);
+          bottom: 15%;
+          right: -6%;
+          animation-duration: 28s;
+          animation-delay: -10s;
         }
+
         .hp-orb-3 {
-          width: 200px; height: 200px;
-          background: radial-gradient(circle, rgba(74,144,217,0.07) 0%, transparent 70%);
-          top: 50%; left: 35%;
-          animation-duration: 18s; animation-delay: -5s;
+          width: 200px;
+          height: 200px;
+          background: radial-gradient(circle, rgba(74, 144, 217, 0.07) 0%, transparent 70%);
+          top: 50%;
+          left: 35%;
+          animation-duration: 18s;
+          animation-delay: -5s;
         }
+
         @keyframes orbDrift {
-          0%   { transform: translateZ(0) translate(0, 0) scale(1); }
-          33%  { transform: translateZ(0) translate(20px, -30px) scale(1.08); }
-          66%  { transform: translateZ(0) translate(-16px, 20px) scale(0.95); }
+          0% { transform: translateZ(0) translate(0, 0) scale(1); }
+          33% { transform: translateZ(0) translate(20px, -30px) scale(1.08); }
+          66% { transform: translateZ(0) translate(-16px, 20px) scale(0.95); }
           100% { transform: translateZ(0) translate(0, 0) scale(1); }
-        }
-
-        /* ── Badge row ── */
-        .hp-badge-row {
-          display: flex;
-          justify-content: flex-end;
-          align-items: center;
-          padding: 16px 0 0 0;
-          position: relative;
-          z-index: 2;
-          animation: fadeDown 0.7s cubic-bezier(.22,1,.36,1) both;
-          width: 100%;
-          box-sizing: border-box;
-        }
-        .hp-badge-slot {
-          width: auto;
-          max-width: 340px;
-          flex-shrink: 1;
-          min-width: 0;
-        }
-        .hp-nav-badge {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 10px;
-          width: 100%;
-          padding: 12px 20px;
-          background: rgba(8,18,32,0.80);
-          border: 1px solid rgba(232,55,42,0.38);
-          border-radius: 999px;
-          backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-          text-decoration: none;
-          cursor: pointer;
-          box-shadow: 0 0 0 1px rgba(232,55,42,0.15), 0 0 24px rgba(232,55,42,0.18), inset 0 1px 0 rgba(255,255,255,0.06);
-          transition: all 0.3s cubic-bezier(.22,1,.36,1);
-          -webkit-tap-highlight-color: transparent;
-          position: relative;
-          overflow: hidden;
-          white-space: nowrap;
-          box-sizing: border-box;
-        }
-        .hp-nav-badge::before {
-          content: ''; position: absolute; top: 0; left: -75%;
-          width: 50%; height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
-          transform: skewX(-20deg); transition: left 0.6s ease;
-        }
-        .hp-nav-badge:hover::before { left: 140%; }
-        .hp-nav-badge:hover {
-          background: rgba(12,24,42,0.95);
-          border-color: rgba(232,55,42,0.70);
-          box-shadow: 0 0 0 1px rgba(232,55,42,0.25), 0 0 36px rgba(232,55,42,0.40), 0 0 80px rgba(232,55,42,0.12), inset 0 1px 0 rgba(255,255,255,0.08);
-          transform: translateY(-2px);
-        }
-        .hp-nav-badge:active { transform: translateY(0); }
-
-        .hp-badge-icon {
-          display: flex; align-items: center; justify-content: center;
-          width: 28px; height: 28px; border-radius: 50%;
-          background: rgba(232,55,42,0.18); border: 1.5px solid rgba(232,55,42,0.35);
-          color: #e8372a; font-size: 13px; flex-shrink: 0;
-          position: relative;
-          animation: ringShake 3s ease-in-out infinite;
-          box-shadow: 0 0 12px rgba(232,55,42,0.25);
-        }
-        .hp-badge-icon::before,
-        .hp-badge-icon::after {
-          content: ''; position: absolute; inset: -6px;
-          border-radius: 50%; border: 1.5px solid rgba(232,55,42,0.45);
-          animation: badgePulse 2s ease-out infinite;
-        }
-        .hp-badge-icon::after { inset: -12px; animation-delay: 0.5s; border-color: rgba(232,55,42,0.2); }
-
-        @keyframes badgePulse {
-          0%   { transform: scale(1); opacity: 1; }
-          100% { transform: scale(1.8); opacity: 0; }
-        }
-        @keyframes ringShake {
-          0%, 85%, 100% { transform: rotate(0deg); }
-          88%           { transform: rotate(-16deg); }
-          91%           { transform: rotate(16deg); }
-          94%           { transform: rotate(-12deg); }
-          97%           { transform: rotate(10deg); }
-        }
-
-        .hp-badge-text {
-          font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500;
-          letter-spacing: 0.08em; color: rgba(200,225,245,0.70);
-        }
-        .hp-badge-sep { width: 1.5px; height: 16px; background: rgba(232,55,42,0.30); flex-shrink: 0; }
-        .hp-badge-911 {
-          font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: 700;
-          letter-spacing: 0.1em; color: #e8372a;
-          animation: glowPulse 1.6s ease-in-out infinite;
-        }
-        @keyframes glowPulse {
-          0%, 100% { text-shadow: 0 0 8px rgba(232,55,42,0.5); opacity: 1; }
-          50%       { text-shadow: 0 0 16px rgba(232,55,42,0.95), 0 0 32px rgba(232,55,42,0.5); opacity: 0.95; }
         }
 
         /* ── Inner container ── */
@@ -429,24 +567,36 @@ export default function Homepage() {
 
         /* ── Hero ── */
         .hp-hero {
-          margin-top: 48px; margin-bottom: 80px;
+          margin-top: 48px;
+          margin-bottom: 80px;
           display: grid;
           grid-template-columns: 1fr minmax(0, 420px);
-          gap: 56px; align-items: center;
-          animation: fadeUp 0.8s 0.15s cubic-bezier(.22,1,.36,1) both;
+          gap: 56px;
+          align-items: center;
+          animation: fadeUp 0.8s 0.15s cubic-bezier(0.22, 1, 0.36, 1) both;
           width: 100%;
           box-sizing: border-box;
         }
 
         .hp-hero-eyebrow {
-          font-family: 'Inter', sans-serif;
-          font-size: 11px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase;
-          color: #e8372a; margin-bottom: 22px;
-          display: flex; align-items: center; gap: 12px;
-          animation: slideRight 0.6s .1s cubic-bezier(.22,1,.36,1) both;
+          font-family: 'Space Mono', monospace;
+          font-size: 11px;
+          font-weight: 600;
+          letter-spacing: 0.22em;
+          text-transform: uppercase;
+          color: #e8372a;
+          margin-bottom: 22px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          animation: slideRight 0.6s 0.1s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
+
         .hp-hero-eyebrow::after {
-          content: ''; display: block; width: 48px; height: 1.5px;
+          content: '';
+          display: block;
+          width: 48px;
+          height: 1.5px;
           background: linear-gradient(90deg, #e8372a, transparent);
           opacity: 0.7;
         }
@@ -454,291 +604,517 @@ export default function Homepage() {
         .hp-hero h1 {
           font-family: 'Poppins', sans-serif;
           font-size: clamp(38px, 6.5vw, 84px);
-          font-weight: 700;
+          font-weight: 800;
           line-height: 0.92;
           letter-spacing: -0.03em;
           color: #F8FAFC;
           margin-bottom: 28px;
-          animation: slideUp .8s .2s cubic-bezier(.22,1,.36,1) both;
+          animation: slideUp 0.8s 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
           word-break: break-word;
+          background: linear-gradient(135deg, #F8FAFC 0%, #A8D8FF 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
         }
-        .hp-hero h1 .accent { color: #A8D8FF; }
+
+        .hp-hero h1 .accent {
+          color: #00c8e0;
+          background: linear-gradient(135deg, #00c8e0 0%, #A8D8FF 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
 
         .hp-hero-sub {
-          font-size: 16px; font-weight: 400;
+          font-size: 16px;
+          font-weight: 400;
           color: rgba(168, 216, 255, 0.75);
-          max-width: 420px; line-height: 1.75; margin-bottom: 40px;
-          animation: slideUp .8s .25s cubic-bezier(.22,1,.36,1) both;
+          max-width: 420px;
+          line-height: 1.75;
+          margin-bottom: 40px;
+          animation: slideUp 0.8s 0.25s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
 
         .hp-hero-cta {
-          display: inline-flex; align-items: center; justify-content: center; gap: 12px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 12px;
           background: linear-gradient(135deg, #e8372a 0%, #f04438 100%);
-          color: #fff; text-decoration: none;
-          font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 600;
-          letter-spacing: 0.08em; text-transform: uppercase;
-          padding: 15px 32px; border-radius: 10px;
-          transition: all .3s cubic-bezier(.22,1,.36,1);
-          box-shadow: 0 0 32px rgba(232,55,42,0.32);
-          position: relative; overflow: hidden;
-          animation: slideUp .8s .3s cubic-bezier(.22,1,.36,1) both;
+          color: #fff;
+          text-decoration: none;
+          font-family: 'Poppins', sans-serif;
+          font-size: 13px;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          padding: 15px 32px;
+          border-radius: 10px;
+          transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+          box-shadow: 0 0 32px rgba(232, 55, 42, 0.32);
+          position: relative;
+          overflow: hidden;
+          animation: slideUp 0.8s 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
           max-width: 100%;
           box-sizing: border-box;
+          border: none;
+          cursor: pointer;
         }
+
         .hp-hero-cta::after {
           content: '';
-          position: absolute; top: 0; left: -100%;
-          width: 60%; height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.20), transparent);
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 60%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.20), transparent);
           transform: skewX(-20deg);
           animation: ctaShimmer 3s ease-in-out infinite;
         }
+
         @keyframes ctaShimmer {
-          0%   { left: -100%; }
-          40%  { left: 140%; }
+          0% { left: -100%; }
+          40% { left: 140%; }
           100% { left: 140%; }
         }
+
         .hp-hero-cta:hover {
           transform: translateY(-3px);
-          box-shadow: 0 0 48px rgba(232,55,42,0.60), 0 8px 32px rgba(232,55,42,0.40);
+          box-shadow: 0 0 48px rgba(232, 55, 42, 0.60), 0 8px 32px rgba(232, 55, 42, 0.40);
           background: linear-gradient(135deg, #f04438 0%, #f85a47 100%);
         }
-        .hp-hero-cta:active { transform: translateY(-1px); }
-        .hp-hero-cta-arrow { transition: transform .3s ease; }
-        .hp-hero-cta:hover .hp-hero-cta-arrow { transform: translateX(6px); }
+
+        .hp-hero-cta:active {
+          transform: translateY(-1px);
+        }
+
+        .hp-hero-cta-arrow {
+          transition: transform 0.3s ease;
+          display: inline-block;
+        }
+
+        .hp-hero-cta:hover .hp-hero-cta-arrow {
+          transform: translateX(6px);
+        }
 
         /* ── Stats ── */
         .hp-stats {
-          display: flex; align-items: stretch; gap: 0;
+          display: flex;
+          align-items: stretch;
+          gap: 0;
           margin-top: 56px;
-          border: 1px solid rgba(0,200,224,0.14);
+          border: 1px solid rgba(0, 200, 224, 0.14);
           border-radius: 14px;
-          background: rgba(7,16,29,0.60);
-          backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+          background: rgba(7, 16, 29, 0.60);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
           overflow: hidden;
-          box-shadow: 0 0 40px rgba(0,200,224,0.08);
-          animation: slideUp .8s .35s cubic-bezier(.22,1,.36,1) both;
+          box-shadow: 0 0 40px rgba(0, 200, 224, 0.08);
+          animation: slideUp 0.8s 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
           width: 100%;
           box-sizing: border-box;
         }
+
         .hp-stat {
-          flex: 1; padding: 24px 18px; text-align: center;
-          position: relative; min-width: 0;
-          transition: all .3s ease;
+          flex: 1;
+          padding: 24px 18px;
+          text-align: center;
+          position: relative;
+          min-width: 0;
+          transition: all 0.3s ease;
         }
-        .hp-stat:hover { background: rgba(0,200,224,0.05); }
+
+        .hp-stat:hover {
+          background: rgba(0, 200, 224, 0.05);
+        }
+
         .hp-stat + .hp-stat::before {
-          content: ''; position: absolute; left: 0; top: 18%; bottom: 18%;
-          width: 1px; background: rgba(0,200,224,0.12);
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 18%;
+          bottom: 18%;
+          width: 1px;
+          background: rgba(0, 200, 224, 0.12);
         }
+
         .hp-stat-value {
           font-family: 'Poppins', sans-serif;
-          font-size: 32px; font-weight: 700;
-          color: #F8FAFC; line-height: 1;
+          font-size: 32px;
+          font-weight: 800;
+          color: #F8FAFC;
+          line-height: 1;
           margin-bottom: 8px;
+          background: linear-gradient(135deg, #F8FAFC 0%, #A8D8FF 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
         }
-        .hp-stat-suffix { font-size: 18px; color: #A8D8FF; margin-left: 3px; font-weight: 600; }
+
+        .hp-stat-suffix {
+          font-size: 18px;
+          color: #A8D8FF;
+          margin-left: 3px;
+          font-weight: 600;
+        }
+
         .hp-stat-label {
-          font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
-          text-transform: uppercase; color: rgba(168,216,255,0.50);
+          font-size: 11px;
+          font-weight: 600;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: rgba(168, 216, 255, 0.50);
           line-height: 1.4;
         }
 
         /* ── Auth panel ── */
         .hp-auth-panel {
-          background: rgba(13,27,46,0.85);
-          border: 1px solid rgba(0,200,224,0.18);
-          border-radius: 18px; padding: 36px 32px 32px;
-          backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
-          position: relative; overflow: hidden;
-          box-shadow: 0 0 48px rgba(7,16,29,0.6), inset 0 0 48px rgba(0,200,224,0.03);
+          background: rgba(13, 27, 46, 0.85);
+          border: 1px solid rgba(0, 200, 224, 0.18);
+          border-radius: 18px;
+          padding: 36px 32px 32px;
+          backdrop-filter: blur(28px);
+          -webkit-backdrop-filter: blur(28px);
+          position: relative;
+          overflow: hidden;
+          box-shadow: 0 0 48px rgba(7, 16, 29, 0.6), inset 0 0 48px rgba(0, 200, 224, 0.03);
           width: 100%;
           max-width: 100%;
           box-sizing: border-box;
-          animation: slideUp .8s .2s cubic-bezier(.22,1,.36,1) both;
+          animation: slideUp 0.8s 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
+
         .hp-auth-panel::before {
-          content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 2px;
           background: linear-gradient(90deg, #e8372a, #00c8e0, transparent);
           border-radius: 18px 18px 0 0;
         }
+
         .hp-auth-panel::after {
-          content: ''; position: absolute; top: -50px; right: -50px;
-          width: 150px; height: 150px; border-radius: 50%;
-          background: radial-gradient(circle, rgba(0,200,224,0.12), transparent 70%);
+          content: '';
+          position: absolute;
+          top: -50px;
+          right: -50px;
+          width: 150px;
+          height: 150px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(0, 200, 224, 0.12), transparent 70%);
           pointer-events: none;
           filter: blur(40px);
         }
+
         .hp-auth-scan {
-          position: absolute; top: 0; left: 0; right: 0; height: 100%;
-          pointer-events: none; overflow: hidden; border-radius: 18px;
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 100%;
+          pointer-events: none;
+          overflow: hidden;
+          border-radius: 18px;
           z-index: 0;
         }
+
         .hp-auth-scan::after {
           content: '';
-          position: absolute; left: 0; right: 0; top: -4px; height: 3px;
-          background: linear-gradient(90deg, transparent 0%, rgba(0,200,224,0.20) 40%, rgba(0,200,224,0.40) 50%, rgba(0,200,224,0.20) 60%, transparent 100%);
+          position: absolute;
+          left: 0;
+          right: 0;
+          top: -4px;
+          height: 3px;
+          background: linear-gradient(90deg, transparent 0%, rgba(0, 200, 224, 0.20) 40%, rgba(0, 200, 224, 0.40) 50%, rgba(0, 200, 224, 0.20) 60%, transparent 100%);
           animation: scanLine 5s ease-in-out infinite;
           filter: blur(1.5px);
           will-change: top;
         }
+
         @keyframes scanLine {
-          0%   { top: 0%; opacity: 0; }
-          5%   { opacity: 1; }
-          95%  { opacity: 1; }
+          0% { top: 0%; opacity: 0; }
+          5% { opacity: 1; }
+          95% { opacity: 1; }
           100% { top: 100%; opacity: 0; }
         }
+
         .hp-auth-watermark {
-          position: absolute; bottom: -20px; right: -20px;
-          font-size: 130px; color: rgba(0,200,224,0.03);
-          pointer-events: none; z-index: 0;
+          position: absolute;
+          bottom: -20px;
+          right: -20px;
+          font-size: 130px;
+          color: rgba(0, 200, 224, 0.03);
+          pointer-events: none;
+          z-index: 0;
           line-height: 1;
         }
+
         .hp-auth-panel > *:not(.hp-auth-scan):not(.hp-auth-watermark) {
-          position: relative; z-index: 1;
+          position: relative;
+          z-index: 1;
         }
+
         .hp-auth-title {
           font-family: 'Poppins', sans-serif;
-          font-size: 24px; font-weight: 700;
-          color: #F8FAFC; margin-bottom: 6px;
+          font-size: 24px;
+          font-weight: 800;
+          color: #F8FAFC;
+          margin-bottom: 6px;
         }
+
         .hp-auth-subtitle {
-          font-size: 13.5px; font-weight: 400;
-          color: rgba(168,216,255,0.60);
-          margin-bottom: 28px; line-height: 1.6;
+          font-size: 13.5px;
+          font-weight: 400;
+          color: rgba(168, 216, 255, 0.60);
+          margin-bottom: 28px;
+          line-height: 1.6;
         }
-        .hp-auth-field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; width: 100%; }
+
+        .hp-auth-field {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          margin-bottom: 16px;
+          width: 100%;
+        }
+
         .hp-auth-label {
-          font-family: 'Inter', sans-serif; font-size: 10.5px; font-weight: 600;
-          letter-spacing: 0.12em; text-transform: uppercase;
-          color: rgba(168,216,255,0.50);
+          font-family: 'Space Mono', monospace;
+          font-size: 10.5px;
+          font-weight: 600;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: rgba(168, 216, 255, 0.50);
         }
+
         .hp-auth-input {
-          background: rgba(6,15,28,0.85);
-          border: 1px solid rgba(0,200,224,0.14);
-          border-radius: 10px; padding: 12px 16px;
-          font-family: 'Inter', sans-serif; font-size: 14px; color: #c8e4f4;
-          outline: none; caret-color: #00c8e0;
-          transition: all .25s ease;
+          background: rgba(6, 15, 28, 0.85);
+          border: 1px solid rgba(0, 200, 224, 0.14);
+          border-radius: 10px;
+          padding: 12px 16px;
+          font-family: 'Inter', sans-serif;
+          font-size: 14px;
+          color: #c8e4f4;
+          outline: none;
+          caret-color: #00c8e0;
+          transition: all 0.25s ease;
           width: 100%;
           box-sizing: border-box;
         }
-        .hp-auth-input::placeholder { color: rgba(160,200,224,0.20); }
+
+        .hp-auth-input::placeholder {
+          color: rgba(160, 200, 224, 0.20);
+        }
+
         .hp-auth-input:focus {
-          border-color: rgba(0,200,224,0.45);
-          box-shadow: 0 0 0 3.5px rgba(0,200,224,0.08);
-          background: rgba(0,200,224,0.03);
+          border-color: rgba(0, 200, 224, 0.45);
+          box-shadow: 0 0 0 3.5px rgba(0, 200, 224, 0.08);
+          background: rgba(0, 200, 224, 0.03);
         }
+
         .hp-auth-row {
-          display: flex; align-items: center; justify-content: space-between;
-          margin-bottom: 24px; gap: 10px; flex-wrap: wrap;
-          width: 100%; box-sizing: border-box;
-        }
-        .hp-auth-remember {
-          display: flex; align-items: center; gap: 8px;
-          font-size: 12.5px; color: rgba(168,216,255,0.50);
-          cursor: pointer; user-select: none;
-          transition: color .2s;
-        }
-        .hp-auth-remember:hover { color: rgba(168,216,255,0.70); }
-        .hp-auth-remember input[type="checkbox"] {
-          accent-color: #e8372a; width: 14px; height: 14px; cursor: pointer;
-          border: 1.5px solid rgba(0,200,224,0.25);
-        }
-        .hp-auth-forgot {
-          font-size: 12.5px; font-weight: 600; color: #00c8e0; text-decoration: none;
-          transition: all .25s;
-        }
-        .hp-auth-forgot:hover {
-          color: #A8D8FF;
-          text-shadow: 0 0 12px rgba(0,200,224,0.35);
-        }
-        .hp-auth-error {
-          font-size: 12px; color: #ff7f6b;
-          background: rgba(232,55,42,0.12);
-          border: 1px solid rgba(232,55,42,0.28);
-          border-radius: 10px; padding: 11px 14px;
-          margin-bottom: 16px; line-height: 1.5;
-          animation: errShake 0.35s ease;
-          width: 100%; box-sizing: border-box;
-        }
-        @keyframes errShake {
-          0%,100% { transform: translateX(0); }
-          20%     { transform: translateX(-6px); }
-          40%     { transform: translateX(6px); }
-          60%     { transform: translateX(-4px); }
-          80%     { transform: translateX(4px); }
-        }
-        .hp-auth-btn {
-          width: 100%; padding: 14px 22px; border: none; border-radius: 10px;
-          background: linear-gradient(135deg, #e8372a 0%, #f04438 100%);
-          color: #fff;
-          font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 600;
-          letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer;
-          transition: all .25s cubic-bezier(.22,1,.36,1);
-          box-shadow: 0 0 32px rgba(232,55,42,0.28);
-          position: relative; overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 24px;
+          gap: 10px;
+          flex-wrap: wrap;
+          width: 100%;
           box-sizing: border-box;
         }
+
+        .hp-auth-remember {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 12.5px;
+          color: rgba(168, 216, 255, 0.50);
+          cursor: pointer;
+          user-select: none;
+          transition: color 0.2s;
+        }
+
+        .hp-auth-remember:hover {
+          color: rgba(168, 216, 255, 0.70);
+        }
+
+        .hp-auth-remember input[type="checkbox"] {
+          accent-color: #e8372a;
+          width: 14px;
+          height: 14px;
+          cursor: pointer;
+          border: 1.5px solid rgba(0, 200, 224, 0.25);
+        }
+
+        .hp-auth-forgot {
+          font-size: 12.5px;
+          font-weight: 600;
+          color: #00c8e0;
+          text-decoration: none;
+          transition: all 0.25s;
+        }
+
+        .hp-auth-forgot:hover {
+          color: #A8D8FF;
+          text-shadow: 0 0 12px rgba(0, 200, 224, 0.35);
+        }
+
+        .hp-auth-error {
+          font-size: 12px;
+          color: #ff7f6b;
+          background: rgba(232, 55, 42, 0.12);
+          border: 1px solid rgba(232, 55, 42, 0.28);
+          border-radius: 10px;
+          padding: 11px 14px;
+          margin-bottom: 16px;
+          line-height: 1.5;
+          animation: errShake 0.35s ease;
+          width: 100%;
+          box-sizing: border-box;
+        }
+
+        @keyframes errShake {
+          0%, 100% { transform: translateX(0); }
+          20% { transform: translateX(-6px); }
+          40% { transform: translateX(6px); }
+          60% { transform: translateX(-4px); }
+          80% { transform: translateX(4px); }
+        }
+
+        .hp-auth-btn {
+          width: 100%;
+          padding: 14px 22px;
+          border: none;
+          border-radius: 10px;
+          background: linear-gradient(135deg, #e8372a 0%, #f04438 100%);
+          color: #fff;
+          font-family: 'Poppins', sans-serif;
+          font-size: 13px;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          cursor: pointer;
+          transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+          box-shadow: 0 0 32px rgba(232, 55, 42, 0.28);
+          position: relative;
+          overflow: hidden;
+          box-sizing: border-box;
+        }
+
         .hp-auth-btn::after {
           content: '';
-          position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 60%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.18), transparent);
           transform: skewX(-20deg);
           transition: left 0.45s ease;
         }
-        .hp-auth-btn:hover:not(:disabled)::after { left: 140%; }
+
+        .hp-auth-btn:hover:not(:disabled)::after {
+          left: 140%;
+        }
+
         .hp-auth-btn:hover:not(:disabled) {
           transform: translateY(-2px);
-          box-shadow: 0 0 48px rgba(232,55,42,0.50);
+          box-shadow: 0 0 48px rgba(232, 55, 42, 0.50);
           background: linear-gradient(135deg, #f04438 0%, #f85a47 100%);
         }
-        .hp-auth-btn:active:not(:disabled) { transform: translateY(0); }
-        .hp-auth-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .hp-auth-btn:active:not(:disabled) {
+          transform: translateY(0);
+        }
+
+        .hp-auth-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
         .hp-auth-or {
-          display: flex; align-items: center; gap: 14px; margin: 20px 0;
-          width: 100%; box-sizing: border-box;
-        }
-        .hp-auth-or-line { flex: 1; height: 1px; background: rgba(0,200,224,0.12); }
-        .hp-auth-or-text {
-          font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
-          color: rgba(168,216,255,0.35); white-space: nowrap;
-        }
-        .hp-auth-create {
-          display: block; width: 100%; padding: 14px;
-          border: 1.5px solid rgba(168,216,255,0.30);
-          border-radius: 10px; background: rgba(168,216,255,0.06);
-          color: #A8D8FF;
-          font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 600;
-          letter-spacing: 0.08em; text-transform: uppercase;
-          text-align: center; text-decoration: none;
-          transition: all .25s cubic-bezier(.22,1,.36,1);
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          margin: 20px 0;
+          width: 100%;
           box-sizing: border-box;
         }
-        .hp-auth-create:hover {
-          background: rgba(168,216,255,0.12);
-          border-color: rgba(168,216,255,0.55);
-          transform: translateY(-2px);
-          box-shadow: 0 0 28px rgba(168,216,255,0.15);
+
+        .hp-auth-or-line {
+          flex: 1;
+          height: 1px;
+          background: rgba(0, 200, 224, 0.12);
         }
-        .hp-auth-create:active { transform: translateY(0); }
+
+        .hp-auth-or-text {
+          font-size: 11px;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: rgba(168, 216, 255, 0.35);
+          white-space: nowrap;
+        }
+
+        .hp-auth-create {
+          display: block;
+          width: 100%;
+          padding: 14px;
+          border: 1.5px solid rgba(168, 216, 255, 0.30);
+          border-radius: 10px;
+          background: rgba(168, 216, 255, 0.06);
+          color: #A8D8FF;
+          font-family: 'Poppins', sans-serif;
+          font-size: 13px;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          text-align: center;
+          text-decoration: none;
+          transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+          box-sizing: border-box;
+          cursor: pointer;
+        }
+
+        .hp-auth-create:hover {
+          background: rgba(168, 216, 255, 0.12);
+          border-color: rgba(168, 216, 255, 0.55);
+          transform: translateY(-2px);
+          box-shadow: 0 0 28px rgba(168, 216, 255, 0.15);
+        }
+
+        .hp-auth-create:active {
+          transform: translateY(0);
+        }
 
         /* ── Divider ── */
         .hp-divider {
-          display: flex; align-items: center; gap: 20px;
+          display: flex;
+          align-items: center;
+          gap: 20px;
           margin-bottom: 48px;
-          animation: fadeUp 0.8s 0.4s cubic-bezier(.22,1,.36,1) both;
-          width: 100%; box-sizing: border-box;
+          animation: fadeUp 0.8s 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+          width: 100%;
+          box-sizing: border-box;
           overflow: hidden;
         }
+
         .hp-divider-label {
-          font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600;
-          letter-spacing: 0.20em; text-transform: uppercase;
-          color: rgba(168,216,255,0.40); white-space: nowrap;
+          font-family: 'Space Mono', monospace;
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.20em;
+          text-transform: uppercase;
+          color: rgba(168, 216, 255, 0.40);
+          white-space: nowrap;
         }
+
         .hp-divider-line {
-          flex: 1; height: 1px;
-          background: linear-gradient(90deg, rgba(168,216,255,0.20), transparent);
+          flex: 1;
+          height: 1px;
+          background: linear-gradient(90deg, rgba(168, 216, 255, 0.20), transparent);
           min-width: 0;
         }
 
@@ -750,166 +1126,215 @@ export default function Homepage() {
           width: 100%;
           box-sizing: border-box;
         }
+
         .hp-card {
           position: relative;
-          background: rgba(13,27,46,0.70);
-          border: 1.5px solid rgba(0,200,224,0.11);
-          border-radius: 14px; padding: 28px 24px;
-          text-decoration: none; color: inherit;
-          display: flex; flex-direction: column; gap: 12px;
+          background: rgba(13, 27, 46, 0.70);
+          border: 1.5px solid rgba(0, 200, 224, 0.11);
+          border-radius: 14px;
+          padding: 28px 24px;
+          text-decoration: none;
+          color: inherit;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
           overflow: hidden;
-          transition: all .3s cubic-bezier(.22,1,.36,1);
+          transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
           animation: fadeUp 0.7s ease both;
           cursor: pointer;
-          backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-          box-shadow: 0 0 20px rgba(0,0,0,0.1);
+          backdrop-filter: blur(14px);
+          -webkit-backdrop-filter: blur(14px);
+          box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
           box-sizing: border-box;
           min-width: 0;
         }
-        .hp-card:nth-child(1) { animation-delay: 0.3s; }
-        .hp-card:nth-child(2) { animation-delay: 0.38s; }
-        .hp-card:nth-child(3) { animation-delay: 0.46s; }
-        .hp-card:nth-child(4) { animation-delay: 0.54s; }
+
+        .hp-card:nth-child(1) {
+          animation-delay: 0.3s;
+        }
+
+        .hp-card:nth-child(2) {
+          animation-delay: 0.38s;
+        }
+
+        .hp-card:nth-child(3) {
+          animation-delay: 0.46s;
+        }
+
+        .hp-card:nth-child(4) {
+          animation-delay: 0.54s;
+        }
+
         .hp-card::before {
-          content: ''; position: absolute; inset: 0;
+          content: '';
+          position: absolute;
+          inset: 0;
           background: radial-gradient(ellipse 100% 70% at 10% 0%, var(--accent-alpha), transparent 75%);
-          opacity: 0; transition: opacity .35s ease;
+          opacity: 0;
+          transition: opacity 0.35s ease;
           pointer-events: none;
         }
+
         .hp-card::after {
-          content: ''; position: absolute; top: 0; left: 15%; right: 15%; height: 1.5px;
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 15%;
+          right: 15%;
+          height: 1.5px;
           background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
-          opacity: 0; transition: opacity .4s ease;
+          opacity: 0;
+          transition: opacity 0.4s ease;
           border-radius: 1px;
           pointer-events: none;
         }
+
         .hp-card:hover {
           transform: translateY(-8px) scale(1.02);
           border-color: var(--accent-color);
-          background: rgba(13,27,46,0.92);
-          box-shadow: 0 16px 48px rgba(0,0,0,0.45), 0 0 40px var(--accent-alpha);
+          background: rgba(13, 27, 46, 0.92);
+          box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45), 0 0 40px var(--accent-alpha);
         }
-        .hp-card:hover::before { opacity: 1; }
-        .hp-card:hover::after  { opacity: 1; }
+
+        .hp-card:hover::before {
+          opacity: 1;
+        }
+
+        .hp-card:hover::after {
+          opacity: 1;
+        }
+
+        .hp-card:focus-within {
+          outline: 2px solid var(--accent-color);
+          outline-offset: 2px;
+        }
+
         .hp-card-header {
-          display: flex; align-items: center; justify-content: space-between;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
         }
+
         .hp-card-icon {
-          width: 52px; height: 52px; border-radius: 12px;
-          display: flex; align-items: center; justify-content: center;
+          width: 52px;
+          height: 52px;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           color: var(--accent-color);
-          background: var(--accent-alpha); border: 1.5px solid var(--accent-color);
-          flex-shrink: 0; position: relative; z-index: 1;
-          transition: all .3s ease;
+          background: var(--accent-alpha);
+          border: 1.5px solid var(--accent-color);
+          flex-shrink: 0;
+          position: relative;
+          z-index: 1;
+          transition: all 0.3s ease;
           box-shadow: 0 0 20px var(--accent-alpha);
         }
+
         .hp-card:hover .hp-card-icon {
-          transform: scale(1.12);
+          transform: scale(1.12) rotate(3deg);
           box-shadow: 0 0 28px var(--accent-alpha);
         }
-        .hp-card-tag {
-          font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 700;
-          letter-spacing: 0.14em; color: var(--accent-color);
-          border: 1px solid var(--accent-color);
-          border-radius: 4px; padding: 3px 8px; opacity: 0.75;
-          position: relative; z-index: 1;
-          transition: all .2s ease;
-        }
-        .hp-card:hover .hp-card-tag { opacity: 1; }
-        .hp-card-title {
-          font-family: 'Poppins', sans-serif; font-size: 19px; font-weight: 600;
-          color: #F8FAFC; position: relative; z-index: 1;
-        }
-        .hp-card-desc {
-          font-size: 13px; font-weight: 400;
-          color: rgba(168,216,255,0.62); line-height: 1.6;
-          position: relative; z-index: 1; flex: 1;
-        }
-        .hp-card-action {
-          display: flex; align-items: center; gap: 8px;
-          font-size: 12px; font-weight: 600; letter-spacing: 0.06em;
-          color: var(--accent-color); position: relative; z-index: 1; margin-top: 6px;
-          transition: gap .25s ease;
-        }
-        .hp-card:hover .hp-card-action { gap: 12px; }
 
-        /* ── Ticker ── */
-        .hp-ticker {
-          margin-top: 20px;
-          margin-bottom: 0;
-          border: 1px solid rgba(168,216,255,0.12);
-          border-radius: 12px;
-          background: rgba(7,16,29,0.70);
-          backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-          padding: 13px 0;
-          display: flex;
-          align-items: center;
-          overflow: hidden;
+        .hp-card-tag {
+          font-family: 'Space Mono', monospace;
+          font-size: 9px;
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          color: var(--accent-color);
+          border: 1px solid var(--accent-color);
+          border-radius: 4px;
+          padding: 3px 8px;
+          opacity: 0.75;
           position: relative;
-          box-shadow: 0 0 24px rgba(0,200,224,0.06);
-          animation: slideUp .8s .45s cubic-bezier(.22,1,.36,1) both;
-          width: 100%;
-          box-sizing: border-box;
-          contain: layout style;
+          z-index: 1;
+          transition: all 0.2s ease;
         }
-        .hp-ticker-label {
-          flex-shrink: 0;
-          font-family: 'Poppins', sans-serif; font-size: 10px; font-weight: 700;
-          letter-spacing: 0.20em; text-transform: uppercase;
-          color: #e8372a; padding: 0 18px;
-          border-right: 1.5px solid rgba(232,55,42,0.28);
-          margin-right: 18px;
-          background: rgba(7,16,29,0.65);
-          position: relative; z-index: 2;
+
+        .hp-card:hover .hp-card-tag {
+          opacity: 1;
+          transform: scale(1.05);
         }
-        .hp-ticker-track {
+
+        .hp-card-title {
+          font-family: 'Poppins', sans-serif;
+          font-size: 19px;
+          font-weight: 700;
+          color: #F8FAFC;
+          position: relative;
+          z-index: 1;
+        }
+
+        .hp-card-desc {
+          font-size: 13px;
+          font-weight: 400;
+          color: rgba(168, 216, 255, 0.62);
+          line-height: 1.6;
+          position: relative;
+          z-index: 1;
+          flex: 1;
+        }
+
+        .hp-card-action {
           display: flex;
-          gap: 72px;
           align-items: center;
-          animation: tickerScroll 28s linear infinite;
-          white-space: nowrap;
-          will-change: transform;
-          transform: translateZ(0);
-          flex-shrink: 0;
+          gap: 8px;
+          font-size: 12px;
+          font-weight: 700;
+          letter-spacing: 0.06em;
+          color: var(--accent-color);
+          position: relative;
+          z-index: 1;
+          margin-top: 6px;
+          transition: gap 0.25s ease;
         }
-        .hp-ticker:hover .hp-ticker-track { animation-play-state: paused; }
-        @keyframes tickerScroll {
-          from { transform: translateZ(0) translateX(0); }
-          to   { transform: translateZ(0) translateX(-50%); }
-        }
-        .hp-ticker-item {
-          font-family: 'Inter', sans-serif; font-size: 12.5px; font-weight: 400;
-          letter-spacing: 0.05em; color: rgba(168,216,255,0.58);
-          flex-shrink: 0;
-        }
-        .hp-ticker-dot {
-          width: 4px; height: 4px; border-radius: 50%;
-          background: rgba(168,216,255,0.35); flex-shrink: 0;
+
+        .hp-card:hover .hp-card-action {
+          gap: 12px;
         }
 
         /* ── Footer bridge ── */
         .hp-footer-bridge {
           height: 56px;
-          background: linear-gradient(to bottom, rgba(4,16,28,0) 0%, rgba(4,16,28,1) 100%);
-          pointer-events: none; position: relative; z-index: 1;
+          background: linear-gradient(to bottom, rgba(4, 16, 28, 0) 0%, rgba(4, 16, 28, 1) 100%);
+          pointer-events: none;
+          position: relative;
+          z-index: 1;
         }
 
         /* ── Keyframes ── */
-        @keyframes fadeDown {
-          from { opacity: 0; transform: translateY(-20px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
         @keyframes slideRight {
-          from { opacity: 0; transform: translateX(-20px); }
-          to   { opacity: 1; transform: translateX(0); }
+          from {
+            opacity: 0;
+            transform: translateX(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
         }
+
         @keyframes slideUp {
-          from { opacity: 0; transform: translateY(28px); }
-          to   { opacity: 1; transform: translateY(0); }
+          from {
+            opacity: 0;
+            transform: translateY(28px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
+
         @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to   { opacity: 1; transform: translateY(0); }
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
 
         /* ══════════════════════════════════════
@@ -918,78 +1343,171 @@ export default function Homepage() {
         @media (max-width: 860px) {
           .hp-hero {
             grid-template-columns: 1fr;
-            margin-top: 32px; margin-bottom: 56px; gap: 40px;
+            margin-top: 32px;
+            margin-bottom: 56px;
+            gap: 40px;
           }
-          .hp-auth-panel { order: -1; }
-          .hp-badge-slot { width: 100%; max-width: none; }
-          .hp-badge-row { justify-content: flex-start; }
-          .hp-nav-badge { justify-content: center; }
+          .hp-auth-panel {
+            order: -1;
+          }
         }
 
         @media (max-width: 600px) {
-          .hp-inner { padding: 0 14px 48px; }
-          .hp-badge-row { padding-top: 12px; justify-content: stretch; }
-          .hp-badge-slot { width: 100%; max-width: 100%; }
-          .hp-nav-badge { padding: 10px 16px; width: 100%; justify-content: center; }
-          .hp-badge-text { font-size: 11px; }
-          .hp-badge-911 { font-size: 15px; }
-          .hp-ticker { border-radius: 10px; padding: 10px 0; }
-          .hp-ticker-label { padding: 0 12px; margin-right: 12px; font-size: 9px; }
-          .hp-ticker-item { font-size: 11.5px; }
-          .hp-hero { margin-top: 16px; margin-bottom: 36px; gap: 24px; }
-          .hp-hero h1 { font-size: clamp(34px, 9vw, 52px); margin-bottom: 14px; line-height: 0.95; }
-          .hp-hero-sub { font-size: 14px; margin-bottom: 22px; line-height: 1.65; }
-          .hp-hero-eyebrow { font-size: 10px; margin-bottom: 14px; }
-          .hp-hero-cta { padding: 13px 22px; font-size: 12px; width: 100%; justify-content: center; }
-          .hp-auth-panel { padding: 22px 16px 20px; border-radius: 14px; }
-          .hp-auth-title { font-size: 20px; }
-          .hp-auth-subtitle { font-size: 12.5px; margin-bottom: 20px; }
-          .hp-auth-input { padding: 11px 13px; font-size: 13px; }
-          .hp-auth-btn { padding: 13px; font-size: 12px; }
-          .hp-auth-create { padding: 13px; font-size: 12px; }
-          .hp-auth-row { margin-bottom: 18px; }
-          .hp-stats { margin-top: 28px; }
-          .hp-stat { padding: 14px 8px; }
-          .hp-stat-value { font-size: 24px; }
-          .hp-stat-suffix { font-size: 14px; }
-          .hp-stat-label { font-size: 9px; letter-spacing: 0.04em; }
-          .hp-divider { margin-bottom: 24px; }
-          .hp-grid { gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-          .hp-card { padding: 18px 14px; gap: 10px; border-radius: 12px; }
-          .hp-card-icon { width: 42px; height: 42px; border-radius: 10px; }
-          .hp-card-icon svg { width: 20px !important; height: 20px !important; }
-          .hp-card-title { font-size: 15px; }
-          .hp-card-desc { font-size: 11.5px; }
-          .hp-card-tag { font-size: 8px; padding: 2px 6px; }
-          .hp-card-action { font-size: 11px; margin-top: 2px; }
+          .hp-inner {
+            padding: 0 14px 48px;
+          }
+          .hp-hero {
+            margin-top: 16px;
+            margin-bottom: 36px;
+            gap: 24px;
+          }
+          .hp-hero h1 {
+            font-size: clamp(34px, 9vw, 52px);
+            margin-bottom: 14px;
+            line-height: 0.95;
+          }
+          .hp-hero-sub {
+            font-size: 14px;
+            margin-bottom: 22px;
+            line-height: 1.65;
+          }
+          .hp-hero-eyebrow {
+            font-size: 10px;
+            margin-bottom: 14px;
+          }
+          .hp-hero-cta {
+            padding: 13px 22px;
+            font-size: 12px;
+            width: 100%;
+            justify-content: center;
+          }
+          .hp-auth-panel {
+            padding: 22px 16px 20px;
+            border-radius: 14px;
+          }
+          .hp-auth-title {
+            font-size: 20px;
+          }
+          .hp-auth-subtitle {
+            font-size: 12.5px;
+            margin-bottom: 20px;
+          }
+          .hp-auth-input {
+            padding: 11px 13px;
+            font-size: 13px;
+          }
+          .hp-auth-btn {
+            padding: 13px;
+            font-size: 12px;
+          }
+          .hp-auth-create {
+            padding: 13px;
+            font-size: 12px;
+          }
+          .hp-auth-row {
+            margin-bottom: 18px;
+          }
+          .hp-stats {
+            margin-top: 28px;
+          }
+          .hp-stat {
+            padding: 14px 8px;
+          }
+          .hp-stat-value {
+            font-size: 24px;
+          }
+          .hp-stat-suffix {
+            font-size: 14px;
+          }
+          .hp-stat-label {
+            font-size: 9px;
+            letter-spacing: 0.04em;
+          }
+          .hp-divider {
+            margin-bottom: 24px;
+          }
+          .hp-grid {
+            gap: 12px;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+          .hp-card {
+            padding: 18px 14px;
+            gap: 10px;
+            border-radius: 12px;
+          }
+          .hp-card-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+          }
+          .hp-card-icon svg {
+            width: 20px !important;
+            height: 20px !important;
+          }
+          .hp-card-title {
+            font-size: 15px;
+          }
+          .hp-card-desc {
+            font-size: 11.5px;
+          }
+          .hp-card-tag {
+            font-size: 8px;
+            padding: 2px 6px;
+          }
+          .hp-card-action {
+            font-size: 11px;
+            margin-top: 2px;
+          }
         }
 
         @media (max-width: 400px) {
-          .hp-inner { padding: 0 12px 40px; }
-          .hp-grid { grid-template-columns: 1fr; }
-          .hp-card { padding: 16px 14px; }
-          .hp-card-title { font-size: 15px; }
-          .hp-card-desc { font-size: 11px; }
-          .hp-stat-value { font-size: 20px; }
-          .hp-hero h1 { font-size: clamp(30px, 9vw, 46px); }
-          .hp-auth-panel { padding: 20px 14px 18px; }
+          .hp-inner {
+            padding: 0 12px 40px;
+          }
+          .hp-grid {
+            grid-template-columns: 1fr;
+          }
+          .hp-card {
+            padding: 16px 14px;
+          }
+          .hp-card-title {
+            font-size: 15px;
+          }
+          .hp-card-desc {
+            font-size: 11px;
+          }
+          .hp-stat-value {
+            font-size: 20px;
+          }
+          .hp-hero h1 {
+            font-size: clamp(30px, 9vw, 46px);
+          }
+          .hp-auth-panel {
+            padding: 20px 14px 18px;
+          }
         }
       `}</style>
 
-      {/* ── Outermost wrapper — never clips vertical scroll ── */}
-      <div style={{
-        overflowX: "hidden",
-        overflowY: "visible",   /* KEY: visible so scroll propagates to html/body */
-        width: "100%",
-        maxWidth: "100vw",
-        minHeight: "100vh",
-        height: "auto",
-      }}>
+      {/* ── Outermost wrapper ── */}
+      <div
+        style={{
+          overflowX: "hidden",
+          overflowY: "visible",
+          width: "100%",
+          maxWidth: "100vw",
+          minHeight: "100vh",
+          height: "auto",
+        }}
+      >
         <div className="hp-root">
-
           {/* ── Fixed background ── */}
           <div className="hp-bg">
-            <img src={homepageBg} alt="" className="hp-bg-img" aria-hidden="true" />
+            <img
+              src={homepageBg}
+              alt=""
+              className="hp-bg-img"
+              aria-hidden="true"
+            />
             <div className="hp-bg-overlay" />
             <div className="hp-bg-atmosphere" />
             <div className="hp-bg-grain" />
@@ -1000,83 +1518,17 @@ export default function Homepage() {
           <div className="hp-orb hp-orb-3" />
 
           <div className="hp-inner">
-
-            {/* ── Ticker ── */}
-            <div className="hp-ticker">
-              <div className="hp-ticker-label">LIVE</div>
-
-              <div className="hp-ticker-track">
-                <span className="hp-ticker-item">
-                  Emergency response system active
-                </span>
-
-                <span className="hp-ticker-dot" />
-
-                <span className="hp-ticker-item">
-                  Safety monitoring online 24\/7
-                </span>
-
-                <span className="hp-ticker-dot" />
-
-                <span className="hp-ticker-item">
-                  Hotline services available
-                </span>
-
-                <span className="hp-ticker-dot" />
-
-                <span className="hp-ticker-item">
-                  Community alerts enabled
-                </span>
-
-                <span className="hp-ticker-item">
-                  Emergency response system active
-                </span>
-
-                <span className="hp-ticker-dot" />
-
-                <span className="hp-ticker-item">
-                  Safety monitoring online 24\/7
-                </span>
-
-                <span className="hp-ticker-dot" />
-
-                <span className="hp-ticker-item">
-                  Hotline services available
-                </span>
-
-                <span className="hp-ticker-dot" />
-
-                <span className="hp-ticker-item">
-                  Community alerts enabled
-                </span>
-              </div>
-            </div>
-
-            {/* ── Badge ── */}
-            <div className="hp-badge-row">
-              <div className="hp-badge-slot">
-                <a href="tel:911" className="hp-nav-badge">
-                  <span className="hp-badge-icon">
-                    <FaPhoneAlt size={11} />
-                  </span>
-                  <span className="hp-badge-text">Emergency</span>
-                  <span className="hp-badge-sep" />
-                  <span className="hp-badge-911">911</span>
-                </a>
-              </div>
-            </div>
-
             {/* ── Hero ── */}
             <section className="hp-hero">
               <div className="hp-hero-copy">
-                <div className="hp-hero-eyebrow">Community Safety Platform</div>
                 <h1>
-                  Emergency<br />
+                  Emergency
+                  <br />
                   <span className="accent">Response</span> at Your Fingertips
                 </h1>
                 <p className="hp-hero-sub">
-                  A centralized safety platform for the City of Gentle People. Fast access
-                  to hotlines, facilities, and safety guidelines.
+                  A centralized safety platform for the City of Gentle People.
+                  Fast access to hotlines, facilities, and safety guidelines.
                 </p>
                 <Link to="/report" className="hp-hero-cta">
                   Report an Incident
@@ -1113,7 +1565,10 @@ export default function Homepage() {
                     placeholder="you@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    onFocus={() => setFocusedField("email")}
+                    onBlur={() => setFocusedField(null)}
                     autoComplete="email"
+                    aria-label="Email address"
                   />
                 </div>
                 <div className="hp-auth-field">
@@ -1126,40 +1581,69 @@ export default function Homepage() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+                      onFocus={() => setFocusedField("password")}
+                      onBlur={() => setFocusedField(null)}
                       autoComplete="current-password"
                       style={{ paddingRight: "42px" }}
+                      aria-label="Password"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword((v) => !v)}
                       style={{
-                        position: "absolute", right: "12px", top: "50%",
-                        transform: "translateY(-50%)", background: "none",
-                        border: "none", cursor: "pointer", padding: 0,
-                        display: "flex", alignItems: "center",
-                        color: "rgba(168,216,255,0.40)", transition: "color 0.2s",
+                        position: "absolute",
+                        right: "12px",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        padding: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        color: "rgba(168,216,255,0.40)",
+                        transition: "color 0.2s",
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.color = "#A8D8FF")}
-                      onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(168,216,255,0.40)")}
-                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.color = "#A8D8FF")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.color = "rgba(168,216,255,0.40)")
+                      }
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
                     >
-                      {showPassword ? <FaEyeSlash size={15} /> : <FaEye size={15} />}
+                      {showPassword ? (
+                        <FaEyeSlash size={15} />
+                      ) : (
+                        <FaEye size={15} />
+                      )}
                     </button>
                   </div>
                 </div>
                 <div className="hp-auth-row">
                   <label className="hp-auth-remember">
-                    <input type="checkbox" /> Remember me
+                    <input type="checkbox" aria-label="Remember me" /> Remember me
                   </label>
                   <Link to="/forgot-password" className="hp-auth-forgot">
                     Forgot Password?
                   </Link>
                 </div>
-                {error && <div className="hp-auth-error">⚠ {error}</div>}
+                {error && (
+                  <div
+                    className="hp-auth-error"
+                    role="alert"
+                    aria-live="polite"
+                  >
+                    ⚠ {error}
+                  </div>
+                )}
                 <button
                   className="hp-auth-btn"
                   onClick={handleLogin}
                   disabled={loading}
+                  aria-busy={loading}
                 >
                   {loading ? "Signing in…" : "Login Account"}
                 </button>
@@ -1190,23 +1674,25 @@ export default function Homepage() {
                   style={{
                     "--accent-color": card.accent,
                     "--accent-alpha": `${card.accent}20`,
-                  } as CSSProperties}
+                  } as React.CSSProperties}
                 >
                   <div className="hp-card-header">
-                    <div className="hp-card-icon">{card.icon}</div>
+                    <div className="hp-card-icon" aria-hidden="true">
+                      {card.icon}
+                    </div>
                     <span className="hp-card-tag">{card.tag}</span>
                   </div>
                   <div className="hp-card-title">{card.label}</div>
                   <div className="hp-card-desc">{card.desc}</div>
-                  <div className="hp-card-action">Explore <span>→</span></div>
+                  <div className="hp-card-action">
+                    Explore <span aria-hidden="true">→</span>
+                  </div>
                 </Link>
               ))}
             </div>
-
           </div>
 
           <div className="hp-footer-bridge" />
-
         </div>
       </div>
     </>
