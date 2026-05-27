@@ -1,105 +1,85 @@
-import { lazy, Suspense } from 'react';
-import { HashRouter, Routes, Route } from 'react-router-dom';
+import { lazy, Suspense, useEffect, useState } from 'react';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
-import Layout from './pages/Layout';
+import { supabase } from './js/supabase';
 
-// ── Public Pages ───────────────────────────────────────────────
-const Homepage           = lazy(() => import('./pages/Homepage'));
-const Login              = lazy(() => import('./pages/Login'));
-const Signup             = lazy(() => import('./pages/Signup'));
-const ForgotPassword     = lazy(() => import('./pages/Forgotpassword'));
-const Directory          = lazy(() => import('./pages/Directory'));
-const Map                = lazy(() => import('./pages/Map'));
-const Report             = lazy(() => import('./pages/Report'));
-const IncidentAlerts     = lazy(() => import('./pages/Incidentalerts'));
-const AboutDumaSafeGuide = lazy(() => import('./pages/AboutDumaSafeGuide'));
-const PartnerAgencies    = lazy(() => import('./pages/PartnerAgencies'));
-const PrivacyPolicy      = lazy(() => import('./pages/PrivacyPolicy'));
-const Resources          = lazy(() => import('./pages/Resources'));
-const SafetyTips         = lazy(() => import('./pages/SafetyTips'));
-const TermsOfService     = lazy(() => import('./pages/TermsOfService'));
-const TermsOfUse         = lazy(() => import('./pages/TermsOfUse'));
+const Homepage        = lazy(() => import('./pages/Homepage'));
+const Login           = lazy(() => import('./pages/Login'));
+const Signup          = lazy(() => import('./pages/Signup'));
+const ForgotPassword  = lazy(() => import('./pages/ForgotPassword'));
+const Directory       = lazy(() => import('./pages/Directory'));
+const Map             = lazy(() => import('./pages/Map'));
+const IncidentAlerts  = lazy(() => import('./pages/IncidentaAlerts'));
 
-// ── Citizen-scoped pages ───────────────────────────────────────
-const CitizenMap          = lazy(() => import('./citizen/CitizenMap'));
-const CitizenDirectory    = lazy(() => import('./citizen/CitizenDirectory'));
-const CitizenSafetyTips   = lazy(() => import('./citizen/CitizenSafetyTips'));
-const CitizenAbout        = lazy(() => import('./citizen/CitizenAbout'));
-const CitizenReport       = lazy(() => import('./citizen/CitizenReport'));
-const CitizenDashboard    = lazy(() => import('./citizen/CitizenDashboard'));
-const CitizenAlertsPage   = lazy(() => import('./citizen/CitizenAlertsPage'));
-const CitizenHistory      = lazy(() => import('./citizen/CitizenHistory'));
-const CitizenReportDetail = lazy(() => import('./citizen/CitizenReportDetail'));
-
-// ── Admin ──────────────────────────────────────────────────────
-const AdminDashboard = lazy(() => import('./admin/AdminDashboard'));
-
-// ── Responder ──────────────────────────────────────────────────
-const RespondersDashboard = lazy(() => import('./responder/Respondersdashboard'));
-const ResponderAlertsPage = lazy(() => import('./responder/Responderalertspage'));
-const ResponderTeamPage   = lazy(() => import('./responder/Responderteam'));
 const Dispatch            = lazy(() => import('./responder/Dispatch'));
-const ResponderIncidents  = lazy(() => import('./responder/IncidentsPage'));
+const IncidentsPage       = lazy(() => import('./responder/IncidentsPage'));
+const ResponderAlertsPage = lazy(() => import('./responder/ResponderAlertsPage'));
+const RespondersDashboard = lazy(() => import('./responder/RespondersDashboard'));
+const ResponderTeam       = lazy(() => import('./responder/ResponderTeam'));
+
+const CitizenDashboard   = lazy(() => import('./citizen/CitizenDashboard'));
+const CitizenHistoryPage = lazy(() => import('./citizen/CitizenHistoryPage'));
+const CitizenAlertsPage  = lazy(() => import('./citizen/CitizenAlertsPage'));
+const CitizenMap         = lazy(() => import('./citizen/CitizenMap'));
+const CitizenSafetyTips  = lazy(() => import('./citizen/CitizenSafetyTips'));
+const CitizenReportPage  = lazy(() => import('./citizen/CitizenReportPage'));
+const CitizenDirectory   = lazy(() => import('./citizen/CitizenDirectory'));
+const CitizenResources   = lazy(() => import('./citizen/CitizenResources'));
+
+const Loader = () => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', backgroundColor: '#080c14', color: '#eef0f7' }}>
+    Loading...
+  </div>
+);
 
 export default function App() {
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => { authListener?.subscription?.unsubscribe(); };
+  }, []);
+
+  if (loading) return <Loader />;
+
   return (
-    <HashRouter
-      future={{
-        v7_startTransition: true,
-        v7_relativeSplatPath: true,
-      }}
-    >
-      <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>}>
+    <HashRouter>
+      <Suspense fallback={<Loader />}>
         <Routes>
-
-          {/* ── PUBLIC — Global Navbar + Footer ──────────────── */}
-          <Route element={<Layout />}>
-            <Route path="/"                 element={<Homepage />} />
-            <Route path="/directory"        element={<Directory />} />
-            <Route path="/report"           element={<Report />} />
-            <Route path="/incident-alerts"  element={<IncidentAlerts />} />
-            <Route path="/about"            element={<AboutDumaSafeGuide />} />
-            <Route path="/partner-agencies" element={<PartnerAgencies />} />
-            <Route path="/resources"        element={<Resources />} />
-            <Route path="/safetytips"       element={<SafetyTips />} />
-            <Route path="/terms-of-use"     element={<TermsOfUse />} />
-            <Route path="/map"              element={<Map />} />
-            <Route path="/privacy"          element={<PrivacyPolicy />} />
-            <Route path="/terms"            element={<TermsOfService />} />
-          </Route>
-
-          {/* ── STANDALONE ───────────────────────────────────── */}
+          <Route path="/"                element={<Homepage />} />
           <Route path="/login"           element={<Login />} />
           <Route path="/signup"          element={<Signup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/directory"       element={<Directory />} />
+          <Route path="/map"             element={<Map />} />
+          <Route path="/incident-alerts" element={<IncidentAlerts />} />
 
-          {/* ── ADMIN portal — no Layout ─────────────────────── */}
-          <Route element={<ProtectedRoute allowedRole="admin" />}>
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          </Route>
+          <Route path="/citizen/dashboard"   element={<ProtectedRoute allowedRole="citizen"><CitizenDashboard /></ProtectedRoute>} />
+          <Route path="/citizen/history"     element={<ProtectedRoute allowedRole="citizen"><CitizenHistoryPage /></ProtectedRoute>} />
+          <Route path="/citizen/history/:id" element={<ProtectedRoute allowedRole="citizen"><CitizenHistoryPage /></ProtectedRoute>} />
+          <Route path="/citizen/alerts"      element={<ProtectedRoute allowedRole="citizen"><CitizenAlertsPage /></ProtectedRoute>} />
+          <Route path="/citizen/map"         element={<ProtectedRoute allowedRole="citizen"><CitizenMap /></ProtectedRoute>} />
+          <Route path="/citizen/safetytips"  element={<ProtectedRoute allowedRole="citizen"><CitizenSafetyTips /></ProtectedRoute>} />
+          <Route path="/citizen/report"      element={<ProtectedRoute allowedRole="citizen"><CitizenReportPage /></ProtectedRoute>} />
+          <Route path="/citizen/directory"   element={<ProtectedRoute allowedRole="citizen"><CitizenDirectory /></ProtectedRoute>} />
+          <Route path="/citizen/resources"   element={<ProtectedRoute allowedRole="citizen"><CitizenResources /></ProtectedRoute>} />
 
-          {/* ── CITIZEN portal — no Layout ───────────────────── */}
-          <Route element={<ProtectedRoute allowedRole="citizen" />}>
-            <Route path="/citizen/dashboard"   element={<CitizenDashboard />} />
-            <Route path="/citizen/alerts"      element={<CitizenAlertsPage />} />
-            <Route path="/citizen/history"     element={<CitizenHistory />} />
-            <Route path="/citizen/history/:id" element={<CitizenReportDetail />} />
-            <Route path="/citizen/map"         element={<CitizenMap />} />
-            <Route path="/citizen/directory"   element={<CitizenDirectory />} />
-            <Route path="/citizen/safetytips"  element={<CitizenSafetyTips />} />
-            <Route path="/citizen/about"       element={<CitizenAbout />} />
-            <Route path="/citizen/report"      element={<CitizenReport />} />
-          </Route>
+          <Route path="/responder/dispatch"  element={<ProtectedRoute allowedRole="responder"><Dispatch /></ProtectedRoute>} />
+          <Route path="/responder/incidents" element={<ProtectedRoute allowedRole="responder"><IncidentsPage /></ProtectedRoute>} />
+          <Route path="/responder/alerts"    element={<ProtectedRoute allowedRole="responder"><ResponderAlertsPage /></ProtectedRoute>} />
+          <Route path="/responder/dashboard" element={<ProtectedRoute allowedRole="responder"><RespondersDashboard /></ProtectedRoute>} />
+          <Route path="/responder/team"      element={<ProtectedRoute allowedRole="responder"><ResponderTeam /></ProtectedRoute>} />
 
-          {/* ── RESPONDER portal — no Layout ─────────────────── */}
-          <Route element={<ProtectedRoute allowedRole="responder" />}>
-            <Route path="/responder/dashboard"  element={<RespondersDashboard />} />
-            <Route path="/responder/alerts"     element={<ResponderAlertsPage />} />
-            <Route path="/responder/team"       element={<ResponderTeamPage />} />
-            <Route path="/responder/dispatch"   element={<Dispatch />} />
-            <Route path="/responder/incidents"  element={<ResponderIncidents />} />
-          </Route>
-
+          <Route path="/report"     element={user ? <Navigate to="/citizen/report" replace /> : <Navigate to="/login" replace />} />
+          <Route path="/safetytips" element={<Navigate to="/citizen/safetytips" replace />} />
+          <Route path="*"           element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
     </HashRouter>

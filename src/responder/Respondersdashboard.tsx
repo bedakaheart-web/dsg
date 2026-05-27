@@ -3,9 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../js/supabase";
 
 import Dispatch from "./Dispatch";
-import ResponderAlertsPage from "./Responderalertspage";
+import ResponderAlertsPage from "./ResponderAlertsPage";
 import ResponderIncidentsPage from "./IncidentsPage";
-import ResponderTeamPage from "./Responderteam";
+import ResponderTeamPage from "./ResponderTeam";
 import dsgLogo from "../assets/dsg.logo.png";
 
 // ─── Types ────────────────────────────────────────────────────────────────────

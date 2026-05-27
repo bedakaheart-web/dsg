@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { supabase } from "../js/supabase";
 
 const ROLE_HOME: Record<string, string> = {
@@ -9,7 +9,8 @@ const ROLE_HOME: Record<string, string> = {
 };
 
 interface Props {
-  allowedRole: "citizen" | "responder" | "admin";
+  children: React.ReactElement;
+  allowedRole?: "citizen" | "responder" | "admin";
 }
 
 type AuthState =
@@ -18,7 +19,7 @@ type AuthState =
   | { status: "wrong_role"; actualRole: string }
   | { status: "authorized" };
 
-export default function ProtectedRoute({ allowedRole }: Props) {
+export default function ProtectedRoute({ children, allowedRole }: Props) {
   const [authState, setAuthState] = useState<AuthState>({ status: "loading" });
   const location = useLocation();
 
@@ -26,13 +27,17 @@ export default function ProtectedRoute({ allowedRole }: Props) {
     let cancelled = false;
 
     const check = async () => {
-      // getSession() reads from local cache — no network race condition
       const { data: { session } } = await supabase.auth.getSession();
-
       if (cancelled) return;
 
       if (!session?.user) {
         setAuthState({ status: "unauthenticated" });
+        return;
+      }
+
+      // If no role restriction, just allow through
+      if (!allowedRole) {
+        setAuthState({ status: "authorized" });
         return;
       }
 
@@ -45,13 +50,11 @@ export default function ProtectedRoute({ allowedRole }: Props) {
       if (cancelled) return;
 
       if (profileErr || !profile?.role) {
-        console.error("[ProtectedRoute] profile fetch failed:", profileErr);
         setAuthState({ status: "unauthenticated" });
         return;
       }
 
       const role = (profile.role as string).trim().toLowerCase();
-
       if (role === allowedRole) {
         setAuthState({ status: "authorized" });
       } else {
@@ -90,5 +93,5 @@ export default function ProtectedRoute({ allowedRole }: Props) {
     return <Navigate to={home} replace />;
   }
 
-  return <Outlet />;
+  return children;
 }

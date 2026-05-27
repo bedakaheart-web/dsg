@@ -1,342 +1,311 @@
+// src/citizen/CitizenDirectory.tsx
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "../js/supabase";
+import dsgLogo from "../assets/dsg.logo.png";
 
 interface PhoneEntry { label: string; number: string; }
 interface EmergencyAgency {
   agency: string; label: string; address: string; icon: string; accent: string;
-  phones: PhoneEntry[]; facebook?: string; notes?: string;
+  phones: PhoneEntry[]; notes?: string;
 }
 interface Hospital {
-  name: string; address: string; icon: string; type: string;
+  name: string; address: string; type: string;
   beds?: string; phones: PhoneEntry[]; notes?: string;
 }
 interface Barangay { name: string; hotline: string | null; evacuation: string | null; }
 
 const emergency: EmergencyAgency[] = [
-  { agency: "PNP", label: "Police", address: "Camp Leon Kilat, Dumaguete City", icon: "🚔", accent: "#4A90D9", phones: [{ label: "National Hotline", number: "911" }, { label: "Local Hotline", number: "116" }, { label: "CRUZTELCO 1", number: "(035) 225-1766" }, { label: "CRUZTELCO 2", number: "(035) 225-1163" }, { label: "Globe Mobile", number: "0917 933 0022" }, { label: "Smart Mobile", number: "0929 200 6999" }, { label: "Globe Landline", number: "(035) 420-9143" }], notes: "Available 24/7 for all police emergencies" },
-  { agency: "BFP", label: "Fire Dept.", address: "Real St, Dumaguete City", icon: "🔥", accent: "#e8372a", phones: [{ label: "Emergency", number: "160" }, { label: "CRUZTELCO", number: "(035) 225-3445" }, { label: "Globe Landline", number: "(035) 422-9672" }, { label: "Globe Mobile", number: "0977 198 1900" }, { label: "Smart Mobile", number: "0961 199 8377" }], notes: "Fire suppression, rescue & emergency medical response" },
-  { agency: "CDRRMO", label: "City DRRM", address: "City Hall Compound, Dumaguete City", icon: "🛡️", accent: "#e8b830", phones: [{ label: "Emergency 348", number: "348" }, { label: "Admin Landline", number: "(035) 226-3483" }, { label: "Operations", number: "(035) 225-1911" }, { label: "Globe Mobile", number: "0936 795 4163" }], notes: "City Disaster Risk Reduction & Management — 24/7 operations" },
-  { agency: "LDRRMO", label: "Local DRRM", address: "Dumaguete City (Provincial)", icon: "⛑️", accent: "#00c8e0", phones: [{ label: "Province DRRM", number: "(035) 422-3636" }, { label: "Rescue 348", number: "(035) 421-5073" }], notes: "Provincial Disaster Risk Reduction & Management Office" },
-  { agency: "ONE Rescue", label: "EMS / Ambulance", address: "Oriental Negros Emergency Rescue Foundation, Inc.", icon: "🚑", accent: "#e8b830", phones: [{ label: "CRUZTELCO", number: "(035) 225-9110" }, { label: "Globe Landline", number: "(035) 422-9110" }, { label: "Globe Mobile", number: "0905 518 6917" }, { label: "Sun Mobile", number: "0922 880 8897" }], notes: "Free pre-hospital emergency medical services across Negros Oriental" },
-  { agency: "Coast Guard", label: "Sea Rescue", address: "Dumaguete Boulevard, Dumaguete City", icon: "⚓", accent: "#00c8e0", phones: [{ label: "Station", number: "(035) 422-6541" }, { label: "Mobile", number: "0968 771 2455" }], notes: "Philippine Coast Guard — marine search & rescue operations" },
-  { agency: "NORECO II", label: "Power / Electric", address: "Dumaguete City", icon: "⚡", accent: "#a78bfa", phones: [{ label: "CRUZTELCO", number: "(035) 225-4830" }, { label: "Globe Landline", number: "(035) 422-6522" }, { label: "Globe Mobile", number: "0917 322 4237" }], notes: "For power outages, downed lines, and electrical emergencies" },
-  { agency: "Metro Water", label: "Water District", address: "Dumaguete City", icon: "💧", accent: "#38bdf8", phones: [{ label: "Office", number: "(035) 422-6951" }, { label: "Emergency", number: "0998 847 5656" }], notes: "Metro Dumaguete Water District — supply interruptions & pipe emergencies" },
+  { agency: "PNP", label: "Police", address: "Camp Leon Kilat, Dumaguete City", icon: "🚔", accent: "#4A90D9",
+    phones: [{ label: "National", number: "911" }, { label: "Local", number: "116" }, { label: "CRUZTELCO", number: "(035) 225-1766" }, { label: "Globe", number: "0917 933 0022" }, { label: "Smart", number: "0929 200 6999" }],
+    notes: "Available 24/7 for all police emergencies" },
+  { agency: "BFP", label: "Fire Dept.", address: "Real St, Dumaguete City", icon: "🔥", accent: "#e8372a",
+    phones: [{ label: "Emergency", number: "160" }, { label: "CRUZTELCO", number: "(035) 225-3445" }, { label: "Globe", number: "0977 198 1900" }, { label: "Smart", number: "0961 199 8377" }],
+    notes: "Fire suppression, rescue & emergency medical response" },
+  { agency: "CDRRMO", label: "City DRRM", address: "City Hall Compound, Dumaguete City", icon: "🛡️", accent: "#F5C842",
+    phones: [{ label: "Emergency", number: "348" }, { label: "Operations", number: "(035) 225-1911" }, { label: "Globe", number: "0936 795 4163" }],
+    notes: "City Disaster Risk Reduction & Management — 24/7" },
+  { agency: "ONE Rescue", label: "EMS / Ambulance", address: "Oriental Negros Emergency Rescue Foundation", icon: "🚑", accent: "#2ECC8F",
+    phones: [{ label: "CRUZTELCO", number: "(035) 225-9110" }, { label: "Globe", number: "0905 518 6917" }, { label: "Sun", number: "0922 880 8897" }],
+    notes: "Free pre-hospital emergency medical services" },
+  { agency: "Coast Guard", label: "Sea Rescue", address: "Dumaguete Boulevard", icon: "⚓", accent: "#00c8e0",
+    phones: [{ label: "Station", number: "(035) 422-6541" }, { label: "Mobile", number: "0968 771 2455" }],
+    notes: "Marine search & rescue operations" },
+  { agency: "NORECO II", label: "Electric", address: "Dumaguete City", icon: "⚡", accent: "#a78bfa",
+    phones: [{ label: "CRUZTELCO", number: "(035) 225-4830" }, { label: "Globe", number: "0917 322 4237" }],
+    notes: "Power outages, downed lines & electrical emergencies" },
 ];
 
 const hospitals: Hospital[] = [
-  { name: "Silliman University Medical Center (SUMC)", address: "V. Aldecoa Sr. Road, Daro, Dumaguete City", icon: "🏥", type: "Private — Level III Tertiary", beds: "200+ beds", phones: [{ label: "Main", number: "(035) 420-2000" }, { label: "Trunkline", number: "(035) 225-0841" }, { label: "ICU", number: "(035) 225-3563" }, { label: "EMS Ambulance", number: "0917 107 7415" }], notes: "Oldest Protestant hospital in Negros Oriental (est. 1903). Academic teaching hospital." },
-  { name: "ACE Dumaguete Doctors Hospital", address: "Claytown Road (North Road), Dumaguete City", icon: "🏥", type: "Private — Tertiary", phones: [{ label: "Trunk", number: "(035) 523-5957" }, { label: "Alternate", number: "(035) 225-8000" }], notes: "Allied Care Experts hospital offering specialist and emergency services." },
-  { name: "Holy Child Hospital", address: "Bp. Epifanio Surban St., Dumaguete City", icon: "🏥", type: "Private — Secondary", phones: [{ label: "Main", number: "(035) 422-9063" }, { label: "Alternate", number: "(035) 225-0510" }, { label: "Alternate 2", number: "(035) 225-4841" }, { label: "Mobile", number: "0995 090 8263" }], notes: "Catholic-affiliated hospital run by the Sisters of Mount Carmel." },
-  { name: "Negros Oriental Provincial Hospital (NOPH)", address: "North National Highway, Brgy. Piapi, Dumaguete City", icon: "🏥", type: "Government — Level III Referral", beds: "250 beds", phones: [{ label: "Main", number: "(035) 225-4921" }, { label: "Alternate", number: "(035) 225-0949" }, { label: "Alternate 2", number: "(035) 422-8628" }], notes: "Primary government referral hospital for all 22 municipalities of Negros Oriental." },
+  { name: "Silliman University Medical Center", address: "V. Aldecoa Sr. Road, Daro", type: "Private — Level III",
+    beds: "200+ beds",
+    phones: [{ label: "Main", number: "(035) 420-2000" }, { label: "ICU", number: "(035) 225-3563" }, { label: "Ambulance", number: "0917 107 7415" }],
+    notes: "Oldest Protestant hospital in Negros Oriental (est. 1903)" },
+  { name: "ACE Dumaguete Doctors Hospital", address: "Claytown Road, Dumaguete City", type: "Private — Tertiary",
+    phones: [{ label: "Trunk", number: "(035) 523-5957" }, { label: "Alt", number: "(035) 225-8000" }],
+    notes: "Allied Care Experts — specialist and emergency services" },
+  { name: "Holy Child Hospital", address: "Bp. Epifanio Surban St.", type: "Private — Secondary",
+    phones: [{ label: "Main", number: "(035) 422-9063" }, { label: "Mobile", number: "0995 090 8263" }],
+    notes: "Catholic-affiliated, run by the Sisters of Mount Carmel" },
+  { name: "Negros Oriental Provincial Hospital", address: "North National Hwy, Brgy. Piapi", type: "Government — Level III",
+    beds: "250 beds",
+    phones: [{ label: "Main", number: "(035) 225-4921" }, { label: "Alt", number: "(035) 422-8628" }],
+    notes: "Primary government referral hospital for Negros Oriental" },
 ];
 
 const barangays: Barangay[] = [
-  { name: "Bagacay", hotline: "09652045077", evacuation: "Barangay Bagacay Gymnasium" },
-  { name: "Bajumpandan", hotline: "09551850601", evacuation: "NORSU Main Campus II" },
-  { name: "Balugo", hotline: "09273571566", evacuation: "Balugo Elementary School" },
-  { name: "Banilad", hotline: "09197607484", evacuation: "Hermenegilda Flores Gloria Memorial High School" },
-  { name: "Bantayan", hotline: "09353261839", evacuation: "Barangay Bantayan Health Center" },
-  { name: "Batinguel", hotline: "09054345143", evacuation: "Barangay Batinguel Gymnasium" },
-  { name: "Buñao", hotline: "09559268258", evacuation: "Buñao Barangay Hall / Magsaysay Memorial Elementary School" },
+  { name: "Bagacay",     hotline: "09652045077",               evacuation: "Barangay Bagacay Gymnasium" },
+  { name: "Bajumpandan", hotline: "09551850601",               evacuation: "NORSU Main Campus II" },
+  { name: "Balugo",      hotline: "09273571566",               evacuation: "Balugo Elementary School" },
+  { name: "Banilad",     hotline: "09197607484",               evacuation: "Hermenegilda Flores Gloria Memorial High School" },
+  { name: "Bantayan",    hotline: "09353261839",               evacuation: "Barangay Bantayan Health Center" },
+  { name: "Batinguel",   hotline: "09054345143",               evacuation: "Barangay Batinguel Gymnasium" },
+  { name: "Buñao",       hotline: "09559268258",               evacuation: "Buñao Barangay Hall / Magsaysay Memorial Elementary School" },
   { name: "Cadawinonan", hotline: "09363175898 / 09164803784", evacuation: "Cadawinonan Elementary School" },
-  { name: "Calindagan", hotline: "09457419261", evacuation: "Dumaguete City National High School" },
-  { name: "Camanjac", hotline: "(035) 523-6263 / 09350792683", evacuation: "Camanjac Basketball Court" },
-  { name: "Candau-ay", hotline: "09359836121", evacuation: "Batinguel Elem. School / Candau-ay Elem. School / Balugo Church / BADC / Sto. Niño Church" },
-  { name: "Cantil-e", hotline: "09550192925", evacuation: "Upper Cantil-e Covered Court" },
-  { name: "Daro", hotline: "(035) 422-9761", evacuation: "Daro Barangay Hall" },
-  { name: "Junob", hotline: "09753422065", evacuation: "Northern Junob Basketball Court / Babajuba Basketball Court" },
-  { name: "Looc", hotline: "09362997073", evacuation: "Amador Dagudag Elementary School / Piapi Elementary School" },
-  { name: "Mangnao", hotline: "09979156379", evacuation: "Mangnao Gymnasium / South City Elementary School" },
-  { name: "Motong", hotline: "09261912007", evacuation: "Barangay Motong Covered Court" },
-  { name: "Piapi", hotline: "09165009288", evacuation: "Piapi High School and Elementary School" },
-  { name: "Poblacion 1", hotline: "09264603953", evacuation: "City Central Elementary School" },
-  { name: "Poblacion 2", hotline: "09558560795", evacuation: "Building 2, Public Market" },
-  { name: "Poblacion 3", hotline: null, evacuation: null },
-  { name: "Poblacion 4", hotline: null, evacuation: null },
-  { name: "Poblacion 5", hotline: null, evacuation: null },
-  { name: "Poblacion 6", hotline: null, evacuation: null },
-  { name: "Poblacion 7", hotline: "09550894159 / 09351386318", evacuation: "Barangay Hall / West City Elementary School" },
-  { name: "Poblacion 8", hotline: "09067729723", evacuation: "COSCA / Building 2, Public Market" },
-  { name: "Pulantubig", hotline: "09559268258", evacuation: "Magsaysay Memorial Elementary School" },
-  { name: "Tabuc-tubig", hotline: "09975941648", evacuation: "Tabuc-tubig Barangay Hall" },
-  { name: "Taculing", hotline: null, evacuation: null },
-  { name: "Talay", hotline: "09190834553", evacuation: "Talay Multi-purpose Evacuation Center" },
-  { name: "Tamnag", hotline: null, evacuation: null },
-  { name: "Taclobo", hotline: "(035) 226-3953", evacuation: "Taclobo National High School" },
+  { name: "Calindagan",  hotline: "09457419261",               evacuation: "Dumaguete City National High School" },
+  { name: "Camanjac",    hotline: "(035) 523-6263",            evacuation: "Camanjac Basketball Court" },
+  { name: "Candau-ay",   hotline: "09359836121",               evacuation: "Batinguel / Candau-ay Elementary School" },
+  { name: "Cantil-e",    hotline: "09550192925",               evacuation: "Upper Cantil-e Covered Court" },
+  { name: "Daro",        hotline: "(035) 422-9761",            evacuation: "Daro Barangay Hall" },
+  { name: "Junob",       hotline: "09753422065",               evacuation: "Northern Junob Basketball Court" },
+  { name: "Looc",        hotline: "09362997073",               evacuation: "Amador Dagudag Elementary School" },
+  { name: "Mangnao",     hotline: "09979156379",               evacuation: "Mangnao Gymnasium / South City Elementary School" },
+  { name: "Motong",      hotline: "09261912007",               evacuation: "Barangay Motong Covered Court" },
+  { name: "Piapi",       hotline: "09165009288",               evacuation: "Piapi High School and Elementary School" },
+  { name: "Poblacion 1", hotline: "09264603953",               evacuation: "City Central Elementary School" },
+  { name: "Poblacion 2", hotline: "09558560795",               evacuation: "Building 2, Public Market" },
+  { name: "Poblacion 3", hotline: null,                        evacuation: null },
+  { name: "Poblacion 4", hotline: null,                        evacuation: null },
+  { name: "Poblacion 5", hotline: null,                        evacuation: null },
+  { name: "Poblacion 6", hotline: null,                        evacuation: null },
+  { name: "Poblacion 7", hotline: "09550894159",               evacuation: "Barangay Hall / West City Elementary School" },
+  { name: "Poblacion 8", hotline: "09067729723",               evacuation: "COSCA / Building 2, Public Market" },
+  { name: "Pulantubig",  hotline: "09559268258",               evacuation: "Magsaysay Memorial Elementary School" },
+  { name: "Tabuc-tubig", hotline: "09975941648",               evacuation: "Tabuc-tubig Barangay Hall" },
+  { name: "Taculing",    hotline: null,                        evacuation: null },
+  { name: "Talay",       hotline: "09190834553",               evacuation: "Talay Multi-purpose Evacuation Center" },
+  { name: "Tamnag",      hotline: null,                        evacuation: null },
+  { name: "Taclobo",     hotline: "(035) 226-3953",            evacuation: "Taclobo National High School" },
 ];
 
-function cleanPhone(phone: string): string { return phone.replace(/[^0-9+]/g, ""); }
-function openMaps(query: string) { window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`, "_blank"); }
+function cleanPhone(p: string) { return p.replace(/[^0-9+]/g, ""); }
+function openMaps(q: string) { window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`, "_blank"); }
 
-function PhoneLink({ number, className }: { number: string; className: string }) {
-  const parts = number.split(/\s*\/\s*/);
-  return (
-    <>
-      {parts.map((part, i) => (
-        <span key={i}>
-          <a href={`tel:${cleanPhone(part.trim())}`} className={className}>{part.trim()}</a>
-          {i < parts.length - 1 && <span style={{ color: "rgba(168,216,255,0.30)", margin: "0 3px" }}>/</span>}
-        </span>
-      ))}
-    </>
-  );
-}
+const NAV_LINK: React.CSSProperties = {
+  display: "flex", alignItems: "center", gap: "10px",
+  padding: "10px 12px", borderRadius: "8px",
+  fontSize: "13px", fontWeight: "500",
+  color: "rgba(238,240,247,0.55)",
+  textDecoration: "none", marginBottom: "2px", transition: "all 0.2s",
+};
 
 export default function CitizenDirectory() {
+  const navigate = useNavigate();
+  const [tab,       setTab]       = useState<"emergency" | "hospitals" | "barangays">("emergency");
   const [bgySearch, setBgySearch] = useState("");
-  const filteredBarangays = barangays.filter((bgy) => {
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/login", { replace: true });
+  };
+
+  const filtered = barangays.filter(b => {
     const q = bgySearch.toLowerCase();
-    return bgy.name.toLowerCase().includes(q) || (bgy.hotline?.toLowerCase().includes(q) ?? false) || (bgy.evacuation?.toLowerCase().includes(q) ?? false);
+    return b.name.toLowerCase().includes(q) ||
+      (b.hotline?.toLowerCase().includes(q) ?? false) ||
+      (b.evacuation?.toLowerCase().includes(q) ?? false);
   });
 
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap');
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        :root { --bg: #07101d; --surface: rgba(13,27,46,0.72); --surface2: rgba(13,27,46,0.88); --input-bg: #060f1c; --border: rgba(168,216,255,0.08); --border2: rgba(168,216,255,0.20); --text: #F8FAFC; --accent: #A8D8FF; --text2: rgba(168,216,255,0.70); --text3: rgba(168,216,255,0.35); --red: #e8372a; --cyan: #00c8e0; --blue: #4A90D9; --radius: 13px; }
-        .dr { min-height: 100vh; font-family: 'DM Sans', sans-serif; color: var(--text); background: var(--bg); position: relative; overflow-x: hidden; }
-        .dr-bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; background: #07101d; }
-        .dr-bg-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(7,16,29,0.85) 0%, rgba(7,16,29,0.70) 40%, rgba(7,16,29,0.88) 80%, rgba(7,16,29,0.97) 100%); }
-        .dr-bg-atmosphere { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 60% 50% at 10% 0%, rgba(232,55,42,0.09) 0%, transparent 65%), radial-gradient(ellipse 55% 60% at 90% 100%, rgba(168,216,255,0.06) 0%, transparent 70%); }
-        .dr-wrap { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; padding: 0 28px 120px; }
-        .dr-nav { display: flex; align-items: center; justify-content: space-between; padding: 28px 0 0; animation: fadeUp .5s ease both; }
-        .dr-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text); }
-        .dr-logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); box-shadow: 0 0 12px var(--red), 0 0 24px rgba(232,55,42,0.4); animation: breathe 2.4s ease infinite; }
-        @keyframes breathe { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:.55; transform:scale(.78); } }
-        .dr-back { font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); text-decoration: none; border: 1px solid rgba(168,216,255,0.12); border-radius: 8px; padding: 8px 16px; transition: all .2s; background: rgba(13,27,46,0.60); backdrop-filter: blur(18px); display: flex; align-items: center; gap: 6px; }
-        .dr-back:hover { color: var(--accent); border-color: rgba(168,216,255,0.30); }
-        .dr-hero { margin-top: 72px; margin-bottom: 52px; animation: fadeUp 0.7s 0.1s ease both; }
-        .dr-hero-eyebrow { font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 0.20em; text-transform: uppercase; color: var(--red); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
-        .dr-hero-eyebrow::after { content: ''; display: block; width: 40px; height: 1px; background: var(--red); opacity: 0.5; }
-        .dr-hero h1 { font-family: 'Syne', sans-serif; font-size: clamp(42px, 6vw, 78px); font-weight: 800; line-height: 0.95; letter-spacing: -0.03em; color: #F8FAFC; margin-bottom: 24px; }
-        .dr-hero h1 .accent { color: #A8D8FF; }
-        .dr-hero-sub { font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 300; color: rgba(168,216,255,0.70); max-width: 520px; line-height: 1.68; }
-        .dr-banner { background: rgba(232,55,42,0.10); border: 1px solid rgba(232,55,42,0.35); border-radius: var(--radius); padding: 16px 20px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 16px; animation: bannerPulse 3s ease-in-out infinite, fadeUp .6s .15s ease both; box-shadow: 0 0 22px rgba(232,55,42,0.12); backdrop-filter: blur(18px); }
-        @keyframes bannerPulse { 0%,100% { box-shadow: 0 0 22px rgba(232,55,42,0.12); } 50% { box-shadow: 0 0 38px rgba(232,55,42,0.26); } }
-        .dr-banner-label { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #ff8a80; white-space: nowrap; }
-        .dr-banner-pills { display: flex; gap: 7px; flex-wrap: wrap; }
-        .dr-banner-pill { display: inline-flex; align-items: center; gap: 5px; background: rgba(232,55,42,0.12); border: 1px solid rgba(232,55,42,0.35); border-radius: 22px; padding: 7px 14px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; color: #F8FAFC; text-decoration: none; transition: all .18s; min-height: 40px; }
-        .dr-banner-pill:hover { background: rgba(232,55,42,0.26); transform: translateY(-1px); }
-        .dr-disclaimer { display: flex; align-items: flex-start; gap: 10px; background: var(--surface); backdrop-filter: blur(18px); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; margin-bottom: 48px; }
-        .dr-disclaimer-icon { font-size: 13px; flex-shrink: 0; margin-top: 2px; }
-        .dr-disclaimer-text { font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 300; color: var(--text2); line-height: 1.65; }
-        .dr-disclaimer-text strong { color: var(--text); font-weight: 500; }
-        .dr-disclaimer-text .red { color: #ff8a80; font-weight: 500; }
-        .dr-section { margin-bottom: 56px; animation: fadeUp .55s ease both; }
-        .dr-section-head { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-        .dr-section-icon { font-size: 18px; }
-        .dr-section-head h2 { font-family: 'Syne', sans-serif; font-size: 19px; font-weight: 800; letter-spacing: -0.02em; color: #F8FAFC; }
-        .dr-section-line { flex: 1; height: 1px; background: linear-gradient(90deg, rgba(168,216,255,0.18), transparent); }
-        .dr-section-count { font-family: 'DM Sans', sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text3); }
-        .dr-grid-emergency { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-        .dr-emerg-card { background: var(--surface); backdrop-filter: blur(18px); border: 1px solid var(--border); border-top: 2px solid var(--accent); border-radius: var(--radius); padding: 20px 16px 16px; position: relative; overflow: hidden; transition: transform .22s, box-shadow .22s; display: flex; flex-direction: column; }
-        .dr-emerg-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(0,0,0,0.4); }
-        .dr-emerg-icon { font-size: 26px; margin-bottom: 10px; }
-        .dr-emerg-agency { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; letter-spacing: -0.02em; color: var(--accent); line-height: 1; }
-        .dr-emerg-label { font-family: 'DM Sans', sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text3); margin-top: 3px; margin-bottom: 14px; }
-        .dr-phone-list { display: flex; flex-direction: column; gap: 5px; flex: 1; }
-        .dr-phone-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap; }
-        .dr-phone-lbl { font-family: 'DM Sans', sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text3); min-width: 80px; flex-shrink: 0; }
-        .dr-phone-num { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; color: var(--text2); text-decoration: none; transition: color .15s; display: inline-block; padding: 4px 2px; }
-        .dr-phone-num:hover { color: var(--accent); }
-        .dr-phone-num.mobile { color: #A8D8FF; }
-        .dr-phone-num.hotline { font-size: 16px; font-weight: 700; color: #ff8a80; }
-        .dr-emerg-note { font-family: 'DM Sans', sans-serif; font-size: 11.5px; font-weight: 300; color: var(--text3); line-height: 1.55; margin-top: 10px; }
-        .dr-card-actions { display: flex; gap: 6px; margin-top: 13px; flex-wrap: wrap; }
-        .dr-act-btn { display: inline-flex; align-items: center; gap: 5px; font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; border-radius: 8px; padding: 8px 13px; cursor: pointer; border: none; text-decoration: none; transition: all .18s; min-height: 36px; }
-        .dr-act-call { background: rgba(168,216,255,0.08); border: 1px solid var(--accent) !important; color: var(--accent); }
-        .dr-act-nav { background: var(--surface2); border: 1px solid var(--border) !important; color: var(--text3); }
-        .dr-act-nav:hover { border-color: var(--border2) !important; color: var(--text2); }
-        .dr-grid-hospital { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-        .dr-hosp-card { background: var(--surface); backdrop-filter: blur(18px); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; transition: transform .22s, box-shadow .22s; display: flex; flex-direction: column; }
-        .dr-hosp-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(0,0,0,0.4); }
-        .dr-hosp-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
-        .dr-hosp-tags { display: flex; gap: 5px; flex-wrap: wrap; }
-        .dr-hosp-tag { font-family: 'DM Sans', sans-serif; font-size: 9px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: #A8D8FF; border: 1px solid rgba(168,216,255,0.25); border-radius: 4px; padding: 3px 7px; }
-        .dr-hosp-tag.gov { color: var(--blue); border-color: rgba(74,144,217,0.25); }
-        .dr-hosp-beds { font-family: 'DM Sans', sans-serif; font-size: 10px; color: var(--text3); background: rgba(168,216,255,0.04); border: 1px solid var(--border); border-radius: 4px; padding: 3px 8px; white-space: nowrap; }
-        .dr-hosp-name { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: #F8FAFC; margin-bottom: 4px; line-height: 1.35; }
-        .dr-hosp-addr { font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 300; color: var(--text3); margin-bottom: 13px; line-height: 1.55; }
-        .dr-hosp-phones { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
-        .dr-hosp-phone-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-        .dr-hosp-phone-lbl { font-family: 'DM Sans', sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text3); min-width: 68px; flex-shrink: 0; }
-        .dr-hosp-phone-num { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; color: var(--text2); text-decoration: none; transition: color .15s; display: inline-block; padding: 4px 2px; }
-        .dr-hosp-phone-num:hover { color: #A8D8FF; }
-        .dr-hosp-phone-num.mobile { color: #A8D8FF; }
-        .dr-hosp-note { font-family: 'DM Sans', sans-serif; font-size: 11.5px; font-weight: 300; color: var(--text3); line-height: 1.55; margin-bottom: 13px; }
-        .dr-hosp-actions { display: flex; gap: 6px; margin-top: auto; flex-wrap: wrap; }
-        .dr-bgy-search-wrap { position: relative; margin-bottom: 16px; }
-        .dr-bgy-search-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); font-size: 14px; opacity: 0.25; pointer-events: none; }
-        .dr-bgy-search-input { width: 100%; background: var(--input-bg); border: 1px solid var(--border); border-radius: 9px; padding: 11px 38px; font-family: 'DM Sans', sans-serif; font-size: 14px; color: #F8FAFC; outline: none; caret-color: #A8D8FF; transition: border-color .18s; }
-        .dr-bgy-search-input::placeholder { color: var(--text3); }
-        .dr-bgy-search-input:focus { border-color: rgba(168,216,255,0.38); box-shadow: 0 0 0 3px rgba(168,216,255,0.06); }
-        .dr-bgy-search-clear { position: absolute; right: 11px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text3); cursor: pointer; font-size: 20px; line-height: 1; padding: 0; }
-        .dr-bgy-stats { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
-        .dr-bgy-stat { font-family: 'DM Sans', sans-serif; font-size: 11px; color: var(--text3); background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; }
-        .dr-bgy-stat span { color: #A8D8FF; font-weight: 500; }
-        .dr-bgy-empty { text-align: center; color: var(--text3); font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 48px 0; }
-        .dr-grid-barangay { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-        .dr-bgy-card { background: var(--surface); backdrop-filter: blur(18px); border: 1px solid var(--border); border-radius: 11px; padding: 14px 13px; display: flex; flex-direction: column; gap: 8px; transition: transform .2s, border-color .2s; }
-        .dr-bgy-card:hover { transform: translateY(-2px); border-color: var(--border2); }
-        .dr-bgy-name { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: #F8FAFC; }
-        .dr-bgy-badges { display: flex; flex-wrap: wrap; gap: 4px; }
-        .dr-bgy-badge { font-family: 'DM Sans', sans-serif; font-size: 8px; font-weight: 500; letter-spacing: 0.10em; text-transform: uppercase; padding: 2px 6px; border-radius: 3px; white-space: nowrap; }
-        .dr-bgy-badge-hotline { color: #A8D8FF; background: rgba(168,216,255,0.08); border: 1px solid rgba(168,216,255,0.20); }
-        .dr-bgy-badge-evac { color: var(--blue); background: rgba(74,144,217,0.08); border: 1px solid rgba(74,144,217,0.18); }
-        .dr-bgy-badge-tbd { color: var(--text3); background: rgba(168,216,255,0.02); border: 1px solid var(--border); }
-        .dr-bgy-info-row { display: flex; align-items: flex-start; gap: 6px; }
-        .dr-bgy-info-icon { font-size: 10px; margin-top: 2px; flex-shrink: 0; opacity: .40; }
-        .dr-bgy-phone-link { font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; color: #A8D8FF; text-decoration: none; transition: color .15s; display: inline-block; padding: 3px 1px; }
-        .dr-bgy-phone-link:hover { color: #F8FAFC; }
-        .dr-bgy-info-text { font-family: 'DM Sans', sans-serif; font-weight: 300; color: var(--text3); line-height: 1.45; font-size: 11px; }
-        .dr-bgy-nav-btn { display: inline-flex; align-items: center; gap: 4px; font-family: 'DM Sans', sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text3); background: none; border: none; cursor: pointer; padding: 0; transition: color .18s; margin-top: 2px; }
-        .dr-bgy-nav-btn:hover { color: #A8D8FF; }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
-        @media (max-width: 1024px) { .dr-grid-emergency { grid-template-columns: repeat(2, 1fr); } .dr-grid-barangay { grid-template-columns: repeat(3, 1fr); } }
-        @media (max-width: 760px) { .dr-wrap { padding: 0 18px 100px; } .dr-hero h1 { font-size: 38px; } .dr-grid-hospital { grid-template-columns: 1fr; } .dr-grid-barangay { grid-template-columns: repeat(2, 1fr); } .dr-banner { flex-direction: column; } }
-        @media (max-width: 520px) { .dr-grid-emergency { grid-template-columns: 1fr; } .dr-grid-barangay { grid-template-columns: 1fr; } }
-      `}</style>
+    <div style={{ minHeight: "100vh", backgroundColor: "#080c14", color: "#eef0f7", fontFamily: "'Instrument Sans', sans-serif" }}>
 
-      <div className="dr">
-        <div className="dr-bg"><div className="dr-bg-overlay" /><div className="dr-bg-atmosphere" /></div>
-        <div className="dr-wrap">
-          <nav className="dr-nav">
-            <Link to="/citizen/dashboard" className="dr-logo"><span className="dr-logo-dot" />DumaSafeGuide</Link>
-            <Link to="/citizen/dashboard" className="dr-back">← Dashboard</Link>
-          </nav>
-
-          <section className="dr-hero">
-            <div className="dr-hero-eyebrow">Emergency Directory</div>
-            <h1>Stay <span className="accent">Connected</span>,<br />Stay <span className="accent">Safe</span></h1>
-            <p className="dr-hero-sub">All critical contacts for Dumaguete City — landlines and mobile numbers for emergency services, hospitals, and every barangay hotline in one place.</p>
-          </section>
-
-          <div className="dr-banner">
-            <div className="dr-banner-label">🚨 Universal Emergency</div>
-            <div className="dr-banner-pills">
-              <a href="tel:911" className="dr-banner-pill">📞 911 — All Emergencies</a>
-              <a href="tel:116" className="dr-banner-pill">🚔 116 — PNP Police</a>
-              <a href="tel:160" className="dr-banner-pill">🔥 160 — BFP Fire</a>
-              <a href="tel:09367954163" className="dr-banner-pill">🛡️ 0936 795 4163 — CDRRMO</a>
-              <a href="tel:09055186917" className="dr-banner-pill">🚑 0905 518 6917 — ONE Rescue</a>
-            </div>
+      {/* ── Sidebar ── */}
+      <aside style={{ position: "fixed", left: 0, top: 0, width: "260px", height: "100vh", backgroundColor: "rgba(8,12,20,0.95)", borderRight: "1px solid rgba(255,255,255,0.07)", display: "flex", flexDirection: "column", zIndex: 200 }}>
+        <div style={{ padding: "20px 16px", display: "flex", alignItems: "center", gap: "12px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+          <img src={dsgLogo} alt="DSG" style={{ width: "40px", height: "40px", borderRadius: "8px", filter: "drop-shadow(0 0 8px rgba(255,255,255,0.6))" }} />
+          <div>
+            <div style={{ fontSize: "15px", fontWeight: "800", color: "#eef0f7" }}>DumaSafeGuide</div>
+            <div style={{ fontSize: "10px", color: "#2ECC8F", marginTop: "2px", fontWeight: "600" }}>● CITIZEN</div>
           </div>
+        </div>
 
-          <div className="dr-disclaimer">
-            <span className="dr-disclaimer-icon">ℹ️</span>
-            <p className="dr-disclaimer-text"><strong>911, 116, and 160 are free to call from any mobile or landline</strong> in the Philippines — no load required. When in doubt, dial <span className="red">911</span> first.</p>
+        <nav style={{ flex: 1, overflowY: "auto", padding: "8px 10px" }}>
+          <div style={{ fontSize: "10px", fontWeight: "700", color: "rgba(238,240,247,0.28)", letterSpacing: "0.14em", textTransform: "uppercase", padding: "12px 8px 6px" }}>Portal</div>
+          <Link to="/citizen/dashboard" style={NAV_LINK}><span>🏠</span> Overview</Link>
+
+          <div style={{ fontSize: "10px", fontWeight: "700", color: "rgba(238,240,247,0.28)", letterSpacing: "0.14em", textTransform: "uppercase", padding: "12px 8px 6px", marginTop: "8px" }}>Actions</div>
+          <Link to="/citizen/report"    style={NAV_LINK}><span>📝</span> File Report</Link>
+          <Link to="/citizen/history"   style={NAV_LINK}><span>📂</span> My Reports</Link>
+          <Link to="/citizen/alerts"    style={NAV_LINK}><span>🔔</span> Barangay Alerts</Link>
+          <Link to="/citizen/map"       style={NAV_LINK}><span>🗺️</span> Safety Map</Link>
+          <Link to="/citizen/safetytips" style={NAV_LINK}><span>💡</span> Safety Tips</Link>
+
+          <div style={{ fontSize: "10px", fontWeight: "700", color: "rgba(238,240,247,0.28)", letterSpacing: "0.14em", textTransform: "uppercase", padding: "12px 8px 6px", marginTop: "8px" }}>Info</div>
+          {/* Active state for directory */}
+          <Link to="/citizen/directory" style={{ ...NAV_LINK, backgroundColor: "rgba(74,144,217,0.12)", color: "#4A90D9", borderLeft: "2px solid #4A90D9", paddingLeft: "10px" }}><span>📋</span> Directory</Link>
+          <Link to="/citizen/resources" style={NAV_LINK}><span>📚</span> Resources</Link>
+        </nav>
+
+        <div style={{ padding: "12px 10px 16px", borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+          <button onClick={handleLogout} style={{ display: "flex", alignItems: "center", gap: "8px", width: "100%", padding: "9px 12px", backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "8px", fontSize: "13px", fontWeight: "500", color: "rgba(238,240,247,0.55)", cursor: "pointer" }}>
+            🚪 Sign Out
+          </button>
+        </div>
+      </aside>
+
+      {/* ── Main ── */}
+      <div style={{ marginLeft: "260px", padding: "28px 32px", minHeight: "100vh" }}>
+
+        {/* Header */}
+        <div style={{ marginBottom: "28px" }}>
+          <div style={{ fontSize: "10px", color: "#4A90D9", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "8px", fontWeight: "700" }}>● Emergency Directory</div>
+          <h1 style={{ fontSize: "34px", fontWeight: "900", color: "#eef0f7", marginBottom: "6px" }}>Emergency <span style={{ color: "#4A90D9" }}>Contacts</span></h1>
+          <p style={{ fontSize: "12px", color: "rgba(238,240,247,0.35)", letterSpacing: "0.06em" }}>DUMAGUETE CITY — ALL CRITICAL HOTLINES IN ONE PLACE</p>
+        </div>
+
+        {/* 911 Banner */}
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", backgroundColor: "rgba(232,55,42,0.08)", border: "1px solid rgba(232,55,42,0.3)", borderRadius: "10px", padding: "14px 18px", marginBottom: "24px" }}>
+          <span style={{ fontSize: "11px", fontWeight: "700", color: "#ff8a80", letterSpacing: "0.12em" }}>🚨 UNIVERSAL EMERGENCY</span>
+          {[["911","All Emergencies"],["116","PNP Police"],["160","BFP Fire"],["0936 795 4163","CDRRMO"],["0905 518 6917","ONE Rescue"]].map(([num, lbl]) => (
+            <a key={num} href={`tel:${cleanPhone(num)}`} style={{ display: "inline-flex", alignItems: "center", gap: "5px", backgroundColor: "rgba(232,55,42,0.1)", border: "1px solid rgba(232,55,42,0.3)", borderRadius: "20px", padding: "6px 13px", fontSize: "12px", fontWeight: "500", color: "#eef0f7", textDecoration: "none" }}>
+              📞 {num} <span style={{ color: "rgba(238,240,247,0.4)", fontSize: "10px" }}>— {lbl}</span>
+            </a>
+          ))}
+        </div>
+
+        {/* Tabs */}
+        <div style={{ display: "flex", gap: "6px", marginBottom: "20px" }}>
+          {(["emergency","hospitals","barangays"] as const).map(t => (
+            <button key={t} onClick={() => setTab(t)} style={{ padding: "8px 18px", borderRadius: "8px", fontSize: "11px", fontWeight: "700", letterSpacing: "0.10em", textTransform: "uppercase", cursor: "pointer", border: "1px solid", transition: "all 0.2s",
+              backgroundColor: tab === t ? "rgba(74,144,217,0.15)" : "rgba(255,255,255,0.03)",
+              color:           tab === t ? "#4A90D9"               : "rgba(238,240,247,0.35)",
+              borderColor:     tab === t ? "rgba(74,144,217,0.4)"  : "rgba(255,255,255,0.07)",
+            }}>
+              {t === "emergency" ? "🚨 Emergency" : t === "hospitals" ? "🏥 Hospitals" : "🏘️ Barangays"}
+            </button>
+          ))}
+        </div>
+
+        {/* ── Emergency Services Tab ── */}
+        {tab === "emergency" && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "12px" }}>
+            {emergency.map(item => (
+              <div key={item.agency} style={{ backgroundColor: "rgba(15,21,33,0.82)", border: `1px solid rgba(255,255,255,0.07)`, borderTop: `2px solid ${item.accent}`, borderRadius: "14px", padding: "20px", transition: "all 0.2s" }}>
+                <div style={{ fontSize: "24px", marginBottom: "8px" }}>{item.icon}</div>
+                <div style={{ fontSize: "18px", fontWeight: "900", color: item.accent, marginBottom: "2px" }}>{item.agency}</div>
+                <div style={{ fontSize: "10px", color: "rgba(238,240,247,0.35)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "14px" }}>{item.label}</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "5px", marginBottom: "12px" }}>
+                  {item.phones.map((p, i) => {
+                    const isHotline = /^\d{2,3}$/.test(p.number.trim());
+                    const isMobile  = p.number.startsWith("09");
+                    return (
+                      <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span style={{ fontSize: "10px", color: "rgba(238,240,247,0.28)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{p.label}</span>
+                        <a href={`tel:${cleanPhone(p.number)}`} style={{ fontSize: isHotline ? "16px" : "13px", fontWeight: isHotline ? "800" : "500", color: isHotline ? "#ff8a80" : isMobile ? item.accent : "rgba(238,240,247,0.7)", textDecoration: "none" }}>
+                          {p.number}
+                        </a>
+                      </div>
+                    );
+                  })}
+                </div>
+                {item.notes && <p style={{ fontSize: "11px", color: "rgba(238,240,247,0.28)", lineHeight: "1.5", marginBottom: "12px" }}>{item.notes}</p>}
+                <div style={{ display: "flex", gap: "6px" }}>
+                  <a href={`tel:${cleanPhone(item.phones[0].number)}`} style={{ flex: 1, textAlign: "center", padding: "8px", backgroundColor: `${item.accent}18`, border: `1px solid ${item.accent}55`, borderRadius: "8px", fontSize: "11px", fontWeight: "700", color: item.accent, textDecoration: "none" }}>
+                    📞 Call Now
+                  </a>
+                  <button onClick={() => openMaps(`${item.agency} ${item.address}`)} style={{ padding: "8px 12px", backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "8px", fontSize: "11px", color: "rgba(238,240,247,0.35)", cursor: "pointer" }}>
+                    📍
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
+        )}
 
-          <div className="dr-section">
-            <div className="dr-section-head"><span className="dr-section-icon">🚨</span><h2>Emergency Services</h2><span className="dr-section-line" /><span className="dr-section-count">{emergency.length} agencies</span></div>
-            <div className="dr-grid-emergency">
-              {emergency.map((item) => (
-                <div key={item.agency} className="dr-emerg-card" style={{ "--accent": item.accent } as React.CSSProperties}>
-                  <div className="dr-emerg-icon">{item.icon}</div>
-                  <div className="dr-emerg-agency">{item.agency}</div>
-                  <div className="dr-emerg-label">{item.label}</div>
-                  <div className="dr-phone-list">
-                    {item.phones.map((p, i) => {
-                      const isMobile = p.number.startsWith("09") || p.number.startsWith("+639");
-                      const isHotline = /^\d{2,3}$/.test(p.number.trim());
-                      return (
-                        <div key={i} className="dr-phone-row">
-                          <span className="dr-phone-lbl">{p.label}</span>
-                          <a href={`tel:${cleanPhone(p.number)}`} className={`dr-phone-num${isMobile ? " mobile" : ""}${isHotline ? " hotline" : ""}`}>{p.number}</a>
-                        </div>
-                      );
-                    })}
+        {/* ── Hospitals Tab ── */}
+        {tab === "hospitals" && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: "12px" }}>
+            {hospitals.map(h => {
+              const isGov = h.type.includes("Government");
+              return (
+                <div key={h.name} style={{ backgroundColor: "rgba(15,21,33,0.82)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "20px" }}>
+                  <div style={{ display: "flex", gap: "8px", marginBottom: "12px", flexWrap: "wrap" }}>
+                    <span style={{ fontSize: "9px", fontWeight: "700", letterSpacing: "0.12em", textTransform: "uppercase", color: isGov ? "#4A90D9" : "#2ECC8F", border: `1px solid ${isGov ? "rgba(74,144,217,0.3)" : "rgba(46,204,143,0.3)"}`, borderRadius: "4px", padding: "3px 7px" }}>
+                      {isGov ? "Government" : "Private"}
+                    </span>
+                    {h.beds && <span style={{ fontSize: "9px", color: "rgba(238,240,247,0.28)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "4px", padding: "3px 7px" }}>🛏 {h.beds}</span>}
                   </div>
-                  {item.notes && <p className="dr-emerg-note">{item.notes}</p>}
-                  <div className="dr-card-actions">
-                    <a href={`tel:${cleanPhone(item.phones[0].number)}`} className="dr-act-btn dr-act-call">📞 Call Now</a>
-                    <button className="dr-act-btn dr-act-nav" onClick={() => openMaps(`${item.agency} ${item.address}`)}>📍 Map</button>
+                  <div style={{ fontSize: "15px", fontWeight: "800", color: "#eef0f7", marginBottom: "4px", lineHeight: "1.3" }}>{h.name}</div>
+                  <div style={{ fontSize: "11px", color: "rgba(238,240,247,0.28)", marginBottom: "14px" }}>📍 {h.address}</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "5px", marginBottom: "12px" }}>
+                    {h.phones.map((p, i) => (
+                      <div key={i} style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span style={{ fontSize: "10px", color: "rgba(238,240,247,0.28)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{p.label}</span>
+                        <a href={`tel:${cleanPhone(p.number)}`} style={{ fontSize: "13px", fontWeight: "500", color: p.number.startsWith("09") ? "#4A90D9" : "rgba(238,240,247,0.7)", textDecoration: "none" }}>{p.number}</a>
+                      </div>
+                    ))}
+                  </div>
+                  {h.notes && <p style={{ fontSize: "11px", color: "rgba(238,240,247,0.28)", lineHeight: "1.5", marginBottom: "12px" }}>{h.notes}</p>}
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    <a href={`tel:${cleanPhone(h.phones[0].number)}`} style={{ flex: 1, textAlign: "center", padding: "8px", backgroundColor: "rgba(74,144,217,0.1)", border: "1px solid rgba(74,144,217,0.3)", borderRadius: "8px", fontSize: "11px", fontWeight: "700", color: "#4A90D9", textDecoration: "none" }}>📞 Call</a>
+                    <button onClick={() => openMaps(`${h.name} Dumaguete`)} style={{ padding: "8px 12px", backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "8px", fontSize: "11px", color: "rgba(238,240,247,0.35)", cursor: "pointer" }}>📍</button>
                   </div>
                 </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* ── Barangays Tab ── */}
+        {tab === "barangays" && (
+          <>
+            <div style={{ position: "relative", marginBottom: "16px" }}>
+              <span style={{ position: "absolute", left: "13px", top: "50%", transform: "translateY(-50%)", opacity: 0.3 }}>🔍</span>
+              <input
+                type="text"
+                value={bgySearch}
+                onChange={e => setBgySearch(e.target.value)}
+                placeholder="Search barangay, hotline, or evacuation site…"
+                style={{ width: "100%", backgroundColor: "rgba(8,12,20,0.9)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", padding: "11px 36px 11px 36px", fontSize: "13px", color: "#eef0f7", outline: "none", fontFamily: "inherit" }}
+              />
+              {bgySearch && (
+                <button onClick={() => setBgySearch("")} style={{ position: "absolute", right: "11px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "rgba(238,240,247,0.35)", fontSize: "18px", cursor: "pointer" }}>×</button>
+              )}
+            </div>
+            <div style={{ display: "flex", gap: "8px", marginBottom: "16px", flexWrap: "wrap" }}>
+              {[
+                { label: `${barangays.filter(b => b.hotline).length} with hotlines`,        color: "#4A90D9" },
+                { label: `${barangays.filter(b => b.evacuation).length} with evacuation`,   color: "#2ECC8F" },
+                { label: `${barangays.filter(b => !b.hotline).length} no direct hotline`,   color: "rgba(238,240,247,0.28)" },
+              ].map(s => (
+                <span key={s.label} style={{ fontSize: "11px", color: s.color, backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "6px", padding: "4px 10px" }}>{s.label}</span>
               ))}
             </div>
-          </div>
-
-          <div className="dr-section">
-            <div className="dr-section-head"><span className="dr-section-icon">🏥</span><h2>Hospitals &amp; Medical Facilities</h2><span className="dr-section-line" /><span className="dr-section-count">{hospitals.length} facilities</span></div>
-            <div className="dr-grid-hospital">
-              {hospitals.map((h) => {
-                const isGov = h.type.includes("Government");
-                return (
-                  <div key={h.name} className="dr-hosp-card">
-                    <div className="dr-hosp-top">
-                      <div className="dr-hosp-tags">
-                        <span className={`dr-hosp-tag${isGov ? " gov" : ""}`}>{isGov ? "Government" : "Private"}</span>
-                        <span className="dr-hosp-tag" style={{ color: "#a78bfa", borderColor: "rgba(167,139,250,0.25)" }}>{h.type.split("—")[1]?.trim() || "Hospital"}</span>
-                      </div>
-                      {h.beds && <span className="dr-hosp-beds">🛏 {h.beds}</span>}
-                    </div>
-                    <div className="dr-hosp-name">{h.name}</div>
-                    <div className="dr-hosp-addr">📍 {h.address}</div>
-                    <div className="dr-hosp-phones">
-                      {h.phones.map((p, i) => {
-                        const isMobile = p.number.startsWith("09") || p.number.startsWith("+639");
-                        return (
-                          <div key={i} className="dr-hosp-phone-row">
-                            <span className="dr-hosp-phone-lbl">{p.label}</span>
-                            <a href={`tel:${cleanPhone(p.number)}`} className={`dr-hosp-phone-num${isMobile ? " mobile" : ""}`}>{p.number}</a>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    {h.notes && <p className="dr-hosp-note">{h.notes}</p>}
-                    <div className="dr-hosp-actions">
-                      <a href={`tel:${cleanPhone(h.phones[0].number)}`} className="dr-act-btn dr-act-call">📞 Call</a>
-                      <button className="dr-act-btn dr-act-nav" onClick={() => openMaps(`${h.name} Dumaguete`)}>📍 Navigate</button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="dr-section">
-            <div className="dr-section-head"><span className="dr-section-icon">🏘️</span><h2>Barangay Emergency Contacts</h2><span className="dr-section-line" /><span className="dr-section-count">{filteredBarangays.length} barangays</span></div>
-            <div className="dr-bgy-search-wrap">
-              <span className="dr-bgy-search-icon">🔍</span>
-              <input type="text" className="dr-bgy-search-input" placeholder="Search barangay, hotline, or evacuation site…" value={bgySearch} onChange={(e) => setBgySearch(e.target.value)} />
-              {bgySearch && <button className="dr-bgy-search-clear" onClick={() => setBgySearch("")}>×</button>}
-            </div>
-            <div className="dr-bgy-stats">
-              <div className="dr-bgy-stat"><span>{barangays.filter((b) => b.hotline).length}</span> with hotlines</div>
-              <div className="dr-bgy-stat"><span>{barangays.filter((b) => b.evacuation).length}</span> with evacuation sites</div>
-              <div className="dr-bgy-stat"><span>{barangays.filter((b) => !b.hotline && !b.evacuation).length}</span> no direct hotline</div>
-            </div>
-            {filteredBarangays.length === 0 ? (
-              <p className="dr-bgy-empty">No barangay matches your search.</p>
+            {filtered.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "48px", color: "rgba(238,240,247,0.28)", fontSize: "13px" }}>No barangay matches your search.</div>
             ) : (
-              <div className="dr-grid-barangay">
-                {filteredBarangays.map((bgy) => (
-                  <div key={bgy.name} className="dr-bgy-card">
-                    <div className="dr-bgy-name">{bgy.name}</div>
-                    <div className="dr-bgy-badges">
-                      {bgy.hotline && <span className="dr-bgy-badge dr-bgy-badge-hotline">📞 Hotline</span>}
-                      {bgy.evacuation && <span className="dr-bgy-badge dr-bgy-badge-evac">🏫 Evacuation</span>}
-                      {!bgy.hotline && !bgy.evacuation && <span className="dr-bgy-badge dr-bgy-badge-tbd">No Direct Hotline</span>}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "10px" }}>
+                {filtered.map(b => (
+                  <div key={b.name} style={{ backgroundColor: "rgba(15,21,33,0.82)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "14px" }}>
+                    <div style={{ fontSize: "13px", fontWeight: "800", color: "#eef0f7", marginBottom: "8px" }}>{b.name}</div>
+                    <div style={{ display: "flex", gap: "4px", marginBottom: "8px", flexWrap: "wrap" }}>
+                      {b.hotline    && <span style={{ fontSize: "8px", fontWeight: "700", letterSpacing: "0.10em", color: "#4A90D9", border: "1px solid rgba(74,144,217,0.25)", borderRadius: "3px", padding: "2px 6px" }}>📞 HOTLINE</span>}
+                      {b.evacuation && <span style={{ fontSize: "8px", fontWeight: "700", letterSpacing: "0.10em", color: "#2ECC8F", border: "1px solid rgba(46,204,143,0.25)", borderRadius: "3px", padding: "2px 6px" }}>🏫 EVAC</span>}
+                      {!b.hotline && !b.evacuation && <span style={{ fontSize: "8px", color: "rgba(238,240,247,0.28)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "3px", padding: "2px 6px" }}>NO DIRECT HOTLINE</span>}
                     </div>
-                    {bgy.hotline ? (
-                      <div className="dr-bgy-info-row"><span className="dr-bgy-info-icon">📞</span><PhoneLink number={bgy.hotline} className="dr-bgy-phone-link" /></div>
-                    ) : (
-                      <div className="dr-bgy-info-row">
-                        <span className="dr-bgy-info-icon">⚠️</span>
-                        <span className="dr-bgy-info-text">No direct hotline — call <a href="tel:911" style={{ color: "#ff8a80", fontWeight: 500, textDecoration: "none" }}>911</a> or <a href="tel:09367954163" style={{ color: "#A8D8FF", fontWeight: 500, textDecoration: "none" }}>CDRRMO</a></span>
-                      </div>
-                    )}
-                    {bgy.evacuation && <div className="dr-bgy-info-row"><span className="dr-bgy-info-icon">🏫</span><span className="dr-bgy-info-text">{bgy.evacuation}</span></div>}
-                    <button className="dr-bgy-nav-btn" onClick={() => openMaps(`${bgy.name} Barangay Dumaguete City`)}>Navigate →</button>
+                    {b.hotline
+                      ? <a href={`tel:${cleanPhone(b.hotline.split("/")[0].trim())}`} style={{ fontSize: "12px", fontWeight: "600", color: "#4A90D9", textDecoration: "none", display: "block", marginBottom: "5px" }}>{b.hotline}</a>
+                      : <p style={{ fontSize: "11px", color: "rgba(238,240,247,0.28)", marginBottom: "5px" }}>Call <a href="tel:911" style={{ color: "#ff8a80", textDecoration: "none" }}>911</a> or <a href="tel:09367954163" style={{ color: "#4A90D9", textDecoration: "none" }}>CDRRMO</a></p>
+                    }
+                    {b.evacuation && <p style={{ fontSize: "10px", color: "rgba(238,240,247,0.35)", lineHeight: "1.4", marginBottom: "8px" }}>🏫 {b.evacuation}</p>}
+                    <button onClick={() => openMaps(`${b.name} Barangay Dumaguete City`)} style={{ fontSize: "10px", fontWeight: "600", color: "rgba(238,240,247,0.35)", background: "none", border: "none", cursor: "pointer", padding: 0 }}>Navigate →</button>
                   </div>
                 ))}
               </div>
             )}
-          </div>
-        </div>
+          </>
+        )}
       </div>
-    </>
+    </div>
   );
 }

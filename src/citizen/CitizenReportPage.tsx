@@ -91,7 +91,7 @@ const CSS = `
     max-width: 480px; line-height: 1.7;
   }
 
-  /* ── Tracking banner ── */
+  /* ── Logged-in status banner ── */
   .cr-banner {
     display: flex; align-items: center; gap: 14px;
     background: rgba(46,204,143,.06);
@@ -424,8 +424,6 @@ const CSS = `
     font-size: 14px; font-weight: 400; color: rgba(238,240,247,.35);
     max-width: 460px; line-height: 1.68; margin-bottom: 28px;
   }
-
-  /* ── SUCCESS CARDS ROW ── */
   .cr-success-cards {
     display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
     width: 100%; max-width: 780px;
@@ -469,6 +467,8 @@ const CSS = `
     .cr-inner { padding: 0 16px 80px; }
     .cr-steps { -webkit-mask-image: none; mask-image: none; }
     .cr-success-cards { flex-direction: column; align-items: center; }
+    .cr-banner { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .cr-banner-btn { width: 100%; justify-content: center; }
   }
   @media (max-width: 560px) {
     .cr-fields { grid-template-columns: 1fr; }
@@ -501,10 +501,7 @@ async function ipGeolocationFallback(): Promise<{ lat: string; lng: string } | n
     const res  = await fetch("https://ipapi.co/json/");
     const data = await res.json();
     if (data?.latitude && data?.longitude) {
-      return {
-        lat: String(data.latitude),
-        lng: String(data.longitude),
-      };
+      return { lat: String(data.latitude), lng: String(data.longitude) };
     }
   } catch {}
   return null;
@@ -543,25 +540,17 @@ function acquireGPS(
   watchId = navigator.geolocation.watchPosition(
     (pos) => {
       if (!best || pos.coords.accuracy < best.coords.accuracy) best = pos;
-      if (pos.coords.accuracy <= 15) {
-        clearTimeout(timer);
-        finish();
-      }
+      if (pos.coords.accuracy <= 15) { clearTimeout(timer); finish(); }
     },
     (err) => {
-      if (err.code === err.PERMISSION_DENIED) {
-        clearTimeout(timer);
-        finish();
-        return;
-      }
-      if (best) {
-        clearTimeout(timer);
-        finish();
-      }
+      if (err.code === err.PERMISSION_DENIED) { clearTimeout(timer); finish(); return; }
+      if (best) { clearTimeout(timer); finish(); }
     },
     { enableHighAccuracy: true, timeout: 30_000, maximumAge: 0 }
   );
 }
+
+// ── Component ────────────────────────────────────────────────────────────────
 
 export default function CitizenReport() {
   const navigate = useNavigate();
@@ -660,9 +649,7 @@ export default function CitizenReport() {
     );
   }
 
-  useEffect(() => {
-    resolveLocation();
-  }, []);
+  useEffect(() => { resolveLocation(); }, []);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -686,12 +673,9 @@ export default function CitizenReport() {
     if (error) {
       setUploadProgress("error");
       let msg = `Upload failed: ${error.message}`;
-      if (error.message?.includes("Bucket not found"))
-        msg = 'Storage bucket "reports-evidence" not found.';
-      else if (error.message?.includes("policy"))
-        msg = "Upload blocked by storage security policy.";
-      else if (error.message?.includes("too large"))
-        msg = "File is too large.";
+      if (error.message?.includes("Bucket not found"))  msg = 'Storage bucket "reports-evidence" not found.';
+      else if (error.message?.includes("policy"))       msg = "Upload blocked by storage security policy.";
+      else if (error.message?.includes("too large"))    msg = "File is too large.";
       return { url: null, errorMsg: msg };
     }
     const { data } = supabase.storage.from("reports-evidence").getPublicUrl(filePath);
@@ -710,11 +694,7 @@ export default function CitizenReport() {
     let evidenceUrl: string | null = null;
     if (fileObject) {
       const { url, errorMsg } = await uploadEvidence(fileObject);
-      if (!url) {
-        setSubmitError(errorMsg ?? "Evidence upload failed.");
-        setSubmitting(false);
-        return;
-      }
+      if (!url) { setSubmitError(errorMsg ?? "Evidence upload failed."); setSubmitting(false); return; }
       evidenceUrl = url;
     }
 
@@ -759,7 +739,7 @@ export default function CitizenReport() {
     if (locationStatus === "loading") return "Acquiring location — please wait…";
     if (locationStatus === "error")   return "Location unavailable — GPS access denied or timed out";
     if (locationStatus === "ok") {
-      if (address) return address;
+      if (address)  return address;
       if (location) return `Resolving address… (${location})`;
     }
     return "";
@@ -864,18 +844,18 @@ export default function CitizenReport() {
             </p>
           </section>
 
-          {/* ── Tracking banner ── */}
+          {/* ── Logged-in status banner (NO "create account" language) ── */}
           <div className="cr-banner">
-            <div className="cr-banner-icon">📍</div>
+            <div className="cr-banner-icon">✅</div>
             <div className="cr-banner-body">
-              <div className="cr-banner-title">Track Your Report in Real-Time</div>
+              <div className="cr-banner-title">You're Logged In — Reports Are Tracked Automatically</div>
               <p className="cr-banner-text">
-                Monitor your report status and receive updates as authorities respond.{" "}
-                <strong>Check My Reports in the sidebar to view all your submissions.</strong>
+                All reports you submit are linked to your account.{" "}
+                <strong>You can monitor status updates and responder activity anytime from My Reports.</strong>
               </p>
             </div>
             <button className="cr-banner-btn" onClick={() => navigate("/citizen/history")}>
-              View My Reports →
+              My Reports →
             </button>
           </div>
 
@@ -986,11 +966,7 @@ export default function CitizenReport() {
                         placeholder="Waiting for GPS…"
                       />
                     </div>
-                    <button
-                      type="button"
-                      className="cr-gps-btn"
-                      onClick={resolveLocation}
-                    >
+                    <button type="button" className="cr-gps-btn" onClick={resolveLocation}>
                       📍 Refresh GPS
                     </button>
                   </div>
@@ -1029,20 +1005,8 @@ export default function CitizenReport() {
                     <>
                       <div className="cr-acc-badges">
                         {locationSource === "gps" && gpsAccuracy !== null && (
-                          <span
-                            className={`cr-acc-badge ${
-                              gpsAccuracy <= 20
-                                ? "acc-great"
-                                : gpsAccuracy <= 100
-                                ? "acc-ok"
-                                : "acc-poor"
-                            }`}
-                          >
-                            {gpsAccuracy <= 20
-                              ? "✓ High accuracy"
-                              : gpsAccuracy <= 100
-                              ? "~ Medium accuracy"
-                              : "⚠ Low accuracy"}{" "}
+                          <span className={`cr-acc-badge ${gpsAccuracy <= 20 ? "acc-great" : gpsAccuracy <= 100 ? "acc-ok" : "acc-poor"}`}>
+                            {gpsAccuracy <= 20 ? "✓ High accuracy" : gpsAccuracy <= 100 ? "~ Medium accuracy" : "⚠ Low accuracy"}{" "}
                             (±{Math.round(gpsAccuracy)}m)
                           </span>
                         )}
@@ -1052,14 +1016,11 @@ export default function CitizenReport() {
                           </span>
                         )}
                         {locationSource === "gps" && gpsAccuracy !== null && gpsAccuracy > 100 && (
-                          <span className="cr-acc-tip">
-                            Move outdoors for better accuracy
-                          </span>
+                          <span className="cr-acc-tip">Move outdoors for better accuracy</span>
                         )}
                       </div>
                       <p className="cr-hint cr-hint--warn">
-                        ⚠️ If the location looks wrong, tap{" "}
-                        <strong>Refresh GPS</strong> to try again.
+                        ⚠️ If the location looks wrong, tap <strong>Refresh GPS</strong> to try again.
                       </p>
                     </>
                   )}
@@ -1123,27 +1084,19 @@ export default function CitizenReport() {
                   ) : (
                     <>
                       <span className="cr-dropzone-icon">📤</span>
-                      <span className="cr-dropzone-text">
-                        Click to select or drag &amp; drop
-                      </span>
+                      <span className="cr-dropzone-text">Click to select or drag &amp; drop</span>
                       <span className="cr-dropzone-hint">Photos or videos accepted</span>
                     </>
                   )}
                 </div>
                 {uploadProgress === "uploading" && (
-                  <div className="cr-upload-status cr-upload--uploading">
-                    ⏳ Uploading evidence…
-                  </div>
+                  <div className="cr-upload-status cr-upload--uploading">⏳ Uploading evidence…</div>
                 )}
                 {uploadProgress === "done" && (
-                  <div className="cr-upload-status cr-upload--done">
-                    ✅ Evidence uploaded successfully
-                  </div>
+                  <div className="cr-upload-status cr-upload--done">✅ Evidence uploaded successfully</div>
                 )}
                 {uploadProgress === "error" && (
-                  <div className="cr-upload-status cr-upload--error">
-                    ❌ Upload failed — please try again
-                  </div>
+                  <div className="cr-upload-status cr-upload--error">❌ Upload failed — please try again</div>
                 )}
               </div>
 
@@ -1203,15 +1156,9 @@ export default function CitizenReport() {
                 disabled={!agreed || !selectedType || submitting}
               >
                 {submitting ? (
-                  <>
-                    <span className="cr-spinner" />
-                    <span>Submitting…</span>
-                  </>
+                  <><span className="cr-spinner" /><span>Submitting…</span></>
                 ) : (
-                  <>
-                    <span>Submit Incident Report</span>
-                    <span className="cr-submit-arrow">→</span>
-                  </>
+                  <><span>Submit Incident Report</span><span className="cr-submit-arrow">→</span></>
                 )}
               </button>
             </form>
@@ -1256,8 +1203,9 @@ export default function CitizenReport() {
                 </p>
               </div>
 
+              {/* Sidebar track card — NO create account, just view reports */}
               <div className="cr-sidebar-card cr-sidebar-card--track">
-                <div className="cr-sidebar-title">📍 Track Your Report</div>
+                <div className="cr-sidebar-title">📍 Track Your Reports</div>
                 <p className="cr-sidebar-text">
                   View all your submitted reports and track their status in
                   real-time as authorities respond and investigate.

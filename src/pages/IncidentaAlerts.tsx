@@ -655,6 +655,7 @@ export default function IncidentAlerts() {
                             <span className="ia-card-meta-item">{report.category}</span>
                           )}
                         </div>
+      
                       </div>
                       <div className="ia-card-right">
                         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
