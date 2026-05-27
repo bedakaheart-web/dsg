@@ -10,22 +10,8 @@ import {
   FaClipboardCheck, FaUserShield,
 } from "react-icons/fa";
 
-// ── Logo: use the real DSG logo asset ──
-let dsgLogo = "";
-try {
-  dsgLogo = require("../assets/dsg_logo.png").default || "";
-} catch {
-  try {
-    dsgLogo = require("../assets/dsg_logo.png").default || "";
-  } catch {
-    dsgLogo = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect fill='%232ECC8F' width='40' height='40' rx='8'/%3E%3Ctext x='50%25' y='50%25' font-size='20' fill='white' text-anchor='middle' dominant-baseline='middle'%3EDS%3C/text%3E%3C/svg%3E";
-  }
-}
-
-let pagesBackground = "";
-try {
-  pagesBackground = require("../assets/pagesbackground.png").default || "";
-} catch { pagesBackground = ""; }
+import dsgLogo from '../assets/dsg_logo.png';
+import pagesBackground from '../assets/pagesbackground.png';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
