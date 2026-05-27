@@ -32,7 +32,8 @@ const CitizenHistoryPage = lazy(() => import('./citizen/CitizenHistoryPage'));
 const CitizenAlertsPage  = lazy(() => import('./citizen/CitizenAlertsPage'));
 const CitizenMap         = lazy(() => import('./citizen/CitizenMap'));
 const CitizenSafetyTips  = lazy(() => import('./citizen/CitizenSafetyTips'));
-const CitizenReportPage  = lazy(() => import('./citizen/CitizenReportPage'));
+const CitizenReportPage = lazy(() => import("./citizen/CitizenReportPage"));
+const Report = lazy(() => import("./pages/Report"));
 const CitizenDirectory   = lazy(() => import('./citizen/CitizenDirectory'));
 const CitizenResources   = lazy(() => import('./citizen/CitizenResources'));
 
@@ -148,10 +149,7 @@ export default function App() {
           <Route path="/responder/team"      element={<ProtectedRoute allowedRole="responder"><ResponderTeam /></ProtectedRoute>} />
 
           {/* ── Convenience redirects ─────────────────────────────────────── */}
-              <Route path="/about" element={<PublicLayout><About /></PublicLayout>} />
-              <Route path="/report"
-            element={user
-              ? <Navigate to="/citizen/report" replace />
+              <Route path="/report" element={<PublicLayout><Report /></PublicLayout>} />
               : <Navigate to="/" replace />}
           />
           <Route path="/safetytips" element={<Navigate to="/citizen/safetytips" replace />} />
