@@ -287,7 +287,7 @@ function fmtDateTime(ts: string) {
   return new Date(ts).toLocaleString("en-PH", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
-// ─── Detail View ─────────────────────────────────────────────────────────────
+// ─── Detail View ─────────────────────────────────────────────────────────
 
 function ReportDetail({ report, onBack }: { report: Report; onBack: () => void }) {
   const tm  = TYPE_META[report.type?.toLowerCase()]   ?? TYPE_META.other;
@@ -409,7 +409,7 @@ function ReportDetail({ report, onBack }: { report: Report; onBack: () => void }
           </div>
 
           {/* ── RESOLUTION DETAILS from responder ── */}
-          {report.status === "resolved" && (report.responder_notes || report.action_notes) && (
+          {report.status === "resolved" && (
             <div>
               <div className="ch-detail-section-title">Responder Resolution</div>
               <div className="ch-resolution">
@@ -427,25 +427,43 @@ function ReportDetail({ report, onBack }: { report: Report; onBack: () => void }
                 </div>
 
                 <div className="ch-resolution-body">
-                  {report.responder_notes && (
+                  {report.responder_notes ? (
                     <div className="ch-resolution-field">
                       <span className="ch-resolution-field-label">
                         <FaUserShield size={10} /> Response Notes
                       </span>
                       <div className="ch-resolution-field-value">{report.responder_notes}</div>
                     </div>
+                  ) : (
+                    <div className="ch-resolution-field">
+                      <span className="ch-resolution-field-label">
+                        <FaUserShield size={10} /> Response Notes
+                      </span>
+                      <div className="ch-resolution-field-value" style={{ color: "var(--text-3)", fontStyle: "italic" }}>
+                        No notes provided by responder.
+                      </div>
+                    </div>
                   )}
 
-                  {report.responder_notes && report.action_notes && (
+                  {(report.responder_notes || report.action_notes) && (
                     <div className="ch-resolution-divider" />
                   )}
 
-                  {report.action_notes && (
+                  {report.action_notes ? (
                     <div className="ch-resolution-field">
                       <span className="ch-resolution-field-label">
                         <FaClipboardCheck size={10} /> Action Taken
                       </span>
                       <div className="ch-resolution-field-value">{report.action_notes}</div>
+                    </div>
+                  ) : (
+                    <div className="ch-resolution-field">
+                      <span className="ch-resolution-field-label">
+                        <FaClipboardCheck size={10} /> Action Taken
+                      </span>
+                      <div className="ch-resolution-field-value" style={{ color: "var(--text-3)", fontStyle: "italic" }}>
+                        No action details recorded.
+                      </div>
                     </div>
                   )}
                 </div>
@@ -508,7 +526,25 @@ export default function CitizenHistoryPage() {
           .select("id, description, type, status, created_at, location, address, evidence_url, responder_id, responder_notes, action_notes, resolution_type, resolved_at")
           .eq("user_id", u.id)
           .order("created_at", { ascending: false });
-        if (!error) setReports(data || []);
+        if (error) {
+          console.error("❌ Error fetching reports:", error);
+        } else {
+          if (data && data.length > 0) {
+            console.log("✅ Reports loaded:", data.length, "reports");
+            data.forEach((r: any) => {
+              if (r.status === "resolved") {
+                console.log(`📋 Resolved Report ${r.id}:`, {
+                  type: r.type,
+                  responder_notes: r.responder_notes,
+                  action_notes: r.action_notes,
+                  resolution_type: r.resolution_type,
+                  resolved_at: r.resolved_at,
+                });
+              }
+            });
+          }
+          setReports(data || []);
+        }
       }
       setLoading(false);
     };
@@ -714,6 +750,6 @@ export default function CitizenHistoryPage() {
           </div>
         </div>
       </div>
-    </>A
+    </>
   );
 }
