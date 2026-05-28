@@ -29,10 +29,11 @@ import AdminTeamPage from "./AdminTeamPage";
 
 import dsgLogo from "../assets/dsg.logo.png";
 import footerBg from "../assets/footer.png"; // ✅ Import background
+import AdminHistoryLog from "./AdminHistoryLog";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type ViewId = "overview" | "incidents" | "alerts" | "responders" | "team" | "analytics";
+type ViewId = "overview" | "incidents" | "alerts" | "responders" | "team" | "analytics" | "settings";
 
 interface NavItem {
   id: ViewId;
@@ -833,6 +834,7 @@ export default function AdminDashboard() {
               {view === "responders" && <RespondersPage />}
               {view === "team"       && <AdminTeamPage />}
               {view === "analytics"  && <IncidentAnalytics />}
+              {view === "settings"   && <AdminHistoryLog  />}
             </div>
           </div>
         </div>
