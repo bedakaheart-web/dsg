@@ -21,17 +21,28 @@ import {
 import dsgLogo  from "../assets/dsg.logo.png";
 import footerBg from "../assets/footer.png";
 
-/* ─────────────────────────────────────────
-   FONT INJECTION — Inter + Poppins
-   (matches Login, Signup, and Navbar)
-───────────────────────────────────────── */
 const FONT_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+  @keyframes ambulanceStrobe {
+    0%   { box-shadow: 0 0 8px rgba(232,55,42,0.40), 0 0 20px rgba(232,55,42,0.20), 0 0 40px rgba(232,55,42,0.08); border-color: rgba(232,55,42,0.55); }
+    25%  { box-shadow: 0 0 16px rgba(232,55,42,0.90), 0 0 36px rgba(232,55,42,0.55), 0 0 64px rgba(232,55,42,0.25); border-color: rgba(232,55,42,1); }
+    50%  { box-shadow: 0 0 6px rgba(232,55,42,0.30), 0 0 14px rgba(232,55,42,0.15), 0 0 28px rgba(232,55,42,0.06); border-color: rgba(232,55,42,0.40); }
+    75%  { box-shadow: 0 0 18px rgba(232,55,42,0.95), 0 0 40px rgba(232,55,42,0.60), 0 0 70px rgba(232,55,42,0.28); border-color: rgba(232,55,42,1); }
+    100% { box-shadow: 0 0 8px rgba(232,55,42,0.40), 0 0 20px rgba(232,55,42,0.20), 0 0 40px rgba(232,55,42,0.08); border-color: rgba(232,55,42,0.55); }
+  }
+  @keyframes iconPulse {
+    0%, 100% { background: rgba(232,55,42,0.20); border-color: rgba(232,55,42,0.50); }
+    25%, 75%  { background: rgba(232,55,42,0.40); border-color: rgba(232,55,42,0.90); }
+    50%       { background: rgba(232,55,42,0.15); border-color: rgba(232,55,42,0.35); }
+  }
+  @keyframes textFlicker {
+    0%, 100% { color: rgba(255,120,100,0.90); }
+    25%, 75%  { color: rgba(255,160,140,1); }
+    50%       { color: rgba(255,100,80,0.75); }
+  }
 `;
 
-/* ─────────────────────────────────────────
-   TYPES
-───────────────────────────────────────── */
 interface FooterLink {
   label: string;
   to: string;
@@ -52,11 +63,6 @@ interface Hotline {
   pulse?: boolean;
 }
 
-/* ─────────────────────────────────────────
-   DATA
-   — Portals removed: ProtectedRoute handles
-     post-login routing automatically.
-───────────────────────────────────────── */
 const FOOTER_NAV: FooterColumn[] = [
   {
     heading: "Navigate",
@@ -70,7 +76,7 @@ const FOOTER_NAV: FooterColumn[] = [
   {
     heading: "About",
     links: [
-      { label: "About DumaSafeGuide", to: "/about",    icon: <FaInfoCircle size={11} /> },
+      { label: "About DumaSafeGuide", to: "/about",     icon: <FaInfoCircle size={11} /> },
       { label: "Resources",           to: "/resources", icon: <FaBook size={11} /> },
       { label: "Privacy Policy",      to: "/privacy",   icon: <FaLock size={11} /> },
       { label: "Terms of Use",        to: "/terms",     icon: <FaFileAlt size={11} /> },
@@ -87,9 +93,6 @@ const HOTLINES: Hotline[] = [
 
 const HIDDEN_PATHS = ["/signup"];
 
-/* ─────────────────────────────────────────
-   COMPONENT
-───────────────────────────────────────── */
 export default function Footer() {
   const location = useLocation();
   const year     = new Date().getFullYear();
@@ -101,22 +104,15 @@ export default function Footer() {
 
   return (
     <footer className="ft">
-
-      {/* Font injection */}
       <style>{FONT_CSS}</style>
 
-      {/* Textured photo scrim */}
       <div className="ft-scrim" style={{ backgroundImage: `url(${footerBg})` }} />
-
-      {/* Ambient glows */}
       <div className="ft-glow-left"  aria-hidden="true" />
       <div className="ft-glow-right" aria-hidden="true" />
 
       <div className="ft-inner">
 
-        {/* ══════════════════════════════════
-            STATUS STRIP — top edge signal bar
-        ══════════════════════════════════ */}
+        {/* STATUS STRIP */}
         <div className="ft-status-strip">
           <div className="ft-status-left">
             <span className="ft-status-dot" />
@@ -130,9 +126,7 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* ══════════════════════════════════
-            HOTLINE CARDS
-        ══════════════════════════════════ */}
+        {/* HOTLINES */}
         <div className="ft-hotlines">
           <div className="ft-hotlines-head">
             <FaPhone size={12} color="#e8372a" />
@@ -140,11 +134,90 @@ export default function Footer() {
             <span className="ft-hotlines-hint">Tap to dial instantly</span>
           </div>
           <div className="ft-hotlines-row">
-            {HOTLINES.map((h) => (
+
+            {/* ── Emergency 911 — homepage pill style ── */}
+            <a
+              href="tel:911"
+              title="Call Emergency: 911"
+              aria-label="Call Emergency 911"
+              style={{
+                flexShrink: 0,
+                display: "flex",
+                alignItems: "center",
+                gap: 7,
+                background: "rgba(10,18,30,0.88)",
+                border: "1px solid rgba(232,55,42,0.55)",
+                borderRadius: 20,
+                padding: "4px 14px 4px 7px",
+                backdropFilter: "blur(16px)",
+                WebkitBackdropFilter: "blur(16px)",
+                textDecoration: "none",
+                cursor: "pointer",
+                animation: "ambulanceStrobe 1.8s ease-in-out infinite",
+                transition: "all 0.2s ease",
+                alignSelf: "center",
+              }}
+              onMouseEnter={e => {
+                const el = e.currentTarget as HTMLAnchorElement;
+                el.style.animationPlayState = "paused";
+                el.style.background = "rgba(232,55,42,0.15)";
+                el.style.borderColor = "rgba(232,55,42,0.90)";
+                el.style.boxShadow = "0 0 24px rgba(232,55,42,0.80), 0 0 48px rgba(232,55,42,0.40)";
+              }}
+              onMouseLeave={e => {
+                const el = e.currentTarget as HTMLAnchorElement;
+                el.style.animationPlayState = "running";
+                el.style.background = "rgba(10,18,30,0.88)";
+                el.style.borderColor = "rgba(232,55,42,0.55)";
+                el.style.boxShadow = "";
+              }}
+            >
+              <div style={{
+                width: 20, height: 20, borderRadius: "50%",
+                background: "rgba(232,55,42,0.20)",
+                border: "1px solid rgba(232,55,42,0.50)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0,
+                animation: "iconPulse 1.8s ease-in-out infinite",
+              }}>
+                <FaPhone size={9} color="#ff6b5b" />
+              </div>
+              <span style={{
+                fontFamily: "'Space Mono', monospace",
+                fontSize: 10, fontWeight: 700,
+                color: "rgba(255,120,100,0.90)",
+                letterSpacing: "0.08em",
+                whiteSpace: "nowrap",
+                lineHeight: 1,
+                animation: "textFlicker 1.8s ease-in-out infinite",
+              }}>
+                Emergency
+              </span>
+              <span style={{
+                width: 1, height: 10,
+                background: "rgba(232,55,42,0.30)",
+                margin: "0 1px",
+                flexShrink: 0,
+              }} />
+              <span style={{
+                fontFamily: "'Space Mono', monospace",
+                fontSize: 12, fontWeight: 700,
+                color: "#fff",
+                letterSpacing: "0.04em",
+                whiteSpace: "nowrap",
+                lineHeight: 1,
+                textShadow: "0 0 8px rgba(232,55,42,0.60)",
+              }}>
+                911
+              </span>
+            </a>
+
+            {/* ── Other hotline cards — unchanged ── */}
+            {HOTLINES.filter(h => !h.pulse).map((h) => (
               <a
                 key={h.label}
                 href={`tel:${h.dialNumber}`}
-                className={`ft-hotline-card${h.pulse ? " is-pulse" : ""}`}
+                className="ft-hotline-card"
                 style={{
                   "--hc-color": h.color,
                   "--hc-bg":    h.bg,
@@ -160,15 +233,12 @@ export default function Footer() {
                 </div>
               </a>
             ))}
+
           </div>
         </div>
 
-        {/* ══════════════════════════════════
-            MAIN GRID — brand + nav columns
-        ══════════════════════════════════ */}
+        {/* MAIN GRID */}
         <div className="ft-main">
-
-          {/* Brand */}
           <div className="ft-brand-col">
             <Link to="/" className="ft-brand-lockup">
               <img src={dsgLogo} alt="DumaSafeGuide" className="ft-brand-logo" />
@@ -176,19 +246,16 @@ export default function Footer() {
                 Duma<em>Safe</em><strong>Guide</strong>
               </span>
             </Link>
-
             <p className="ft-brand-desc">
               A community-built safety platform for the City of Gentle People.
               Fast access to hotlines, incident reporting, and disaster preparedness.
             </p>
-
             <div className="ft-brand-badge">
               <span className="ft-badge-dot" />
               Serving Dumaguete City · Negros Oriental
             </div>
           </div>
 
-          {/* Nav columns — accordion on mobile */}
           {FOOTER_NAV.map((col) => {
             const isOpen = openCol === col.heading;
             return (
@@ -214,17 +281,10 @@ export default function Footer() {
               </div>
             );
           })}
-
         </div>
 
-        {/* ══════════════════════════════════
-            DIVIDER
-        ══════════════════════════════════ */}
         <div className="ft-rule" />
 
-        {/* ══════════════════════════════════
-            BOTTOM BAR
-        ══════════════════════════════════ */}
         <div className="ft-bottom">
           <p className="ft-copy">
             &copy; {year} DumaSafeGuide &mdash; All rights reserved.

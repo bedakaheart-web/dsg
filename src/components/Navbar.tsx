@@ -188,6 +188,7 @@ export default function Navbar() {
       <Link to="/map"        onClick={() => setMenuOpen(false)}>Map</Link>
       <Link to="/safetytips" onClick={() => setMenuOpen(false)}>Safety Tips</Link>
       <Link to="/about"      onClick={() => setMenuOpen(false)}>About</Link>
+      <Link to="/resources"  onClick={() => setMenuOpen(false)}>Resources</Link>    
       {isLoggedIn ? (
         <>
           {role === "citizen"   && <Link to="/citizen/dashboard"   onClick={() => setMenuOpen(false)}>My Dashboard</Link>}
@@ -230,7 +231,8 @@ export default function Navbar() {
           <Link to="/directory"  onClick={() => setMenuOpen(false)}><span className="ndl-icon">🗂</span> Directory</Link>
           <Link to="/map"        onClick={() => setMenuOpen(false)}><span className="ndl-icon">🗺</span> Map</Link>
           <Link to="/safetytips" onClick={() => setMenuOpen(false)}><span className="ndl-icon">💡</span> Safety Tips</Link>
-          <Link to="/about"      onClick={() => setMenuOpen(false)}><span className="ndl-icon">ℹ️</span> About</Link>
+          <Link to="/about"     onClick={() => setMenuOpen(false)}><span className="ndl-icon">ℹ️</span> About</Link>
+          <Link to="/resources" onClick={() => setMenuOpen(false)}><span className="ndl-icon">📚</span> Resources</Link>
           {isLoggedIn ? (
             <>
               <div className="nav-drawer-divider" />

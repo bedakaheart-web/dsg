@@ -361,7 +361,6 @@ export default function Resources() {
 
 
           <section className="rs-hero">
-            <div className="rs-hero-eyebrow">Knowledge Hub</div>
             <h1>
               Resources &amp; <span className="accent">Guides</span>
             </h1>
