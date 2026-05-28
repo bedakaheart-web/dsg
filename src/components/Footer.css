@@ -1,8 +1,5 @@
 /* ═══════════════════════════════════════════════════════
    Footer.css  —  DumaSafeGuide
-   Refined: keeps your glassmorphism cards + gradient border,
-   removes Portals, adds status strip + card-style hotlines,
-   matches --ft-page-px site-wide margin token.
 ═══════════════════════════════════════════════════════ */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
@@ -11,9 +8,7 @@
    TOKENS
 ───────────────────────────────────────────── */
 :root {
-  /* Matches the site-wide page margin used in Navbar, FacilityLocator, etc. */
   --ft-page-px : clamp(24px, 6vw, 148px);
-
   --ft-bg      : #04101c;
   --ft-cyan    : #00c8e0;
   --ft-red     : #e8372a;
@@ -36,11 +31,9 @@
   color       : var(--ft-text);
   position    : relative;
   overflow    : hidden;
-  /* Glowing gradient top border — your original signature */
   border-top  : 1px solid rgba(74, 144, 217, 0.20);
 }
 
-/* Gradient accent line over the border */
 .ft::before {
   content  : '';
   position : absolute;
@@ -60,7 +53,7 @@
 }
 
 /* ─────────────────────────────────────────────
-   BACKGROUND SCRIM (your original approach)
+   BACKGROUND SCRIM
 ───────────────────────────────────────────── */
 .ft-scrim {
   position            : absolute;
@@ -84,7 +77,7 @@
 }
 
 /* ─────────────────────────────────────────────
-   GLOW ORBS (your original, slightly expanded)
+   GLOW ORBS
 ───────────────────────────────────────────── */
 .ft-glow-left {
   position      : absolute;
@@ -111,7 +104,6 @@
 
 /* ─────────────────────────────────────────────
    INNER WRAPPER
-   — padding uses the site-wide margin token
 ───────────────────────────────────────────── */
 .ft-inner {
   position   : relative;
@@ -122,7 +114,7 @@
 }
 
 /* ═══════════════════════════════════════════════════════
-   STATUS STRIP  (new addition — feels live, purposeful)
+   STATUS STRIP
 ═══════════════════════════════════════════════════════ */
 .ft-status-strip {
   display         : flex;
@@ -165,8 +157,7 @@
 }
 
 /* ═══════════════════════════════════════════════════════
-   HOTLINES  — card design replacing the pills
-   Keeps the pulse ring, adds bigger numbers + icon box
+   HOTLINES
 ═══════════════════════════════════════════════════════ */
 .ft-hotlines {
   margin-bottom : 36px;
@@ -200,7 +191,7 @@
   flex-wrap : wrap;
 }
 
-/* Hotline card */
+/* ── Base hotline card ── */
 .ft-hotline-card {
   display         : flex;
   align-items     : center;
@@ -214,7 +205,6 @@
   flex            : 1;
   min-width       : 130px;
   max-width       : 210px;
-  /* glassmorphism — consistent with your card style */
   backdrop-filter         : blur(12px);
   -webkit-backdrop-filter : blur(12px);
   box-shadow : inset 0 1px 0 rgba(255,255,255,0.05),
@@ -235,25 +225,115 @@
 }
 .ft-hotline-card:active { transform: scale(0.96); }
 
-/* Pulse ring — Emergency card */
+/* ══════════════════════════════════════════════════════
+   AMBULANCE STROBE — 911 card only (.is-pulse)
+   Double-flash pattern matches emergency vehicle lights
+══════════════════════════════════════════════════════ */
 .ft-hotline-card.is-pulse {
-  position: relative;
+  position   : relative;
+  animation  : ft911Strobe 1.8s ease-in-out infinite;
+  border-color: rgba(232, 55, 42, 0.55);
 }
+
+@keyframes ft911Strobe {
+  0%   {
+    box-shadow   : 0 0 8px  rgba(232,55,42,0.40),
+                   0 0 20px rgba(232,55,42,0.18),
+                   0 0 40px rgba(232,55,42,0.07),
+                   inset 0 1px 0 rgba(255,255,255,0.05);
+    border-color : rgba(232,55,42,0.55);
+  }
+  25%  {
+    box-shadow   : 0 0 16px rgba(232,55,42,0.95),
+                   0 0 36px rgba(232,55,42,0.55),
+                   0 0 64px rgba(232,55,42,0.25),
+                   inset 0 1px 0 rgba(255,255,255,0.08);
+    border-color : rgba(232,55,42,1);
+  }
+  50%  {
+    box-shadow   : 0 0 6px  rgba(232,55,42,0.28),
+                   0 0 14px rgba(232,55,42,0.12),
+                   0 0 28px rgba(232,55,42,0.05),
+                   inset 0 1px 0 rgba(255,255,255,0.05);
+    border-color : rgba(232,55,42,0.38);
+  }
+  75%  {
+    box-shadow   : 0 0 18px rgba(232,55,42,0.98),
+                   0 0 40px rgba(232,55,42,0.60),
+                   0 0 70px rgba(232,55,42,0.28),
+                   inset 0 1px 0 rgba(255,255,255,0.08);
+    border-color : rgba(232,55,42,1);
+  }
+  100% {
+    box-shadow   : 0 0 8px  rgba(232,55,42,0.40),
+                   0 0 20px rgba(232,55,42,0.18),
+                   0 0 40px rgba(232,55,42,0.07),
+                   inset 0 1px 0 rgba(255,255,255,0.05);
+    border-color : rgba(232,55,42,0.55);
+  }
+}
+
+/* Outer pulse ring — expands outward like a shockwave */
 .ft-hotline-card.is-pulse::before {
   content       : '';
   position      : absolute;
   inset         : -3px;
   border-radius : 16px;
-  border        : 1px solid color-mix(in srgb, var(--hc-color) 55%, transparent);
-  animation     : hotlinePulse 2s ease-out infinite;
+  border        : 1px solid rgba(232,55,42,0.70);
+  animation     : ft911Ring 1.8s ease-out infinite;
   pointer-events: none;
 }
-@keyframes hotlinePulse {
-  0%   { opacity: 1; transform: scale(1); }
-  70%  { opacity: 0; transform: scale(1.10); }
-  100% { opacity: 0; transform: scale(1.10); }
+
+@keyframes ft911Ring {
+  0%   { opacity: 1;   transform: scale(1);    border-color: rgba(232,55,42,0.70); }
+  25%  { opacity: 0.9; transform: scale(1.04); border-color: rgba(232,55,42,1);   }
+  50%  { opacity: 0.3; transform: scale(1.08); border-color: rgba(232,55,42,0.40);}
+  75%  { opacity: 0.8; transform: scale(1.04); border-color: rgba(232,55,42,1);   }
+  100% { opacity: 0;   transform: scale(1.12); border-color: rgba(232,55,42,0);   }
 }
 
+/* Icon wrap pulses in sync on 911 card */
+.ft-hotline-card.is-pulse .ft-hc-icon-wrap {
+  animation: ft911Icon 1.8s ease-in-out infinite;
+}
+
+@keyframes ft911Icon {
+  0%, 100% { background: rgba(232,55,42,0.16); color: #FF4444; }
+  25%, 75%  { background: rgba(232,55,42,0.38); color: #ff6b5b; box-shadow: 0 0 10px rgba(232,55,42,0.45); }
+  50%       { background: rgba(232,55,42,0.10); color: #e8372a; }
+}
+
+/* Number glows red on 911 card */
+.ft-hotline-card.is-pulse .ft-hc-num {
+  animation: ft911Num 1.8s ease-in-out infinite;
+  text-shadow: 0 0 8px rgba(232,55,42,0.50);
+}
+
+@keyframes ft911Num {
+  0%, 100% { text-shadow: 0 0 6px  rgba(232,55,42,0.40); }
+  25%, 75%  { text-shadow: 0 0 16px rgba(232,55,42,0.90), 0 0 32px rgba(232,55,42,0.40); }
+  50%       { text-shadow: 0 0 4px  rgba(232,55,42,0.25); }
+}
+
+/* Pause strobe on hover so user can tap comfortably */
+.ft-hotline-card.is-pulse:hover {
+  animation-play-state: paused;
+  box-shadow   : 0 0 24px rgba(232,55,42,0.80),
+                 0 0 48px rgba(232,55,42,0.40),
+                 0 0 80px rgba(232,55,42,0.20),
+                 inset 0 1px 0 rgba(255,255,255,0.08);
+  border-color : rgba(232,55,42,1);
+  transform    : translateY(-2px);
+}
+.ft-hotline-card.is-pulse:hover::before,
+.ft-hotline-card.is-pulse:hover .ft-hc-icon-wrap,
+.ft-hotline-card.is-pulse:hover .ft-hc-num {
+  animation-play-state: paused;
+}
+
+/* ─────────────────────────────────────────────
+   SHARED ICON + BODY
+───────────────────────────────────────────── */
 .ft-hc-icon-wrap {
   width         : 36px;
   height        : 36px;
@@ -289,8 +369,6 @@
 
 /* ═══════════════════════════════════════════════════════
    MAIN GRID
-   — 3 cols: brand (2fr) + 2 nav columns (1fr each)
-   — Portals column removed; ProtectedRoute handles routing
 ═══════════════════════════════════════════════════════ */
 .ft-main {
   display               : grid;
@@ -299,7 +377,6 @@
   padding               : 8px 0 44px;
 }
 
-/* Glassmorphism card on every direct child — your original signature */
 .ft-main > * {
   background              : var(--ft-card-bg);
   border                  : 1px solid rgba(255, 255, 255, 0.07);
@@ -339,16 +416,15 @@
 .ft-brand-name strong { color: var(--ft-cyan); font-weight: 700; }
 
 .ft-brand-desc {
-  font-family: var(--ft-font);
-  font-size  : 13.5px;
-  font-weight: 400;
-  line-height: 1.75;
-  color      : var(--ft-text);
-  max-width  : 300px;
+  font-family  : var(--ft-font);
+  font-size    : 13.5px;
+  font-weight  : 400;
+  line-height  : 1.75;
+  color        : var(--ft-text);
+  max-width    : 300px;
   margin-bottom: 18px;
 }
 
-/* Location badge */
 .ft-brand-badge {
   display      : inline-flex;
   align-items  : center;
@@ -381,14 +457,13 @@
   flex-direction : column;
 }
 
-/* Toggle button — desktop: visual heading only */
 .ft-col-toggle {
   all            : unset;
   display        : flex;
   align-items    : center;
   justify-content: space-between;
   margin-bottom  : 16px;
-  cursor         : default;  /* not clickable on desktop */
+  cursor         : default;
   width          : 100%;
 }
 .ft-col-head {
@@ -401,7 +476,6 @@
   position       : relative;
   padding-bottom : 8px;
 }
-/* Cyan underline accent */
 .ft-col-head::after {
   content       : '';
   position      : absolute;
@@ -412,20 +486,19 @@
   border-radius : 2px;
 }
 .ft-col-chevron {
-  display    : none; /* shown only on mobile */
+  display    : none;
   color      : var(--ft-text-lo);
   transition : transform 0.24s ease;
   flex-shrink: 0;
 }
 
-/* Link list */
 .ft-col-links {
   list-style     : none;
   display        : flex;
   flex-direction : column;
   gap            : 2px;
   overflow       : hidden;
-  max-height     : 999px;    /* open on desktop */
+  max-height     : 999px;
 }
 
 .ft-col-link {
@@ -503,11 +576,8 @@
     grid-template-columns : 1fr 1fr;
     padding               : 8px 0 32px;
   }
-  /* Brand spans full width on top */
   .ft-brand-col { grid-column: 1 / -1; }
-
   .ft-hotlines-hint { display: none; }
-
   .ft-hotline-card {
     max-width : none;
     flex      : 1 1 calc(50% - 5px);
@@ -521,11 +591,8 @@
   :root { --ft-page-px: 16px; }
 
   .ft-inner { padding-bottom: 24px; }
-
-  /* Status strip: hide right side */
   .ft-status-right { display: none; }
 
-  /* Hotlines: 2×2 grid */
   .ft-hotlines-row {
     display               : grid;
     grid-template-columns : 1fr 1fr;
@@ -539,16 +606,14 @@
   }
   .ft-hc-num { font-size: 17px; }
 
-  /* Grid: single column */
   .ft-main {
     grid-template-columns : 1fr;
     gap                   : 10px;
     padding               : 8px 0 20px;
   }
-  .ft-brand-col { grid-column: auto; }
+  .ft-brand-col  { grid-column: auto; }
   .ft-brand-desc { max-width: 100%; }
 
-  /* ── Accordion nav on mobile ── */
   .ft-col-toggle {
     cursor         : pointer;
     pointer-events : auto;
@@ -557,22 +622,17 @@
     -webkit-tap-highlight-color: transparent;
   }
   .ft-col-toggle:active { opacity: 0.72; }
-
   .ft-col-head { padding-bottom: 0; }
   .ft-col-head::after { display: none; }
-
   .ft-col-chevron { display: flex; }
 
-  /* Collapsed by default */
   .ft-col-links {
     max-height : 0;
     transition : max-height 0.30s ease;
   }
-
-  /* Open state via React .is-open class */
   .ft-nav-col.is-open .ft-col-links {
-    max-height   : 320px;
-    padding-top  : 8px;
+    max-height  : 320px;
+    padding-top : 8px;
   }
   .ft-nav-col.is-open .ft-col-chevron {
     transform: rotate(180deg);
@@ -588,13 +648,11 @@
 }
 
 /* ═══════════════════════════════════════════════════════
-   RESPONSIVE — VERY SMALL  ≤ 380px  (OnePlus Nord)
+   RESPONSIVE — VERY SMALL  ≤ 380px
 ═══════════════════════════════════════════════════════ */
 @media (max-width: 380px) {
-  .ft-hotlines-row {
-    grid-template-columns: 1fr;
-  }
+  .ft-hotlines-row { grid-template-columns: 1fr; }
   .ft-hotline-card { max-width: none; }
-  .ft-status-strip { display: none; } /* too cramped */
+  .ft-status-strip { display: none; }
   .ft-brand-name   { font-size: 16px; }
 }
