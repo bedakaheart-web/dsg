@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../js/supabase";
 import {
   FaTachometerAlt,
@@ -26,20 +26,21 @@ import IncidentsPage from "./IncidentsPage";
 import IncidentAnalytics from "./IncidentAnalytics";
 import RespondersPage from "./RespondersPage";
 import AdminTeamPage from "./AdminTeamPage";
+import AdminHistoryLog from "./AdminHistoryLog";
 
 import dsgLogo from "../assets/dsg.logo.png";
-import footerBg from "../assets/footer.png"; // ✅ Import background
-import AdminHistoryLog from "./AdminHistoryLog";
+import footerBg from "../assets/footer.png";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type ViewId = "overview" | "incidents" | "alerts" | "responders" | "team" | "analytics" | "settings";
+type ViewId = "overview" | "incidents" | "alerts" | "responders" | "team" | "analytics" | "history";
 
 interface NavItem {
   id: ViewId;
   label: string;
   icon: JSX.Element;
   group: "Command" | "Management";
+  path: string;
 }
 
 interface Report {
@@ -59,12 +60,13 @@ interface Report {
 // ─── Navigation Items ─────────────────────────────────────────────────────────
 
 const NAV: NavItem[] = [
-  { id: "overview",   label: "Overview",   icon: <FaTachometerAlt />, group: "Command"    },
-  { id: "incidents",  label: "Incidents",  icon: <FaClipboardList />, group: "Command"    },
-  { id: "alerts",     label: "Alerts",     icon: <FaBell />,          group: "Command"    },
-  { id: "responders", label: "Responders", icon: <FaUsers />,         group: "Management" },
-  { id: "team",       label: "Team",       icon: <FaUsers />,         group: "Management" },
-  { id: "analytics",  label: "Analytics",  icon: <FaChartBar />,      group: "Management" },
+  { id: "overview",   label: "Overview",   icon: <FaTachometerAlt />, group: "Command",    path: "/admin" },
+  { id: "incidents",  label: "Incidents",  icon: <FaClipboardList />, group: "Command",    path: "/admin/incidents" },
+  { id: "alerts",     label: "Alerts",     icon: <FaBell />,          group: "Command",    path: "/admin/alerts" },
+  { id: "responders", label: "Responders", icon: <FaUsers />,         group: "Management", path: "/admin/responders" },
+  { id: "team",       label: "Team",       icon: <FaUsers />,         group: "Management", path: "/admin/team" },
+  { id: "analytics",  label: "Analytics",  icon: <FaChartBar />,      group: "Management", path: "/admin/analytics" },
+  { id: "history",    label: "History",    icon: <FaClipboardList />, group: "Management", path: "/admin/history" },
 ];
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
@@ -400,7 +402,7 @@ const DASH_STYLE = `
 .hud-empty { text-align: center; padding: 48px 24px; font-size: 12px; letter-spacing: 0.3px; color: var(--text-secondary); text-transform: uppercase; }
 
 /* ── Sub-page resets ── */
-.hud-page .al-root, .hud-page .ia-root, .hud-page .inc-root, .hud-page .rp-root, .hud-page .atp-root { min-height: unset; padding: 0; }
+.hud-page .al-root, .hud-page .ia-root, .hud-page .inc-root, .hud-page .rp-root, .hud-page .atp-root, .hud-page .hl-root { min-height: unset; padding: 0; }
 
 /* ════════════ RESPONSIVE ════════════ */
 @media (max-width: 1024px) {
@@ -668,15 +670,33 @@ function OverviewPanel({ onNavigate }: { onNavigate: (v: ViewId) => void }) {
 // ─── Main AdminDashboard ──────────────────────────────────────────────────────
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
   const clock = usePHTClock();
-  const [view, setView] = useState<ViewId>("overview");
+  
+  // ── Determine current view from URL ──
+  const getViewFromPath = (): ViewId => {
+    const path = location.pathname;
+    if (path === "/admin" || path === "/admin/") return "overview";
+    if (path.includes("incidents")) return "incidents";
+    if (path.includes("alerts")) return "alerts";
+    if (path.includes("responders")) return "responders";
+    if (path.includes("team")) return "team";
+    if (path.includes("analytics")) return "analytics";
+    if (path.includes("history")) return "history";
+    return "overview";
+  };
+
+  const view = getViewFromPath();
   const [pendingCount, setPendingCount] = useState(0);
   const [adminName, setAdminName] = useState("Admin");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleNavigate = (v: ViewId) => {
-    setView(v);
-    setSidebarOpen(false);
+    const navItem = NAV.find(n => n.id === v);
+    if (navItem) {
+      navigate(navItem.path);
+      setSidebarOpen(false);
+    }
   };
 
   useEffect(() => {
@@ -697,8 +717,6 @@ export default function AdminDashboard() {
         const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
         if (profile?.full_name) setAdminName(profile.full_name);
         await supabase.from("responders").update({ status: "on_duty" }).eq("email", user.email);
-
-        await supabase.from("responders").update({ status: "on_duty" }).eq("email", user.email);
       }
       const { data } = await supabase.from("reports").select("id").eq("status", "pending");
       setPendingCount((data ?? []).length);
@@ -714,8 +732,8 @@ export default function AdminDashboard() {
 
   const handleLogout = async () => {
     const { data: { user: logoutUser } } = await supabase.auth.getUser();
-  if (logoutUser) { await supabase.from("responders").update({ status: "off_duty" }).eq("email", logoutUser.email); }
-  await supabase.auth.signOut();
+    if (logoutUser) { await supabase.from("responders").update({ status: "off_duty" }).eq("email", logoutUser.email); }
+    await supabase.auth.signOut();
     navigate("/login", { replace: true });
   };
 
@@ -728,6 +746,7 @@ export default function AdminDashboard() {
     responders: "Responders",
     team:       "Team",
     analytics:  "Analytics",
+    history:    "History",
   };
 
   const groups = [
@@ -834,7 +853,7 @@ export default function AdminDashboard() {
               {view === "responders" && <RespondersPage />}
               {view === "team"       && <AdminTeamPage />}
               {view === "analytics"  && <IncidentAnalytics />}
-              {view === "settings"   && <AdminHistoryLog  />}
+              {view === "history"    && <AdminHistoryLog />}
             </div>
           </div>
         </div>
