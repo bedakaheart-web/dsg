@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../js/supabase";
 import {
   FaTachometerAlt,
@@ -19,6 +19,7 @@ import {
   FaExclamationTriangle,
   FaBars,
   FaTimes,
+  FaHistory,
 } from "react-icons/fa";
 
 import AdminAlertsPage from "./AdminAlertsPage";
@@ -40,7 +41,6 @@ interface NavItem {
   label: string;
   icon: JSX.Element;
   group: "Command" | "Management";
-  path: string;
 }
 
 interface Report {
@@ -60,13 +60,13 @@ interface Report {
 // ─── Navigation Items ─────────────────────────────────────────────────────────
 
 const NAV: NavItem[] = [
-  { id: "overview",   label: "Overview",   icon: <FaTachometerAlt />, group: "Command",    path: "/admin" },
-  { id: "incidents",  label: "Incidents",  icon: <FaClipboardList />, group: "Command",    path: "/admin/incidents" },
-  { id: "alerts",     label: "Alerts",     icon: <FaBell />,          group: "Command",    path: "/admin/alerts" },
-  { id: "responders", label: "Responders", icon: <FaUsers />,         group: "Management", path: "/admin/responders" },
-  { id: "team",       label: "Team",       icon: <FaUsers />,         group: "Management", path: "/admin/team" },
-  { id: "analytics",  label: "Analytics",  icon: <FaChartBar />,      group: "Management", path: "/admin/analytics" },
-  { id: "history",    label: "History",    icon: <FaClipboardList />, group: "Management", path: "/admin/history" },
+  { id: "overview",   label: "Overview",    icon: <FaTachometerAlt />, group: "Command"    },
+  { id: "incidents",  label: "Incidents",   icon: <FaClipboardList />, group: "Command"    },
+  { id: "alerts",     label: "Alerts",      icon: <FaBell />,          group: "Command"    },
+  { id: "responders", label: "Responders",  icon: <FaUsers />,         group: "Management" },
+  { id: "team",       label: "Team",        icon: <FaUsers />,         group: "Management" },
+  { id: "analytics",  label: "Analytics",   icon: <FaChartBar />,      group: "Management" },
+  { id: "history",    label: "History Log", icon: <FaHistory />,       group: "Management" },
 ];
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
@@ -670,33 +670,15 @@ function OverviewPanel({ onNavigate }: { onNavigate: (v: ViewId) => void }) {
 // ─── Main AdminDashboard ──────────────────────────────────────────────────────
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const location = useLocation();
   const clock = usePHTClock();
-  
-  // ── Determine current view from URL ──
-  const getViewFromPath = (): ViewId => {
-    const path = location.pathname;
-    if (path === "/admin" || path === "/admin/") return "overview";
-    if (path.includes("incidents")) return "incidents";
-    if (path.includes("alerts")) return "alerts";
-    if (path.includes("responders")) return "responders";
-    if (path.includes("team")) return "team";
-    if (path.includes("analytics")) return "analytics";
-    if (path.includes("history")) return "history";
-    return "overview";
-  };
-
-  const view = getViewFromPath();
+  const [view, setView] = useState<ViewId>("overview");
   const [pendingCount, setPendingCount] = useState(0);
   const [adminName, setAdminName] = useState("Admin");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleNavigate = (v: ViewId) => {
-    const navItem = NAV.find(n => n.id === v);
-    if (navItem) {
-      navigate(navItem.path);
-      setSidebarOpen(false);
-    }
+    setView(v);
+    setSidebarOpen(false);
   };
 
   useEffect(() => {
@@ -746,7 +728,7 @@ export default function AdminDashboard() {
     responders: "Responders",
     team:       "Team",
     analytics:  "Analytics",
-    history:    "History",
+    history:    "History Log",
   };
 
   const groups = [
