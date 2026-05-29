@@ -433,7 +433,9 @@ export default function AdminHistoryLog() {
     if (data) {
       // Batch-load responder names in a single query
       const responderIds = [...new Set(
-        (data as HistoryReport[]).filter(r => r.responder_id).map(r => r.responder_id as string)
+        (data as unknown as HistoryReport[])
+          .map(r => r.responder_id)
+          .filter((id): id is string => id !== null && id !== undefined)
       )];
       const respMap: Record<string, string> = {};
       if (responderIds.length) {
@@ -445,7 +447,7 @@ export default function AdminHistoryLog() {
           if (r.name) respMap[r.id] = r.name;
         });
       }
-      const enriched: HistoryReport[] = (data as HistoryReport[]).map(r => ({
+      const enriched: HistoryReport[] = (data as unknown as HistoryReport[]).map(r => ({
         ...r,
         responder_name: respMap[r.responder_id ?? ""] ?? null,
       }));
@@ -509,7 +511,7 @@ export default function AdminHistoryLog() {
   type TableRow = { type: "header"; month: string; count: number } | { type: "data"; report: HistoryReport; idx: number };
   const groupedRows = React.useMemo((): TableRow[] => {
     if (sortField !== "created_at") {
-      return paged.map((report, idx) => ({ type: "data", report, idx }));
+      return paged.map((report, idx): TableRow => ({ type: "data" as const, report, idx }));
     }
     const rows: TableRow[] = [];
     let lastMonth = "";
@@ -517,10 +519,10 @@ export default function AdminHistoryLog() {
       const mk = getMonthKey(report.created_at);
       if (mk !== lastMonth) {
         const count = paged.filter(r => getMonthKey(r.created_at) === mk).length;
-        rows.push({ type: "header", month: mk, count });
+        rows.push({ type: "header" as const, month: mk, count });
         lastMonth = mk;
       }
-      rows.push({ type: "data", report, idx });
+      rows.push({ type: "data" as const, report, idx });
     });
     return rows;
   }, [paged, sortField]);
