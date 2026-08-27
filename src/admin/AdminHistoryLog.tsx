@@ -447,7 +447,7 @@ export default function AdminHistoryLog() {
           if (r.name) respMap[r.id] = r.name;
         });
       }
-      const enriched: HistoryReport[] = (data as unknown as HistoryReport[]).map(r => ({
+      const enriched: HistoryReport[] = (cdc).map(r => ({
         ...r,
         responder_name: respMap[r.responder_id ?? ""] ?? null,
       }));
