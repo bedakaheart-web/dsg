@@ -1393,7 +1393,7 @@ export default function Homepage() {
                   <input
                     className="hp-auth-input"
                     type="email"
-                    placeholder="you@example.com"
+                    placeholder=" "
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     onFocus={() => setFocusedField("email")}
