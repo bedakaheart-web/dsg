@@ -211,6 +211,7 @@ const RP_STYLE = `
     background: var(--surface, #fff);
     border: 1px solid var(--border, #E5E7EB);
     border-radius: 12px; overflow: hidden;
+    overflow-x: auto;
   }
   .rp-table { width: 100%; border-collapse: collapse; }
   .rp-table thead tr { border-bottom: 1px solid var(--border, #E5E7EB); background: var(--bg, #FAFBFC); }
@@ -219,6 +220,7 @@ const RP_STYLE = `
     font-size: 10px; font-weight: 600;
     letter-spacing: .5px; text-transform: uppercase;
     color: var(--text-tertiary, #9CA3AF); text-align: left;
+    white-space: nowrap;
   }
   .rp-table td {
     padding: 13px 16px;
@@ -300,6 +302,10 @@ const RP_STYLE = `
     color: var(--text-tertiary, #9CA3AF);
   }
   .rp-duty-badge-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+  /* Last seen */
+  .rp-lastseen { font-size: 12px; color: var(--text-secondary, #6B7280); white-space: nowrap; }
+  .rp-lastseen--none { color: var(--text-tertiary, #9CA3AF); font-style: italic; }
 
   /* Action buttons */
   .rp-duty-toggle {
@@ -538,12 +544,28 @@ function getInitials(name: string | null | undefined): string {
   );
 }
 
+// Exact last-seen date & time (not relative) — e.g. "Aug 28, 2026, 3:45 PM"
+function fmtExactDateTime(ts?: string | null): string | null {
+  if (!ts) return null;
+  const d = new Date(ts);
+  if (isNaN(d.getTime())) return null;
+  return d.toLocaleString("en-PH", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}
+
 interface ProfileUser {
   id: string;
   full_name: string | null;
   email: string;
   role: string;
   created_at?: string;
+  last_seen?: string | null;
   source: "auth";
 }
 
@@ -553,6 +575,7 @@ interface ManualResponder {
   email: string;
   status: string;
   on_duty: boolean;
+  last_seen?: string | null;
   source: "manual";
 }
 
@@ -595,7 +618,7 @@ export default function RespondersPage() {
 
     const { data: profiles, error: profilesError } = await supabase
       .from("profiles")
-      .select("id, full_name, email, role, created_at");
+      .select("id, full_name, email, role, created_at, last_seen");
 
     if (profilesError) console.error("profiles fetch error:", profilesError.message);
 
@@ -619,7 +642,18 @@ export default function RespondersPage() {
     setRefreshing(false);
   };
 
-  useEffect(() => { fetchAll(); }, []);
+  useEffect(() => {
+    fetchAll();
+    // Live-refresh whenever a profile or responder row changes (e.g. a
+    // login/logout writes last_seen) so "Last Seen" updates immediately
+    // without the admin needing to click Refresh.
+    const channel = supabase
+      .channel("rp-live-last-seen")
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => fetchAll(true))
+      .on("postgres_changes", { event: "*", schema: "public", table: "responders" }, () => fetchAll(true))
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   const addResponder = async () => {
     const firstName = formData.firstName.trim();
@@ -640,43 +674,27 @@ export default function RespondersPage() {
     setModalSuccess(null);
 
     if (createAuth) {
-      // supabase-js swaps the browser's active session to whichever user
-      // just called signUp(). Since the admin is the one submitting this
-      // form, we snapshot the admin's session first and restore it right
-      // after, so creating a responder never signs the admin out.
-      const { data: { session: adminSession } } = await supabase.auth.getSession();
+      // Admin account creation now goes through a Supabase Edge Function
+      // ("admin-create-responder") that uses the service role key on the
+      // server. This bypasses CAPTCHA entirely (CAPTCHA only applies to
+      // public-facing auth.signUp calls from the browser) and never
+      // touches or swaps the admin's own browser session, so there's no
+      // need to snapshot/restore the admin's session anymore.
+      const { data: fnData, error: fnError } = await supabase.functions.invoke(
+        "admin-create-responder",
+        {
+          body: {
+            email: formData.email.trim(),
+            password: formData.password,
+            fullName,
+          },
+        }
+      );
 
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email: formData.email.trim(),
-        password: formData.password,
-        options: {
-          data: { full_name: fullName, role: "responder" },
-          // Sends the confirmation email and sends the responder back to
-          // the login page once they click the link.
-          emailRedirectTo: `${window.location.origin}/login`,
-        },
-      });
-      if (signUpError) {
-        setModalError(`Auth account error: ${signUpError.message}`);
+      if (fnError || fnData?.error) {
+        setModalError(`Auth account error: ${fnData?.error || fnError?.message}`);
         setSaving(false);
         return;
-      }
-      const userId = signUpData.user?.id;
-      if (userId) {
-        await supabase.from("profiles").upsert({
-          id: userId,
-          full_name: fullName,
-          email: formData.email.trim(),
-          role: "responder",
-        });
-      }
-
-      // Restore the admin's session (see note above).
-      if (adminSession) {
-        await supabase.auth.setSession({
-          access_token: adminSession.access_token,
-          refresh_token: adminSession.refresh_token,
-        });
       }
     }
 
@@ -775,6 +793,7 @@ export default function RespondersPage() {
     const name     = isAuth ? (r.full_name ?? "Unknown") : ((r as ManualResponder).name ?? "Unknown");
     const status   = isAuth ? "active" : (r as ManualResponder).status;
     const isOnDuty = isAuth ? true : (r as ManualResponder).on_duty;
+    const lastSeen = fmtExactDateTime(r.last_seen);
 
     return (
       <tr key={r.id ?? i}>
@@ -799,6 +818,11 @@ export default function RespondersPage() {
           <span className={`rp-duty-badge ${isOnDuty ? "rp-duty-badge--on" : "rp-duty-badge--off"}`}>
             <span className="rp-duty-badge-dot" />{isOnDuty ? "On Duty" : "Off Duty"}
           </span>
+        </td>
+        <td>
+          {lastSeen
+            ? <span className="rp-lastseen">{lastSeen}</span>
+            : <span className="rp-lastseen rp-lastseen--none">Never</span>}
         </td>
         <td>
           {!isAuth ? (
@@ -835,27 +859,35 @@ export default function RespondersPage() {
     );
   };
 
-  const renderCitizenRow = (c: ProfileUser, i: number) => (
-    <tr key={c.id ?? i}>
-      <td>
-        <div className="rp-name-cell">
-          <div className="rp-avatar rp-avatar-citizen">{getInitials(c.full_name)}</div>
-          <div>
-            <div className="rp-name">{c.full_name || "—"}</div>
-            <span className="rp-source-tag rp-tag-auth">✓ Registered</span>
+  const renderCitizenRow = (c: ProfileUser, i: number) => {
+    const lastSeen = fmtExactDateTime(c.last_seen);
+    return (
+      <tr key={c.id ?? i}>
+        <td>
+          <div className="rp-name-cell">
+            <div className="rp-avatar rp-avatar-citizen">{getInitials(c.full_name)}</div>
+            <div>
+              <div className="rp-name">{c.full_name || "—"}</div>
+              <span className="rp-source-tag rp-tag-auth">✓ Registered</span>
+            </div>
           </div>
-        </div>
-      </td>
-      <td style={{ fontSize: 12 }}>{c.email || "—"}</td>
-      <td><span className="rp-status-badge rp-status-active"><span className="rp-status-dot" /> Active</span></td>
-      <td><span className="rp-duty-badge rp-duty-badge--on"><span className="rp-duty-badge-dot" /> Registered</span></td>
-      <td style={{ fontSize: 12, color: "var(--text-tertiary, #9CA3AF)" }}>
-        {c.created_at
-          ? new Date(c.created_at).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })
-          : "—"}
-      </td>
-    </tr>
-  );
+        </td>
+        <td style={{ fontSize: 12 }}>{c.email || "—"}</td>
+        <td><span className="rp-status-badge rp-status-active"><span className="rp-status-dot" /> Active</span></td>
+        <td><span className="rp-duty-badge rp-duty-badge--on"><span className="rp-duty-badge-dot" /> Registered</span></td>
+        <td>
+          {lastSeen
+            ? <span className="rp-lastseen">{lastSeen}</span>
+            : <span className="rp-lastseen rp-lastseen--none">Never</span>}
+        </td>
+        <td style={{ fontSize: 12, color: "var(--text-tertiary, #9CA3AF)" }}>
+          {c.created_at
+            ? new Date(c.created_at).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })
+            : "—"}
+        </td>
+      </tr>
+    );
+  };
 
   return (
     <>
@@ -986,18 +1018,19 @@ export default function RespondersPage() {
                   <th>Email</th>
                   <th>Status</th>
                   <th>Duty</th>
+                  <th>Last Seen</th>
                   <th>{tab === "citizens" ? "Joined" : "Actions"}</th>
                 </tr>
               </thead>
               <tbody>
                 {tab === "responders" && (
                   filteredResponders.length === 0
-                    ? <tr><td colSpan={5}><div className="rp-empty"><div className="rp-empty-icon"><FaUsers /></div><div className="rp-empty-text">No responders found</div></div></td></tr>
+                    ? <tr><td colSpan={6}><div className="rp-empty"><div className="rp-empty-icon"><FaUsers /></div><div className="rp-empty-text">No responders found</div></div></td></tr>
                     : filteredResponders.map(renderResponderRow)
                 )}
                 {tab === "citizens" && (
                   filteredCitizens.length === 0
-                    ? <tr><td colSpan={5}><div className="rp-empty"><div className="rp-empty-icon"><FaUserCircle /></div><div className="rp-empty-text">No citizens found</div></div></td></tr>
+                    ? <tr><td colSpan={6}><div className="rp-empty"><div className="rp-empty-icon"><FaUserCircle /></div><div className="rp-empty-text">No citizens found</div></div></td></tr>
                     : filteredCitizens.map(renderCitizenRow)
                 )}
               </tbody>

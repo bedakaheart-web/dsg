@@ -698,6 +698,7 @@ export default function AdminDashboard() {
       if (user) {
         const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
         if (profile?.full_name) setAdminName(profile.full_name);
+        await supabase.from("profiles").update({ status: "on_duty", last_seen: new Date().toISOString() }).eq("id", user.id);
         await supabase.from("responders").update({ status: "on_duty" }).eq("email", user.email);
       }
       const { data } = await supabase.from("reports").select("id").eq("status", "pending");
@@ -714,7 +715,10 @@ export default function AdminDashboard() {
 
   const handleLogout = async () => {
     const { data: { user: logoutUser } } = await supabase.auth.getUser();
-    if (logoutUser) { await supabase.from("responders").update({ status: "off_duty" }).eq("email", logoutUser.email); }
+    if (logoutUser) {
+      await supabase.from("profiles").update({ status: "off_duty", last_seen: new Date().toISOString() }).eq("id", logoutUser.id);
+      await supabase.from("responders").update({ status: "off_duty" }).eq("email", logoutUser.email);
+    }
     await supabase.auth.signOut();
     navigate("/login", { replace: true });
   };

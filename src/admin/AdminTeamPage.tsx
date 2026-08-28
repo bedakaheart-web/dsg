@@ -13,6 +13,7 @@ interface TeamMember {
   avatar_url?: string | null;
   phone?: string | null;
   joined_at?: string;
+  last_seen?: string;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -873,7 +874,7 @@ function MemberCard({ member, index }: { member: TeamMember; index: number }) {
             { key: "Role",      val: displayRole,                       color: roleColor },
             { key: "Unit",      val: unit,                              color: unitColor },
             { key: "Status",    val: statusMeta.label,                  color: statusMeta.color },
-            { key: "Last seen", val: fmtRelative(member.joined_at),    color: undefined },
+            { key: "Last seen", val: fmtRelative(member.last_seen),    color: undefined },
           ].map(({ key, val, color }) => (
             <div key={key} className="atp-detail-row">
               <span className="atp-detail-key">{key}</span>
@@ -925,7 +926,7 @@ export default function AdminTeamPage() {
       setError(null);
       const { data, error: err } = await supabase
         .from("profiles")
-        .select("id, full_name, email, role, status, unit, avatar_url, phone, joined_at")
+        .select("id, full_name, email, role, status, unit, avatar_url, phone, joined_at, last_seen")
         .in("role", ["responder", "admin", "commander"])
         .order("full_name", { ascending: true });
 
@@ -1085,4 +1086,6 @@ export default function AdminTeamPage() {
       </div>
     </>
   );
+
+
 }
