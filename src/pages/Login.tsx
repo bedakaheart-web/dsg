@@ -846,7 +846,7 @@ export default function Login() {
                     <input
                       className="lg-input"
                       type="email"
-                      placeholder="you@example.com"
+                      placeholder=" "
                       value={email}
                       onChange={e => setEmail(e.target.value)}
                       onKeyDown={e => e.key === "Enter" && handleLogin()}
