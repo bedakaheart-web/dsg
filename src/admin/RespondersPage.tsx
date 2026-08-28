@@ -433,6 +433,8 @@ const RP_STYLE = `
 
   /* Fields */
   .rp-field { margin-bottom: 14px; }
+  .rp-field-row { display: flex; gap: 12px; margin-bottom: 14px; }
+  .rp-field-row .rp-field { flex: 1; margin-bottom: 0; min-width: 0; }
   .rp-label {
     display: block; font-size: 11px; font-weight: 600;
     letter-spacing: .1em; text-transform: uppercase;
@@ -576,8 +578,11 @@ export default function RespondersPage() {
   const [saving, setSaving]             = useState(false);
   const [modalError, setModalError]     = useState<string | null>(null);
   const [modalSuccess, setModalSuccess] = useState<string | null>(null);
+  // ── firstName/lastName are combined into a single full name on submit.
+  // "on_duty" is no longer set here — new responders are added off-duty
+  // and the dashboard flips it automatically based on login/logout. ──
   const [formData, setFormData]         = useState({
-    name: "", email: "", password: "", on_duty: true,
+    firstName: "", lastName: "", email: "", password: "",
   });
 
   const [showEdit, setShowEdit] = useState(false);
@@ -617,8 +622,12 @@ export default function RespondersPage() {
   useEffect(() => { fetchAll(); }, []);
 
   const addResponder = async () => {
-    if (!formData.name.trim() || !formData.email.trim()) {
-      setModalError("Name and email are required.");
+    const firstName = formData.firstName.trim();
+    const lastName  = formData.lastName.trim();
+    const fullName  = `${firstName} ${lastName}`.trim();
+
+    if (!firstName || !lastName || !formData.email.trim()) {
+      setModalError("First name, last name, and email are required.");
       return;
     }
     if (createAuth && formData.password.length < 6) {
@@ -634,7 +643,7 @@ export default function RespondersPage() {
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email.trim(),
         password: formData.password,
-        options: { data: { full_name: formData.name.trim(), role: "responder" } },
+        options: { data: { full_name: fullName, role: "responder" } },
       });
       if (signUpError) {
         setModalError(`Auth account error: ${signUpError.message}`);
@@ -645,18 +654,21 @@ export default function RespondersPage() {
       if (userId) {
         await supabase.from("profiles").upsert({
           id: userId,
-          full_name: formData.name.trim(),
+          full_name: fullName,
           email: formData.email.trim(),
           role: "responder",
         });
       }
     }
 
+    // New responders always start off-duty. Duty status becomes "On Duty"
+    // automatically once they log in (see AdminDashboard's login/logout
+    // handlers, which flip on_duty for the matching email).
     const { error: insertError } = await supabase.from("responders").insert({
-      name: formData.name.trim(),
+      name: fullName,
       email: formData.email.trim(),
       status: "active",
-      on_duty: formData.on_duty,
+      on_duty: false,
     });
 
     if (insertError) {
@@ -668,10 +680,10 @@ export default function RespondersPage() {
     setModalSuccess(
       createAuth
         ? `✓ Auth account + responder record created for ${formData.email}`
-        : `✓ Responder record added for ${formData.name}`
+        : `✓ Responder record added for ${fullName}`
     );
     setSaving(false);
-    setFormData({ name: "", email: "", password: "", on_duty: true });
+    setFormData({ firstName: "", lastName: "", email: "", password: "" });
     setCreateAuth(true);
     fetchAll(true);
     setTimeout(() => { setShowAdd(false); setModalSuccess(null); }, 1500);
@@ -841,7 +853,7 @@ export default function RespondersPage() {
           <button
             className="rp-add-btn"
             onClick={() => {
-              setFormData({ name: "", email: "", password: "", on_duty: true });
+              setFormData({ firstName: "", lastName: "", email: "", password: "" });
               setModalError(null);
               setModalSuccess(null);
               setShowAdd(true);
@@ -989,14 +1001,25 @@ export default function RespondersPage() {
                 <div className={`rp-auth-switch${createAuth ? " on" : ""}`} />
               </div>
 
-              <div className="rp-field">
-                <label className="rp-label">Full Name</label>
-                <input
-                  className="rp-input" placeholder="e.g. Juan dela Cruz"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
+              <div className="rp-field-row">
+                <div className="rp-field">
+                  <label className="rp-label">First Name</label>
+                  <input
+                    className="rp-input" placeholder="e.g. Juan"
+                    value={formData.firstName}
+                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                  />
+                </div>
+                <div className="rp-field">
+                  <label className="rp-label">Last Name</label>
+                  <input
+                    className="rp-input" placeholder="e.g. dela Cruz"
+                    value={formData.lastName}
+                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                  />
+                </div>
               </div>
+
               <div className="rp-field">
                 <label className="rp-label">Email</label>
                 <input
@@ -1028,20 +1051,17 @@ export default function RespondersPage() {
                 </div>
               )}
 
-              <div className="rp-field" style={{ marginTop: 14 }}>
-                <label className="rp-label">Duty Status</label>
-                <select
-                  className="rp-select"
-                  value={formData.on_duty ? "on" : "off"}
-                  onChange={(e) => setFormData({ ...formData, on_duty: e.target.value === "on" })}
-                >
-                  <option value="on">On Duty</option>
-                  <option value="off">Off Duty</option>
-                </select>
+              <div className="rp-notice" style={{ marginTop: 14, marginBottom: 0 }}>
+                <FaUserShield className="rp-notice-icon" size={12} />
+                <span>
+                  Duty status is set automatically — responders are tagged{" "}
+                  <strong style={{ color: "#00B074" }}>On Duty</strong> when they log in and{" "}
+                  <strong style={{ color: "var(--text-tertiary, #9CA3AF)" }}>Off Duty</strong> when they log out.
+                </span>
               </div>
 
-              {modalError   && <div className="rp-modal-error">⚠ {modalError}</div>}
-              {modalSuccess && <div className="rp-modal-success">{modalSuccess}</div>}
+              {modalError   && <div className="rp-modal-error" style={{ marginTop: 14 }}>⚠ {modalError}</div>}
+              {modalSuccess && <div className="rp-modal-success" style={{ marginTop: 14 }}>{modalSuccess}</div>}
 
               <div className="rp-modal-actions">
                 <button className="rp-modal-cancel" onClick={() => setShowAdd(false)}>Cancel</button>

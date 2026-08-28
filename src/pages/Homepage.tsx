@@ -7,9 +7,18 @@ import homepageBg from "../assets/homepage.bg.jpg";
 
 
 // ── Cloudflare Turnstile site key ──
-// Same widget/key used on the Signup page.
+// Same widget/key used on the Signup page and Login page.
 const TURNSTILE_SITE_KEY = "0x4AAAAAAEeWeQHuqgMoh8cd";
 
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (container: string | HTMLElement, options: Record<string, any>) => string;
+      reset: (widgetId?: string) => void;
+      remove: (widgetId?: string) => void;
+    };
+  }
+}
 
 function EmergencyRunner() {
   const [dismissed, setDismissed] = useState(false);
@@ -286,6 +295,15 @@ export default function Homepage() {
   const statsRef = useRef<HTMLDivElement>(null);
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
+  // ── CAPTCHA (Turnstile) state — required by Supabase Auth when captcha
+  // protection is enabled on the project. Without a valid token,
+  // signInWithPassword() is rejected, which is why login only worked
+  // on the dedicated /login page (which already had the widget) and
+  // silently failed here. ──
+  const [captchaToken, setCaptchaToken] = useState("");
+  const captchaContainerRef = useRef<HTMLDivElement>(null);
+  const captchaWidgetId = useRef<string | null>(null);
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -320,19 +338,69 @@ export default function Homepage() {
     return () => observer.disconnect();
   }, []);
 
+  // ── Load the Turnstile script once, then render the widget into our
+  // container. Mirrors the logic used on the Login page. ──
+  useEffect(() => {
+    const existing = document.querySelector('script[data-turnstile]');
+
+    const renderWidget = () => {
+      if (!window.turnstile || !captchaContainerRef.current || captchaWidgetId.current) return;
+      captchaWidgetId.current = window.turnstile.render(captchaContainerRef.current, {
+        sitekey: TURNSTILE_SITE_KEY,
+        theme: "dark",
+        callback: (token: string) => setCaptchaToken(token),
+        "expired-callback": () => setCaptchaToken(""),
+        "error-callback": () => setCaptchaToken(""),
+      });
+    };
+
+    if (window.turnstile) {
+      renderWidget();
+    } else if (!existing) {
+      const script = document.createElement("script");
+      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+      script.async = true;
+      script.defer = true;
+      script.setAttribute("data-turnstile", "true");
+      script.onload = renderWidget;
+      document.body.appendChild(script);
+    } else {
+      existing.addEventListener("load", renderWidget);
+    }
+
+    return () => {
+      if (window.turnstile && captchaWidgetId.current) {
+        window.turnstile.remove(captchaWidgetId.current);
+        captchaWidgetId.current = null;
+      }
+    };
+  }, []);
+
   const handleLogin = async () => {
     if (!email || !password) {
       setError("Please enter your email and password.");
+      return;
+    }
+    if (!captchaToken) {
+      setError("Please complete the CAPTCHA to verify you're human.");
       return;
     }
     setLoading(true);
     setError(null);
     try {
       const { data: authData, error: authError } =
-        await supabase.auth.signInWithPassword({ email, password });
+        await supabase.auth.signInWithPassword({
+          email,
+          password,
+          options: { captchaToken },
+        });
       if (authError || !authData.user) {
         setError(authError?.message || "Login failed.");
         setLoading(false);
+        setCaptchaToken("");
+        if (window.turnstile && captchaWidgetId.current) {
+          window.turnstile.reset(captchaWidgetId.current);
+        }
         return;
       }
       const { data: profile, error: profileError } = await supabase
@@ -365,6 +433,10 @@ export default function Homepage() {
     } catch (err: any) {
       setError(err.message || "Login failed.");
       setLoading(false);
+      setCaptchaToken("");
+      if (window.turnstile && captchaWidgetId.current) {
+        window.turnstile.reset(captchaWidgetId.current);
+      }
     }
   };
 
@@ -909,6 +981,15 @@ export default function Homepage() {
           80% { transform: translateX(4px); }
         }
 
+        .hp-auth-captcha {
+          display: flex;
+          justify-content: center;
+          margin-bottom: 20px;
+          min-height: 65px;
+          width: 100%;
+          box-sizing: border-box;
+        }
+
         .hp-auth-btn {
           width: 100%;
           padding: 14px 22px;
@@ -1375,10 +1456,12 @@ export default function Homepage() {
                     ⚠ {error}
                   </div>
                 )}
+                {/* ── Turnstile CAPTCHA widget — required by Supabase Auth ── */}
+                <div className="hp-auth-captcha" ref={captchaContainerRef} />
                 <button
                   className="hp-auth-btn"
                   onClick={handleLogin}
-                  disabled={loading}
+                  disabled={loading || !captchaToken}
                   aria-busy={loading}
                 >
                   {loading ? "Signing in…" : "Login Account"}
