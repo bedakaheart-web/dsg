@@ -640,10 +640,21 @@ export default function RespondersPage() {
     setModalSuccess(null);
 
     if (createAuth) {
+      // supabase-js swaps the browser's active session to whichever user
+      // just called signUp(). Since the admin is the one submitting this
+      // form, we snapshot the admin's session first and restore it right
+      // after, so creating a responder never signs the admin out.
+      const { data: { session: adminSession } } = await supabase.auth.getSession();
+
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email.trim(),
         password: formData.password,
-        options: { data: { full_name: fullName, role: "responder" } },
+        options: {
+          data: { full_name: fullName, role: "responder" },
+          // Sends the confirmation email and sends the responder back to
+          // the login page once they click the link.
+          emailRedirectTo: `${window.location.origin}/login`,
+        },
       });
       if (signUpError) {
         setModalError(`Auth account error: ${signUpError.message}`);
@@ -657,6 +668,14 @@ export default function RespondersPage() {
           full_name: fullName,
           email: formData.email.trim(),
           role: "responder",
+        });
+      }
+
+      // Restore the admin's session (see note above).
+      if (adminSession) {
+        await supabase.auth.setSession({
+          access_token: adminSession.access_token,
+          refresh_token: adminSession.refresh_token,
         });
       }
     }
@@ -679,14 +698,14 @@ export default function RespondersPage() {
 
     setModalSuccess(
       createAuth
-        ? `✓ Auth account + responder record created for ${formData.email}`
+        ? `✓ Responder added. A confirmation email was sent to ${formData.email} — they must click the link before they can log in.`
         : `✓ Responder record added for ${fullName}`
     );
     setSaving(false);
     setFormData({ firstName: "", lastName: "", email: "", password: "" });
     setCreateAuth(true);
     fetchAll(true);
-    setTimeout(() => { setShowAdd(false); setModalSuccess(null); }, 1500);
+    setTimeout(() => { setShowAdd(false); setModalSuccess(null); }, createAuth ? 3000 : 1500);
   };
 
   const updateResponder = async () => {
@@ -991,7 +1010,10 @@ export default function RespondersPage() {
           <div className="rp-overlay" onClick={() => setShowAdd(false)}>
             <div className="rp-modal" onClick={(e) => e.stopPropagation()}>
               <h3 className="rp-modal-title">Add Responder</h3>
-              <p className="rp-modal-sub">Create a login account and add them to the responders list in one step.</p>
+              <p className="rp-modal-sub">
+                Create a login account and add them to the responders list in one step.
+                {createAuth && " They'll receive a confirmation email and must verify it before they can sign in."}
+              </p>
 
               <div className="rp-auth-toggle" onClick={() => setCreateAuth((v) => !v)}>
                 <div className="rp-auth-toggle-left">
