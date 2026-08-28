@@ -1,9 +1,49 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "../js/supabase";
 import { FaEye, FaEyeSlash, FaCheck, FaArrowRight } from "react-icons/fa";
 import directorybg from "../assets/directorybg.png";
 import dsgLogo from "../assets/dsg_logo.png";
+
+
+
+// ── Cloudflare Turnstile site key ──
+// Same widget/key used on the Signup page.
+const TURNSTILE_SITE_KEY = "0x4AAAAAAEeWeQHuqgMoh8cd";
+
+
+// ── Disposable / throwaway email domains to block ──
+// Not exhaustive, but catches the most common temp-mail services.
+const DISPOSABLE_EMAIL_DOMAINS = new Set([
+  "mailinator.com", "tempmail.com", "temp-mail.org", "10minutemail.com",
+  "guerrillamail.com", "guerrillamail.info", "guerrillamail.biz",
+  "guerrillamail.de", "yopmail.com", "throwawaymail.com", "sharklasers.com",
+  "trashmail.com", "getnada.com", "maildrop.cc", "fakeinbox.com",
+  "mintemail.com", "dispostable.com", "mailnesia.com", "tempinbox.com",
+  "moakt.com", "emailondeck.com", "spamgourmet.com", "mytemp.email",
+  "tempr.email", "burnermail.io", "mailcatch.com", "mohmal.com",
+  "0-mail.com", "discard.email", "throwam.com",
+]);
+
+function isValidEmailFormat(email: string): boolean {
+  // Reasonably strict RFC-5322-ish check, good enough for signup forms.
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+}
+
+function isDisposableEmail(email: string): boolean {
+  const domain = email.split("@")[1]?.toLowerCase().trim();
+  return domain ? DISPOSABLE_EMAIL_DOMAINS.has(domain) : false;
+}
+
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (container: string | HTMLElement, options: Record<string, any>) => string;
+      reset: (widgetId?: string) => void;
+      remove: (widgetId?: string) => void;
+    };
+  }
+}
 
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
@@ -444,6 +484,13 @@ const CSS = `
     margin-top: 5px; padding-left: 2px; font-weight: 400;
   }
 
+  .su-captcha-wrap {
+    margin: 18px 0 6px;
+    display: flex;
+    justify-content: center;
+    min-height: 65px;
+  }
+
   .su-btn {
     width: 100%; padding: 15px 22px;
     font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 700;
@@ -825,15 +872,56 @@ function LeftPanel() {
 }
 
 export default function Signup() {
-  const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    fullName: "", email: "", phone: "", barangay: "", password: "", confirmPassword: ""
+    firstName: "", lastName: "", email: "", phone: "", barangay: "", password: "", confirmPassword: ""
   });
   const [showPw,        setShowPw]        = useState(false);
   const [showConfirmPw, setShowConfirmPw] = useState(false);
   const [loading,       setLoading]       = useState(false);
   const [error,         setError]         = useState("");
   const [success,       setSuccess]       = useState(false);
+  const [captchaToken,  setCaptchaToken]  = useState("");
+  const [emailTouched,  setEmailTouched]  = useState(false);
+
+  const captchaContainerRef = useRef<HTMLDivElement>(null);
+  const captchaWidgetId     = useRef<string | null>(null);
+
+  // Load the Turnstile script once, then render the widget into our container.
+  useEffect(() => {
+    const existing = document.querySelector('script[data-turnstile]');
+
+    const renderWidget = () => {
+      if (!window.turnstile || !captchaContainerRef.current || captchaWidgetId.current) return;
+      captchaWidgetId.current = window.turnstile.render(captchaContainerRef.current, {
+        sitekey: TURNSTILE_SITE_KEY,
+        theme: "dark",
+        callback: (token: string) => setCaptchaToken(token),
+        "expired-callback": () => setCaptchaToken(""),
+        "error-callback": () => setCaptchaToken(""),
+      });
+    };
+
+    if (window.turnstile) {
+      renderWidget();
+    } else if (!existing) {
+      const script = document.createElement("script");
+      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+      script.async = true;
+      script.defer = true;
+      script.setAttribute("data-turnstile", "true");
+      script.onload = renderWidget;
+      document.body.appendChild(script);
+    } else {
+      existing.addEventListener("load", renderWidget);
+    }
+
+    return () => {
+      if (window.turnstile && captchaWidgetId.current) {
+        window.turnstile.remove(captchaWidgetId.current);
+        captchaWidgetId.current = null;
+      }
+    };
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -843,10 +931,18 @@ export default function Signup() {
     e.preventDefault();
     setError("");
 
-    const { fullName, email, phone, barangay, password, confirmPassword } = formData;
+    const { firstName, lastName, email, phone, barangay, password, confirmPassword } = formData;
 
-    if (!fullName || !email || !phone || !barangay || !password || !confirmPassword) {
+    if (!firstName || !lastName || !email || !phone || !barangay || !password || !confirmPassword) {
       setError("Please complete all fields.");
+      return;
+    }
+    if (!isValidEmailFormat(email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+    if (isDisposableEmail(email)) {
+      setError("Temporary or disposable email addresses aren't allowed. Please use a real email you can access.");
       return;
     }
     if (password !== confirmPassword) {
@@ -857,32 +953,35 @@ export default function Signup() {
       setError("Password must be at least 6 characters.");
       return;
     }
+    if (!captchaToken) {
+      setError("Please complete the CAPTCHA to verify you're human.");
+      return;
+    }
 
     setLoading(true);
     try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
+      const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
+
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          captchaToken,
+          emailRedirectTo: `${window.location.origin}/dashboard/citizen`,
+          data: {
+            first_name:   firstName.trim(),
+            last_name:    lastName.trim(),
+            full_name:    fullName,
+            phone_number: phone,
+            barangay,
+          },
+        },
+      });
       if (authError) throw authError;
       if (!authData.user) throw new Error("Signup failed. Please try again.");
 
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .upsert(
-          {
-            id:           authData.user.id,
-            full_name:    fullName,
-            email,
-            phone_number: phone,
-            barangay,
-            role:         "citizen",
-          },
-          { onConflict: "id" }
-        );
-
-      if (profileError) throw profileError;
-
       await supabase.auth.signOut();
       setSuccess(true);
-      setTimeout(() => navigate("/login"), 4000);
 
     } catch (err: any) {
       const isDuplicate =
@@ -893,11 +992,14 @@ export default function Signup() {
       if (isDuplicate) {
         await supabase.auth.signOut();
         setSuccess(true);
-        setTimeout(() => navigate("/login"), 4000);
         return;
       }
 
       setError(err.message || "An unexpected error occurred.");
+      setCaptchaToken("");
+      if (window.turnstile && captchaWidgetId.current) {
+        window.turnstile.reset(captchaWidgetId.current);
+      }
     } finally {
       setLoading(false);
     }
@@ -913,16 +1015,17 @@ export default function Signup() {
             <div className="su-form-wrap">
               <div className="su-success">
                 <div className="su-success-icon"><FaCheck /></div>
-                <div className="su-success-title">Account Created!</div>
+                <div className="su-success-title">Check Your Email</div>
                 <p className="su-success-msg">
                   Welcome to <strong>DumaSafeGuide</strong>!<br/>
-                  Your citizen account is ready immediately.
+                  We've sent a confirmation link to your email. Please verify
+                  your address before signing in.
                 </p>
-                <p className="su-success-note">Redirecting to login in 4 seconds…</p>
+                <p className="su-success-note">Didn't get it? Check your spam folder.</p>
                 <div className="su-success-div" />
                 <Link to="/login" className="su-success-btn">
                   <FaArrowRight size={12} style={{ marginRight: "2px" }} />
-                  Sign In Now
+                  Go to Sign In
                 </Link>
               </div>
             </div>
@@ -960,13 +1063,24 @@ export default function Signup() {
             )}
 
             <form onSubmit={handleSignup} noValidate>
-              <div className="su-field">
-                <label className="su-label">Full Name</label>
-                <div className="su-input-wrap">
-                  <span className="su-field-icon"><IconUser /></span>
-                  <input className="su-input" name="fullName" type="text"
-                    placeholder="Maria Clara"
-                    value={formData.fullName} onChange={handleChange} />
+              <div className="su-row-2">
+                <div className="su-field">
+                  <label className="su-label">First Name</label>
+                  <div className="su-input-wrap">
+                    <span className="su-field-icon"><IconUser /></span>
+                    <input className="su-input" name="firstName" type="text"
+                      placeholder="Maria"
+                      value={formData.firstName} onChange={handleChange} />
+                  </div>
+                </div>
+                <div className="su-field">
+                  <label className="su-label">Last Name</label>
+                  <div className="su-input-wrap">
+                    <span className="su-field-icon"><IconUser /></span>
+                    <input className="su-input" name="lastName" type="text"
+                      placeholder="Clara"
+                      value={formData.lastName} onChange={handleChange} />
+                  </div>
                 </div>
               </div>
 
@@ -999,8 +1113,20 @@ export default function Signup() {
                   <span className="su-field-icon"><IconMail /></span>
                   <input className="su-input" name="email" type="email"
                     placeholder="name@example.com"
-                    value={formData.email} onChange={handleChange} />
+                    value={formData.email}
+                    onChange={handleChange}
+                    onBlur={() => setEmailTouched(true)} />
                 </div>
+                {emailTouched && formData.email && !isValidEmailFormat(formData.email) && (
+                  <p style={{ fontSize: 11.5, marginTop: 6, color: "#ff8877" }}>
+                    Please enter a valid email address.
+                  </p>
+                )}
+                {!(emailTouched && formData.email && !isValidEmailFormat(formData.email)) && (
+                  <p style={{ fontSize: 11, marginTop: 6, color: "rgba(168,216,255,0.35)" }}>
+                    Use an email you can check — we'll send a confirmation link before you can sign in.
+                  </p>
+                )}
               </div>
 
               <div className="su-row-2">
@@ -1031,7 +1157,9 @@ export default function Signup() {
               </div>
               <p className="su-pw-hint">Minimum 6 characters required.</p>
 
-              <button className="su-btn" type="submit" disabled={loading}>
+              <div className="su-captcha-wrap" ref={captchaContainerRef} />
+
+              <button className="su-btn" type="submit" disabled={loading || !captchaToken}>
                 {loading && <span className="su-spinner" />}
                 {loading ? "Creating account…" : "Create Account"}
               </button>

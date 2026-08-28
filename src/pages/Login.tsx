@@ -1,9 +1,23 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "../js/supabase";
 import { FaEye, FaEyeSlash, FaCheck, FaArrowRight } from "react-icons/fa";
 import logoImage from "../assets/dsg.logo.png";
 import directorybg from "../assets/directorybg.png";
+
+// ── Cloudflare Turnstile site key ──
+// Same widget/key used on the Signup page.
+const TURNSTILE_SITE_KEY = "0x4AAAAAAEeWeQHuqgMoh8cd";
+
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (container: string | HTMLElement, options: Record<string, any>) => string;
+      reset: (widgetId?: string) => void;
+      remove: (widgetId?: string) => void;
+    };
+  }
+}
 
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
@@ -439,6 +453,14 @@ const CSS = `
     letter-spacing: 0.5px;
   }
 
+  .lg-captcha-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 24px;
+    min-height: 65px;
+    position: relative; z-index: 1;
+  }
+
   .lg-btn {
     width: 100%;
     padding: 15px 22px;
@@ -609,6 +631,10 @@ export default function Login() {
   const [success, setSuccess]   = useState(false);
   const [error, setError]       = useState("");
   const [checking, setChecking] = useState(true);
+  const [captchaToken, setCaptchaToken] = useState("");
+
+  const captchaContainerRef = useRef<HTMLDivElement>(null);
+  const captchaWidgetId     = useRef<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -632,18 +658,75 @@ export default function Login() {
     return () => { cancelled = true; };
   }, [navigate]);
 
+  // Load the Turnstile script once, then render the widget into our container.
+  useEffect(() => {
+    if (checking) return; // don't render the widget while the session check is still on screen
+
+    const existing = document.querySelector('script[data-turnstile]');
+
+    const renderWidget = () => {
+      if (!window.turnstile || !captchaContainerRef.current || captchaWidgetId.current) return;
+      captchaWidgetId.current = window.turnstile.render(captchaContainerRef.current, {
+        sitekey: TURNSTILE_SITE_KEY,
+        theme: "dark",
+        callback: (token: string) => setCaptchaToken(token),
+        "expired-callback": () => setCaptchaToken(""),
+        "error-callback": () => setCaptchaToken(""),
+      });
+    };
+
+    if (window.turnstile) {
+      renderWidget();
+    } else if (!existing) {
+      const script = document.createElement("script");
+      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+      script.async = true;
+      script.defer = true;
+      script.setAttribute("data-turnstile", "true");
+      script.onload = renderWidget;
+      document.body.appendChild(script);
+    } else {
+      existing.addEventListener("load", renderWidget);
+    }
+
+    return () => {
+      if (window.turnstile && captchaWidgetId.current) {
+        window.turnstile.remove(captchaWidgetId.current);
+        captchaWidgetId.current = null;
+      }
+    };
+  }, [checking]);
+
   const handleLogin = async () => {
     setError("");
     if (!email.trim() || !password.trim()) {
       setError("Please enter your email and password.");
       return;
     }
+    if (!captchaToken) {
+      setError("Please complete the CAPTCHA to verify you're human.");
+      return;
+    }
     setLoading(true);
     const { data: authData, error: authError } =
-      await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+        options: { captchaToken },
+      });
     if (authError || !authData?.user) {
-      setError(authError?.message || "Login failed. Please check your credentials.");
+      const rawMessage = authError?.message || "";
+      const isUnconfirmed = rawMessage.toLowerCase().includes("email not confirmed");
+      setError(
+        isUnconfirmed
+          ? "Please confirm your email first. We sent a confirmation link to your inbox when you signed up — check your inbox (and spam folder) and click it before signing in."
+          : rawMessage || "Login failed. Please check your credentials."
+      );
       setLoading(false);
+      setCaptchaToken("");
+      if (window.turnstile && captchaWidgetId.current) {
+        window.turnstile.reset(captchaWidgetId.current);
+      }
       return;
     }
     const { data: profile, error: profileError } = await supabase
@@ -800,7 +883,9 @@ export default function Login() {
                   <Link to="/forgot-password" className="lg-forgot">Forgot password?</Link>
                 </div>
 
-                <button className="lg-btn" onClick={handleLogin} disabled={loading} type="button">
+                <div className="lg-captcha-wrap" ref={captchaContainerRef} />
+
+                <button className="lg-btn" onClick={handleLogin} disabled={loading || !captchaToken} type="button">
                   {loading && <span className="lg-spinner" />}
                   {loading ? "Signing in…" : (
                     <>

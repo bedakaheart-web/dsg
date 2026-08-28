@@ -5,6 +5,12 @@ import { FaMapMarkedAlt, FaUsers, FaLightbulb, FaPhoneAlt, FaEye, FaEyeSlash, Fa
 import { supabase } from "../js/supabase";
 import homepageBg from "../assets/homepage.bg.jpg";
 
+
+// ── Cloudflare Turnstile site key ──
+// Same widget/key used on the Signup page.
+const TURNSTILE_SITE_KEY = "0x4AAAAAAEeWeQHuqgMoh8cd";
+
+
 function EmergencyRunner() {
   const [dismissed, setDismissed] = useState(false);
   const alerts = [
