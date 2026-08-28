@@ -1112,7 +1112,7 @@ export default function Signup() {
                 <div className="su-input-wrap">
                   <span className="su-field-icon"><IconMail /></span>
                   <input className="su-input" name="email" type="email"
-                    placeholder="name@example.com"
+                    placeholder=" "
                     value={formData.email}
                     onChange={handleChange}
                     onBlur={() => setEmailTouched(true)} />
