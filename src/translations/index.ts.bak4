@@ -1,0 +1,1941 @@
+// src/i18n/translations.ts
+//
+// Central dictionary for DumaSafeGuide's language support.
+// Add new languages by adding a new top-level key (matching the
+// `LanguageCode` type below) and mirroring the same nested shape
+// as `en`. Add new pages by adding a new top-level section
+// (e.g. `map`, `directory`, `safetyTips`).
+//
+// ⚠️ Note: ticker.alerts strings are safety-critical. Machine/AI
+// translation is a solid starting point, but have a native speaker
+// review these specific strings before relying on them in production.
+
+export type TranslationDict = {
+  common: {
+    live: string;
+    emergency: string;
+    quickAccess: string;
+    explore: string;
+  };
+  nav: {
+    directory: string;
+    map: string;
+    safetyTips: string;
+    about: string;
+    resources: string;
+    myDashboard: string;
+    responderPanel: string;
+    adminDashboard: string;
+    login: string;
+    createAccount: string;
+    logout: string;
+    signOut: string;
+    citizen: string;
+    fileReport: string;
+    alerts: string;
+  };
+  ticker: {
+    alerts: string[];
+  };
+  hero: {
+    eyebrow: string;
+    titleLine1: string;
+    titleAccent: string;
+    titleRest: string;
+    subtitle: string;
+    cta: string;
+  };
+  stats: {
+    barangays: string;
+    hourResponse: string;
+    avgResponse: string;
+  };
+  auth: {
+    welcomeTitle: string;
+    welcomeSubtitle: string;
+    emailLabel: string;
+    passwordLabel: string;
+    rememberMe: string;
+    forgotPassword: string;
+    loginBtn: string;
+    loggingIn: string;
+    orDivider: string;
+    noAccount: string;
+    createAccount: string;
+    errMissingFields: string;
+    errNeedCaptcha: string;
+    errProfileNotReady: string;
+    errLoginFailed: string;
+  };
+  cards: {
+    map: { label: string; desc: string; tag: string };
+    directory: { label: string; desc: string; tag: string };
+    tips: { label: string; desc: string; tag: string };
+    contacts: { label: string; desc: string; tag: string };
+  };
+  languageModal: {
+    heading: string;
+    subheading: string;
+    continueBtn: string;
+  };
+  safetyTips: {
+    heroTitleStart: string;
+    heroAccent: string;
+    heroTitleEnd: string;
+    heroSub: string;
+    disasters: {
+      typhoon: string; flood: string; fire: string;
+      earthquake: string; landslide: string; road: string;
+    };
+    phases: {
+      beforeLabel: string; beforeDesc: string;
+      duringLabel: string; duringDesc: string;
+      afterLabel: string; afterDesc: string;
+    };
+    goBag: {
+      tabLabel: string; titleStart: string; titleAccent: string; titleEnd: string;
+      sub: string; itemsPacked: string; resetBtn: string;
+    };
+    categories: {
+      all: string; waterFood: string; medical: string; documents: string;
+      tools: string; clothing: string; shelter: string; communication: string;
+    };
+  };
+  resources: {
+    heroTitle: string;
+    heroAccent: string;
+    heroSub: string;
+    cards: {
+      safety: { tag: string; title: string; description: string; links: { before: string; flood: string; fire: string } };
+      agencies: { tag: string; title: string; description: string; links: { cdrrmo: string; redcross: string; bfp: string } };
+      directory: { tag: string; title: string; description: string; links: { city: string; barangays: string; hospitals: string } };
+      terms: { tag: string; title: string; description: string; links: { responsibilities: string; privacy: string; ra10175: string } };
+    };
+    cta: { title: string; desc: string; btn: string };
+  };
+  map: {
+    backBtn: string;
+    titleStart: string;
+    titleAccent: string;
+    subtitle: string;
+    statTotal: string;
+    filterLabel: string;
+    filterAll: string;
+    categories: { emergency: string; hospital: string; evacuation: string };
+    searchPlaceholder: string;
+    showingPrefix: string;
+    showingOf: string;
+    showingSuffix: string;
+    navigateBtn: string;
+    emptyTitle: string;
+    legendTitle: string;
+    liveTitle: string;
+    liveSubPrefix: string;
+    liveSubSuffix: string;
+    getDirections: string;
+  };
+  about: {
+    heroTitle: string;
+    heroSub: string;
+    metaText: string;
+    introLabel: string;
+    introText: string;
+    pillarsLabel: string;
+    mission: { tag: string; title: string; body: string };
+    vision: { tag: string; title: string; body: string };
+    featuresLabel: string;
+    features: {
+      contacts: { label: string; detail: string };
+      guidelines: { label: string; detail: string };
+      reporting: { label: string; detail: string };
+      partners: { label: string; detail: string };
+    };
+    cta: { title: string; desc: string; btn: string };
+  };
+  directory: {
+    hero: { line1: string; line1Accent: string; line2: string; line2Accent: string; sub: string };
+    banner: { label: string; allEmergencies: string; pnpPolice: string; bfpFire: string; cdrrmo: string; oneRescue: string };
+    disclaimer: { bold: string; rest: string; red: string; end: string };
+    emergency: { title: string; countLabel: string; searchPlaceholder: string; emptyText: string };
+    hospitals: { title: string; countLabel: string; searchPlaceholder: string; emptyText: string; government: string; private: string };
+    barangays: {
+      title: string; countLabel: string; searchPlaceholder: string; emptyText: string;
+      withHotlines: string; withEvac: string; noHotline: string;
+      hotlineBadge: string; evacBadge: string; tbdBadge: string;
+      noDirectPrefix: string; orCdrrmo: string; navigate: string;
+    };
+    actions: { callNow: string; map: string; call: string; navigate: string };
+  };
+  footer: {
+    statusOperational: string;
+    statusActive: string;
+    hotlinesLabel: string;
+    hotlinesHint: string;
+    emergencyPill: string;
+    navHeading: string;
+    aboutHeading: string;
+    links: {
+      safetyMap: string; reportIncident: string; safetyTips: string; emergencyContacts: string;
+      aboutDsg: string; resources: string; privacyPolicy: string; termsOfUse: string;
+    };
+    hotlineLabels: { emergency: string; ndrrmc: string; bfpFire: string; pnp: string };
+    brandDesc: string;
+    brandBadge: string;
+    rightsReserved: string;
+    builtWithPrefix: string;
+    builtWithSuffix: string;
+  };
+  report: {
+    heroTitle: string; heroAccent: string;
+    heroSub: string;
+    bannerTitle: string; bannerText: string; bannerCta: string;
+    types: { fire: string; accident: string; flood: string; crime: string; medical: string; other: string };
+    steps: { incidentType: string; reporterInfo: string; location: string; description: string; evidence: string; submit: string };
+    cardLabels: { incidentType: string; reporterInfo: string; location: string; description: string; evidence: string };
+    form: {
+      fullName: string; optional: string; contactNumber: string;
+      detectedLocation: string; refreshGps: string; verifyMaps: string;
+      descriptionPlaceholder: string; uploadHint: string;
+      legalTitle: string; legalSummary: string;
+      submitBtn: string; submitting: string;
+    };
+    sidebar: {
+      hotlinesTitle: string; warnTitle: string; warnText: string;
+      safetyTitle: string; safetyText: string;
+      trackTitle: string; trackText: string; trackBtn: string;
+    };
+    success: { title: string; sub: string; cardTitle: string; cardText: string; cardBtn: string };
+  };
+  signup: {
+    eyebrow: string;
+    heroLine1: string; heroAccent1: string; heroAccent2: string;
+    heroDesc: string;
+    steps: {
+      create: { title: string; desc: string };
+      access: { title: string; desc: string };
+      report: { title: string; desc: string };
+    };
+    certBold: string; certRest: string;
+    mobileBadge: string;
+    backToHome: string;
+    formTitle: string; formSub: string;
+    labels: { firstName: string; lastName: string; barangay: string; phone: string; email: string; password: string; confirmPassword: string };
+    placeholders: { firstName: string; lastName: string; phone: string; selectLocation: string };
+    pwHint: string; emailHint: string; emailInvalid: string;
+    errors: {
+      missingFields: string; invalidEmail: string; disposableEmail: string;
+      passwordMismatch: string; passwordTooShort: string; needCaptcha: string; unexpected: string;
+    };
+    submitBtn: string; submitting: string;
+    footerHaveAccount: string; footerSignIn: string;
+    success: { title: string; msgIntro: string; msgBody: string; note: string; goToSignIn: string };
+  };
+};
+
+export type LanguageCode = "en" | "tl" | "ceb" | "ko" | "zh" | "ja" | "ru" | "ar";
+
+export const translations: Record<LanguageCode, TranslationDict> = {
+  // ── English ──────────────────────────────────────────────
+  en: {
+    common: { live: "Live", emergency: "Emergency", quickAccess: "Quick Access", explore: "Explore" },
+    nav: {
+      directory: "Directory", map: "Map", safetyTips: "Safety Tips", about: "About", resources: "Resources",
+      myDashboard: "My Dashboard", responderPanel: "Responder Panel", adminDashboard: "Admin Dashboard",
+      login: "Login", createAccount: "Create Account", logout: "Logout", signOut: "Sign Out",
+      citizen: "Citizen", fileReport: "File Report", alerts: "Alerts",
+    },
+    ticker: {
+      alerts: [
+        "🔴  ADVISORY: Typhoon Signal No. 1 raised for Negros Occidental — monitor official updates",
+        "🚨  INCIDENT: Vehicular accident reported along Lacson St — avoid the area",
+        "⚠️  REMINDER: Hotline 911 is active 24/7 — do not use for non-emergencies",
+        "🔴  ADVISORY: Flash flood watch in effect for low-lying barangays — stay alert",
+      ],
+    },
+    hero: {
+      eyebrow: "City of Gentle People",
+      titleLine1: "Emergency",
+      titleAccent: "Response",
+      titleRest: "at Your Fingertips",
+      subtitle: "A centralized safety platform for the City of Gentle People. Fast access to hotlines, facilities, and safety guidelines.",
+      cta: "Report a Live Incident",
+    },
+    stats: { barangays: "Barangays Covered", hourResponse: "Hour Response", avgResponse: "Avg. Response (min)" },
+    auth: {
+      welcomeTitle: "Welcome Back",
+      welcomeSubtitle: "Login to access the DumaSafeGuide emergency dashboard.",
+      emailLabel: "Email Address",
+      passwordLabel: "Password",
+      rememberMe: "Remember me",
+      forgotPassword: "Forgot Password?",
+      loginBtn: "Login Account",
+      loggingIn: "Signing in…",
+      orDivider: "No account yet?",
+      noAccount: "No account yet?",
+      createAccount: "Create Account →",
+      errMissingFields: "Please enter your email and password.",
+      errNeedCaptcha: "Please complete the CAPTCHA to verify you're human.",
+      errProfileNotReady: "Profile not ready yet. Please wait a moment and try again.",
+      errLoginFailed: "Login failed.",
+    },
+    cards: {
+      map: { label: "Safety Map", desc: "View live incident zones and safe routes", tag: "LIVE" },
+      directory: { label: "Directory", desc: "Barangay officials and contact persons", tag: "PEOPLE" },
+      tips: { label: "Safety Tips", desc: "Preparedness guides for every situation", tag: "TIPS" },
+      contacts: { label: "Emergency Contacts", desc: "Reach responders and hotlines instantly", tag: "URGENT" },
+    },
+    languageModal: { heading: "Choose your language", subheading: "Select your preferred language to continue.", continueBtn: "Continue" },
+    safetyTips: {
+      heroTitleStart: "Safety", heroAccent: "Tips", heroTitleEnd: "& Emergency Guides",
+      heroSub: "Step-by-step guidance for typhoons, floods, fires, earthquakes, landslides, and road accidents — plus your complete go bag checklist.",
+      disasters: { typhoon: "Typhoon", flood: "Flood", fire: "Fire", earthquake: "Earthquake", landslide: "Landslide", road: "Road Accident" },
+      phases: { beforeLabel: "Before", beforeDesc: "Prepare ahead", duringLabel: "During", duringDesc: "Stay safe now", afterLabel: "After", afterDesc: "Recover safely" },
+      goBag: { tabLabel: "Go Bag", titleStart: "Your", titleAccent: "Go Bag", titleEnd: "Checklist", sub: "Pack these 20 essentials so you can evacuate safely within 15 minutes. Check off what you've already prepared.", itemsPacked: "items packed", resetBtn: "Reset checklist" },
+      categories: { all: "All", waterFood: "Water & Food", medical: "Medical", documents: "Documents", tools: "Tools", clothing: "Clothing", shelter: "Shelter", communication: "Communication" },
+    },
+    resources: {
+      heroTitle: "Resources &", heroAccent: "Guides",
+      heroSub: "Everything you need to stay informed — safety guides, partner agencies, emergency contacts, and legal references in one place.",
+      cards: {
+        safety: { tag: "Community", title: "Safety Tips", description: "Practical, barangay-level guidelines to keep yourself and your community protected before, during, and after an emergency.", links: { before: "Before a Typhoon", flood: "Flood Safety Protocol", fire: "Fire Prevention Guide" } },
+        agencies: { tag: "Organizations", title: "Partner Agencies", description: "Government bodies and civil society organizations collaborating with DumaSafeGuide to deliver coordinated emergency response.", links: { cdrrmo: "CDRRMO", redcross: "Philippine Red Cross", bfp: "Bureau of Fire Protection" } },
+        directory: { tag: "Contacts", title: "Emergency Directory", description: "Quick access to all essential emergency hotlines — hospitals, barangay responders, and city-wide disaster management units.", links: { city: "City Emergency Services", barangays: "Barangay Hotlines", hospitals: "Hospitals & Medical" } },
+        terms: { tag: "Legal", title: "Terms of Service", description: "Understand the rules, user responsibilities, and legal framework governing the use of DumaSafeGuide, including RA 10175.", links: { responsibilities: "User Responsibilities", privacy: "Privacy Policy", ra10175: "RA 10175 Overview" } },
+      },
+      cta: { title: "Need to report an emergency?", desc: "Don't wait — use the incident reporting form to alert local responders immediately.", btn: "Report Now" },
+    },
+    map: {
+      backBtn: "Back to Dashboard",
+      titleStart: "Find Help", titleAccent: "Near You",
+      subtitle: "Emergency services, hospitals & evacuation centers across Dumaguete City",
+      statTotal: "Total",
+      filterLabel: "Filter",
+      filterAll: "All",
+      categories: { emergency: "Emergency Services", hospital: "Hospitals", evacuation: "Evacuation Centers" },
+      searchPlaceholder: "Search facilities or addresses…",
+      showingPrefix: "Showing", showingOf: "of", showingSuffix: "facilities",
+      navigateBtn: "Navigate",
+      emptyTitle: "No facilities match your search.",
+      legendTitle: "Map Legend",
+      liveTitle: "Dumaguete Coastal Watch",
+      liveSubPrefix: "Live map — all", liveSubSuffix: "facilities active",
+      getDirections: "Get Directions",
+    },
+    about: {
+      heroTitle: "About",
+      heroSub: "A web-based public safety and emergency reporting system built for Dumaguete City — consolidating everything you need in one place.",
+      metaText: "Serving Dumaguete City · Est. 2025",
+      introLabel: "What is DumaSafeGuide?",
+      introText: "DumaSafeGuide (DSG) is a web-based public safety and emergency reporting system designed specifically for Dumaguete City. It consolidates verified emergency contacts, safety tips, preparedness guidelines, and reporting features into one accessible platform — so that when seconds matter, you're never searching for answers.",
+      pillarsLabel: "Mission & Vision",
+      mission: { tag: "Purpose", title: "Our Mission", body: "To improve public safety awareness, enhance emergency accessibility, and support timely communication between the public and emergency service providers in Dumaguete City." },
+      vision: { tag: "Future", title: "Our Vision", body: "A safer, more informed Dumaguete City where residents, students, and visitors can access reliable emergency information anytime, anywhere — without barriers." },
+      featuresLabel: "What We Provide",
+      features: {
+        contacts: { label: "Verified Contacts", detail: "Curated, regularly updated emergency hotlines for hospitals, barangay offices, and city-wide disaster response units." },
+        guidelines: { label: "Safety Guidelines", detail: "Practical, barangay-level preparedness tips covering typhoons, floods, fires, and other common local emergencies." },
+        reporting: { label: "Incident Reporting", detail: "A fast, accessible reporting form that lets residents alert local responders directly — no delays, no confusion." },
+        partners: { label: "Partner Network", detail: "Coordinated with CDRRMO, Philippine Red Cross, Bureau of Fire Protection, and other key government agencies." },
+      },
+      cta: { title: "Need to report an emergency?", desc: "Don't wait — use the incident reporting form to alert local responders immediately.", btn: "Report Now" },
+    },
+    directory: {
+      hero: { line1: "Stay", line1Accent: "Connected", line2: "Stay", line2Accent: "Safe", sub: "All critical contacts for Dumaguete City — landlines and mobile numbers for emergency services, hospitals, and every barangay hotline in one place." },
+      banner: { label: "🚨 Universal Emergency", allEmergencies: "All Emergencies", pnpPolice: "PNP Police", bfpFire: "BFP Fire", cdrrmo: "CDRRMO", oneRescue: "ONE Rescue" },
+      disclaimer: { bold: "911, 116, and 160 are free to call from any mobile or landline", rest: "in the Philippines — no load required, no charges. Mobile numbers (09xx) and landlines (035) may incur standard call rates. When in doubt, dial", red: "911", end: "first." },
+      emergency: { title: "Emergency Services", countLabel: "agencies", searchPlaceholder: "Search agency, number, or service type…", emptyText: "No emergency service matches your search." },
+      hospitals: { title: "Hospitals & Medical Facilities", countLabel: "facilities", searchPlaceholder: "Search hospital name, address, or phone number…", emptyText: "No hospital matches your search.", government: "Government", private: "Private" },
+      barangays: {
+        title: "Barangay Emergency Contacts", countLabel: "barangays", searchPlaceholder: "Search barangay, hotline, or evacuation site…", emptyText: "No barangay matches your search.",
+        withHotlines: "with hotlines", withEvac: "with evacuation sites", noHotline: "no direct hotline",
+        hotlineBadge: "Hotline", evacBadge: "Evacuation", tbdBadge: "No Direct Hotline",
+        noDirectPrefix: "No direct hotline — call", orCdrrmo: "or CDRRMO", navigate: "Navigate",
+      },
+      actions: { callNow: "Call Now", map: "Map", call: "Call", navigate: "Navigate" },
+    },
+    footer: {
+      statusOperational: "All systems operational",
+      statusActive: "DumaSafeGuide Active",
+      hotlinesLabel: "Emergency Hotlines",
+      hotlinesHint: "Tap to dial instantly",
+      emergencyPill: "Emergency",
+      navHeading: "Navigate",
+      aboutHeading: "About",
+      links: {
+        safetyMap: "Safety Map", reportIncident: "Report Incident", safetyTips: "Safety Tips", emergencyContacts: "Emergency Contacts",
+        aboutDsg: "About DumaSafeGuide", resources: "Resources", privacyPolicy: "Privacy Policy", termsOfUse: "Terms of Use",
+      },
+      hotlineLabels: { emergency: "Emergency", ndrrmc: "NDRRMC", bfpFire: "BFP Fire", pnp: "PNP" },
+      brandDesc: "A community-built safety platform for the City of Gentle People. Fast access to hotlines, incident reporting, and disaster preparedness.",
+      brandBadge: "Serving Dumaguete City · Negros Oriental",
+      rightsReserved: "All rights reserved.",
+      builtWithPrefix: "Built with",
+      builtWithSuffix: "for the safety of every Dumagueteño",
+    },
+    report: {
+      heroTitle: "Report an", heroAccent: "Incident",
+      heroSub: "Submit a report to alert local responders. Provide accurate details so the right team can act fast.",
+      bannerTitle: "Track Your Report in Real-Time",
+      bannerText: "Create an account to monitor the status of your incident report and receive updates as authorities respond.",
+      bannerCta: "Create Account →",
+      types: { fire: "Fire Incident", accident: "Road Accident", flood: "Flood", crime: "Crime", medical: "Medical Emergency", other: "Other" },
+      steps: { incidentType: "Incident Type", reporterInfo: "Reporter Info", location: "Location", description: "Description", evidence: "Evidence", submit: "Submit" },
+      cardLabels: { incidentType: "Incident Type", reporterInfo: "Reporter Information", location: "Your Location", description: "Incident Details", evidence: "Upload Evidence" },
+      form: {
+        fullName: "Full Name", optional: "(Optional)", contactNumber: "Contact Number",
+        detectedLocation: "Detected Location", refreshGps: "📍 Refresh GPS", verifyMaps: "Verify on Maps →",
+        descriptionPlaceholder: "Describe what happened — include time, number of people involved, severity, and any other relevant details…",
+        uploadHint: "Click to select or drag & drop",
+        legalTitle: "Legal Acknowledgment",
+        legalSummary: "By submitting this report, you confirm that the information provided is true and accurate to the best of your knowledge.",
+        submitBtn: "Submit Incident Report", submitting: "Submitting…",
+      },
+      sidebar: {
+        hotlinesTitle: "Emergency Hotlines",
+        warnTitle: "⚠️ Emergency Reminder",
+        warnText: "If someone is in immediate danger, call emergency services directly. Do not rely solely on this form in life-threatening situations.",
+        safetyTitle: "🛡️ Your Safety Matters",
+        safetyText: "Your identity and contact information are kept strictly confidential. You may submit anonymously if preferred.",
+        trackTitle: "📍 Track Your Report",
+        trackText: "Create an account to track the status of your incident reports in real-time.",
+        trackBtn: "Create Account or Login →",
+      },
+      success: {
+        title: "Report Submitted",
+        sub: "Your incident report has been received and is now visible to responders. Authorities have been notified and will respond shortly.",
+        cardTitle: "Submit Another Report",
+        cardText: "Report another incident to help keep your community safe.",
+        cardBtn: "Submit Another Report →",
+      },
+    },
+    signup: {
+      eyebrow: "Community Safety Platform",
+      heroLine1: "Join the", heroAccent1: "emergency", heroAccent2: "response",
+      heroDesc: "Register your account to report incidents, receive real-time alerts, and stay connected with emergency responders across all barangays.",
+      steps: {
+        create: { title: "Create Account", desc: "Fill your details and select your barangay." },
+        access: { title: "Instant Access", desc: "Your account is ready immediately after signup." },
+        report: { title: "Report & Respond", desc: "Submit incidents and coordinate with responders now." },
+      },
+      certBold: "Free for all citizens", certRest: "in Dumaguete",
+      mobileBadge: "Sign Up",
+      backToHome: "Back to home",
+      formTitle: "Create Account",
+      formSub: "Join DumaSafeGuide — it's completely free for all citizens.",
+      labels: { firstName: "First Name", lastName: "Last Name", barangay: "Barangay", phone: "Phone Number", email: "Email Address", password: "Password", confirmPassword: "Confirm" },
+      placeholders: { firstName: "Maria", lastName: "Clara", phone: "09XX XXX XXXX", selectLocation: "Select location" },
+      pwHint: "Minimum 6 characters required.",
+      emailHint: "Use an email you can check — we'll send a confirmation link before you can sign in.",
+      emailInvalid: "Please enter a valid email address.",
+      errors: {
+        missingFields: "Please complete all fields.",
+        invalidEmail: "Please enter a valid email address.",
+        disposableEmail: "Temporary or disposable email addresses aren't allowed. Please use a real email you can access.",
+        passwordMismatch: "Passwords do not match.",
+        passwordTooShort: "Password must be at least 6 characters.",
+        needCaptcha: "Please complete the CAPTCHA to verify you're human.",
+        unexpected: "An unexpected error occurred.",
+      },
+      submitBtn: "Create Account", submitting: "Creating account…",
+      footerHaveAccount: "Already have an account?", footerSignIn: "Sign in →",
+      success: {
+        title: "Check Your Email",
+        msgIntro: "Welcome to DumaSafeGuide!",
+        msgBody: "We've sent a confirmation link to your email. Please verify your address before signing in.",
+        note: "Didn't get it? Check your spam folder.",
+        goToSignIn: "Go to Sign In",
+      },
+    },
+  },
+
+  // ── Tagalog / Filipino ───────────────────────────────────
+  tl: {
+    common: { live: "Live", emergency: "Emerhensiya", quickAccess: "Mabilisang Access", explore: "Tingnan" },
+    nav: {
+      directory: "Direktoryo", map: "Mapa", safetyTips: "Mga Tip sa Kaligtasan", about: "Tungkol Sa Amin", resources: "Mga Mapagkukunan",
+      myDashboard: "Aking Dashboard", responderPanel: "Panel ng Responder", adminDashboard: "Admin Dashboard",
+      login: "Mag-login", createAccount: "Gumawa ng Account", logout: "Mag-logout", signOut: "Mag-sign Out",
+      citizen: "Mamamayan", fileReport: "Mag-file ng Ulat", alerts: "Mga Alerto",
+    },
+    ticker: {
+      alerts: [
+        "🔴  ABISO: Naitaas ang Bagyo Signal No. 1 para sa Negros Occidental — subaybayan ang opisyal na balita",
+        "🚨  INSIDENTE: May aksidente sa sasakyan sa Lacson St — iwasan ang lugar",
+        "⚠️  PAALALA: Aktibo ang Hotline 911 24/7 — huwag gamitin para sa hindi emerhensiya",
+        "🔴  ABISO: May flash flood watch para sa mga mababang barangay — mag-ingat",
+      ],
+    },
+    hero: {
+      eyebrow: "Lungsod ng Mababait na Tao",
+      titleLine1: "Mabilisang",
+      titleAccent: "Tugon",
+      titleRest: "sa Iyong Kamay",
+      subtitle: "Sentralisadong plataporma ng kaligtasan para sa Lungsod ng Mababait na Tao. Mabilisang access sa mga hotline, pasilidad, at gabay sa kaligtasan.",
+      cta: "Mag-report ng Insidente Ngayon",
+    },
+    stats: { barangays: "Sakop na mga Barangay", hourResponse: "Oras na Tugon", avgResponse: "Karaniwang Tugon (min)" },
+    auth: {
+      welcomeTitle: "Maligayang Pagbabalik",
+      welcomeSubtitle: "Mag-login para ma-access ang DumaSafeGuide emergency dashboard.",
+      emailLabel: "Email Address",
+      passwordLabel: "Password",
+      rememberMe: "Tandaan ako",
+      forgotPassword: "Nakalimutan ang Password?",
+      loginBtn: "Mag-login",
+      loggingIn: "Nagla-login…",
+      orDivider: "Wala pang account?",
+      noAccount: "Wala pang account?",
+      createAccount: "Gumawa ng Account →",
+      errMissingFields: "Pakilagay ang iyong email at password.",
+      errNeedCaptcha: "Pakikumpleto ang CAPTCHA para i-verify na ikaw ay tao.",
+      errProfileNotReady: "Hindi pa handa ang profile. Maghintay saglit at subukan ulit.",
+      errLoginFailed: "Nabigo ang pag-login.",
+    },
+    cards: {
+      map: { label: "Mapa ng Kaligtasan", desc: "Tingnan ang live na insidente at ligtas na ruta", tag: "LIVE" },
+      directory: { label: "Direktoryo", desc: "Mga opisyal ng barangay at contact person", tag: "TAO" },
+      tips: { label: "Mga Tip sa Kaligtasan", desc: "Gabay sa paghahanda para sa bawat sitwasyon", tag: "TIPS" },
+      contacts: { label: "Emergency Contacts", desc: "Direktang makontak ang responders at hotlines", tag: "URGENT" },
+    },
+    languageModal: { heading: "Piliin ang iyong wika", subheading: "Piliin ang gusto mong wika para magpatuloy.", continueBtn: "Magpatuloy" },
+    safetyTips: {
+      heroTitleStart: "Mga Tip sa", heroAccent: "Kaligtasan", heroTitleEnd: "at Gabay sa Emerhensiya",
+      heroSub: "Hakbang-hakbang na gabay para sa bagyo, baha, sunog, lindol, guho, at aksidente sa daan — kasama ang kumpletong go bag checklist.",
+      disasters: { typhoon: "Bagyo", flood: "Baha", fire: "Sunog", earthquake: "Lindol", landslide: "Guho", road: "Aksidente sa Daan" },
+      phases: { beforeLabel: "Bago", beforeDesc: "Maghanda nang maaga", duringLabel: "Habang Nangyayari", duringDesc: "Manatiling ligtas ngayon", afterLabel: "Pagkatapos", afterDesc: "Bumangon nang ligtas" },
+      goBag: { tabLabel: "Go Bag", titleStart: "Iyong", titleAccent: "Go Bag", titleEnd: "Checklist", sub: "Ihanda ang 20 mahahalagang bagay para makapag-evacuate nang ligtas sa loob ng 15 minuto. Markahan ang mga nahanda mo na.", itemsPacked: "item ang nahanda", resetBtn: "I-reset ang checklist" },
+      categories: { all: "Lahat", waterFood: "Tubig at Pagkain", medical: "Medikal", documents: "Mga Dokumento", tools: "Kagamitan", clothing: "Damit", shelter: "Silungan", communication: "Komunikasyon" },
+    },
+    resources: {
+      heroTitle: "Mga Mapagkukunan at", heroAccent: "Gabay",
+      heroSub: "Lahat ng kailangan mo para manatiling updated — mga gabay sa kaligtasan, kasosyong ahensya, emergency contacts, at legal na sanggunian sa isang lugar.",
+      cards: {
+        safety: { tag: "Komunidad", title: "Mga Tip sa Kaligtasan", description: "Praktikal na gabay sa antas ng barangay upang protektahan ang iyong sarili at komunidad bago, habang, at pagkatapos ng emerhensiya.", links: { before: "Bago ang Bagyo", flood: "Protokol sa Kaligtasan sa Baha", fire: "Gabay sa Pag-iwas sa Sunog" } },
+        agencies: { tag: "Mga Organisasyon", title: "Mga Kasosyong Ahensya", description: "Mga ahensya ng gobyerno at organisasyong sibiko na nakikipagtulungan sa DumaSafeGuide para sa maayos na tugon sa emerhensiya.", links: { cdrrmo: "CDRRMO", redcross: "Philippine Red Cross", bfp: "Kagawaran ng Sunog" } },
+        directory: { tag: "Mga Kontak", title: "Emergency Directory", description: "Mabilisang access sa lahat ng mahahalagang hotline — ospital, responder ng barangay, at yunit ng disaster management ng lungsod.", links: { city: "City Emergency Services", barangays: "Mga Hotline ng Barangay", hospitals: "Mga Ospital at Medikal" } },
+        terms: { tag: "Legal", title: "Mga Tuntunin ng Serbisyo", description: "Alamin ang mga patakaran, responsibilidad ng user, at legal na balangkas sa paggamit ng DumaSafeGuide, kasama ang RA 10175.", links: { responsibilities: "Responsibilidad ng User", privacy: "Patakaran sa Privacy", ra10175: "Buod ng RA 10175" } },
+      },
+      cta: { title: "Kailangan mo bang mag-report ng emerhensiya?", desc: "Huwag maghintay — gamitin ang incident report form para agad na maabisuhan ang mga lokal na responder.", btn: "Mag-report Ngayon" },
+    },
+    map: {
+      backBtn: "Bumalik sa Dashboard",
+      titleStart: "Humanap ng Tulong", titleAccent: "Malapit sa Iyo",
+      subtitle: "Mga serbisyong pang-emerhensiya, ospital, at evacuation center sa buong Dumaguete City",
+      statTotal: "Kabuuan",
+      filterLabel: "I-filter",
+      filterAll: "Lahat",
+      categories: { emergency: "Serbisyong Pang-emerhensiya", hospital: "Mga Ospital", evacuation: "Mga Evacuation Center" },
+      searchPlaceholder: "Maghanap ng pasilidad o address…",
+      showingPrefix: "Ipinapakita", showingOf: "sa", showingSuffix: "na pasilidad",
+      navigateBtn: "Mag-navigate",
+      emptyTitle: "Walang pasilidad na tumutugma sa iyong hanap.",
+      legendTitle: "Alamat ng Mapa",
+      liveTitle: "Dumaguete Coastal Watch",
+      liveSubPrefix: "Live na mapa — lahat ng", liveSubSuffix: "na pasilidad ay aktibo",
+      getDirections: "Kumuha ng Direksyon",
+    },
+    about: {
+      heroTitle: "Tungkol Sa",
+      heroSub: "Isang web-based na sistema ng ligtas publiko at pag-uulat ng emerhensiya na ginawa para sa Dumaguete City — pinagsasama-sama ang lahat ng kailangan mo sa isang lugar.",
+      metaText: "Naglilingkod sa Dumaguete City · Itinatag 2025",
+      introLabel: "Ano ang DumaSafeGuide?",
+      introText: "Ang DumaSafeGuide (DSG) ay isang web-based na sistema ng ligtas publiko at pag-uulat ng emerhensiya na partikular na idinisenyo para sa Dumaguete City. Pinagsasama nito ang beripikadong emergency contacts, mga tip sa kaligtasan, gabay sa paghahanda, at mga feature sa pag-uulat sa isang accessible na plataporma — para kapag mahalaga ang bawat segundo, hindi ka na kailangang maghanap ng sagot.",
+      pillarsLabel: "Misyon at Bisyon",
+      mission: { tag: "Layunin", title: "Aming Misyon", body: "Pagbutihin ang kamalayan sa kaligtasang pampubliko, pahusayin ang access sa emerhensiya, at suportahan ang napapanahong komunikasyon sa pagitan ng publiko at mga tagapagbigay ng serbisyong pang-emerhensiya sa Dumaguete City." },
+      vision: { tag: "Hinaharap", title: "Aming Bisyon", body: "Isang mas ligtas at mas may kaalamang Dumaguete City kung saan ang mga residente, estudyante, at bisita ay may access sa maaasahang impormasyong pang-emerhensiya kahit kailan, kahit saan — walang hadlang." },
+      featuresLabel: "Aming Inihahandog",
+      features: {
+        contacts: { label: "Beripikadong Contacts", detail: "Pinili at regular na ina-update na mga emergency hotline para sa ospital, opisina ng barangay, at mga yunit ng disaster response sa buong lungsod." },
+        guidelines: { label: "Mga Gabay sa Kaligtasan", detail: "Praktikal na mga tip sa antas ng barangay para sa paghahanda sa bagyo, baha, sunog, at iba pang karaniwang emerhensiya sa lokalidad." },
+        reporting: { label: "Pag-uulat ng Insidente", detail: "Isang mabilis at madaling gamitin na reporting form na nagpapahintulot sa mga residente na direktang alertuhan ang mga lokal na responder — walang pagkaantala, walang kalituhan." },
+        partners: { label: "Network ng mga Kasosyo", detail: "Nakikipag-ugnayan sa CDRRMO, Philippine Red Cross, Bureau of Fire Protection, at iba pang mahahalagang ahensya ng gobyerno." },
+      },
+      cta: { title: "Kailangan mo bang mag-report ng emerhensiya?", desc: "Huwag maghintay — gamitin ang incident reporting form para agad na maabisuhan ang mga lokal na responder.", btn: "Mag-report Ngayon" },
+    },
+    directory: {
+      hero: { line1: "Manatiling", line1Accent: "Konektado", line2: "Manatiling", line2Accent: "Ligtas", sub: "Lahat ng mahahalagang contact para sa Dumaguete City — mga landline at mobile number para sa emergency services, ospital, at bawat barangay hotline sa isang lugar." },
+      banner: { label: "🚨 Pangkalahatang Emerhensiya", allEmergencies: "Lahat ng Emerhensiya", pnpPolice: "PNP Pulis", bfpFire: "BFP Bumbero", cdrrmo: "CDRRMO", oneRescue: "ONE Rescue" },
+      disclaimer: { bold: "Libre tumawag sa 911, 116, at 160 mula sa anumang mobile o landline", rest: "sa Pilipinas — walang kailangang load, walang bayad. Ang mga mobile number (09xx) at landline (035) ay maaaring may standard na singil. Kapag nag-aalinlangan, tumawag muna sa", red: "911", end: "." },
+      emergency: { title: "Mga Serbisyong Pang-emerhensiya", countLabel: "ahensya", searchPlaceholder: "Maghanap ng ahensya, numero, o uri ng serbisyo…", emptyText: "Walang emergency service na tumutugma sa iyong hanap." },
+      hospitals: { title: "Mga Ospital at Medikal na Pasilidad", countLabel: "pasilidad", searchPlaceholder: "Maghanap ng pangalan ng ospital, address, o numero ng telepono…", emptyText: "Walang ospital na tumutugma sa iyong hanap.", government: "Gobyerno", private: "Pribado" },
+      barangays: {
+        title: "Mga Emergency Contact ng Barangay", countLabel: "barangay", searchPlaceholder: "Maghanap ng barangay, hotline, o evacuation site…", emptyText: "Walang barangay na tumutugma sa iyong hanap.",
+        withHotlines: "may hotline", withEvac: "may evacuation site", noHotline: "walang direktang hotline",
+        hotlineBadge: "Hotline", evacBadge: "Evacuation", tbdBadge: "Walang Direktang Hotline",
+        noDirectPrefix: "Walang direktang hotline — tumawag sa", orCdrrmo: "o sa CDRRMO", navigate: "Mag-navigate",
+      },
+      actions: { callNow: "Tumawag Ngayon", map: "Mapa", call: "Tumawag", navigate: "Mag-navigate" },
+    },
+    footer: {
+      statusOperational: "Normal ang operasyon ng lahat ng sistema",
+      statusActive: "Aktibo ang DumaSafeGuide",
+      hotlinesLabel: "Mga Emergency Hotline",
+      hotlinesHint: "I-tap para direktang tumawag",
+      emergencyPill: "Emerhensiya",
+      navHeading: "Mag-navigate",
+      aboutHeading: "Tungkol Dito",
+      links: {
+        safetyMap: "Mapa ng Kaligtasan", reportIncident: "Mag-report ng Insidente", safetyTips: "Mga Tip sa Kaligtasan", emergencyContacts: "Emergency Contacts",
+        aboutDsg: "Tungkol sa DumaSafeGuide", resources: "Mga Mapagkukunan", privacyPolicy: "Patakaran sa Privacy", termsOfUse: "Mga Tuntunin ng Paggamit",
+      },
+      hotlineLabels: { emergency: "Emerhensiya", ndrrmc: "NDRRMC", bfpFire: "BFP Sunog", pnp: "PNP" },
+      brandDesc: "Isang plataporma ng kaligtasan na binuo ng komunidad para sa Lungsod ng Mababait na Tao. Mabilisang access sa mga hotline, pag-uulat ng insidente, at paghahanda sa sakuna.",
+      brandBadge: "Naglilingkod sa Dumaguete City · Negros Oriental",
+      rightsReserved: "Lahat ng karapatan ay nakalaan.",
+      builtWithPrefix: "Ginawa nang may",
+      builtWithSuffix: "para sa kaligtasan ng bawat Dumagueteño",
+    },
+    report: {
+      heroTitle: "Mag-report ng", heroAccent: "Insidente",
+      heroSub: "Magsumite ng ulat para maabisuhan ang mga lokal na responder. Magbigay ng tamang detalye para makatugon agad ang tamang team.",
+      bannerTitle: "Subaybayan ang Iyong Ulat nang Real-Time",
+      bannerText: "Gumawa ng account para subaybayan ang status ng iyong insidente at makatanggap ng update kapag tumugon na ang mga awtoridad.",
+      bannerCta: "Gumawa ng Account →",
+      types: { fire: "Sunog", accident: "Aksidente sa Daan", flood: "Baha", crime: "Krimen", medical: "Medikal na Emerhensiya", other: "Iba pa" },
+      steps: { incidentType: "Uri ng Insidente", reporterInfo: "Impormasyon", location: "Lokasyon", description: "Paglalarawan", evidence: "Ebidensya", submit: "Isumite" },
+      cardLabels: { incidentType: "Uri ng Insidente", reporterInfo: "Impormasyon ng Nag-ulat", location: "Iyong Lokasyon", description: "Detalye ng Insidente", evidence: "Mag-upload ng Ebidensya" },
+      form: {
+        fullName: "Buong Pangalan", optional: "(Opsyonal)", contactNumber: "Numero ng Telepono",
+        detectedLocation: "Nakitang Lokasyon", refreshGps: "📍 I-refresh ang GPS", verifyMaps: "I-verify sa Maps →",
+        descriptionPlaceholder: "Ilarawan kung ano ang nangyari — isama ang oras, bilang ng mga taong kasangkot, tindi, at iba pang detalye…",
+        uploadHint: "I-click para pumili o i-drag & drop",
+        legalTitle: "Legal na Pagkilala",
+        legalSummary: "Sa pagsumite ng ulat na ito, kinukumpirma mo na ang impormasyong ibinigay ay totoo at wasto sa iyong kaalaman.",
+        submitBtn: "Isumite ang Ulat ng Insidente", submitting: "Isinusumite…",
+      },
+      sidebar: {
+        hotlinesTitle: "Mga Emergency Hotline",
+        warnTitle: "⚠️ Paalala sa Emerhensiya",
+        warnText: "Kung may nasa agarang panganib, direktang tumawag sa emergency services. Huwag umasa lamang sa form na ito sa mga sitwasyong nagbabanta sa buhay.",
+        safetyTitle: "🛡️ Mahalaga ang Iyong Kaligtasan",
+        safetyText: "Ang iyong pagkakakilanlan at contact information ay mananatiling kumpidensyal. Maaari kang magsumite nang anonymous.",
+        trackTitle: "📍 Subaybayan ang Iyong Ulat",
+        trackText: "Gumawa ng account para masubaybayan ang status ng iyong mga ulat nang real-time.",
+        trackBtn: "Gumawa ng Account o Mag-login →",
+      },
+      success: {
+        title: "Naisumite na ang Ulat",
+        sub: "Natanggap na ang iyong ulat ng insidente at makikita na ito ng mga responder. Naabisuhan na ang mga awtoridad at tutugon sila sa lalong madaling panahon.",
+        cardTitle: "Magsumite ng Isa pang Ulat",
+        cardText: "Mag-ulat ng ibang insidente para tumulong panatilihing ligtas ang inyong komunidad.",
+        cardBtn: "Magsumite ng Isa pang Ulat →",
+      },
+    },
+    signup: {
+      eyebrow: "Platform ng Kaligtasan ng Komunidad",
+      heroLine1: "Sumali sa", heroAccent1: "emerhensiya", heroAccent2: "na pagtugon",
+      heroDesc: "Magrehistro ng account para mag-ulat ng insidente, makatanggap ng real-time na alerto, at manatiling konektado sa mga emergency responder sa lahat ng barangay.",
+      steps: {
+        create: { title: "Gumawa ng Account", desc: "Punan ang iyong detalye at piliin ang iyong barangay." },
+        access: { title: "Agarang Access", desc: "Handa na agad ang iyong account pagkatapos mag-signup." },
+        report: { title: "Mag-ulat at Tumugon", desc: "Magsumite ng insidente at makipag-ugnayan sa mga responder ngayon." },
+      },
+      certBold: "Libre para sa lahat ng mamamayan", certRest: "sa Dumaguete",
+      mobileBadge: "Mag-sign Up",
+      backToHome: "Bumalik sa home",
+      formTitle: "Gumawa ng Account",
+      formSub: "Sumali sa DumaSafeGuide — ganap na libre para sa lahat ng mamamayan.",
+      labels: { firstName: "Pangalan", lastName: "Apelyido", barangay: "Barangay", phone: "Numero ng Telepono", email: "Email Address", password: "Password", confirmPassword: "Kumpirmahin" },
+      placeholders: { firstName: "Maria", lastName: "Clara", phone: "09XX XXX XXXX", selectLocation: "Pumili ng lokasyon" },
+      pwHint: "Kailangan ng hindi bababa sa 6 na karakter.",
+      emailHint: "Gumamit ng email na maa-access mo — magpapadala kami ng confirmation link bago ka makapag-login.",
+      emailInvalid: "Pakilagay ang tamang email address.",
+      errors: {
+        missingFields: "Pakikumpleto ang lahat ng field.",
+        invalidEmail: "Pakilagay ang tamang email address.",
+        disposableEmail: "Hindi pinapayagan ang pansamantalang o disposable na email. Gumamit ng tunay na email na maa-access mo.",
+        passwordMismatch: "Hindi magkatugma ang mga password.",
+        passwordTooShort: "Dapat hindi bababa sa 6 na karakter ang password.",
+        needCaptcha: "Pakikumpleto ang CAPTCHA para i-verify na ikaw ay tao.",
+        unexpected: "May hindi inaasahang error na naganap.",
+      },
+      submitBtn: "Gumawa ng Account", submitting: "Ginagawa ang account…",
+      footerHaveAccount: "May account ka na?", footerSignIn: "Mag-sign in →",
+      success: {
+        title: "Tingnan ang Iyong Email",
+        msgIntro: "Maligayang pagdating sa DumaSafeGuide!",
+        msgBody: "Nagpadala kami ng confirmation link sa iyong email. Paki-verify ang iyong address bago mag-sign in.",
+        note: "Hindi natanggap? Tingnan ang iyong spam folder.",
+        goToSignIn: "Pumunta sa Sign In",
+      },
+    },
+  },
+
+  // ── Bisaya / Cebuano ─────────────────────────────────────
+  ceb: {
+    common: { live: "Live", emergency: "Emerhensya", quickAccess: "Paspas nga Access", explore: "Tan-awa" },
+    nav: {
+      directory: "Direktoryo", map: "Mapa", safetyTips: "Mga Tip sa Kaluwasan", about: "Mahitungod Kanamo", resources: "Mga Kapanguhaan",
+      myDashboard: "Akong Dashboard", responderPanel: "Panel sa Responder", adminDashboard: "Admin Dashboard",
+      login: "Mag-login", createAccount: "Paghimo og Account", logout: "Mag-logout", signOut: "Mag-sign Out",
+      citizen: "Lungsuranon", fileReport: "Pag-file og Report", alerts: "Mga Alerto",
+    },
+    ticker: {
+      alerts: [
+        "🔴  ABISO: Gipataas ang Bagyo Signal No. 1 para sa Negros Occidental — bantayi ang opisyal nga update",
+        "🚨  INSIDENTE: Adunay aksidente sa sakyanan sa Lacson St — likayi ang dapit",
+        "⚠️  PAHINUMDOM: Aktibo ang Hotline 911 24/7 — ayaw gamita para sa dili emerhensya",
+        "🔴  ABISO: Adunay flash flood watch para sa mga ubos nga barangay — pagbantay",
+      ],
+    },
+    hero: {
+      eyebrow: "Siyudad sa Malumo nga Katawhan",
+      titleLine1: "Paspas nga",
+      titleAccent: "Tubag",
+      titleRest: "Anaa sa Imong Kamot",
+      subtitle: "Sentralisadong plataporma sa kaluwasan para sa Siyudad sa Malumo nga Katawhan. Paspas nga access sa mga hotline, pasilidad, ug giya sa kaluwasan.",
+      cta: "Pag-report og Insidente Karon",
+    },
+    stats: { barangays: "Naapil nga mga Barangay", hourResponse: "Oras nga Tubag", avgResponse: "Kasagarang Tubag (min)" },
+    auth: {
+      welcomeTitle: "Maayong Pagbalik",
+      welcomeSubtitle: "Mag-login para ma-access ang DumaSafeGuide emergency dashboard.",
+      emailLabel: "Email Address",
+      passwordLabel: "Password",
+      rememberMe: "Hinumdomi ko",
+      forgotPassword: "Nalimtan ang Password?",
+      loginBtn: "Mag-login",
+      loggingIn: "Nag-login…",
+      orDivider: "Wala pa'y account?",
+      noAccount: "Wala pa'y account?",
+      createAccount: "Paghimo og Account →",
+      errMissingFields: "Palihug isulat ang imong email ug password.",
+      errNeedCaptcha: "Palihug kompletoha ang CAPTCHA para mapamatud-an nga tawo ka.",
+      errProfileNotReady: "Wala pa andam ang profile. Paghulat una ug sulayi pag-usab.",
+      errLoginFailed: "Napakyas ang pag-login.",
+    },
+    cards: {
+      map: { label: "Mapa sa Kaluwasan", desc: "Tan-awa ang live nga insidente ug luwas nga ruta", tag: "LIVE" },
+      directory: { label: "Direktoryo", desc: "Mga opisyal sa barangay ug contact persons", tag: "TAWO" },
+      tips: { label: "Mga Tip sa Kaluwasan", desc: "Giya sa pag-andam para sa matag sitwasyon", tag: "TIPS" },
+      contacts: { label: "Emergency Contacts", desc: "Direkta nga kontaka ang mga responder ug hotlines", tag: "URGENT" },
+    },
+    languageModal: { heading: "Pilia ang imong pinulongan", subheading: "Pilia ang imong gustong pinulongan para magpadayon.", continueBtn: "Padayon" },
+    safetyTips: {
+      heroTitleStart: "Mga Tip sa", heroAccent: "Kaluwasan", heroTitleEnd: "ug Giya sa Emerhensya",
+      heroSub: "Lakang-lakang giya para sa bagyo, baha, sunog, linog, guba, ug aksidente sa dalan — apil ang kompleto nga go bag checklist.",
+      disasters: { typhoon: "Bagyo", flood: "Baha", fire: "Sunog", earthquake: "Linog", landslide: "Guba", road: "Aksidente sa Dalan" },
+      phases: { beforeLabel: "Sa Wala Pa", beforeDesc: "Pangandam nang sayo", duringLabel: "Panahon sa Panghitabo", duringDesc: "Pagpabilin nga luwas karon", afterLabel: "Human Niini", afterDesc: "Pagbangon nga luwas" },
+      goBag: { tabLabel: "Go Bag", titleStart: "Imong", titleAccent: "Go Bag", titleEnd: "Checklist", sub: "Andama ang 20 ka importanteng butang aron makagawas nga luwas sulod sa 15 minutos. Markahi ang mga naandam na nimo.", itemsPacked: "ka butang naandam na", resetBtn: "I-reset ang checklist" },
+      categories: { all: "Tanan", waterFood: "Tubig ug Pagkaon", medical: "Medikal", documents: "Mga Dokumento", tools: "Galamiton", clothing: "Sinina", shelter: "Puy-anan", communication: "Komunikasyon" },
+    },
+    resources: {
+      heroTitle: "Mga Kapanguhaan ug", heroAccent: "Giya",
+      heroSub: "Ang tanan nga kinahanglan nimo aron mahibalo — mga giya sa kaluwasan, kasosyo nga ahensya, emergency contacts, ug legal nga reperensya sa usa ka dapit.",
+      cards: {
+        safety: { tag: "Komunidad", title: "Mga Tip sa Kaluwasan", description: "Praktikal nga giya sa lebel sa barangay aron mapanalipdan ang imong kaugalingon ug komunidad sa dili pa, panahon sa, ug human sa emerhensya.", links: { before: "Sa Dili Pa ang Bagyo", flood: "Protokol sa Kaluwasan sa Baha", fire: "Giya sa Pag-iwas sa Sunog" } },
+        agencies: { tag: "Mga Organisasyon", title: "Mga Kasosyo nga Ahensya", description: "Mga ahensya sa gobyerno ug organisasyong sibiko nga nakigtambayayong sa DumaSafeGuide para sa han-ay nga tubag sa emerhensya.", links: { cdrrmo: "CDRRMO", redcross: "Philippine Red Cross", bfp: "Kagamhanan sa Sunog" } },
+        directory: { tag: "Mga Kontak", title: "Emergency Directory", description: "Paspas nga access sa tanan nga importanteng hotline — ospital, responder sa barangay, ug yunit sa disaster management sa siyudad.", links: { city: "City Emergency Services", barangays: "Mga Hotline sa Barangay", hospitals: "Mga Ospital ug Medikal" } },
+        terms: { tag: "Legal", title: "Mga Termino sa Serbisyo", description: "Sabta ang mga lagda, responsibilidad sa user, ug legal nga balangkas sa paggamit sa DumaSafeGuide, lakip ang RA 10175.", links: { responsibilities: "Responsibilidad sa User", privacy: "Palisiya sa Privacy", ra10175: "Summary sa RA 10175" } },
+      },
+      cta: { title: "Kinahanglan ba nimong mag-report og emerhensya?", desc: "Ayaw paghulat — gamita ang incident report form aron dayon mapahibalo ang lokal nga mga responder.", btn: "I-report Karon" },
+    },
+    map: {
+      backBtn: "Balik sa Dashboard",
+      titleStart: "Pangita og Tabang", titleAccent: "Duol Kanimo",
+      subtitle: "Mga serbisyo sa emerhensya, ospital, ug evacuation center sa tibuok Dumaguete City",
+      statTotal: "Total",
+      filterLabel: "I-filter",
+      filterAll: "Tanan",
+      categories: { emergency: "Serbisyo sa Emerhensya", hospital: "Mga Ospital", evacuation: "Mga Evacuation Center" },
+      searchPlaceholder: "Pangitaa ang pasilidad o address…",
+      showingPrefix: "Gipakita", showingOf: "sa", showingSuffix: "ka pasilidad",
+      navigateBtn: "Mag-navigate",
+      emptyTitle: "Walay pasilidad nga mutugma sa imong gipangita.",
+      legendTitle: "Sambag sa Mapa",
+      liveTitle: "Dumaguete Coastal Watch",
+      liveSubPrefix: "Live nga mapa — tanan nga", liveSubSuffix: "ka pasilidad aktibo",
+      getDirections: "Pagkuha og Direksyon",
+    },
+    about: {
+      heroTitle: "Mahitungod Sa",
+      heroSub: "Usa ka web-based nga sistema sa kaluwasan sa publiko ug pag-report og emerhensya nga gihimo alang sa Dumaguete City — nagtapok sa tanan nga imong gikinahanglan sa usa ka dapit.",
+      metaText: "Nag-alagad sa Dumaguete City · Gitukod 2025",
+      introLabel: "Unsa ang DumaSafeGuide?",
+      introText: "Ang DumaSafeGuide (DSG) usa ka web-based nga sistema sa kaluwasan sa publiko ug pag-report og emerhensya nga gidesinyo espesipiko alang sa Dumaguete City. Gitapok niini ang na-verify nga emergency contacts, mga tip sa kaluwasan, giya sa pag-andam, ug mga feature sa pag-report ngadto sa usa ka accessible nga plataporma — aron kung ang matag segundo importante, dili ka na kinahanglan mangita og tubag.",
+      pillarsLabel: "Misyon ug Bisyon",
+      mission: { tag: "Katuyoan", title: "Among Misyon", body: "Pauswagon ang kahibalo sa kaluwasan sa publiko, palambuon ang access sa emerhensya, ug suportahan ang tukma sa oras nga komunikasyon tali sa publiko ug mga tigtanyag og serbisyo sa emerhensya sa Dumaguete City." },
+      vision: { tag: "Umaabot", title: "Among Bisyon", body: "Usa ka mas luwas ug mas may-kahibalo nga Dumaguete City diin ang mga residente, estudyante, ug bisita makaadto sa kasaligan nga impormasyon sa emerhensya bisan kanus-a, bisan asa — walay babag." },
+      featuresLabel: "Among Gitanyag",
+      features: {
+        contacts: { label: "Na-verify nga Kontak", detail: "Piniling ug regular nga gi-update nga emergency hotline alang sa ospital, opisina sa barangay, ug mga yunit sa disaster response sa tibuok siyudad." },
+        guidelines: { label: "Mga Giya sa Kaluwasan", detail: "Praktikal nga mga tip sa lebel sa barangay alang sa pag-andam sa bagyo, baha, sunog, ug uban pang kasagarang emerhensya sa lokal." },
+        reporting: { label: "Pag-report og Insidente", detail: "Usa ka paspas ug sayon gamiton nga reporting form nga nagtugot sa mga residente sa direktang pagpahibalo sa lokal nga mga responder — walay langan, walay kalibog." },
+        partners: { label: "Network sa mga Kasosyo", detail: "Nakigtambayayong sa CDRRMO, Philippine Red Cross, Bureau of Fire Protection, ug uban pang importanteng ahensya sa gobyerno." },
+      },
+      cta: { title: "Kinahanglan ba nimong mag-report og emerhensya?", desc: "Ayaw paghulat — gamita ang incident reporting form aron dayon mapahibalo ang lokal nga mga responder.", btn: "I-report Karon" },
+    },
+    directory: {
+      hero: { line1: "Magpabilin nga", line1Accent: "Konektado", line2: "Magpabilin nga", line2Accent: "Luwas", sub: "Tanan nga importanteng kontak para sa Dumaguete City — mga landline ug mobile number para sa emergency services, ospital, ug matag barangay hotline sa usa ka lugar." },
+      banner: { label: "🚨 Kinatibuk-ang Emerhensya", allEmergencies: "Tanang Emerhensya", pnpPolice: "PNP Pulis", bfpFire: "BFP Bombero", cdrrmo: "CDRRMO", oneRescue: "ONE Rescue" },
+      disclaimer: { bold: "Libre motawag sa 911, 116, ug 160 gikan sa bisan unsang mobile o landline", rest: "sa Pilipinas — walay kinahanglang load, walay bayad. Ang mga mobile number (09xx) ug landline (035) mahimong adunay standard nga singil. Kung dili sigurado, tawagi una ang", red: "911", end: "." },
+      emergency: { title: "Mga Serbisyo sa Emerhensya", countLabel: "ahensya", searchPlaceholder: "Pangitaa ang ahensya, numero, o klase sa serbisyo…", emptyText: "Walay emergency service nga mutugma sa imong gipangita." },
+      hospitals: { title: "Mga Ospital ug Medikal nga Pasilidad", countLabel: "pasilidad", searchPlaceholder: "Pangitaa ang ngalan sa ospital, address, o numero sa telepono…", emptyText: "Walay ospital nga mutugma sa imong gipangita.", government: "Gobyerno", private: "Pribado" },
+      barangays: {
+        title: "Emergency Contacts sa Barangay", countLabel: "barangay", searchPlaceholder: "Pangitaa ang barangay, hotline, o evacuation site…", emptyText: "Walay barangay nga mutugma sa imong gipangita.",
+        withHotlines: "adunay hotline", withEvac: "adunay evacuation site", noHotline: "walay direktang hotline",
+        hotlineBadge: "Hotline", evacBadge: "Evacuation", tbdBadge: "Walay Direktang Hotline",
+        noDirectPrefix: "Walay direktang hotline — tawagi ang", orCdrrmo: "o ang CDRRMO", navigate: "Mag-navigate",
+      },
+      actions: { callNow: "Tawag Karon", map: "Mapa", call: "Tawag", navigate: "Mag-navigate" },
+    },
+    footer: {
+      statusOperational: "Normal ang operasyon sa tanang sistema",
+      statusActive: "Aktibo ang DumaSafeGuide",
+      hotlinesLabel: "Mga Emergency Hotline",
+      hotlinesHint: "I-tap para dayon motawag",
+      emergencyPill: "Emerhensya",
+      navHeading: "Mag-navigate",
+      aboutHeading: "Mahitungod",
+      links: {
+        safetyMap: "Mapa sa Kaluwasan", reportIncident: "Pag-report og Insidente", safetyTips: "Mga Tip sa Kaluwasan", emergencyContacts: "Emergency Contacts",
+        aboutDsg: "Mahitungod sa DumaSafeGuide", resources: "Mga Kapanguhaan", privacyPolicy: "Palisiya sa Privacy", termsOfUse: "Mga Termino sa Paggamit",
+      },
+      hotlineLabels: { emergency: "Emerhensya", ndrrmc: "NDRRMC", bfpFire: "BFP Sunog", pnp: "PNP" },
+      brandDesc: "Usa ka plataporma sa kaluwasan nga gitukod sa komunidad alang sa Siyudad sa Malumo nga Katawhan. Paspas nga access sa mga hotline, pag-report og insidente, ug pag-andam sa katalagman.",
+      brandBadge: "Nag-alagad sa Dumaguete City · Negros Oriental",
+      rightsReserved: "Tanang katungod gigahin.",
+      builtWithPrefix: "Gihimo uban ang",
+      builtWithSuffix: "alang sa kaluwasan sa matag Dumagueteño",
+    },
+    report: {
+      heroTitle: "Pag-report og", heroAccent: "Insidente",
+      heroSub: "Pagsumite og report aron mapahibalo ang lokal nga mga responder. Paghatag og tukma nga detalye aron makatubag dayon ang husto nga team.",
+      bannerTitle: "Bantayi ang Imong Report sa Real-Time",
+      bannerText: "Paghimo og account aron masubay ang status sa imong insidente ug makadawat og update kung motubag na ang mga awtoridad.",
+      bannerCta: "Paghimo og Account →",
+      types: { fire: "Sunog", accident: "Aksidente sa Dalan", flood: "Baha", crime: "Krimen", medical: "Medikal nga Emerhensya", other: "Uban pa" },
+      steps: { incidentType: "Klase sa Insidente", reporterInfo: "Impormasyon", location: "Lokasyon", description: "Deskripsyon", evidence: "Ebidensya", submit: "Isumite" },
+      cardLabels: { incidentType: "Klase sa Insidente", reporterInfo: "Impormasyon sa Nagreport", location: "Imong Lokasyon", description: "Detalye sa Insidente", evidence: "Pag-upload og Ebidensya" },
+      form: {
+        fullName: "Kompleto nga Ngalan", optional: "(Opsyonal)", contactNumber: "Numero sa Telepono",
+        detectedLocation: "Nakit-an nga Lokasyon", refreshGps: "📍 I-refresh ang GPS", verifyMaps: "I-verify sa Maps →",
+        descriptionPlaceholder: "Ihulagway kung unsa ang nahitabo — iapil ang oras, gidaghanon sa mga tawo nga naapil, kagrabe, ug uban pang detalye…",
+        uploadHint: "I-klik para mopili o i-drag & drop",
+        legalTitle: "Legal nga Pag-ila",
+        legalSummary: "Pinaagi sa pagsumite niini nga report, imong gikumpirma nga ang impormasyon nga gihatag tinuod ug tukma base sa imong nahibaloan.",
+        submitBtn: "Isumite ang Report sa Insidente", submitting: "Gisumite…",
+      },
+      sidebar: {
+        hotlinesTitle: "Mga Emergency Hotline",
+        warnTitle: "⚠️ Pahinumdom sa Emerhensya",
+        warnText: "Kung adunay tawo nga naa sa dinalian nga peligro, direkta nga tawagi ang emergency services. Ayaw pagsalig lang niini nga form sa mga sitwasyon nga makahulga sa kinabuhi.",
+        safetyTitle: "🛡️ Importante ang Imong Kaluwasan",
+        safetyText: "Ang imong pagkatawo ug impormasyon sa kontak kumpidensyal gyud. Pwede ka mosumite nga anonymous.",
+        trackTitle: "📍 Bantayi ang Imong Report",
+        trackText: "Paghimo og account aron masubay ang status sa imong mga report sa real-time.",
+        trackBtn: "Paghimo og Account o Mag-login →",
+      },
+      success: {
+        title: "Nasumite na ang Report",
+        sub: "Nadawat na ang imong report sa insidente ug makita na kini sa mga responder. Naabisohan na ang mga awtoridad ug motubag sila sa dili madugay.",
+        cardTitle: "Pagsumite og Lain nga Report",
+        cardText: "Pag-report og lain nga insidente aron makatabang sa kaluwasan sa inyong komunidad.",
+        cardBtn: "Pagsumite og Lain nga Report →",
+      },
+    },
+    signup: {
+      eyebrow: "Platform sa Kaluwasan sa Komunidad",
+      heroLine1: "Apil sa", heroAccent1: "emerhensya", heroAccent2: "nga pagtubag",
+      heroDesc: "Pagparehistro og account aron makapag-report og insidente, makadawat og real-time nga alerto, ug magpabilin nga konektado sa mga emergency responder sa tanang barangay.",
+      steps: {
+        create: { title: "Paghimo og Account", desc: "Pun-a ang imong detalye ug pilia ang imong barangay." },
+        access: { title: "Dayon nga Access", desc: "Andam na dayon ang imong account human mag-signup." },
+        report: { title: "Pag-report ug Pagtubag", desc: "Pagsumite og insidente ug pakig-uban sa mga responder karon." },
+      },
+      certBold: "Libre para sa tanang lungsuranon", certRest: "sa Dumaguete",
+      mobileBadge: "Mag-sign Up",
+      backToHome: "Balik sa home",
+      formTitle: "Paghimo og Account",
+      formSub: "Apil sa DumaSafeGuide — hingpit nga libre para sa tanang lungsuranon.",
+      labels: { firstName: "Ngalan", lastName: "Apelyido", barangay: "Barangay", phone: "Numero sa Telepono", email: "Email Address", password: "Password", confirmPassword: "Kumpirma" },
+      placeholders: { firstName: "Maria", lastName: "Clara", phone: "09XX XXX XXXX", selectLocation: "Pagpili og lokasyon" },
+      pwHint: "Kinahanglan nga dili moubos sa 6 ka karakter.",
+      emailHint: "Gamita ang email nga imong ma-access — padad-an ka namo og confirmation link una ka makasulod.",
+      emailInvalid: "Palihug isulat ang tukma nga email address.",
+      errors: {
+        missingFields: "Palihug kompletoha ang tanang field.",
+        invalidEmail: "Palihug isulat ang tukma nga email address.",
+        disposableEmail: "Dili tugutan ang temporary o disposable nga email. Gamita ang tinuod nga email nga imong ma-access.",
+        passwordMismatch: "Wala magtugma ang mga password.",
+        passwordTooShort: "Kinahanglan nga dili moubos sa 6 ka karakter ang password.",
+        needCaptcha: "Palihug kompletoha ang CAPTCHA para mapamatud-an nga tawo ka.",
+        unexpected: "Adunay wala damha nga sayop nga nahitabo.",
+      },
+      submitBtn: "Paghimo og Account", submitting: "Gihimo ang account…",
+      footerHaveAccount: "Naa na kay account?", footerSignIn: "Pag-sign in →",
+      success: {
+        title: "Susiha ang Imong Email",
+        msgIntro: "Welcome sa DumaSafeGuide!",
+        msgBody: "Nagpadala kami og confirmation link sa imong email. Palihug i-verify ang imong address una mag-sign in.",
+        note: "Wala nadawat? Susiha ang imong spam folder.",
+        goToSignIn: "Adto sa Sign In",
+      },
+    },
+  },
+
+  // ── Korean ───────────────────────────────────────────────
+  ko: {
+    common: { live: "라이브", emergency: "긴급상황", quickAccess: "빠른 이용", explore: "보기" },
+    nav: {
+      directory: "디렉토리", map: "지도", safetyTips: "안전 수칙", about: "소개", resources: "자료",
+      myDashboard: "내 대시보드", responderPanel: "대응요원 패널", adminDashboard: "관리자 대시보드",
+      login: "로그인", createAccount: "계정 만들기", logout: "로그아웃", signOut: "로그아웃",
+      citizen: "시민", fileReport: "신고하기", alerts: "알림",
+    },
+    ticker: {
+      alerts: [
+        "🔴  주의보: 네그로스 옥시덴탈에 태풍 신호 1호 발령 — 공식 발표를 확인하세요",
+        "🚨  사고: 락슨 거리에서 차량 사고 발생 — 해당 지역을 피하세요",
+        "⚠️  안내: 긴급전화 911은 24시간 운영됩니다 — 긴급 상황이 아닌 경우 사용하지 마세요",
+        "🔴  주의보: 저지대 바랑가이에 돌발 홍수 경보 — 주의하세요",
+      ],
+    },
+    hero: {
+      eyebrow: "온화한 사람들의 도시",
+      titleLine1: "빠른",
+      titleAccent: "대응",
+      titleRest: "이 손끝에서",
+      subtitle: "온화한 사람들의 도시를 위한 통합 안전 플랫폼입니다. 핫라인, 시설, 안전 지침에 빠르게 접근하세요.",
+      cta: "실시간 사건 신고하기",
+    },
+    stats: { barangays: "커버되는 바랑가이", hourResponse: "시간 대응", avgResponse: "평균 대응 시간(분)" },
+    auth: {
+      welcomeTitle: "다시 오신 것을 환영합니다",
+      welcomeSubtitle: "DumaSafeGuide 긴급 대시보드에 접속하려면 로그인하세요.",
+      emailLabel: "이메일 주소",
+      passwordLabel: "비밀번호",
+      rememberMe: "로그인 상태 유지",
+      forgotPassword: "비밀번호를 잊으셨나요?",
+      loginBtn: "로그인",
+      loggingIn: "로그인 중…",
+      orDivider: "계정이 없으신가요?",
+      noAccount: "계정이 없으신가요?",
+      createAccount: "계정 만들기 →",
+      errMissingFields: "이메일과 비밀번호를 입력해주세요.",
+      errNeedCaptcha: "사람인지 확인하기 위해 CAPTCHA를 완료해주세요.",
+      errProfileNotReady: "프로필이 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.",
+      errLoginFailed: "로그인에 실패했습니다.",
+    },
+    cards: {
+      map: { label: "안전 지도", desc: "실시간 사고 구역과 안전 경로 확인", tag: "실시간" },
+      directory: { label: "디렉토리", desc: "바랑가이 공무원 및 담당자 연락처", tag: "인물" },
+      tips: { label: "안전 수칙", desc: "모든 상황에 대비한 안전 가이드", tag: "팁" },
+      contacts: { label: "긴급 연락처", desc: "구조대와 핫라인에 즉시 연락", tag: "긴급" },
+    },
+    languageModal: { heading: "언어를 선택하세요", subheading: "계속하려면 원하는 언어를 선택하세요.", continueBtn: "계속하기" },
+    safetyTips: {
+      heroTitleStart: "안전", heroAccent: "수칙", heroTitleEnd: "및 긴급 대응 가이드",
+      heroSub: "태풍, 홍수, 화재, 지진, 산사태, 교통사고에 대한 단계별 안내와 완벽한 비상 배낭 체크리스트를 확인하세요.",
+      disasters: { typhoon: "태풍", flood: "홍수", fire: "화재", earthquake: "지진", landslide: "산사태", road: "교통사고" },
+      phases: { beforeLabel: "사전", beforeDesc: "미리 대비하기", duringLabel: "발생 중", duringDesc: "지금 안전하게 대피", afterLabel: "이후", afterDesc: "안전하게 복구하기" },
+      goBag: { tabLabel: "비상 배낭", titleStart: "나만의", titleAccent: "비상 배낭", titleEnd: "체크리스트", sub: "15분 이내에 안전하게 대피할 수 있도록 20가지 필수품을 준비하세요. 이미 준비한 항목을 체크하세요.", itemsPacked: "개 항목 준비 완료", resetBtn: "체크리스트 초기화" },
+      categories: { all: "전체", waterFood: "물과 식량", medical: "의료용품", documents: "서류", tools: "도구", clothing: "의류", shelter: "대피용품", communication: "통신" },
+    },
+    resources: {
+      heroTitle: "자료 및", heroAccent: "가이드",
+      heroSub: "안전 가이드, 협력 기관, 긴급 연락처, 법적 참고자료까지 필요한 모든 정보를 한곳에서 확인하세요.",
+      cards: {
+        safety: { tag: "지역사회", title: "안전 수칙", description: "긴급 상황 이전, 도중, 이후에 자신과 지역사회를 보호하기 위한 바랑가이 단위의 실용적인 가이드라인입니다.", links: { before: "태풍 대비", flood: "홍수 안전 수칙", fire: "화재 예방 가이드" } },
+        agencies: { tag: "협력 기관", title: "협력 기관", description: "DumaSafeGuide와 협력하여 통합적인 긴급 대응을 제공하는 정부 기관 및 시민단체입니다.", links: { cdrrmo: "CDRRMO", redcross: "필리핀 적십자사", bfp: "소방청" } },
+        directory: { tag: "연락처", title: "긴급 연락처 디렉토리", description: "병원, 바랑가이 대응요원, 시 재난관리 부서 등 필수 긴급 핫라인에 빠르게 접근하세요.", links: { city: "시 긴급 서비스", barangays: "바랑가이 핫라인", hospitals: "병원 및 의료" } },
+        terms: { tag: "법적 사항", title: "서비스 이용약관", description: "RA 10175를 포함하여 DumaSafeGuide 이용에 관한 규칙, 사용자 책임, 법적 체계를 확인하세요.", links: { responsibilities: "사용자 책임", privacy: "개인정보 보호정책", ra10175: "RA 10175 개요" } },
+      },
+      cta: { title: "긴급 상황을 신고해야 하나요?", desc: "기다리지 마세요 — 사고 신고 양식을 사용해 즉시 현지 대응요원에게 알리세요.", btn: "지금 신고하기" },
+    },
+    map: {
+      backBtn: "대시보드로 돌아가기",
+      titleStart: "주변 도움", titleAccent: "찾기",
+      subtitle: "두마게테시 전역의 긴급 서비스, 병원, 대피소 정보",
+      statTotal: "전체",
+      filterLabel: "필터",
+      filterAll: "전체",
+      categories: { emergency: "긴급 서비스", hospital: "병원", evacuation: "대피소" },
+      searchPlaceholder: "시설 또는 주소 검색…",
+      showingPrefix: "표시 중", showingOf: "/", showingSuffix: "개 시설",
+      navigateBtn: "길찾기",
+      emptyTitle: "검색 결과와 일치하는 시설이 없습니다.",
+      legendTitle: "지도 범례",
+      liveTitle: "두마게테 해안 감시",
+      liveSubPrefix: "실시간 지도 — 총", liveSubSuffix: "개 시설 운영 중",
+      getDirections: "길찾기",
+    },
+    about: {
+      heroTitle: "소개",
+      heroSub: "두마게테시를 위해 만들어진 웹 기반 공공 안전 및 긴급 신고 시스템으로, 필요한 모든 것을 한곳에 모았습니다.",
+      metaText: "두마게테시 서비스 제공 · 2025년 설립",
+      introLabel: "DumaSafeGuide란?",
+      introText: "DumaSafeGuide(DSG)는 두마게테시를 위해 특별히 설계된 웹 기반 공공 안전 및 긴급 신고 시스템입니다. 검증된 긴급 연락처, 안전 수칙, 대비 가이드라인, 신고 기능을 하나의 접근 가능한 플랫폼에 통합하여, 촌각을 다투는 상황에서도 답을 찾아 헤매지 않도록 돕습니다.",
+      pillarsLabel: "사명과 비전",
+      mission: { tag: "목적", title: "우리의 사명", body: "두마게테시에서 공공 안전 인식을 향상시키고, 긴급 상황 접근성을 강화하며, 시민과 응급 서비스 제공자 간의 시기적절한 소통을 지원합니다." },
+      vision: { tag: "미래", title: "우리의 비전", body: "주민, 학생, 방문객이 언제 어디서나 장벽 없이 신뢰할 수 있는 긴급 정보에 접근할 수 있는, 더 안전하고 정보에 밝은 두마게테시를 만듭니다." },
+      featuresLabel: "제공 서비스",
+      features: {
+        contacts: { label: "검증된 연락처", detail: "병원, 바랑가이 사무소, 시 전역 재난 대응 부서의 엄선되고 정기적으로 업데이트되는 긴급 핫라인입니다." },
+        guidelines: { label: "안전 가이드라인", detail: "태풍, 홍수, 화재 및 기타 흔한 지역 비상 상황을 다루는 실용적인 바랑가이 단위 대비 팁입니다." },
+        reporting: { label: "사건 통보", detail: "주민들이 지연이나 혼란 없이 지역 대응요원에게 직접 알릴 수 있는 빠르고 접근하기 쉬운 통보 양식입니다." },
+        partners: { label: "협력 네트워크", detail: "CDRRMO, 필리핀 적십자사, 소방청 및 기타 주요 정부 기관과 협력합니다." },
+      },
+      cta: { title: "긴급 상황을 신고해야 하나요?", desc: "기다리지 마세요 — 사고 신고 양식을 사용해 즉시 현지 대응요원에게 알리세요.", btn: "지금 신고하기" },
+    },
+    directory: {
+      hero: { line1: "안전하게", line1Accent: "연결되고", line2: "안전하게", line2Accent: "지내세요", sub: "두마게테시의 모든 필수 연락처 — 긴급 서비스, 병원, 각 바랑가이 핫라인의 유선 및 휴대폰 번호를 한곳에 모았습니다." },
+      banner: { label: "🚨 공통 긴급 연락처", allEmergencies: "모든 긴급상황", pnpPolice: "PNP 경찰", bfpFire: "BFP 소방", cdrrmo: "CDRRMO", oneRescue: "ONE Rescue" },
+      disclaimer: { bold: "911, 116, 160은 필리핀 내 모든 휴대폰 또는 유선전화에서 무료로 전화할 수 있습니다", rest: "— 로드 필요 없음, 요금 없음. 휴대폰 번호(09xx)와 유선전화(035)는 일반 통화 요금이 부과될 수 있습니다. 확실하지 않을 때는 먼저", red: "911", end: "에 전화하세요." },
+      emergency: { title: "긴급 서비스", countLabel: "개 기관", searchPlaceholder: "기관, 번호 또는 서비스 유형 검색…", emptyText: "검색과 일치하는 긴급 서비스가 없습니다." },
+      hospitals: { title: "병원 및 의료 시설", countLabel: "개 시설", searchPlaceholder: "병원 이름, 주소 또는 전화번호 검색…", emptyText: "검색과 일치하는 병원이 없습니다.", government: "공공", private: "민간" },
+      barangays: {
+        title: "바랑가이 긴급 연락처", countLabel: "개 바랑가이", searchPlaceholder: "바랑가이, 핫라인 또는 대피 장소 검색…", emptyText: "검색과 일치하는 바랑가이가 없습니다.",
+        withHotlines: "핫라인 보유", withEvac: "대피소 보유", noHotline: "직통 핫라인 없음",
+        hotlineBadge: "핫라인", evacBadge: "대피소", tbdBadge: "직통 핫라인 없음",
+        noDirectPrefix: "직통 핫라인 없음 — 전화하세요", orCdrrmo: "또는 CDRRMO", navigate: "길찾기",
+      },
+      actions: { callNow: "지금 전화", map: "지도", call: "전화", navigate: "길찾기" },
+    },
+    footer: {
+      statusOperational: "모든 시스템 정상 작동 중",
+      statusActive: "DumaSafeGuide 활성화됨",
+      hotlinesLabel: "긴급 핫라인",
+      hotlinesHint: "탭하면 바로 전화 연결",
+      emergencyPill: "긴급상황",
+      navHeading: "탐색",
+      aboutHeading: "소개",
+      links: {
+        safetyMap: "안전 지도", reportIncident: "사건 신고", safetyTips: "안전 수칙", emergencyContacts: "긴급 연락처",
+        aboutDsg: "DumaSafeGuide 소개", resources: "자료", privacyPolicy: "개인정보 보호정책", termsOfUse: "이용약관",
+      },
+      hotlineLabels: { emergency: "긴급", ndrrmc: "NDRRMC", bfpFire: "BFP 소방", pnp: "PNP" },
+      brandDesc: "온화한 사람들의 도시를 위해 지역사회가 만든 안전 플랫폼입니다. 핫라인, 사건 신고, 재난 대비에 빠르게 접근하세요.",
+      brandBadge: "두마게테시 · 네그로스 오리엔탈 지역 서비스 제공",
+      rightsReserved: "모든 권리 보유.",
+      builtWithPrefix: "제작:",
+      builtWithSuffix: "모든 두마게테뇨의 안전을 위하여",
+    },
+    report: {
+      heroTitle: "사건", heroAccent: "신고",
+      heroSub: "현지 대응요원에게 알리기 위해 신고서를 제출하세요. 정확한 정보를 제공하면 적절한 팀이 신속하게 대응할 수 있습니다.",
+      bannerTitle: "실시간으로 신고 현황 확인",
+      bannerText: "계정을 만들면 사건 신고 상태를 확인하고 당국이 대응할 때 업데이트를 받을 수 있습니다.",
+      bannerCta: "계정 만들기 →",
+      types: { fire: "화재", accident: "교통사고", flood: "홍수", crime: "범죄", medical: "의료 응급상황", other: "기타" },
+      steps: { incidentType: "사건 유형", reporterInfo: "신고자 정보", location: "위치", description: "설명", evidence: "증거", submit: "제출" },
+      cardLabels: { incidentType: "사건 유형", reporterInfo: "신고자 정보", location: "현재 위치", description: "사건 세부정보", evidence: "증거 업로드" },
+      form: {
+        fullName: "성명", optional: "(선택)", contactNumber: "연락처",
+        detectedLocation: "감지된 위치", refreshGps: "📍 GPS 새로고침", verifyMaps: "지도에서 확인 →",
+        descriptionPlaceholder: "발생한 상황을 설명해주세요 — 시간, 관련 인원 수, 심각도 및 기타 관련 정보를 포함하세요…",
+        uploadHint: "클릭하여 선택하거나 드래그 앤 드롭",
+        legalTitle: "법적 확인",
+        legalSummary: "이 신고서를 제출함으로써 제공된 정보가 귀하가 아는 한 사실이고 정확함을 확인합니다.",
+        submitBtn: "사건 신고 제출", submitting: "제출 중…",
+      },
+      sidebar: {
+        hotlinesTitle: "긴급 핫라인",
+        warnTitle: "⚠️ 긴급 알림",
+        warnText: "누군가 즉각적인 위험에 처해 있다면 긴급 서비스에 직접 전화하세요. 생명이 위태로운 상황에서는 이 양식에만 의존하지 마세요.",
+        safetyTitle: "🛡️ 귀하의 안전이 중요합니다",
+        safetyText: "귀하의 신원과 연락처 정보는 철저히 비밀로 유지됩니다. 원하시면 익명으로 제출할 수 있습니다.",
+        trackTitle: "📍 신고 현황 추적",
+        trackText: "계정을 만들면 사건 신고 상태를 실시간으로 추적할 수 있습니다.",
+        trackBtn: "계정 만들기 또는 로그인 →",
+      },
+      success: {
+        title: "신고가 제출되었습니다",
+        sub: "사건 신고가 접수되어 대응요원에게 표시됩니다. 당국에 통보되었으며 곧 대응할 것입니다.",
+        cardTitle: "다른 사건 신고하기",
+        cardText: "지역사회의 안전을 위해 다른 사건을 신고하세요.",
+        cardBtn: "다른 신고 제출하기 →",
+      },
+    },
+    signup: {
+      eyebrow: "커뮤니티 안전 플랫폼",
+      heroLine1: "가입하기", heroAccent1: "긴급", heroAccent2: "대응",
+      heroDesc: "계정을 등록하여 사건을 신고하고 실시간 알림을 받으며 모든 바랑가이의 응급 대응요원과 연결 상태를 유지하세요.",
+      steps: {
+        create: { title: "계정 만들기", desc: "세부 정보를 입력하고 바랑가이를 선택하세요." },
+        access: { title: "즉시 이용 가능", desc: "가입 후 즉시 계정을 사용할 수 있습니다." },
+        report: { title: "신고 및 대응", desc: "지금 사건을 제출하고 대응요원과 협력하세요." },
+      },
+      certBold: "모든 시민 무료", certRest: "두마게테시에서",
+      mobileBadge: "회원가입",
+      backToHome: "홈으로 돌아가기",
+      formTitle: "계정 만들기",
+      formSub: "DumaSafeGuide에 가입하세요 — 모든 시민에게 완전히 무료입니다.",
+      labels: { firstName: "이름", lastName: "성", barangay: "바랑가이", phone: "전화번호", email: "이메일 주소", password: "비밀번호", confirmPassword: "확인" },
+      placeholders: { firstName: "Maria", lastName: "Clara", phone: "09XX XXX XXXX", selectLocation: "지역 선택" },
+      pwHint: "최소 6자 이상이어야 합니다.",
+      emailHint: "확인 가능한 이메일을 사용하세요 — 로그인 전에 확인 링크를 보내드립니다.",
+      emailInvalid: "유효한 이메일 주소를 입력해주세요.",
+      errors: {
+        missingFields: "모든 필드를 작성해주세요.",
+        invalidEmail: "유효한 이메일 주소를 입력해주세요.",
+        disposableEmail: "임시 또는 일회용 이메일 주소는 허용되지 않습니다. 실제로 접속 가능한 이메일을 사용해주세요.",
+        passwordMismatch: "비밀번호가 일치하지 않습니다.",
+        passwordTooShort: "비밀번호는 최소 6자 이상이어야 합니다.",
+        needCaptcha: "사람인지 확인하기 위해 CAPTCHA를 완료해주세요.",
+        unexpected: "예상치 못한 오류가 발생했습니다.",
+      },
+      submitBtn: "계정 만들기", submitting: "계정 생성 중…",
+      footerHaveAccount: "이미 계정이 있으신가요?", footerSignIn: "로그인 →",
+      success: {
+        title: "이메일을 확인하세요",
+        msgIntro: "DumaSafeGuide에 오신 것을 환영합니다!",
+        msgBody: "귀하의 이메일로 확인 링크를 보내드렸습니다. 로그인하기 전에 주소를 확인해주세요.",
+        note: "받지 못하셨나요? 스팸 폴더를 확인해주세요.",
+        goToSignIn: "로그인으로 이동",
+      },
+    },
+  },
+
+  // ── Chinese (Simplified) ─────────────────────────────────
+  zh: {
+    common: { live: "实时", emergency: "紧急情况", quickAccess: "快速访问", explore: "查看" },
+    nav: {
+      directory: "通讯录", map: "地图", safetyTips: "安全提示", about: "关于我们", resources: "资源",
+      myDashboard: "我的仪表板", responderPanel: "响应人员面板", adminDashboard: "管理员仪表板",
+      login: "登录", createAccount: "创建账户", logout: "退出登录", signOut: "退出登录",
+      citizen: "市民", fileReport: "提交报告", alerts: "通知",
+    },
+    ticker: {
+      alerts: [
+        "🔴  预警：内格罗斯西方省已发布1号台风信号 — 请关注官方通报",
+        "🚨  事故：拉克森街发生车辆事故 — 请避开该区域",
+        "⚠️  提醒：911热线24小时开通 — 非紧急情况请勿拨打",
+        "🔴  预警：低洼村庄发布山洪预警 — 请保持警惕",
+      ],
+    },
+    hero: {
+      eyebrow: "温柔之城",
+      titleLine1: "紧急",
+      titleAccent: "响应",
+      titleRest: "触手可及",
+      subtitle: "为温柔之城打造的一体化安全平台。快速获取热线、设施和安全指南信息。",
+      cta: "举报实时事件",
+    },
+    stats: { barangays: "覆盖村庄数量", hourResponse: "小时响应", avgResponse: "平均响应时间（分钟）" },
+    auth: {
+      welcomeTitle: "欢迎回来",
+      welcomeSubtitle: "登录以访问 DumaSafeGuide 紧急仪表板。",
+      emailLabel: "电子邮箱",
+      passwordLabel: "密码",
+      rememberMe: "记住我",
+      forgotPassword: "忘记密码？",
+      loginBtn: "登录账户",
+      loggingIn: "登录中…",
+      orDivider: "还没有账户？",
+      noAccount: "还没有账户？",
+      createAccount: "创建账户 →",
+      errMissingFields: "请输入您的邮箱和密码。",
+      errNeedCaptcha: "请完成验证码以证明您不是机器人。",
+      errProfileNotReady: "个人资料尚未准备好，请稍等片刻再试。",
+      errLoginFailed: "登录失败。",
+    },
+    cards: {
+      map: { label: "安全地图", desc: "查看实时事故区域和安全路线", tag: "实时" },
+      directory: { label: "通讯录", desc: "村庄官员及联系人信息", tag: "人员" },
+      tips: { label: "安全提示", desc: "应对各种情况的防范指南", tag: "提示" },
+      contacts: { label: "紧急联系方式", desc: "即时联系救援人员和热线", tag: "紧急" },
+    },
+    languageModal: { heading: "选择您的语言", subheading: "请选择您偏好的语言以继续。", continueBtn: "继续" },
+    safetyTips: {
+      heroTitleStart: "安全", heroAccent: "提示", heroTitleEnd: "与应急指南",
+      heroSub: "针对台风、洪水、火灾、地震、山体滑坡和交通事故的分步指南——附完整应急背包清单。",
+      disasters: { typhoon: "台风", flood: "洪水", fire: "火灾", earthquake: "地震", landslide: "山体滑坡", road: "交通事故" },
+      phases: { beforeLabel: "事前", beforeDesc: "提前准备", duringLabel: "事中", duringDesc: "立即确保安全", afterLabel: "事后", afterDesc: "安全恢复" },
+      goBag: { tabLabel: "应急背包", titleStart: "您的", titleAccent: "应急背包", titleEnd: "清单", sub: "准备好这20件必需品，以便在15分钟内安全撤离。勾选您已准备好的物品。", itemsPacked: "件已准备", resetBtn: "重置清单" },
+      categories: { all: "全部", waterFood: "水和食物", medical: "医疗", documents: "证件", tools: "工具", clothing: "衣物", shelter: "庇护用品", communication: "通讯" },
+    },
+    resources: {
+      heroTitle: "资源与", heroAccent: "指南",
+      heroSub: "所需的一切信息尽在此处——安全指南、合作机构、紧急联系方式和法律参考资料。",
+      cards: {
+        safety: { tag: "社区", title: "安全提示", description: "面向村庄层面的实用指南，帮助您在紧急情况发生前、发生中及发生后保护自己和社区。", links: { before: "台风来临前", flood: "洪水安全规程", fire: "防火指南" } },
+        agencies: { tag: "机构", title: "合作机构", description: "与DumaSafeGuide合作提供协调一致的应急响应的政府机构和民间社会组织。", links: { cdrrmo: "CDRRMO", redcross: "菲律宾红十字会", bfp: "消防局" } },
+        directory: { tag: "联系方式", title: "应急通讯录", description: "快速访问所有重要的应急热线——医院、村庄应急人员以及全市灾害管理单位。", links: { city: "市应急服务", barangays: "村庄热线", hospitals: "医院与医疗" } },
+        terms: { tag: "法律", title: "服务条款", description: "了解使用DumaSafeGuide的规则、用户责任和法律框架，包括RA 10175。", links: { responsibilities: "用户责任", privacy: "隐私政策", ra10175: "RA 10175概述" } },
+      },
+      cta: { title: "需要报告紧急情况吗？", desc: "不要等待——使用事件报告表立即通知当地应急人员。", btn: "立即报告" },
+    },
+    map: {
+      backBtn: "返回仪表板",
+      titleStart: "查找附近", titleAccent: "帮助",
+      subtitle: "杜马格特市各地的紧急服务、医院和疏散中心",
+      statTotal: "总计",
+      filterLabel: "筛选",
+      filterAll: "全部",
+      categories: { emergency: "紧急服务", hospital: "医院", evacuation: "疏散中心" },
+      searchPlaceholder: "搜索设施或地址…",
+      showingPrefix: "显示", showingOf: "/", showingSuffix: "个设施",
+      navigateBtn: "导航",
+      emptyTitle: "没有符合您搜索条件的设施。",
+      legendTitle: "地图图例",
+      liveTitle: "杜马格特海岸监测",
+      liveSubPrefix: "实时地图 — 全部", liveSubSuffix: "个设施均在运行",
+      getDirections: "获取路线",
+    },
+    about: {
+      heroTitle: "关于",
+      heroSub: "为杜马格特市打造的基于网络的公共安全与紧急事件报告系统——将您所需的一切集中于一处。",
+      metaText: "服务杜马格特市 · 成立于2025年",
+      introLabel: "什么是 DumaSafeGuide？",
+      introText: "DumaSafeGuide（DSG）是专为杜马格特市设计的基于网络的公共安全与紧急事件报告系统。它将经过核实的紧急联系方式、安全提示、防灾指南和报告功能整合到一个易于使用的平台中——确保在争分夺秒的时刻，您无需四处寻找答案。",
+      pillarsLabel: "使命与愿景",
+      mission: { tag: "宗旨", title: "我们的使命", body: "提升杜马格特市的公共安全意识，改善紧急情况下的可及性，并支持公众与应急服务提供者之间的及时沟通。" },
+      vision: { tag: "未来", title: "我们的愿景", body: "打造一个更安全、信息更畅通的杜马格特市，让居民、学生和游客能够随时随地无障碍地获取可靠的应急信息。" },
+      featuresLabel: "我们提供的服务",
+      features: {
+        contacts: { label: "经核实的联系方式", detail: "精心整理并定期更新的医院、村庄办公室及全市灾害应对部门的紧急热线。" },
+        guidelines: { label: "安全指南", detail: "涵盖台风、洪水、火灾及其他常见本地紧急情况的实用村级防灾提示。" },
+        reporting: { label: "事件报告", detail: "快速、易用的报告表单，让居民可以直接提醒当地应急人员——无延误、无混乱。" },
+        partners: { label: "合作网络", detail: "与CDRRMO、菲律宾红十字会、消防局及其他主要政府机构协调合作。" },
+      },
+      cta: { title: "需要报告紧急情况吗？", desc: "不要等待——使用事件报告表立即通知当地应急人员。", btn: "立即报告" },
+    },
+    directory: {
+      hero: { line1: "保持", line1Accent: "联系", line2: "保持", line2Accent: "安全", sub: "杜马格特市所有重要联系方式——紧急服务、医院和每个村庄热线的固定电话及手机号码，一应俱全。" },
+      banner: { label: "🚨 通用紧急联系方式", allEmergencies: "所有紧急情况", pnpPolice: "PNP 警察", bfpFire: "BFP 消防", cdrrmo: "CDRRMO", oneRescue: "ONE Rescue" },
+      disclaimer: { bold: "在菲律宾，拨打911、116和160均可从任何手机或固定电话免费拨打", rest: "——无需话费，无需付费。手机号码（09xx）和固定电话（035）可能会产生标准通话费用。如有疑问，请先拨打", red: "911", end: "。" },
+      emergency: { title: "紧急服务", countLabel: "个机构", searchPlaceholder: "搜索机构、号码或服务类型…", emptyText: "没有符合您搜索条件的紧急服务。" },
+      hospitals: { title: "医院与医疗设施", countLabel: "个设施", searchPlaceholder: "搜索医院名称、地址或电话号码…", emptyText: "没有符合您搜索条件的医院。", government: "政府", private: "私立" },
+      barangays: {
+        title: "村庄紧急联系方式", countLabel: "个村庄", searchPlaceholder: "搜索村庄、热线或疏散地点…", emptyText: "没有符合您搜索条件的村庄。",
+        withHotlines: "设有热线", withEvac: "设有疏散地点", noHotline: "无直接热线",
+        hotlineBadge: "热线", evacBadge: "疏散", tbdBadge: "无直接热线",
+        noDirectPrefix: "无直接热线 — 请拨打", orCdrrmo: "或拨打CDRRMO", navigate: "导航",
+      },
+      actions: { callNow: "立即致电", map: "地图", call: "致电", navigate: "导航" },
+    },
+    footer: {
+      statusOperational: "所有系统运行正常",
+      statusActive: "DumaSafeGuide 已启用",
+      hotlinesLabel: "紧急热线",
+      hotlinesHint: "点击即可拨打",
+      emergencyPill: "紧急情况",
+      navHeading: "导航",
+      aboutHeading: "关于",
+      links: {
+        safetyMap: "安全地图", reportIncident: "举报事件", safetyTips: "安全提示", emergencyContacts: "紧急联系方式",
+        aboutDsg: "关于 DumaSafeGuide", resources: "资源", privacyPolicy: "隐私政策", termsOfUse: "使用条款",
+      },
+      hotlineLabels: { emergency: "紧急", ndrrmc: "NDRRMC", bfpFire: "BFP 消防", pnp: "PNP" },
+      brandDesc: "为温柔之城打造的社区安全平台。快速获取热线、事件报告和防灾准备信息。",
+      brandBadge: "服务杜马格特市 · 内格罗斯东方省",
+      rightsReserved: "保留所有权利。",
+      builtWithPrefix: "用",
+      builtWithSuffix: "为每一位杜马格特人的安全而建",
+    },
+    report: {
+      heroTitle: "举报", heroAccent: "事件",
+      heroSub: "提交报告以提醒当地应急人员。提供准确的详细信息，以便合适的团队能够快速采取行动。",
+      bannerTitle: "实时追踪您的报告",
+      bannerText: "创建账户以监控您的事件报告状态，并在当局响应时接收更新。",
+      bannerCta: "创建账户 →",
+      types: { fire: "火灾事故", accident: "交通事故", flood: "洪水", crime: "犯罪", medical: "医疗紧急情况", other: "其他" },
+      steps: { incidentType: "事件类型", reporterInfo: "举报人信息", location: "位置", description: "描述", evidence: "证据", submit: "提交" },
+      cardLabels: { incidentType: "事件类型", reporterInfo: "举报人信息", location: "您的位置", description: "事件详情", evidence: "上传证据" },
+      form: {
+        fullName: "姓名", optional: "（可选）", contactNumber: "联系电话",
+        detectedLocation: "检测到的位置", refreshGps: "📍 刷新GPS", verifyMaps: "在地图上验证 →",
+        descriptionPlaceholder: "描述发生的情况——包括时间、涉及人数、严重程度及其他相关细节…",
+        uploadHint: "点击选择或拖放文件",
+        legalTitle: "法律确认",
+        legalSummary: "提交此报告即表示您确认所提供的信息据您所知真实准确。",
+        submitBtn: "提交事件报告", submitting: "提交中…",
+      },
+      sidebar: {
+        hotlinesTitle: "紧急热线",
+        warnTitle: "⚠️ 紧急提醒",
+        warnText: "如果有人处于紧急危险中，请直接致电紧急服务部门。在危及生命的情况下，请勿仅依赖此表格。",
+        safetyTitle: "🛡️ 您的安全至关重要",
+        safetyText: "您的身份和联系信息将被严格保密。如果您愿意，也可以匿名提交。",
+        trackTitle: "📍 追踪您的报告",
+        trackText: "创建账户以实时追踪您的事件报告状态。",
+        trackBtn: "创建账户或登录 →",
+      },
+      success: {
+        title: "报告已提交",
+        sub: "您的事件报告已收到，现已对应急人员可见。当局已收到通知，将尽快做出响应。",
+        cardTitle: "提交另一份报告",
+        cardText: "举报其他事件，帮助维护社区安全。",
+        cardBtn: "提交另一份报告 →",
+      },
+    },
+    signup: {
+      eyebrow: "社区安全平台",
+      heroLine1: "加入", heroAccent1: "紧急", heroAccent2: "响应",
+      heroDesc: "注册账户以举报事件、接收实时警报，并与所有村庄的应急响应人员保持联系。",
+      steps: {
+        create: { title: "创建账户", desc: "填写您的详细信息并选择您的村庄。" },
+        access: { title: "即时访问", desc: "注册后您的账户即可立即使用。" },
+        report: { title: "举报与响应", desc: "立即提交事件并与响应人员协调。" },
+      },
+      certBold: "所有市民免费", certRest: "在杜马格特",
+      mobileBadge: "注册",
+      backToHome: "返回首页",
+      formTitle: "创建账户",
+      formSub: "加入DumaSafeGuide——对所有市民完全免费。",
+      labels: { firstName: "名字", lastName: "姓氏", barangay: "村庄", phone: "电话号码", email: "电子邮箱", password: "密码", confirmPassword: "确认密码" },
+      placeholders: { firstName: "Maria", lastName: "Clara", phone: "09XX XXX XXXX", selectLocation: "选择位置" },
+      pwHint: "至少需要6个字符。",
+      emailHint: "请使用您可以查看的邮箱——登录前我们会发送确认链接。",
+      emailInvalid: "请输入有效的电子邮箱地址。",
+      errors: {
+        missingFields: "请填写所有字段。",
+        invalidEmail: "请输入有效的电子邮箱地址。",
+        disposableEmail: "不允许使用临时或一次性电子邮箱。请使用您可以访问的真实邮箱。",
+        passwordMismatch: "两次输入的密码不一致。",
+        passwordTooShort: "密码至少需要6个字符。",
+        needCaptcha: "请完成验证码以证明您不是机器人。",
+        unexpected: "发生了意外错误。",
+      },
+      submitBtn: "创建账户", submitting: "正在创建账户…",
+      footerHaveAccount: "已有账户？", footerSignIn: "登录 →",
+      success: {
+        title: "请查收您的邮箱",
+        msgIntro: "欢迎加入DumaSafeGuide！",
+        msgBody: "我们已向您的邮箱发送了确认链接。请在登录前验证您的地址。",
+        note: "没有收到？请查看您的垃圾邮件文件夹。",
+        goToSignIn: "前往登录",
+      },
+    },
+  },
+
+  // ── Japanese ─────────────────────────────────────────────
+  ja: {
+    common: { live: "ライブ", emergency: "緊急", quickAccess: "クイックアクセス", explore: "見る" },
+    nav: {
+      directory: "ディレクトリ", map: "マップ", safetyTips: "安全のヒント", about: "概要", resources: "リソース",
+      myDashboard: "マイダッシュボード", responderPanel: "対応者パネル", adminDashboard: "管理者ダッシュボード",
+      login: "ログイン", createAccount: "アカウントを作成", logout: "ログアウト", signOut: "サインアウト",
+      citizen: "市民", fileReport: "報告する", alerts: "通知",
+    },
+    ticker: {
+      alerts: [
+        "🔴  注意報：ネグロス・オクシデンタルに台風シグナル1号発令 — 公式発表をご確認ください",
+        "🚨  事故情報：ラクソン通りで車両事故が発生 — その地域を避けてください",
+        "⚠️  お知らせ：緊急ホットライン911は24時間対応です — 緊急時以外の利用はお控えください",
+        "🔴  注意報：低地のバランガイに鉄砲水警報発令中 — 十分ご注意ください",
+      ],
+    },
+    hero: {
+      eyebrow: "優しき人々の街",
+      titleLine1: "緊急",
+      titleAccent: "対応",
+      titleRest: "を手のひらに",
+      subtitle: "優しき人々の街のための統合安全プラットフォーム。ホットライン、施設、安全ガイドラインに素早くアクセスできます。",
+      cta: "リアルタイムで事件を報告",
+    },
+    stats: { barangays: "対応バランガイ数", hourResponse: "時間対応", avgResponse: "平均対応時間（分）" },
+    auth: {
+      welcomeTitle: "おかえりなさい",
+      welcomeSubtitle: "DumaSafeGuideの緊急ダッシュボードにアクセスするにはログインしてください。",
+      emailLabel: "メールアドレス",
+      passwordLabel: "パスワード",
+      rememberMe: "ログイン状態を保持",
+      forgotPassword: "パスワードをお忘れですか？",
+      loginBtn: "ログイン",
+      loggingIn: "ログイン中…",
+      orDivider: "アカウントをお持ちでないですか？",
+      noAccount: "アカウントをお持ちでないですか？",
+      createAccount: "アカウントを作成 →",
+      errMissingFields: "メールアドレスとパスワードを入力してください。",
+      errNeedCaptcha: "人間であることを確認するためCAPTCHAを完了してください。",
+      errProfileNotReady: "プロフィールがまだ準備できていません。少々お待ちの上、再度お試しください。",
+      errLoginFailed: "ログインに失敗しました。",
+    },
+    cards: {
+      map: { label: "安全マップ", desc: "リアルタイムの事故エリアと安全なルートを確認", tag: "LIVE" },
+      directory: { label: "ディレクトリ", desc: "バランガイ職員と連絡先", tag: "PEOPLE" },
+      tips: { label: "安全のヒント", desc: "あらゆる状況に備えるためのガイド", tag: "TIPS" },
+      contacts: { label: "緊急連絡先", desc: "救助隊やホットラインに即座に連絡", tag: "URGENT" },
+    },
+    languageModal: { heading: "言語を選択してください", subheading: "続けるには希望の言語を選択してください。", continueBtn: "続ける" },
+    safetyTips: {
+      heroTitleStart: "安全", heroAccent: "のヒント", heroTitleEnd: "＆緊急対応ガイド",
+      heroSub: "台風、洪水、火災、地震、土砂災害、交通事故に対応するステップバイステップガイドと、完全な非常持ち出し袋チェックリストです。",
+      disasters: { typhoon: "台風", flood: "洪水", fire: "火災", earthquake: "地震", landslide: "土砂災害", road: "交通事故" },
+      phases: { beforeLabel: "事前", beforeDesc: "事前に備える", duringLabel: "発生時", duringDesc: "今すぐ安全確保", afterLabel: "事後", afterDesc: "安全に回復する" },
+      goBag: { tabLabel: "非常持ち出し袋", titleStart: "あなたの", titleAccent: "非常持ち出し袋", titleEnd: "チェックリスト", sub: "15分以内に安全に避難できるよう、20の必需品を準備しましょう。準備済みの項目にチェックを入れてください。", itemsPacked: "点準備済み", resetBtn: "チェックリストをリセット" },
+      categories: { all: "すべて", waterFood: "水と食料", medical: "医療品", documents: "書類", tools: "道具", clothing: "衣類", shelter: "避難用品", communication: "通信機器" },
+    },
+    resources: {
+      heroTitle: "リソース＆", heroAccent: "ガイド",
+      heroSub: "安全ガイド、協力機関、緊急連絡先、法的資料など、必要な情報がすべてここにあります。",
+      cards: {
+        safety: { tag: "コミュニティ", title: "安全のヒント", description: "緊急事態の前、最中、後に自分自身と地域社会を守るための、バランガイレベルの実践的なガイドラインです。", links: { before: "台風の前に", flood: "洪水安全プロトコル", fire: "火災予防ガイド" } },
+        agencies: { tag: "協力団体", title: "協力機関", description: "DumaSafeGuideと連携し、統合された緊急対応を提供する政府機関および市民団体です。", links: { cdrrmo: "CDRRMO", redcross: "フィリピン赤十字社", bfp: "消防局" } },
+        directory: { tag: "連絡先", title: "緊急連絡先ディレクトリ", description: "病院、バランガイ対応者、市全体の災害管理部門など、重要な緊急ホットラインに素早くアクセスできます。", links: { city: "市の緊急サービス", barangays: "バランガイホットライン", hospitals: "病院と医療" } },
+        terms: { tag: "法的事項", title: "利用規約", description: "RA 10175を含む、DumaSafeGuideの利用に関する規則、ユーザーの責任、法的枠組みについてご確認ください。", links: { responsibilities: "ユーザーの責任", privacy: "プライバシーポリシー", ra10175: "RA 10175の概要" } },
+      },
+      cta: { title: "緊急事態を報告する必要がありますか？", desc: "待たないでください — インシデント報告フォームを使って、すぐに地元の対応者に知らせましょう。", btn: "今すぐ報告する" },
+    },
+    map: {
+      backBtn: "ダッシュボードに戻る",
+      titleStart: "近くの支援を", titleAccent: "探す",
+      subtitle: "ドゥマゲッティ市内の緊急サービス、病院、避難所の情報",
+      statTotal: "合計",
+      filterLabel: "フィルター",
+      filterAll: "すべて",
+      categories: { emergency: "緊急サービス", hospital: "病院", evacuation: "避難所" },
+      searchPlaceholder: "施設名や住所を検索…",
+      showingPrefix: "表示中", showingOf: "/", showingSuffix: "件の施設",
+      navigateBtn: "ナビゲート",
+      emptyTitle: "検索条件に一致する施設がありません。",
+      legendTitle: "地図の凡例",
+      liveTitle: "ドゥマゲッティ沿岸監視",
+      liveSubPrefix: "ライブマップ — 全", liveSubSuffix: "件の施設が稼働中",
+      getDirections: "道順を取得",
+    },
+    about: {
+      heroTitle: "概要",
+      heroSub: "ドゥマゲッティ市のために構築された、必要なものすべてを一箇所に集約したウェブベースの公共安全・緊急通報システムです。",
+      metaText: "ドゥマゲッティ市にサービス提供 · 2025年設立",
+      introLabel: "DumaSafeGuideとは？",
+      introText: "DumaSafeGuide（DSG）は、ドゥマゲッティ市のために特別に設計されたウェブベースの公共安全・緊急通報システムです。検証済みの緊急連絡先、安全のヒント、備えのガイドライン、通報機能を一つのアクセスしやすいプラットフォームに統合し、一刻を争う時でも答えを探し回る必要がないようにします。",
+      pillarsLabel: "使命とビジョン",
+      mission: { tag: "目的", title: "私たちの使命", body: "ドゥマゲッティ市における公共安全の意識を高め、緊急時のアクセシビリティを向上させ、市民と緊急サービス提供者間の迅速な連携を支援します。" },
+      vision: { tag: "未来", title: "私たちのビジョン", body: "住民、学生、訪問者がいつでもどこでも障壁なく信頼できる緊急情報にアクセスできる、より安全で情報の行き届いたドゥマゲッティ市を実現します。" },
+      featuresLabel: "提供内容",
+      features: {
+        contacts: { label: "検証済み連絡先", detail: "病院、バランガイ事務所、市全域の災害対応部門の厳選され定期的に更新される緊急ホットラインです。" },
+        guidelines: { label: "安全ガイドライン", detail: "台風、洪水、火災、その他地域でよく起こる緊急事態に対応する、実践的なバランガイレベルの備えのヒントです。" },
+        reporting: { label: "事件通報", detail: "住民が遅延や混乱なく地元の対応者に直接通知できる、迅速でアクセスしやすい通報フォームです。" },
+        partners: { label: "協力ネットワーク", detail: "CDRRMO、フィリピン赤十字社、消防局、その他の主要政府機関と連携しています。" },
+      },
+      cta: { title: "緊急事態を報告する必要がありますか？", desc: "待たないでください — インシデント報告フォームを使って、すぐに地元の対応者に知らせましょう。", btn: "今すぐ報告する" },
+    },
+    directory: {
+      hero: { line1: "つながりを保ち", line1Accent: "安心", line2: "そして", line2Accent: "安全に", sub: "ドゥマゲッティ市のすべての重要な連絡先——緊急サービス、病院、各バランガイのホットラインの固定電話・携帯電話番号を一箇所に集約。" },
+      banner: { label: "🚨 共通緊急連絡先", allEmergencies: "全緊急事態", pnpPolice: "PNP 警察", bfpFire: "BFP 消防", cdrrmo: "CDRRMO", oneRescue: "ONE Rescue" },
+      disclaimer: { bold: "911、116、160はフィリピン国内のどの携帯電話・固定電話からでも無料で通話できます", rest: "——通話料不要、料金なし。携帯電話番号（09xx）と固定電話（035）には通常の通話料金がかかる場合があります。迷ったときはまず", red: "911", end: "にお電話ください。" },
+      emergency: { title: "緊急サービス", countLabel: "機関", searchPlaceholder: "機関名、番号、サービスの種類を検索…", emptyText: "検索条件に一致する緊急サービスがありません。" },
+      hospitals: { title: "病院・医療施設", countLabel: "施設", searchPlaceholder: "病院名、住所、電話番号を検索…", emptyText: "検索条件に一致する病院がありません。", government: "公立", private: "私立" },
+      barangays: {
+        title: "バランガイ緊急連絡先", countLabel: "バランガイ", searchPlaceholder: "バランガイ、ホットライン、避難場所を検索…", emptyText: "検索条件に一致するバランガイがありません。",
+        withHotlines: "ホットラインあり", withEvac: "避難場所あり", noHotline: "直通ホットラインなし",
+        hotlineBadge: "ホットライン", evacBadge: "避難場所", tbdBadge: "直通ホットラインなし",
+        noDirectPrefix: "直通ホットラインなし — こちらにお電話ください", orCdrrmo: "またはCDRRMO", navigate: "ナビゲート",
+      },
+      actions: { callNow: "今すぐ電話", map: "マップ", call: "電話", navigate: "ナビゲート" },
+    },
+    footer: {
+      statusOperational: "全システム正常稼働中",
+      statusActive: "DumaSafeGuide 稼働中",
+      hotlinesLabel: "緊急ホットライン",
+      hotlinesHint: "タップしてすぐに発信",
+      emergencyPill: "緊急",
+      navHeading: "ナビゲート",
+      aboutHeading: "概要",
+      links: {
+        safetyMap: "安全マップ", reportIncident: "事件を報告", safetyTips: "安全のヒント", emergencyContacts: "緊急連絡先",
+        aboutDsg: "DumaSafeGuideについて", resources: "リソース", privacyPolicy: "プライバシーポリシー", termsOfUse: "利用規約",
+      },
+      hotlineLabels: { emergency: "緊急", ndrrmc: "NDRRMC", bfpFire: "BFP 消防", pnp: "PNP" },
+      brandDesc: "優しき人々の街のために作られた、コミュニティ主導の安全プラットフォームです。ホットライン、事件報告、防災準備に素早くアクセスできます。",
+      brandBadge: "ドゥマゲッティ市・ネグロス・オリエンタル州にサービス提供",
+      rightsReserved: "全著作権所有。",
+      builtWithPrefix: "制作:",
+      builtWithSuffix: "すべてのドゥマゲッテニョの安全のために",
+    },
+    report: {
+      heroTitle: "事件を", heroAccent: "報告する",
+      heroSub: "地元の対応者に知らせるために報告書を提出してください。正確な詳細を提供することで、適切なチームが迅速に対応できます。",
+      bannerTitle: "リアルタイムで報告状況を追跡",
+      bannerText: "アカウントを作成すると、事件報告のステータスを確認し、当局が対応した際に更新情報を受け取ることができます。",
+      bannerCta: "アカウントを作成 →",
+      types: { fire: "火災", accident: "交通事故", flood: "洪水", crime: "犯罪", medical: "医療緊急事態", other: "その他" },
+      steps: { incidentType: "事件の種類", reporterInfo: "報告者情報", location: "位置情報", description: "詳細説明", evidence: "証拠", submit: "送信" },
+      cardLabels: { incidentType: "事件の種類", reporterInfo: "報告者情報", location: "現在地", description: "事件の詳細", evidence: "証拠のアップロード" },
+      form: {
+        fullName: "氏名", optional: "（任意）", contactNumber: "連絡先電話番号",
+        detectedLocation: "検出された位置", refreshGps: "📍 GPSを更新", verifyMaps: "地図で確認 →",
+        descriptionPlaceholder: "何が起きたかを説明してください — 時間、関係者数、深刻度、その他関連する詳細を含めてください…",
+        uploadHint: "クリックして選択するかドラッグ＆ドロップ",
+        legalTitle: "法的確認事項",
+        legalSummary: "この報告を提出することにより、提供された情報が知る限り真実かつ正確であることを確認します。",
+        submitBtn: "事件報告を送信", submitting: "送信中…",
+      },
+      sidebar: {
+        hotlinesTitle: "緊急ホットライン",
+        warnTitle: "⚠️ 緊急時の注意",
+        warnText: "誰かが差し迫った危険にさらされている場合は、直接緊急サービスに電話してください。命に関わる状況では、このフォームだけに頼らないでください。",
+        safetyTitle: "🛡️ あなたの安全が最優先です",
+        safetyText: "お客様の身元と連絡先情報は厳重に機密として保持されます。ご希望であれば匿名で提出することもできます。",
+        trackTitle: "📍 報告を追跡する",
+        trackText: "アカウントを作成すると、事件報告のステータスをリアルタイムで追跡できます。",
+        trackBtn: "アカウント作成またはログイン →",
+      },
+      success: {
+        title: "報告が送信されました",
+        sub: "事件報告を受け付けました。対応者に表示されています。当局に通知され、間もなく対応します。",
+        cardTitle: "別の報告を送信する",
+        cardText: "地域の安全を守るために別の事件を報告してください。",
+        cardBtn: "別の報告を送信 →",
+      },
+    },
+    signup: {
+      eyebrow: "コミュニティ安全プラットフォーム",
+      heroLine1: "参加する", heroAccent1: "緊急", heroAccent2: "対応",
+      heroDesc: "アカウントを登録して事件を報告し、リアルタイムの通知を受け取り、すべてのバランガイの緊急対応者と常につながりましょう。",
+      steps: {
+        create: { title: "アカウントを作成", desc: "詳細を入力し、バランガイを選択してください。" },
+        access: { title: "即時アクセス", desc: "登録後すぐにアカウントをご利用いただけます。" },
+        report: { title: "報告と対応", desc: "今すぐ事件を提出し、対応者と連携しましょう。" },
+      },
+      certBold: "すべての市民に無料", certRest: "ドゥマゲッティ市にて",
+      mobileBadge: "サインアップ",
+      backToHome: "ホームに戻る",
+      formTitle: "アカウントを作成",
+      formSub: "DumaSafeGuideに参加しましょう — すべての市民に完全無料です。",
+      labels: { firstName: "名", lastName: "姓", barangay: "バランガイ", phone: "電話番号", email: "メールアドレス", password: "パスワード", confirmPassword: "確認" },
+      placeholders: { firstName: "Maria", lastName: "Clara", phone: "09XX XXX XXXX", selectLocation: "場所を選択" },
+      pwHint: "6文字以上が必要です。",
+      emailHint: "確認可能なメールアドレスを使用してください — サインインする前に確認リンクを送信します。",
+      emailInvalid: "有効なメールアドレスを入力してください。",
+      errors: {
+        missingFields: "すべての項目を入力してください。",
+        invalidEmail: "有効なメールアドレスを入力してください。",
+        disposableEmail: "一時的または使い捨てのメールアドレスは使用できません。アクセス可能な実際のメールアドレスを使用してください。",
+        passwordMismatch: "パスワードが一致しません。",
+        passwordTooShort: "パスワードは6文字以上である必要があります。",
+        needCaptcha: "人間であることを確認するためCAPTCHAを完了してください。",
+        unexpected: "予期しないエラーが発生しました。",
+      },
+      submitBtn: "アカウントを作成", submitting: "アカウントを作成中…",
+      footerHaveAccount: "すでにアカウントをお持ちですか？", footerSignIn: "サインイン →",
+      success: {
+        title: "メールをご確認ください",
+        msgIntro: "DumaSafeGuideへようこそ！",
+        msgBody: "確認リンクをメールに送信しました。サインインする前にアドレスを確認してください。",
+        note: "届いていませんか？迷惑メールフォルダをご確認ください。",
+        goToSignIn: "サインインへ",
+      },
+    },
+  },
+
+  // ── Russian ──────────────────────────────────────────────
+  ru: {
+    common: { live: "Прямой эфир", emergency: "Экстренная помощь", quickAccess: "Быстрый доступ", explore: "Подробнее" },
+    nav: {
+      directory: "Справочник", map: "Карта", safetyTips: "Советы по безопасности", about: "О нас", resources: "Ресурсы",
+      myDashboard: "Моя панель", responderPanel: "Панель спасателя", adminDashboard: "Панель администратора",
+      login: "Войти", createAccount: "Создать аккаунт", logout: "Выйти", signOut: "Выйти",
+      citizen: "Житель", fileReport: "Подать отчёт", alerts: "Оповещения",
+    },
+    ticker: {
+      alerts: [
+        "🔴  ПРЕДУПРЕЖДЕНИЕ: Объявлен тайфунный сигнал №1 для провинции Западный Негрос — следите за официальными новостями",
+        "🚨  ПРОИСШЕСТВИЕ: ДТП на улице Лаксон — избегайте этот район",
+        "⚠️  НАПОМИНАНИЕ: Горячая линия 911 работает круглосуточно — не используйте её без крайней необходимости",
+        "🔴  ПРЕДУПРЕЖДЕНИЕ: Объявлено предупреждение о внезапном наводнении для низменных барангаев — будьте бдительны",
+      ],
+    },
+    hero: {
+      eyebrow: "Город добрых людей",
+      titleLine1: "Экстренное",
+      titleAccent: "реагирование",
+      titleRest: "всегда под рукой",
+      subtitle: "Единая платформа безопасности для Города добрых людей. Быстрый доступ к горячим линиям, учреждениям и рекомендациям по безопасности.",
+      cta: "Сообщить о происшествии",
+    },
+    stats: { barangays: "Охваченных барангаев", hourResponse: "Часовое реагирование", avgResponse: "Среднее время реагирования (мин)" },
+    auth: {
+      welcomeTitle: "С возвращением",
+      welcomeSubtitle: "Войдите, чтобы получить доступ к панели экстренных ситуаций DumaSafeGuide.",
+      emailLabel: "Электронная почта",
+      passwordLabel: "Пароль",
+      rememberMe: "Запомнить меня",
+      forgotPassword: "Забыли пароль?",
+      loginBtn: "Войти",
+      loggingIn: "Выполняется вход…",
+      orDivider: "Ещё нет аккаунта?",
+      noAccount: "Ещё нет аккаунта?",
+      createAccount: "Создать аккаунт →",
+      errMissingFields: "Пожалуйста, введите email и пароль.",
+      errNeedCaptcha: "Пожалуйста, пройдите проверку CAPTCHA, чтобы подтвердить, что вы не робот.",
+      errProfileNotReady: "Профиль ещё не готов. Подождите немного и попробуйте снова.",
+      errLoginFailed: "Не удалось войти.",
+    },
+    cards: {
+      map: { label: "Карта безопасности", desc: "Просмотр зон происшествий и безопасных маршрутов в реальном времени", tag: "LIVE" },
+      directory: { label: "Справочник", desc: "Должностные лица барангая и контактные лица", tag: "ЛЮДИ" },
+      tips: { label: "Советы по безопасности", desc: "Руководства по подготовке к любой ситуации", tag: "СОВЕТЫ" },
+      contacts: { label: "Экстренные контакты", desc: "Мгновенная связь со спасателями и горячими линиями", tag: "СРОЧНО" },
+    },
+    languageModal: { heading: "Выберите язык", subheading: "Выберите предпочитаемый язык, чтобы продолжить.", continueBtn: "Продолжить" },
+    safetyTips: {
+      heroTitleStart: "Советы по", heroAccent: "безопасности", heroTitleEnd: "и руководства на случай ЧС",
+      heroSub: "Пошаговые инструкции на случай тайфунов, наводнений, пожаров, землетрясений, оползней и ДТП — а также полный список для тревожного чемоданчика.",
+      disasters: { typhoon: "Тайфун", flood: "Наводнение", fire: "Пожар", earthquake: "Землетрясение", landslide: "Оползень", road: "ДТП" },
+      phases: { beforeLabel: "До", beforeDesc: "Подготовьтесь заранее", duringLabel: "Во время", duringDesc: "Обеспечьте безопасность сейчас", afterLabel: "После", afterDesc: "Безопасное восстановление" },
+      goBag: { tabLabel: "Тревожный чемоданчик", titleStart: "Ваш", titleAccent: "тревожный чемоданчик", titleEnd: "— чек-лист", sub: "Соберите эти 20 необходимых вещей, чтобы безопасно эвакуироваться в течение 15 минут. Отмечайте то, что уже подготовили.", itemsPacked: "вещей собрано", resetBtn: "Сбросить чек-лист" },
+      categories: { all: "Все", waterFood: "Вода и еда", medical: "Медицина", documents: "Документы", tools: "Инструменты", clothing: "Одежда", shelter: "Укрытие", communication: "Связь" },
+    },
+    resources: {
+      heroTitle: "Ресурсы и", heroAccent: "руководства",
+      heroSub: "Всё необходимое в одном месте — руководства по безопасности, партнёрские организации, экстренные контакты и юридическая информация.",
+      cards: {
+        safety: { tag: "Сообщество", title: "Советы по безопасности", description: "Практические рекомендации на уровне барангая, которые помогут защитить себя и своё сообщество до, во время и после чрезвычайной ситуации.", links: { before: "Перед тайфуном", flood: "Протокол безопасности при наводнении", fire: "Руководство по предотвращению пожаров" } },
+        agencies: { tag: "Организации", title: "Партнёрские организации", description: "Государственные органы и общественные организации, сотрудничающие с DumaSafeGuide для скоординированного реагирования на чрезвычайные ситуации.", links: { cdrrmo: "CDRRMO", redcross: "Филиппинский Красный Крест", bfp: "Бюро пожарной охраны" } },
+        directory: { tag: "Контакты", title: "Экстренный справочник", description: "Быстрый доступ ко всем важным горячим линиям — больницы, спасатели барангая и городские подразделения по управлению чрезвычайными ситуациями.", links: { city: "Городские экстренные службы", barangays: "Горячие линии барангаев", hospitals: "Больницы и медицина" } },
+        terms: { tag: "Юридическое", title: "Условия использования", description: "Ознакомьтесь с правилами, обязанностями пользователя и юридической базой использования DumaSafeGuide, включая RA 10175.", links: { responsibilities: "Обязанности пользователя", privacy: "Политика конфиденциальности", ra10175: "Обзор RA 10175" } },
+      },
+      cta: { title: "Нужно сообщить о чрезвычайной ситуации?", desc: "Не ждите — используйте форму сообщения об инциденте, чтобы немедленно оповестить местных спасателей.", btn: "Сообщить сейчас" },
+    },
+    map: {
+      backBtn: "Назад к панели",
+      titleStart: "Найти помощь", titleAccent: "рядом с вами",
+      subtitle: "Экстренные службы, больницы и эвакуационные центры по всему городу Думагете",
+      statTotal: "Всего",
+      filterLabel: "Фильтр",
+      filterAll: "Все",
+      categories: { emergency: "Экстренные службы", hospital: "Больницы", evacuation: "Эвакуационные центры" },
+      searchPlaceholder: "Поиск объектов или адресов…",
+      showingPrefix: "Показано", showingOf: "из", showingSuffix: "объектов",
+      navigateBtn: "Маршрут",
+      emptyTitle: "Нет объектов, соответствующих вашему запросу.",
+      legendTitle: "Легенда карты",
+      liveTitle: "Прибрежный дозор Думагете",
+      liveSubPrefix: "Карта в реальном времени — все", liveSubSuffix: "объектов активны",
+      getDirections: "Проложить маршрут",
+    },
+    about: {
+      heroTitle: "О нас",
+      heroSub: "Веб-платформа общественной безопасности и сообщений о чрезвычайных ситуациях, созданная для города Думагете — объединяющая всё необходимое в одном месте.",
+      metaText: "Обслуживаем город Думагете · Основано в 2025",
+      introLabel: "Что такое DumaSafeGuide?",
+      introText: "DumaSafeGuide (DSG) — это веб-платформа общественной безопасности и сообщений о чрезвычайных ситуациях, разработанная специально для города Думагете. Она объединяет проверенные экстренные контакты, советы по безопасности, рекомендации по подготовке и функции подачи сообщений на одной доступной платформе — чтобы в критический момент вам не пришлось искать ответы.",
+      pillarsLabel: "Миссия и видение",
+      mission: { tag: "Цель", title: "Наша миссия", body: "Повышать осведомлённость об общественной безопасности, улучшать доступность экстренной помощи и поддерживать своевременную связь между жителями и службами экстренного реагирования города Думагете." },
+      vision: { tag: "Будущее", title: "Наше видение", body: "Более безопасный и информированный город Думагете, где жители, студенты и гости могут получить доступ к надёжной экстренной информации в любое время и в любом месте — без препятствий." },
+      featuresLabel: "Что мы предлагаем",
+      features: {
+        contacts: { label: "Проверенные контакты", detail: "Отобранные и регулярно обновляемые горячие линии для больниц, офисов барангаев и городских подразделений реагирования на чрезвычайные ситуации." },
+        guidelines: { label: "Рекомендации по безопасности", detail: "Практические советы на уровне барангая по подготовке к тайфунам, наводнениям, пожарам и другим распространённым местным чрезвычайным ситуациям." },
+        reporting: { label: "Сообщение об инцидентах", detail: "Быстрая и доступная форма сообщения, позволяющая жителям напрямую оповещать местных спасателей — без задержек и путаницы." },
+        partners: { label: "Сеть партнёров", detail: "Координация с CDRRMO, Филиппинским Красным Крестом, Бюро пожарной охраны и другими ключевыми государственными учреждениями." },
+      },
+      cta: { title: "Нужно сообщить о чрезвычайной ситуации?", desc: "Не ждите — используйте форму сообщения об инциденте, чтобы немедленно оповестить местных спасателей.", btn: "Сообщить сейчас" },
+    },
+    directory: {
+      hero: { line1: "Оставайтесь", line1Accent: "на связи", line2: "оставайтесь", line2Accent: "в безопасности", sub: "Все важные контакты города Думагете — стационарные и мобильные номера экстренных служб, больниц и горячих линий каждого барангая в одном месте." },
+      banner: { label: "🚨 Единая служба экстренной помощи", allEmergencies: "Все экстренные службы", pnpPolice: "PNP Полиция", bfpFire: "BFP Пожарная служба", cdrrmo: "CDRRMO", oneRescue: "ONE Rescue" },
+      disclaimer: { bold: "Звонки на номера 911, 116 и 160 бесплатны с любого мобильного или стационарного телефона", rest: "на Филиппинах — не требуется баланс, никакой платы. Мобильные номера (09xx) и стационарные (035) могут тарифицироваться по стандартным тарифам. В случае сомнений сначала звоните на", red: "911", end: "." },
+      emergency: { title: "Экстренные службы", countLabel: "учреждений", searchPlaceholder: "Поиск учреждения, номера или типа службы…", emptyText: "Нет экстренных служб, соответствующих запросу." },
+      hospitals: { title: "Больницы и медицинские учреждения", countLabel: "учреждений", searchPlaceholder: "Поиск названия больницы, адреса или номера телефона…", emptyText: "Нет больниц, соответствующих запросу.", government: "Государственная", private: "Частная" },
+      barangays: {
+        title: "Экстренные контакты барангаев", countLabel: "барангаев", searchPlaceholder: "Поиск барангая, горячей линии или места эвакуации…", emptyText: "Нет барангаев, соответствующих запросу.",
+        withHotlines: "с горячей линией", withEvac: "с местом эвакуации", noHotline: "нет прямой горячей линии",
+        hotlineBadge: "Горячая линия", evacBadge: "Эвакуация", tbdBadge: "Нет прямой линии",
+        noDirectPrefix: "Нет прямой горячей линии — звоните", orCdrrmo: "или в CDRRMO", navigate: "Маршрут",
+      },
+      actions: { callNow: "Позвонить", map: "Карта", call: "Позвонить", navigate: "Маршрут" },
+    },
+    footer: {
+      statusOperational: "Все системы работают нормально",
+      statusActive: "DumaSafeGuide активен",
+      hotlinesLabel: "Горячие линии экстренной помощи",
+      hotlinesHint: "Нажмите, чтобы позвонить",
+      emergencyPill: "Экстренная помощь",
+      navHeading: "Навигация",
+      aboutHeading: "О нас",
+      links: {
+        safetyMap: "Карта безопасности", reportIncident: "Сообщить о происшествии", safetyTips: "Советы по безопасности", emergencyContacts: "Экстренные контакты",
+        aboutDsg: "О DumaSafeGuide", resources: "Ресурсы", privacyPolicy: "Политика конфиденциальности", termsOfUse: "Условия использования",
+      },
+      hotlineLabels: { emergency: "Экстренная", ndrrmc: "NDRRMC", bfpFire: "BFP Пожарная", pnp: "PNP" },
+      brandDesc: "Платформа безопасности, созданная сообществом для Города добрых людей. Быстрый доступ к горячим линиям, сообщениям о происшествиях и подготовке к чрезвычайным ситуациям.",
+      brandBadge: "Обслуживаем город Думагете · провинция Восточный Негрос",
+      rightsReserved: "Все права защищены.",
+      builtWithPrefix: "Создано с",
+      builtWithSuffix: "для безопасности каждого жителя Думагете",
+    },
+    report: {
+      heroTitle: "Сообщить о", heroAccent: "происшествии",
+      heroSub: "Отправьте отчёт, чтобы уведомить местных спасателей. Предоставьте точные данные, чтобы нужная команда могла быстро отреагировать.",
+      bannerTitle: "Отслеживайте свой отчёт в реальном времени",
+      bannerText: "Создайте аккаунт, чтобы отслеживать статус вашего отчёта о происшествии и получать обновления по мере реагирования властей.",
+      bannerCta: "Создать аккаунт →",
+      types: { fire: "Пожар", accident: "ДТП", flood: "Наводнение", crime: "Преступление", medical: "Медицинская экстренная ситуация", other: "Другое" },
+      steps: { incidentType: "Тип происшествия", reporterInfo: "Информация", location: "Местоположение", description: "Описание", evidence: "Доказательства", submit: "Отправить" },
+      cardLabels: { incidentType: "Тип происшествия", reporterInfo: "Информация о заявителе", location: "Ваше местоположение", description: "Детали происшествия", evidence: "Загрузить доказательства" },
+      form: {
+        fullName: "Полное имя", optional: "(необязательно)", contactNumber: "Контактный номер",
+        detectedLocation: "Определённое местоположение", refreshGps: "📍 Обновить GPS", verifyMaps: "Проверить на карте →",
+        descriptionPlaceholder: "Опишите, что произошло — укажите время, количество вовлечённых людей, серьёзность и другие важные детали…",
+        uploadHint: "Нажмите, чтобы выбрать, или перетащите файл",
+        legalTitle: "Юридическое подтверждение",
+        legalSummary: "Отправляя этот отчёт, вы подтверждаете, что предоставленная информация является правдивой и точной, насколько вам известно.",
+        submitBtn: "Отправить отчёт о происшествии", submitting: "Отправка…",
+      },
+      sidebar: {
+        hotlinesTitle: "Горячие линии экстренной помощи",
+        warnTitle: "⚠️ Напоминание об экстренной ситуации",
+        warnText: "Если кто-то находится в непосредственной опасности, звоните напрямую в экстренные службы. Не полагайтесь исключительно на эту форму в ситуациях, угрожающих жизни.",
+        safetyTitle: "🛡️ Ваша безопасность важна",
+        safetyText: "Ваша личность и контактная информация строго конфиденциальны. При желании вы можете отправить отчёт анонимно.",
+        trackTitle: "📍 Отслеживайте свой отчёт",
+        trackText: "Создайте аккаунт, чтобы отслеживать статус ваших отчётов о происшествиях в реальном времени.",
+        trackBtn: "Создать аккаунт или войти →",
+      },
+      success: {
+        title: "Отчёт отправлен",
+        sub: "Ваш отчёт о происшествии получен и теперь виден спасателям. Власти уведомлены и вскоре отреагируют.",
+        cardTitle: "Отправить ещё один отчёт",
+        cardText: "Сообщите о другом происшествии, чтобы помочь обеспечить безопасность вашего сообщества.",
+        cardBtn: "Отправить ещё один отчёт →",
+      },
+    },
+    signup: {
+      eyebrow: "Платформа безопасности сообщества",
+      heroLine1: "Присоединяйтесь к", heroAccent1: "экстренному", heroAccent2: "реагированию",
+      heroDesc: "Зарегистрируйте аккаунт, чтобы сообщать о происшествиях, получать уведомления в реальном времени и оставаться на связи со спасателями во всех барангаях.",
+      steps: {
+        create: { title: "Создать аккаунт", desc: "Заполните данные и выберите свой барангай." },
+        access: { title: "Мгновенный доступ", desc: "Ваш аккаунт готов сразу после регистрации." },
+        report: { title: "Сообщайте и реагируйте", desc: "Отправляйте отчёты о происшествиях и координируйтесь со спасателями прямо сейчас." },
+      },
+      certBold: "Бесплатно для всех жителей", certRest: "в Думагете",
+      mobileBadge: "Регистрация",
+      backToHome: "Назад на главную",
+      formTitle: "Создать аккаунт",
+      formSub: "Присоединяйтесь к DumaSafeGuide — совершенно бесплатно для всех жителей.",
+      labels: { firstName: "Имя", lastName: "Фамилия", barangay: "Барангай", phone: "Номер телефона", email: "Электронная почта", password: "Пароль", confirmPassword: "Подтверждение" },
+      placeholders: { firstName: "Maria", lastName: "Clara", phone: "09XX XXX XXXX", selectLocation: "Выберите местоположение" },
+      pwHint: "Требуется минимум 6 символов.",
+      emailHint: "Используйте адрес, к которому у вас есть доступ — мы вышлем ссылку для подтверждения перед входом.",
+      emailInvalid: "Пожалуйста, введите действительный адрес электронной почты.",
+      errors: {
+        missingFields: "Пожалуйста, заполните все поля.",
+        invalidEmail: "Пожалуйста, введите действительный адрес электронной почты.",
+        disposableEmail: "Временные или одноразовые адреса электронной почты не разрешены. Используйте реальный адрес, к которому у вас есть доступ.",
+        passwordMismatch: "Пароли не совпадают.",
+        passwordTooShort: "Пароль должен содержать не менее 6 символов.",
+        needCaptcha: "Пожалуйста, пройдите проверку CAPTCHA, чтобы подтвердить, что вы не робот.",
+        unexpected: "Произошла непредвиденная ошибка.",
+      },
+      submitBtn: "Создать аккаунт", submitting: "Создание аккаунта…",
+      footerHaveAccount: "Уже есть аккаунт?", footerSignIn: "Войти →",
+      success: {
+        title: "Проверьте вашу почту",
+        msgIntro: "Добро пожаловать в DumaSafeGuide!",
+        msgBody: "Мы отправили ссылку для подтверждения на вашу почту. Пожалуйста, подтвердите свой адрес перед входом.",
+        note: "Не получили письмо? Проверьте папку со спамом.",
+        goToSignIn: "Перейти ко входу",
+      },
+    },
+  },
+
+  // ── Arabic (RTL) ─────────────────────────────────────────
+  ar: {
+    common: { live: "مباشر", emergency: "طوارئ", quickAccess: "وصول سريع", explore: "استكشاف" },
+    nav: {
+      directory: "الدليل", map: "الخريطة", safetyTips: "نصائح السلامة", about: "من نحن", resources: "الموارد",
+      myDashboard: "لوحتي", responderPanel: "لوحة المستجيب", adminDashboard: "لوحة المسؤول",
+      login: "تسجيل الدخول", createAccount: "إنشاء حساب", logout: "تسجيل الخروج", signOut: "تسجيل الخروج",
+      citizen: "مواطن", fileReport: "تقديم بلاغ", alerts: "التنبيهات",
+    },
+    ticker: {
+      alerts: [
+        "🔴  تنبيه: تم رفع إشارة الإعصار رقم 1 لمقاطعة نيغروس أوكسيدنتال — تابع التحديثات الرسمية",
+        "🚨  حادث: تم الإبلاغ عن حادث سيارة في شارع لاكسون — تجنب المنطقة",
+        "⚠️  تذكير: خط الطوارئ 911 يعمل على مدار الساعة — لا تستخدمه لغير الحالات الطارئة",
+        "🔴  تنبيه: تحذير من فيضان مفاجئ في الأحياء المنخفضة — كن يقظًا",
+      ],
+    },
+    hero: {
+      eyebrow: "مدينة الناس الطيبين",
+      titleLine1: "استجابة",
+      titleAccent: "طارئة",
+      titleRest: "في متناول يدك",
+      subtitle: "منصة أمان موحدة لمدينة الناس الطيبين. وصول سريع إلى خطوط الطوارئ والمرافق وإرشادات السلامة.",
+      cta: "الإبلاغ عن حادثة مباشرة",
+    },
+    stats: { barangays: "الأحياء المشمولة", hourResponse: "استجابة على مدار الساعة", avgResponse: "متوسط وقت الاستجابة (دقيقة)" },
+    auth: {
+      welcomeTitle: "مرحبًا بعودتك",
+      welcomeSubtitle: "سجّل الدخول للوصول إلى لوحة طوارئ DumaSafeGuide.",
+      emailLabel: "البريد الإلكتروني",
+      passwordLabel: "كلمة المرور",
+      rememberMe: "تذكرني",
+      forgotPassword: "هل نسيت كلمة المرور؟",
+      loginBtn: "تسجيل الدخول",
+      loggingIn: "جارٍ تسجيل الدخول…",
+      orDivider: "ليس لديك حساب؟",
+      noAccount: "ليس لديك حساب؟",
+      createAccount: "إنشاء حساب ←",
+      errMissingFields: "يرجى إدخال البريد الإلكتروني وكلمة المرور.",
+      errNeedCaptcha: "يرجى إكمال التحقق (CAPTCHA) لإثبات أنك لست روبوتًا.",
+      errProfileNotReady: "الملف الشخصي غير جاهز بعد. يرجى الانتظار قليلاً ثم المحاولة مرة أخرى.",
+      errLoginFailed: "فشل تسجيل الدخول.",
+    },
+    cards: {
+      map: { label: "خريطة السلامة", desc: "عرض مناطق الحوادث المباشرة والطرق الآمنة", tag: "مباشر" },
+      directory: { label: "الدليل", desc: "مسؤولو الأحياء وجهات الاتصال", tag: "أشخاص" },
+      tips: { label: "نصائح السلامة", desc: "إرشادات الاستعداد لكل موقف", tag: "نصائح" },
+      contacts: { label: "جهات اتصال الطوارئ", desc: "التواصل الفوري مع المستجيبين وخطوط الطوارئ", tag: "عاجل" },
+    },
+    languageModal: { heading: "اختر لغتك", subheading: "اختر لغتك المفضلة للمتابعة.", continueBtn: "متابعة" },
+    safetyTips: {
+      heroTitleStart: "نصائح", heroAccent: "السلامة", heroTitleEnd: "وأدلة الطوارئ",
+      heroSub: "إرشادات خطوة بخطوة للأعاصير والفيضانات والحرائق والزلازل والانهيارات الأرضية وحوادث الطرق — بالإضافة إلى قائمة كاملة لحقيبة الطوارئ.",
+      disasters: { typhoon: "إعصار", flood: "فيضان", fire: "حريق", earthquake: "زلزال", landslide: "انهيار أرضي", road: "حادث طريق" },
+      phases: { beforeLabel: "قبل", beforeDesc: "استعد مسبقًا", duringLabel: "أثناء", duringDesc: "حافظ على سلامتك الآن", afterLabel: "بعد", afterDesc: "التعافي بأمان" },
+      goBag: { tabLabel: "حقيبة الطوارئ", titleStart: "قائمة", titleAccent: "حقيبة الطوارئ", titleEnd: "الخاصة بك", sub: "جهّز هذه العناصر الأساسية الـ20 حتى تتمكن من الإخلاء بأمان خلال 15 دقيقة. ضع علامة على ما جهزته بالفعل.", itemsPacked: "عنصر تم تجهيزه", resetBtn: "إعادة تعيين القائمة" },
+      categories: { all: "الكل", waterFood: "الماء والطعام", medical: "طبي", documents: "مستندات", tools: "أدوات", clothing: "ملابس", shelter: "مأوى", communication: "اتصالات" },
+    },
+    resources: {
+      heroTitle: "الموارد و", heroAccent: "الأدلة",
+      heroSub: "كل ما تحتاجه لتبقى على اطلاع — أدلة السلامة، الجهات الشريكة، جهات اتصال الطوارئ، والمراجع القانونية في مكان واحد.",
+      cards: {
+        safety: { tag: "المجتمع", title: "نصائح السلامة", description: "إرشادات عملية على مستوى الأحياء لحماية نفسك ومجتمعك قبل الطوارئ وأثناءها وبعدها.", links: { before: "قبل الإعصار", flood: "بروتوكول السلامة من الفيضانات", fire: "دليل الوقاية من الحرائق" } },
+        agencies: { tag: "المنظمات", title: "الجهات الشريكة", description: "جهات حكومية ومنظمات مجتمع مدني تتعاون مع DumaSafeGuide لتقديم استجابة منسقة للطوارئ.", links: { cdrrmo: "CDRRMO", redcross: "الصليب الأحمر الفلبيني", bfp: "مكتب الدفاع المدني" } },
+        directory: { tag: "جهات الاتصال", title: "دليل الطوارئ", description: "وصول سريع لجميع خطوط الطوارئ الأساسية — المستشفيات، مستجيبو الأحياء، ووحدات إدارة الكوارث على مستوى المدينة.", links: { city: "خدمات الطوارئ في المدينة", barangays: "خطوط طوارئ الأحياء", hospitals: "المستشفيات والطبية" } },
+        terms: { tag: "قانوني", title: "شروط الخدمة", description: "تعرّف على القواعد ومسؤوليات المستخدم والإطار القانوني الذي يحكم استخدام DumaSafeGuide، بما في ذلك RA 10175.", links: { responsibilities: "مسؤوليات المستخدم", privacy: "سياسة الخصوصية", ra10175: "نظرة عامة على RA 10175" } },
+      },
+      cta: { title: "هل تحتاج إلى الإبلاغ عن حالة طوارئ؟", desc: "لا تنتظر — استخدم نموذج الإبلاغ عن الحادثة لتنبيه المستجيبين المحليين فورًا.", btn: "الإبلاغ الآن" },
+    },
+    map: {
+      backBtn: "العودة إلى لوحة التحكم",
+      titleStart: "ابحث عن مساعدة", titleAccent: "بالقرب منك",
+      subtitle: "خدمات الطوارئ والمستشفيات ومراكز الإخلاء في جميع أنحاء مدينة دوماغيتي",
+      statTotal: "الإجمالي",
+      filterLabel: "تصفية",
+      filterAll: "الكل",
+      categories: { emergency: "خدمات الطوارئ", hospital: "المستشفيات", evacuation: "مراكز الإخلاء" },
+      searchPlaceholder: "ابحث عن مرفق أو عنوان…",
+      showingPrefix: "عرض", showingOf: "من", showingSuffix: "مرفق",
+      navigateBtn: "التوجيه",
+      emptyTitle: "لا توجد مرافق تطابق بحثك.",
+      legendTitle: "مفتاح الخريطة",
+      liveTitle: "مراقبة ساحل دوماغيتي",
+      liveSubPrefix: "خريطة مباشرة — جميع", liveSubSuffix: "مرفق نشط",
+      getDirections: "الحصول على الاتجاهات",
+    },
+    about: {
+      heroTitle: "حول",
+      heroSub: "نظام أمان عام وإبلاغ عن الطوارئ قائم على الويب، مصمم لمدينة دوماغيتي — يجمع كل ما تحتاجه في مكان واحد.",
+      metaText: "نخدم مدينة دوماغيتي · تأسست عام 2025",
+      introLabel: "ما هو DumaSafeGuide؟",
+      introText: "DumaSafeGuide (DSG) هو نظام أمان عام وإبلاغ عن الطوارئ قائم على الويب، مصمم خصيصًا لمدينة دوماغيتي. يجمع جهات اتصال طوارئ موثّقة، ونصائح للسلامة، وإرشادات للاستعداد، وميزات للإبلاغ في منصة واحدة سهلة الوصول — حتى عندما تكون الثواني مهمة، لن تحتاج أبدًا للبحث عن إجابات.",
+      pillarsLabel: "الرسالة والرؤية",
+      mission: { tag: "الغرض", title: "رسالتنا", body: "تحسين الوعي بالسلامة العامة، وتعزيز إمكانية الوصول إلى خدمات الطوارئ، ودعم التواصل الفوري بين الجمهور ومقدمي خدمات الطوارئ في مدينة دوماغيتي." },
+      vision: { tag: "المستقبل", title: "رؤيتنا", body: "مدينة دوماغيتي أكثر أمانًا ووعيًا، حيث يمكن للسكان والطلاب والزوار الوصول إلى معلومات طوارئ موثوقة في أي وقت وأي مكان — دون عوائق." },
+      featuresLabel: "ما نقدمه",
+      features: {
+        contacts: { label: "جهات اتصال موثّقة", detail: "خطوط ساخنة للطوارئ مختارة بعناية ومحدثة بانتظام للمستشفيات ومكاتب الأحياء ووحدات الاستجابة للكوارث على مستوى المدينة." },
+        guidelines: { label: "إرشادات السلامة", detail: "نصائح عملية للاستعداد على مستوى الأحياء تغطي الأعاصير والفيضانات والحرائق وحالات الطوارئ المحلية الشائعة الأخرى." },
+        reporting: { label: "الإبلاغ عن الحوادث", detail: "نموذج إبلاغ سريع وسهل الاستخدام يتيح للسكان تنبيه المستجيبين المحليين مباشرة — دون تأخير أو ارتباك." },
+        partners: { label: "شبكة الشركاء", detail: "بالتنسيق مع CDRRMO، والصليب الأحمر الفلبيني، ومكتب الدفاع المدني، وجهات حكومية رئيسية أخرى." },
+      },
+      cta: { title: "هل تحتاج إلى الإبلاغ عن حالة طوارئ؟", desc: "لا تنتظر — استخدم نموذج الإبلاغ عن الحادثة لتنبيه المستجيبين المحليين فورًا.", btn: "الإبلاغ الآن" },
+    },
+    directory: {
+      hero: { line1: "ابقَ", line1Accent: "متصلاً", line2: "وابقَ", line2Accent: "آمناً", sub: "جميع جهات الاتصال المهمة لمدينة دوماغيتي — أرقام الهواتف الثابتة والمحمولة لخدمات الطوارئ والمستشفيات وخط ساخن لكل حي في مكان واحد." },
+      banner: { label: "🚨 طوارئ عامة", allEmergencies: "جميع حالات الطوارئ", pnpPolice: "PNP الشرطة", bfpFire: "BFP الإطفاء", cdrrmo: "CDRRMO", oneRescue: "ONE Rescue" },
+      disclaimer: { bold: "الاتصال بالأرقام 911 و116 و160 مجاني من أي هاتف محمول أو أرضي", rest: "في الفلبين — لا حاجة لرصيد، ولا رسوم. قد تخضع أرقام الهواتف المحمولة (09xx) والهواتف الأرضية (035) لرسوم اتصال عادية. عند الشك، اتصل أولاً بـ", red: "911", end: "." },
+      emergency: { title: "خدمات الطوارئ", countLabel: "جهة", searchPlaceholder: "ابحث عن جهة أو رقم أو نوع الخدمة…", emptyText: "لا توجد خدمة طوارئ تطابق بحثك." },
+      hospitals: { title: "المستشفيات والمرافق الطبية", countLabel: "مرفق", searchPlaceholder: "ابحث عن اسم المستشفى أو العنوان أو رقم الهاتف…", emptyText: "لا يوجد مستشفى يطابق بحثك.", government: "حكومي", private: "خاص" },
+      barangays: {
+        title: "جهات اتصال الطوارئ للأحياء", countLabel: "حي", searchPlaceholder: "ابحث عن الحي أو الخط الساخن أو موقع الإخلاء…", emptyText: "لا يوجد حي يطابق بحثك.",
+        withHotlines: "لديه خط ساخن", withEvac: "لديه موقع إخلاء", noHotline: "لا يوجد خط ساخن مباشر",
+        hotlineBadge: "خط ساخن", evacBadge: "إخلاء", tbdBadge: "لا يوجد خط ساخن مباشر",
+        noDirectPrefix: "لا يوجد خط ساخن مباشر — اتصل بـ", orCdrrmo: "أو بـ CDRRMO", navigate: "التوجيه",
+      },
+      actions: { callNow: "اتصل الآن", map: "خريطة", call: "اتصال", navigate: "التوجيه" },
+    },
+    footer: {
+      statusOperational: "جميع الأنظمة تعمل بشكل طبيعي",
+      statusActive: "DumaSafeGuide نشط",
+      hotlinesLabel: "خطوط الطوارئ الساخنة",
+      hotlinesHint: "اضغط للاتصال فورًا",
+      emergencyPill: "طوارئ",
+      navHeading: "التنقل",
+      aboutHeading: "من نحن",
+      links: {
+        safetyMap: "خريطة السلامة", reportIncident: "الإبلاغ عن حادثة", safetyTips: "نصائح السلامة", emergencyContacts: "جهات اتصال الطوارئ",
+        aboutDsg: "حول DumaSafeGuide", resources: "الموارد", privacyPolicy: "سياسة الخصوصية", termsOfUse: "شروط الاستخدام",
+      },
+      hotlineLabels: { emergency: "طوارئ", ndrrmc: "NDRRMC", bfpFire: "BFP الإطفاء", pnp: "PNP" },
+      brandDesc: "منصة أمان بنتها المجتمع لمدينة الناس الطيبين. وصول سريع إلى خطوط الطوارئ والإبلاغ عن الحوادث والاستعداد للكوارث.",
+      brandBadge: "نخدم مدينة دوماغيتي · نيغروس الشرقية",
+      rightsReserved: "جميع الحقوق محفوظة.",
+      builtWithPrefix: "صُنع بـ",
+      builtWithSuffix: "من أجل سلامة كل مواطن في دوماغيتي",
+    },
+    report: {
+      heroTitle: "الإبلاغ عن", heroAccent: "حادثة",
+      heroSub: "قدّم بلاغًا لتنبيه المستجيبين المحليين. قدّم تفاصيل دقيقة حتى يتمكن الفريق المناسب من التصرف بسرعة.",
+      bannerTitle: "تتبع بلاغك في الوقت الفعلي",
+      bannerText: "أنشئ حسابًا لمتابعة حالة بلاغ الحادثة الخاص بك وتلقي التحديثات عند استجابة السلطات.",
+      bannerCta: "إنشاء حساب ←",
+      types: { fire: "حريق", accident: "حادث طريق", flood: "فيضان", crime: "جريمة", medical: "حالة طوارئ طبية", other: "أخرى" },
+      steps: { incidentType: "نوع الحادثة", reporterInfo: "معلومات المبلّغ", location: "الموقع", description: "الوصف", evidence: "الأدلة", submit: "إرسال" },
+      cardLabels: { incidentType: "نوع الحادثة", reporterInfo: "معلومات المبلّغ", location: "موقعك", description: "تفاصيل الحادثة", evidence: "تحميل الأدلة" },
+      form: {
+        fullName: "الاسم الكامل", optional: "(اختياري)", contactNumber: "رقم الاتصال",
+        detectedLocation: "الموقع المكتشف", refreshGps: "📍 تحديث GPS", verifyMaps: "التحقق على الخريطة ←",
+        descriptionPlaceholder: "صف ما حدث — بما في ذلك الوقت وعدد الأشخاص المعنيين ودرجة الخطورة وأي تفاصيل أخرى ذات صلة…",
+        uploadHint: "انقر للاختيار أو اسحب وأفلت",
+        legalTitle: "إقرار قانوني",
+        legalSummary: "من خلال تقديم هذا البلاغ، فإنك تؤكد أن المعلومات المقدمة صحيحة ودقيقة على حد علمك.",
+        submitBtn: "إرسال بلاغ الحادثة", submitting: "جارٍ الإرسال…",
+      },
+      sidebar: {
+        hotlinesTitle: "خطوط الطوارئ الساخنة",
+        warnTitle: "⚠️ تذكير بالطوارئ",
+        warnText: "إذا كان أحدهم في خطر مباشر، اتصل بخدمات الطوارئ مباشرة. لا تعتمد فقط على هذا النموذج في المواقف التي تهدد الحياة.",
+        safetyTitle: "🛡️ سلامتك مهمة",
+        safetyText: "تُحفظ هويتك ومعلومات الاتصال الخاصة بك بسرية تامة. يمكنك تقديم البلاغ دون الكشف عن هويتك إذا رغبت.",
+        trackTitle: "📍 تتبع بلاغك",
+        trackText: "أنشئ حسابًا لتتبع حالة بلاغات الحوادث الخاصة بك في الوقت الفعلي.",
+        trackBtn: "إنشاء حساب أو تسجيل الدخول ←",
+      },
+      success: {
+        title: "تم إرسال البلاغ",
+        sub: "تم استلام بلاغ الحادثة الخاص بك وهو الآن مرئي للمستجيبين. تم إخطار السلطات وستستجيب قريبًا.",
+        cardTitle: "إرسال بلاغ آخر",
+        cardText: "أبلغ عن حادثة أخرى للمساعدة في الحفاظ على سلامة مجتمعك.",
+        cardBtn: "إرسال بلاغ آخر ←",
+      },
+    },
+    signup: {
+      eyebrow: "منصة أمان المجتمع",
+      heroLine1: "انضم إلى", heroAccent1: "الاستجابة", heroAccent2: "الطارئة",
+      heroDesc: "سجّل حسابك للإبلاغ عن الحوادث، وتلقي التنبيهات الفورية، والبقاء على اتصال بالمستجيبين للطوارئ في جميع الأحياء.",
+      steps: {
+        create: { title: "إنشاء حساب", desc: "املأ بياناتك واختر حيّك." },
+        access: { title: "وصول فوري", desc: "يصبح حسابك جاهزًا فور التسجيل." },
+        report: { title: "الإبلاغ والاستجابة", desc: "قدّم بلاغات الحوادث وتنسّق مع المستجيبين الآن." },
+      },
+      certBold: "مجاني لجميع المواطنين", certRest: "في دوماغيتي",
+      mobileBadge: "إنشاء حساب",
+      backToHome: "العودة إلى الرئيسية",
+      formTitle: "إنشاء حساب",
+      formSub: "انضم إلى DumaSafeGuide — مجاني تمامًا لجميع المواطنين.",
+      labels: { firstName: "الاسم الأول", lastName: "اسم العائلة", barangay: "الحي", phone: "رقم الهاتف", email: "البريد الإلكتروني", password: "كلمة المرور", confirmPassword: "تأكيد" },
+      placeholders: { firstName: "Maria", lastName: "Clara", phone: "09XX XXX XXXX", selectLocation: "اختر الموقع" },
+      pwHint: "يلزم 6 أحرف على الأقل.",
+      emailHint: "استخدم بريدًا إلكترونيًا يمكنك الوصول إليه — سنرسل رابط تأكيد قبل تسجيل الدخول.",
+      emailInvalid: "يرجى إدخال عنوان بريد إلكتروني صالح.",
+      errors: {
+        missingFields: "يرجى إكمال جميع الحقول.",
+        invalidEmail: "يرجى إدخال عنوان بريد إلكتروني صالح.",
+        disposableEmail: "عناوين البريد الإلكتروني المؤقتة أو التي تُستخدم لمرة واحدة غير مسموح بها. يرجى استخدام بريد إلكتروني حقيقي يمكنك الوصول إليه.",
+        passwordMismatch: "كلمتا المرور غير متطابقتين.",
+        passwordTooShort: "يجب أن تتكون كلمة المرور من 6 أحرف على الأقل.",
+        needCaptcha: "يرجى إكمال التحقق (CAPTCHA) لإثبات أنك لست روبوتًا.",
+        unexpected: "حدث خطأ غير متوقع.",
+      },
+      submitBtn: "إنشاء حساب", submitting: "جارٍ إنشاء الحساب…",
+      footerHaveAccount: "لديك حساب بالفعل؟", footerSignIn: "تسجيل الدخول ←",
+      success: {
+        title: "تحقق من بريدك الإلكتروني",
+        msgIntro: "مرحبًا بك في DumaSafeGuide!",
+        msgBody: "لقد أرسلنا رابط تأكيد إلى بريدك الإلكتروني. يرجى التحقق من عنوانك قبل تسجيل الدخول.",
+        note: "لم تستلمه؟ تحقق من مجلد الرسائل غير المرغوب فيها.",
+        goToSignIn: "الانتقال إلى تسجيل الدخول",
+      },
+    },
+  },
+};

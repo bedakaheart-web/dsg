@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "../js/supabase";
+import { TranslatedDescription } from "../components/TranslatedDescription";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -8,6 +9,8 @@ interface Report {
   id: string | number;
   type: string;
   description: string | null;
+  description_lang: string | null;
+  description_translated: string | null;
   location: string | null;
   address: string | null;
   reporter_name: string | null;
@@ -613,7 +616,7 @@ export default function ResponderIncidentsPage() {
   const loadReports = async () => {
     const { data } = await supabase
       .from("reports")
-      .select("id,type,description,location,address,reporter_name,reporter_contact,status,evidence_url,created_at,responder_id,responder_notes,action_notes,resolution_type,resolved_at")
+      .select("id,type,description,description_lang,description_translated,location,address,reporter_name,reporter_contact,status,evidence_url,created_at,responder_id,responder_notes,action_notes,resolution_type,resolved_at")
       .order("created_at", { ascending: false });
     setReports(data ?? []);
     setLoading(false);

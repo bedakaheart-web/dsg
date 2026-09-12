@@ -529,6 +529,7 @@ export default function AdminAlertsPage() {
   const [message,   setMessage]  = useState("");
   const [tplFilter, setTplFilter]= useState<TplFilter>("all");
   const [tplOpen,   setTplOpen]  = useState(true);
+  const [confirmSend, setConfirmSend] = useState(false);
 
   // ── Load alerts ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -577,6 +578,7 @@ export default function AdminAlertsPage() {
     if (dbErr) { setError("Failed to send alert: " + dbErr.message); setSending(false); return; }
     if (data) setAlerts(prev => prev.some(a => a.id === data.id) ? prev : [data, ...prev]);
     setSending(false);
+    setConfirmSend(false);
     setSuccess(true);
     setTitle("");
     setMessage("");
@@ -683,12 +685,15 @@ export default function AdminAlertsPage() {
                   className="al-textarea"
                   placeholder="Type your alert message here, or pick a template →"
                   value={message}
+                  maxLength={500}
                   onChange={e => setMessage(e.target.value)}
                 />
-                <div className="al-charcount">{message.length} characters</div>
+                <div className="al-charcount" style={message.length > 450 ? { color: "#FF3B30", fontWeight: 700 } : undefined}>
+                  {message.length} / 500 characters
+                </div>
               </div>
 
-              <button className="al-send-btn" onClick={sendAlert} disabled={sending || !message.trim()}>
+              <button className="al-send-btn" onClick={() => setConfirmSend(true)} disabled={sending || !message.trim()}>
                 {sending
                   ? <><span className="al-spinner" /> Sending…</>
                   : <><FaBell size={12} /> Send Alert</>}
@@ -789,6 +794,34 @@ export default function AdminAlertsPage() {
               </>
             )}
           </div>
+
+          {/* ── Send confirmation modal ── */}
+          {confirmSend && (
+            <div
+              style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,.6)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
+              onClick={() => !sending && setConfirmSend(false)}
+            >
+              <div
+                style={{ width: "100%", maxWidth: 480, background: "#0f1623", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: 22 }}
+                onClick={e => e.stopPropagation()}
+              >
+                <div style={{ fontSize: 15, fontWeight: 700, color: "#eef0f7", marginBottom: 12 }}>Send this alert?</div>
+                <div style={{ fontSize: 12, color: "rgba(238,240,247,0.55)", marginBottom: 6 }}><strong>Title:</strong> {title.trim() || "Alert"}</div>
+                <div style={{ fontSize: 12, color: "rgba(238,240,247,0.55)", marginBottom: 6 }}>
+                  <strong>To:</strong> {AUD_LABELS[audience]} &nbsp;·&nbsp; <strong>Severity:</strong> {severity}
+                </div>
+                <div style={{ fontSize: 13, color: "#eef0f7", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "10px 12px", marginBottom: 16, maxHeight: 160, overflowY: "auto", lineHeight: 1.55 }}>
+                  {message.trim()}
+                </div>
+                <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                  <button className="al-send-btn" style={{ background: "transparent" }} disabled={sending} onClick={() => setConfirmSend(false)}>Cancel</button>
+                  <button className="al-send-btn" disabled={sending} onClick={sendAlert}>
+                    {sending ? <><span className="al-spinner" /> Sending…</> : "Confirm & Send"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
         </div>
       </div>

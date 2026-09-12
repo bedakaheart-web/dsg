@@ -1,41 +1,90 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
-const About = lazy(() => import("./pages/About"));
+import { lazy, Suspense, useEffect, useState, type ComponentType } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicLayout   from './components/Publiclayout';
 import { supabase }   from './js/supabase';
 
+// ── Lazy-load with stale-chunk auto-recovery ────────────────────────────────
+// After a new build is deployed, the browser (or installed service worker) can
+// still reference hashed chunk filenames from the previous bundle, so a
+// React.lazy() import rejects with a ChunkLoadError ("Failed to fetch
+// dynamically imported module", 404). This wrapper forces a single page reload
+// so the fresh index.html/chunk manifest is picked up; the sessionStorage flag
+// guarantees we reload at most once and then surface the real error instead of
+// looping forever (e.g. during private browsing where storage may throw, the
+// reload still happens once and the error propagates on the second failure).
+const PAGE_REFRESHED_KEY = 'page_refreshed';
+
+function lazyWithRetry<T extends ComponentType<Record<string, unknown>>>(
+  componentImport: () => Promise<{ default: T }>,
+) {
+  return lazy(async (): Promise<{ default: T }> => {
+    let pageRefreshed = false;
+    try {
+      pageRefreshed = JSON.parse(window.sessionStorage.getItem(PAGE_REFRESHED_KEY) || 'false');
+    } catch {
+      pageRefreshed = false;
+    }
+    try {
+      const component = await componentImport();
+      try {
+        window.sessionStorage.setItem(PAGE_REFRESHED_KEY, 'false');
+      } catch {
+        // Storage unavailable (e.g. private mode) — safe to ignore.
+      }
+      return component;
+    } catch (error) {
+      if (!pageRefreshed) {
+        try {
+          window.sessionStorage.setItem(PAGE_REFRESHED_KEY, 'true');
+        } catch {
+          // Storage unavailable — still reload once below.
+        }
+        window.location.reload();
+      }
+      throw error;
+    }
+  });
+}
+
+const About = lazyWithRetry(() => import("./pages/About"));
+const PrivacyPolicy = lazyWithRetry(() => import("./pages/PrivacyPolicy"));
+const Terms = lazyWithRetry(() => import("./pages/TermsOfUse"));
+
 // ── Public pages ──────────────────────────────────────────────────────────────
-const Homepage       = lazy(() => import('./pages/Homepage'));
-const Login          = lazy(() => import('./pages/Login'));
-const Signup         = lazy(() => import('./pages/Signup'));
-const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
-const Directory      = lazy(() => import('./pages/Directory'));
-const Map            = lazy(() => import('./pages/Map'));
-const IncidentAlerts = lazy(() => import('./pages/IncidentaAlerts'));
-const SafetyTips     = lazy(() => import('./pages/SafetyTips'));   // add if you have it
-const Resources      = lazy(() => import('./pages/Resources'));     // add if you have it
+const Homepage       = lazyWithRetry(() => import('./pages/Homepage'));
+const Login          = lazyWithRetry(() => import('./pages/Login'));
+const Signup         = lazyWithRetry(() => import('./pages/Signup'));
+const ForgotPassword = lazyWithRetry(() => import('./pages/ForgotPassword'));
+const Directory      = lazyWithRetry(() => import('./pages/Directory'));
+const Map            = lazyWithRetry(() => import('./pages/Map'));
+const IncidentAlerts = lazyWithRetry(() => import('./pages/IncidentaAlerts'));
+const SafetyTips     = lazyWithRetry(() => import('./pages/SafetyTips'));   // add if you have it
+const Resources      = lazyWithRetry(() => import('./pages/Resources'));     // add if you have it
+const PartnerAgencies = lazyWithRetry(() => import('./pages/PartnerAgencies'));
 
 // ── Admin ─────────────────────────────────────────────────────────────────────
-const AdminDashboard = lazy(() => import('./admin/AdminDashboard'));
+const AdminDashboard = lazyWithRetry(() => import('./admin/AdminDashboard'));
 
 // ── Responder ─────────────────────────────────────────────────────────────────
-const Dispatch            = lazy(() => import('./responder/Dispatch'));
-const IncidentsPage       = lazy(() => import('./responder/IncidentsPage'));
-const ResponderAlertsPage = lazy(() => import('./responder/ResponderAlertsPage'));
-const RespondersDashboard = lazy(() => import('./responder/RespondersDashboard'));
-const ResponderTeam       = lazy(() => import('./responder/ResponderTeam'));
+const Dispatch            = lazyWithRetry(() => import('./responder/Dispatch'));
+const IncidentsPage       = lazyWithRetry(() => import('./responder/IncidentsPage'));
+const ResponderAlertsPage = lazyWithRetry(() => import('./responder/ResponderAlertsPage'));
+const RespondersDashboard = lazyWithRetry(() => import('./responder/Respondersdashboard'));
+const ResponderTeam       = lazyWithRetry(() => import('./responder/ResponderTeam'));
 
 // ── Citizen ───────────────────────────────────────────────────────────────────
-const CitizenDashboard   = lazy(() => import('./citizen/CitizenDashboard'));
-const CitizenHistoryPage = lazy(() => import('./citizen/CitizenHistoryPage'));
-const CitizenAlertsPage  = lazy(() => import('./citizen/CitizenAlertsPage'));
-const CitizenMap         = lazy(() => import('./citizen/CitizenMap'));
-const CitizenSafetyTips  = lazy(() => import('./citizen/CitizenSafetyTips'));
-const CitizenReportPage = lazy(() => import("./citizen/CitizenReportPage"));
-const Report = lazy(() => import("./pages/Report"));
-const CitizenDirectory   = lazy(() => import('./citizen/CitizenDirectory'));
-const CitizenResources   = lazy(() => import('./citizen/CitizenResources'));
+const CitizenLayout      = lazyWithRetry(() => import('./citizen/CitizenLayout'));
+const CitizenDashboard   = lazyWithRetry(() => import('./citizen/CitizenDashboard'));
+const CitizenHistoryPage = lazyWithRetry(() => import('./citizen/CitizenHistoryPage'));
+const CitizenAlertsPage  = lazyWithRetry(() => import('./citizen/CitizenAlertsPage'));
+const CitizenMap         = lazyWithRetry(() => import('./citizen/CitizenMap'));
+const CitizenSafetyTips  = lazyWithRetry(() => import('./citizen/CitizenSafetyTips'));
+const CitizenReportPage = lazyWithRetry(() => import("./citizen/CitizenReportPage"));
+const Report = lazyWithRetry(() => import("./pages/Report"));
+const CitizenDirectory   = lazyWithRetry(() => import('./citizen/CitizenDirectory'));
+const CitizenResources   = lazyWithRetry(() => import('./citizen/CitizenResources'));
+const CitizenAbout       = lazyWithRetry(() => import('./citizen/CitizenAbout'));
 
 const Loader = () => (
   <div style={{
@@ -117,6 +166,12 @@ export default function App() {
             </PublicLayout>
           } />
 
+          <Route path="/partner-agencies" element={
+            <PublicLayout>
+              <PartnerAgencies />
+            </PublicLayout>
+          } />
+
           <Route path="/incident-alerts" element={
             <PublicLayout>
               <IncidentAlerts />
@@ -130,16 +185,19 @@ export default function App() {
             </ProtectedRoute>
           } />
 
-          {/* ── Citizen — NO PublicLayout, has CitizenNavbar built-in ───── */}
-          <Route path="/citizen/dashboard"   element={<ProtectedRoute allowedRole="citizen"><CitizenDashboard /></ProtectedRoute>} />
-          <Route path="/citizen/history"     element={<ProtectedRoute allowedRole="citizen"><CitizenHistoryPage /></ProtectedRoute>} />
-          <Route path="/citizen/history/:id" element={<ProtectedRoute allowedRole="citizen"><CitizenHistoryPage /></ProtectedRoute>} />
-          <Route path="/citizen/alerts"      element={<ProtectedRoute allowedRole="citizen"><CitizenAlertsPage /></ProtectedRoute>} />
-          <Route path="/citizen/map"         element={<ProtectedRoute allowedRole="citizen"><CitizenMap /></ProtectedRoute>} />
-          <Route path="/citizen/safetytips"  element={<ProtectedRoute allowedRole="citizen"><CitizenSafetyTips /></ProtectedRoute>} />
-          <Route path="/citizen/report"      element={<ProtectedRoute allowedRole="citizen"><CitizenReportPage /></ProtectedRoute>} />
-          <Route path="/citizen/directory"   element={<ProtectedRoute allowedRole="citizen"><CitizenDirectory /></ProtectedRoute>} />
-          <Route path="/citizen/resources"   element={<ProtectedRoute allowedRole="citizen"><CitizenResources /></ProtectedRoute>} />
+          {/* ── Citizen — persistent CitizenLayout sidebar + <Outlet/> children ───── */}
+          <Route element={<ProtectedRoute allowedRole="citizen"><CitizenLayout /></ProtectedRoute>}>
+            <Route path="/citizen/dashboard"   element={<CitizenDashboard />} />
+            <Route path="/citizen/history"     element={<CitizenHistoryPage />} />
+            <Route path="/citizen/history/:id" element={<CitizenHistoryPage />} />
+            <Route path="/citizen/alerts"      element={<CitizenAlertsPage />} />
+            <Route path="/citizen/map"         element={<CitizenMap />} />
+            <Route path="/citizen/safetytips"  element={<CitizenSafetyTips />} />
+            <Route path="/citizen/report"      element={<CitizenReportPage />} />
+            <Route path="/citizen/directory"   element={<CitizenDirectory />} />
+            <Route path="/citizen/resources"   element={<CitizenResources />} />
+            <Route path="/citizen/about"       element={<CitizenAbout />} />
+          </Route>
 
           {/* ── Responder — NO PublicLayout, has its own dashboard shell ── */}
           <Route path="/responder/dashboard" element={<ProtectedRoute allowedRole="responder"><RespondersDashboard /></ProtectedRoute>} />
@@ -150,6 +208,8 @@ export default function App() {
 
           {/* ── Convenience redirects ─────────────────────────────────────── */}
               <Route path="/about" element={<PublicLayout><About /></PublicLayout>} />
+              <Route path="/privacy" element={<PublicLayout><PrivacyPolicy /></PublicLayout>} />
+              <Route path="/terms" element={<PublicLayout><Terms /></PublicLayout>} />
               <Route path="/report" element={<PublicLayout><Report /></PublicLayout>} />
           {/* ── Catch-all ─────────────────────────────────────────────────── */}
           <Route path="*" element={<Navigate to="/" replace />} />

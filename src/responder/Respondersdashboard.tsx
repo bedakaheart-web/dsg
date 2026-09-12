@@ -1,11 +1,14 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../js/supabase";
+import { TranslatedDescription } from "../components/TranslatedDescription";
 
 import Dispatch from "./Dispatch";
 import ResponderAlertsPage from "./ResponderAlertsPage";
 import ResponderIncidentsPage from "./IncidentsPage";
 import ResponderTeamPage from "./ResponderTeam";
+import ResponderChatDrawer from "./components/ResponderChatDrawer";
+import { fetchUnreadCounts } from "../hooks/useRealtimeChat";
 import dsgLogo from "../assets/dsg.logo.png";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -16,6 +19,8 @@ interface Report {
   id: string | number;
   type: string;
   description: string | null;
+  description_lang: string | null;
+  description_translated: string | null;
   location: string | null;
   address: string | null;
   reporter_name: string | null;
@@ -450,7 +455,7 @@ function OverviewPanel({ onNavigate, responderId }: OverviewPanelProps) {
     try {
       const { data, error } = await supabase
         .from("reports")
-        .select("id,type,description,location,address,reporter_name,reporter_contact,status,evidence_url,created_at,responder_id")
+        .select("id,type,description,description_lang,description_translated,location,address,reporter_name,reporter_contact,status,evidence_url,created_at,responder_id")
         .order("created_at", { ascending: false });
 
       if (error) { console.error("Overview loadData error:", error.message); return; }
@@ -623,7 +628,14 @@ function OverviewPanel({ onNavigate, responderId }: OverviewPanelProps) {
                       <div className="rd-modal-info">
                         <div className={cls("rd-modal-type", tm.colorClass)}>{r.type}</div>
                         <div className="rd-modal-loc">📍 {r.address || r.location || "No location"}</div>
-                        {r.description && <div className="rd-modal-desc">{r.description}</div>}
+                        {r.description && (
+                          <TranslatedDescription
+                            description={r.description}
+                            descriptionLang={r.description_lang}
+                            descriptionTranslated={r.description_translated}
+                            className="rd-modal-desc"
+                          />
+                        )}
                         <div className="rd-modal-meta">
                           {r.reporter_name    && <span className="rd-modal-reporter">👤 {r.reporter_name}</span>}
                           {r.reporter_contact && <span className="rd-modal-reporter">📞 {r.reporter_contact}</span>}
@@ -670,6 +682,8 @@ export default function RespondersDashboard() {
   const [responderId,   setResponderId]   = useState("");
   const [sidebarOpen,   setSidebarOpen]   = useState(false);
   const [authReady,     setAuthReady]     = useState(false);
+  const [isChatOpen,    setIsChatOpen]    = useState(false);
+  const [chatUnread,    setChatUnread]    = useState(0);
 
   // Track when the user last viewed alerts so we only badge NEW ones
   const lastSeenAlertTime = React.useRef<string>(
@@ -752,6 +766,34 @@ export default function RespondersDashboard() {
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
+
+  // HQ chat unread badge: refresh on mount (once id known) + on any new message.
+  // NOTE: requires the `messages` table (migration
+  // 20260912_create_side_chat_messages). Until `supabase db push` runs, the
+  // REST calls below 404 and unread counts stay at zero — by design, no crash.
+  useEffect(() => {
+    if (!responderId) return;
+    const refresh = async () => {
+      const unread = await fetchUnreadCounts(responderId);
+      setChatUnread(Object.values(unread.bySender).reduce((a, b) => a + b, 0) + unread.broadcast);
+    };
+    void refresh();
+    const ch = supabase
+      .channel("realtime:resp-chat-unread")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages" },
+        () => {
+          void refresh();
+        }
+      )
+      .subscribe((status) => {
+        if (status !== "SUBSCRIBED") {
+          console.warn("[resp-chat-unread] channel status:", status);
+        }
+      });
+    return () => { supabase.removeChannel(ch); };
+  }, [responderId]);
 
   const handleLogout = async () => {
     try {
@@ -856,6 +898,29 @@ export default function RespondersDashboard() {
 
               <div className="rd-topbar-right">
                 <span className="rd-clock">{clock}</span>
+                <button
+                  id="responder-chat-trigger"
+                  onClick={() => { setIsChatOpen(true); setChatUnread(0); }}
+                  aria-label="Open HQ direct chat"
+                  title="HQ Direct Chat"
+                  style={{
+                    position: "relative", display: "flex", alignItems: "center", gap: 6,
+                    background: "rgba(46,204,143,0.12)", border: "1px solid rgba(46,204,143,0.35)",
+                    color: "#2ECC8F", borderRadius: 8, padding: "7px 12px",
+                    fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap",
+                  }}
+                >
+                  <span style={{ fontSize: 14 }}>💬</span> HQ Direct Chat
+                  {chatUnread > 0 && (
+                    <span style={{
+                      position: "absolute", top: -6, right: -6, minWidth: 17, height: 17, borderRadius: 9,
+                      background: "#FF3B30", color: "#fff", fontSize: 9, fontWeight: 700,
+                      display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px",
+                    }}>
+                      {chatUnread > 99 ? "99+" : chatUnread}
+                    </span>
+                  )}
+                </button>
                 <div className="rd-notif-wrap">
                   <button className="rd-icon-btn" onClick={() => handleNavigate("alerts")} aria-label="Alerts">
                     <SvgIcon path={ICONS.bell} />
@@ -879,6 +944,9 @@ export default function RespondersDashboard() {
             </main>
           </div>
         </div>
+
+        {/* Real-time side chat with Admin HQ */}
+        {responderId && <ResponderChatDrawer responderId={responderId} open={isChatOpen} onClose={() => setIsChatOpen(false)} />}
       </div>
     </>
   );

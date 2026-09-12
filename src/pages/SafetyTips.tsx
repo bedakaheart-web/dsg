@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import safetyTipsBg from "../assets/safetytips.jpg";
+import { useLanguage } from "../context/LanguageContext";
 
 const GO_BAG_ITEMS = [
   { id: 1,  category: "Water & Food",   label: "3-day water supply (1 gal/person/day)"     },
@@ -25,6 +26,19 @@ const GO_BAG_ITEMS = [
   { id: 20, category: "Communication",  label: "Local hazard map and evacuation route"      },
 ];
 
+// ── Maps each internal (English) category key to a translation key. ──
+// The GO_BAG_ITEMS category values above stay in English on purpose —
+// they're used for filter matching logic, decoupled from the displayed label.
+const CATEGORY_KEY_MAP: Record<string, string> = {
+  "Water & Food": "waterFood",
+  "Medical": "medical",
+  "Documents": "documents",
+  "Tools": "tools",
+  "Clothing": "clothing",
+  "Shelter": "shelter",
+  "Communication": "communication",
+};
+
 interface HotlineEntry {
   label: string;
   number: string;
@@ -32,9 +46,9 @@ interface HotlineEntry {
 
 const DISASTERS = [
   {
-    id: "typhoon", label: "Typhoon", emoji: "🌀",
+    id: "typhoon", labelKey: "typhoon", emoji: "🌀",
     color: "#60A5FA", colorDim: "rgba(96,165,250,0.08)", colorBorder: "rgba(96,165,250,0.22)",
-    colorRgb: "96,165,250", signal: "PAGASA Signal #1–5",
+    colorRgb: "96,165,250", signal: "PAGASA Signal Updates",
     hotlines: [
       { label: "1550 (PAGASA)", number: "1550" },
       { label: "911",           number: "911"  },
@@ -63,7 +77,7 @@ const DISASTERS = [
     ],
   },
   {
-    id: "flood", label: "Flood", emoji: "🌊",
+    id: "flood", labelKey: "flood", emoji: "🌊",
     color: "#38BDF8", colorDim: "rgba(56,189,248,0.08)", colorBorder: "rgba(56,189,248,0.22)",
     colorRgb: "56,189,248", signal: "NDRRMC Flood Advisory",
     hotlines: [
@@ -93,7 +107,7 @@ const DISASTERS = [
     ],
   },
   {
-    id: "fire", label: "Fire", emoji: "🔥",
+    id: "fire", labelKey: "fire", emoji: "🔥",
     color: "#FB923C", colorDim: "rgba(251,146,60,0.08)", colorBorder: "rgba(251,146,60,0.22)",
     colorRgb: "251,146,60", signal: "BFP Fire Alert",
     hotlines: [
@@ -125,7 +139,7 @@ const DISASTERS = [
     ],
   },
   {
-    id: "earthquake", label: "Earthquake", emoji: "🌍",
+    id: "earthquake", labelKey: "earthquake", emoji: "🌍",
     color: "#A78BFA", colorDim: "rgba(167,139,250,0.08)", colorBorder: "rgba(167,139,250,0.22)",
     colorRgb: "167,139,250", signal: "PHIVOLCS Intensity Scale",
     hotlines: [
@@ -157,7 +171,7 @@ const DISASTERS = [
     ],
   },
   {
-    id: "landslide", label: "Landslide", emoji: "⛰️",
+    id: "landslide", labelKey: "landslide", emoji: "⛰️",
     color: "#86EFAC", colorDim: "rgba(134,239,172,0.08)", colorBorder: "rgba(134,239,172,0.22)",
     colorRgb: "134,239,172", signal: "MGB Landslide Advisory",
     hotlines: [
@@ -188,7 +202,7 @@ const DISASTERS = [
     ],
   },
   {
-    id: "road", label: "Road Accident", emoji: "🚗",
+    id: "road", labelKey: "road", emoji: "🚗",
     color: "#FCD34D", colorDim: "rgba(252,211,77,0.08)", colorBorder: "rgba(252,211,77,0.22)",
     colorRgb: "252,211,77", signal: "LTO / MMDA Traffic Alert",
     hotlines: [
@@ -221,17 +235,18 @@ const DISASTERS = [
   },
 ];
 
-const PHASE_META = {
-  before: { label: "Before",  icon: "⚡", desc: "Prepare ahead" },
-  during: { label: "During",  icon: "🔴", desc: "Stay safe now" },
-  after:  { label: "After",   icon: "✅", desc: "Recover safely" },
-};
-
 export default function SafetyTips() {
+  const { t, tList } = useLanguage();
   const [activeTab,   setActiveTab]   = useState(0);
   const [activePhase, setActivePhase] = useState<"before" | "during" | "after">("before");
   const [checked,     setChecked]     = useState<Record<number, boolean>>({});
   const [bagFilter,   setBagFilter]   = useState("All");
+
+  const PHASE_META = {
+    before: { label: t("safetyTips.phases.beforeLabel", "Bago"), icon: "⚡", desc: t("safetyTips.phases.beforeDesc", "Maghanda nang maaga") },
+    during: { label: t("safetyTips.phases.duringLabel", "Habang Nangyayari"), icon: "🔴", desc: t("safetyTips.phases.duringDesc", "Manatiling ligtas ngayon") },
+    after:  { label: t("safetyTips.phases.afterLabel", "Pagkatapos"),  icon: "✅", desc: t("safetyTips.phases.afterDesc", "Bumangon nang ligtas") },
+  };
 
   const toggleCheck = (id: number) =>
     setChecked(prev => ({ ...prev, [id]: !prev[id] }));
@@ -241,8 +256,17 @@ export default function SafetyTips() {
   const categories   = ["All", ...Array.from(new Set(GO_BAG_ITEMS.map(i => i.category)))];
   const visibleItems = bagFilter === "All" ? GO_BAG_ITEMS : GO_BAG_ITEMS.filter(i => i.category === bagFilter);
 
+  const categoryLabel = (cat: string) =>
+    cat === "All" ? t("safetyTips.categories.all") : t(`safetyTips.categories.${CATEGORY_KEY_MAP[cat] ?? "all"}`);
+
   const isGoBag  = activeTab === DISASTERS.length;
   const disaster = !isGoBag ? DISASTERS[activeTab] : null;
+
+  type PhaseTip = string | { title?: string; text?: string };
+
+  const translatedTips = disaster ? tList(`safetyTips.disasterDetails.${disaster.labelKey}.${activePhase}`) : [];
+  const phaseTips: PhaseTip[] = translatedTips.length ? translatedTips : (disaster ? disaster[activePhase] : []);
+  const activePhaseObj = { tips: phaseTips };
 
   useEffect(() => {
     const hash = window.location.hash.replace("#", "");
@@ -490,37 +514,28 @@ export default function SafetyTips() {
           height: 2px; border-radius: 2px; background: var(--d-color); opacity: .55;
         }
 
-        /* Tips grid */
-        .st-tips {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-          gap: 10px;
-        }
-        .st-tip {
-          display: flex; align-items: flex-start; gap: 14px;
-          background: var(--surface); backdrop-filter: blur(18px);
-          border: 1px solid rgba(0,200,224,0.07);
-          border-left: 3px solid var(--d-color);
-          border-radius: var(--radius); padding: 16px 18px;
-          transition: border-color .2s, background .2s, transform .2s, box-shadow .2s;
-          animation: fadeUp .35s ease both;
-        }
-        .st-tip:hover {
-          background: var(--surface2); border-color: var(--d-border);
-          transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,0.35);
-        }
-        .st-tip-num {
-          font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700;
-          min-width: 28px; height: 28px; border-radius: 7px;
-          display: flex; align-items: center; justify-content: center;
-          background: var(--d-dim); color: var(--d-color);
-          flex-shrink: 0; margin-top: 1px; letter-spacing: .04em;
-        }
-        .st-tip-text {
-          font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 300;
-          line-height: 1.65; color: var(--text2);
-        }
-        .st-tip-text strong { color: var(--text); font-weight: 500; }
+        /* Phase tips bullet list */
+        .st-panel [class~="mt-6"] { margin-top: 1.5rem; }
+        .st-panel [class~="p-6"] { padding: 1.5rem; }
+        .st-panel [class~="p-3"] { padding: 0.75rem; }
+        .st-panel [class~="mb-4"] { margin-bottom: 1rem; }
+        .st-panel [class~="rounded-xl"] { border-radius: 0.75rem; }
+        .st-panel [class~="rounded-lg"] { border-radius: 0.5rem; }
+        .st-panel [class~="border"] { border-width: 1px; border-style: solid; }
+        .st-panel [class~="flex"] { display: flex; }
+        .st-panel [class~="items-start"] { align-items: flex-start; }
+        .st-panel [class~="gap-3"] { gap: 0.75rem; }
+        .st-panel [class~="text-lg"] { font-size: 1.125rem; line-height: 1.5; }
+        .st-panel [class~="font-bold"] { font-weight: 700; }
+        .st-panel [class~="text-emerald-400"] { color: #34d399; }
+        .st-panel [class~="text-slate-200"] { color: #e2e8f0; }
+        .st-panel [class~="text-slate-400"] { color: #94a3b8; }
+        .st-panel [class~="bg-slate-900/80"] { background: rgba(24,26,32,0.82); }
+        .st-panel [class~="bg-slate-800/60"] { background: rgba(30,41,59,0.60); }
+        .st-panel [class~="border-slate-700/60"] { border-color: rgba(51,65,89,0.60); }
+        .st-panel [class~="border-slate-700/40"] { border-color: rgba(51,65,89,0.40); }
+        .st-panel [class~="space-y-3"] { list-style: none; margin: 0; padding: 0; }
+        .st-panel [class~="space-y-3"] > :not([hidden]) ~ :not([hidden]) { margin-top: 0.75rem; }
 
         /* ── Go Bag ── */
         .st-gobag { animation: fadeUp .38s ease both; }
@@ -673,13 +688,9 @@ export default function SafetyTips() {
           {/* Hero */}
           <section className="st-hero">
             <h1>
-              Safety <span className="accent">Tips</span> &amp;<br />
-              Emergency Guides
+              {t("safetyTips.heroTitleStart")} <span className="accent">{t("safetyTips.heroAccent")}</span> {t("safetyTips.heroTitleEnd")}
             </h1>
-            <p className="st-hero-sub">
-              Step-by-step guidance for typhoons, floods, fires, earthquakes, landslides,
-              and road accidents — plus your complete go bag checklist.
-            </p>
+            <p className="st-hero-sub">{t("safetyTips.heroSub")}</p>
           </section>
 
           {/* Sticky tabs */}
@@ -692,7 +703,7 @@ export default function SafetyTips() {
                   onClick={() => { setActiveTab(i); setActivePhase("before"); }}
                 >
                   <span className="st-tab-emoji">{d.emoji}</span>
-                  {d.label}
+                  {t(`safetyTips.disasters.${d.labelKey}`)}
                 </button>
               ))}
               <button
@@ -700,7 +711,7 @@ export default function SafetyTips() {
                 onClick={() => setActiveTab(DISASTERS.length)}
               >
                 <span className="st-tab-emoji">🎒</span>
-                Go Bag
+                {t("safetyTips.goBag.tabLabel")}
               </button>
             </div>
           </div>
@@ -721,8 +732,8 @@ export default function SafetyTips() {
                 <div className="st-panel-title-group">
                   <div className="st-panel-icon">{disaster.emoji}</div>
                   <div>
-                    <div className="st-panel-name">{disaster.label}</div>
-                    <div className="st-panel-signal">{disaster.signal}</div>
+                    <div className="st-panel-name">{t(`safetyTips.disasters.${disaster.labelKey}`)}</div>
+                    <div className="st-panel-signal">{t(`safetyTips.disasterDetails.${disaster.labelKey}.signal`, disaster.signal)}</div>
                   </div>
                 </div>
 
@@ -757,20 +768,20 @@ export default function SafetyTips() {
                 })}
               </div>
 
-              <div className="st-tips">
-                {disaster[activePhase].map((tip, i) => {
-                  const dot  = tip.indexOf(" — ");
-                  const main = tip.slice(0, dot > -1 ? dot : tip.length);
-                  const rest = dot > -1 ? tip.slice(dot) : "";
-                  return (
-                    <div key={i} className="st-tip" style={{ animationDelay: `${i * 0.045}s` }}>
-                      <div className="st-tip-num">{String(i + 1).padStart(2,"0")}</div>
-                      <div className="st-tip-text">
-                        <strong>{main}</strong>{rest}
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="mt-6 p-6 bg-slate-900/80 border border-slate-700/60 rounded-xl">
+                <h4 className="text-lg font-bold text-emerald-400 mb-4">Mga Hakbang sa Kaligtasan:</h4>
+                <ul className="space-y-3 text-slate-200">
+                  {activePhaseObj?.tips ? (
+                    activePhaseObj.tips.map((tip, idx) => (
+                      <li key={idx} className="flex items-start gap-3 bg-slate-800/60 p-3 rounded-lg border border-slate-700/40">
+                        <span className="text-emerald-400 font-bold">✓</span>
+                        <span>{typeof tip === 'string' ? tip : tip.title || tip.text}</span>
+                      </li>
+                    ))
+                  ) : (
+                    <li className="text-slate-400">Maghanda ng emergency supply kit at subaybayan ang mga balita sa radyo at TV.</li>
+                  )}
+                </ul>
               </div>
             </div>
           )}
@@ -780,17 +791,16 @@ export default function SafetyTips() {
             <div className="st-gobag">
               <div className="st-gobag-header-card">
                 <div>
-                  <div className="st-gobag-title">🎒 Your <span>Go Bag</span> Checklist</div>
-                  <p className="st-gobag-sub">
-                    Pack these 20 essentials so you can evacuate safely within 15 minutes.
-                    Check off what you've already prepared.
-                  </p>
+                  <div className="st-gobag-title">
+                    🎒 {t("safetyTips.goBag.titleStart")} <span>{t("safetyTips.goBag.titleAccent")}</span> {t("safetyTips.goBag.titleEnd")}
+                  </div>
+                  <p className="st-gobag-sub">{t("safetyTips.goBag.sub")}</p>
                 </div>
               </div>
 
               <div className="st-progress-card">
                 <div className="st-progress-row">
-                  <span className="st-progress-label">{checkedCount} of {GO_BAG_ITEMS.length} items packed</span>
+                  <span className="st-progress-label">{checkedCount} / {GO_BAG_ITEMS.length} {t("safetyTips.goBag.itemsPacked")}</span>
                   <span className="st-progress-pct">{progress}%</span>
                 </div>
                 <div className="st-progress-track">
@@ -804,7 +814,7 @@ export default function SafetyTips() {
                     key={c}
                     className={`st-cat-btn${bagFilter === c ? " active" : ""}`}
                     onClick={() => setBagFilter(c)}
-                  >{c}</button>
+                  >{categoryLabel(c)}</button>
                 ))}
               </div>
 
@@ -817,8 +827,8 @@ export default function SafetyTips() {
                   >
                     <div className="st-checkbox">{checked[item.id] && "✓"}</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div className="st-check-cat">{item.category}</div>
-                      <div className="st-check-label">{item.label}</div>
+                      <div className="st-check-cat">{categoryLabel(item.category)}</div>
+                      <div className="st-check-label">{tList("safetyTips.goBagItems")[item.id - 1] ?? item.label}</div>
                     </div>
                     <div className="st-check-num">#{String(item.id).padStart(2,"0")}</div>
                   </div>
@@ -827,7 +837,7 @@ export default function SafetyTips() {
 
               {checkedCount > 0 && (
                 <button className="st-reset" onClick={() => setChecked({})}>
-                  Reset checklist
+                  {t("safetyTips.goBag.resetBtn")}
                 </button>
               )}
             </div>

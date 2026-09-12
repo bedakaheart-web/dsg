@@ -6,6 +6,7 @@
 // • Consistent with CitizenReport, CitizenReportDetail, CitizenAlertsPage
 
 import { useEffect, useState } from "react";
+import { useLanguage } from "../context/LanguageContext";
 import { supabase } from "../js/supabase";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -319,8 +320,27 @@ function usePHTClock() {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function CitizenHistory() {
+  // Consumes the active Navbar/Header language — any selector change re-renders
+  // this component and re-evaluates every t() call and language-aware helper below.
+  const { language, t, tList } = useLanguage();
+  void tList;
+  const locale = language === "tl" ? "fil-PH" : "en-PH";
   const navigate = useNavigate();
   const clock    = usePHTClock();
+
+  // Language-aware status-pill text (status.* in the dictionary, English fallback).
+  const statusLabel = (s: string) =>
+    t(`status.${s === "in-progress" ? "inProgress" : s}`, STATUS_META[s]?.label ?? s);
+  // Language-aware report-type name (report.types.* in the dictionary).
+  const typeLabel = (type: string | undefined) =>
+    t(`report.types.${type?.toLowerCase()}`, type ?? "");
+  // Language-aware accessible names for icon-only buttons.
+  const aria = {
+    navigation: language === "tl" ? "Nabigasyon" : "Navigation",
+    close: language === "tl" ? "Isara" : "Close",
+    openNav: language === "tl" ? "Buksan ang nabigasyon" : "Open navigation",
+    notifications: language === "tl" ? "Mga abiso" : "Notifications",
+  };
 
   const [reports,     setReports]     = useState<Report[]>([]);
   const [user,        setUser]        = useState<any>(null);
@@ -363,7 +383,7 @@ export default function CitizenHistory() {
     resolved:   reports.filter(r => r.status === "resolved").length,
   };
 
-  const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Citizen";
+  const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || t("history.citizen", "Citizen");
   const initials    = displayName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
 
   const handleLogout = async () => {
@@ -372,10 +392,10 @@ export default function CitizenHistory() {
   };
 
   const statCards = [
-    { label: "Total Filed",  value: stats.total,      accent: "#7B9EFF", icon: <FaFileAlt />     },
-    { label: "Pending",      value: stats.pending,    accent: "#FFD166", icon: <FaClock />       },
-    { label: "In Progress",  value: stats.inProgress, accent: "#FF9F43", icon: <FaSpinner />     },
-    { label: "Resolved",     value: stats.resolved,   accent: "#2ECC8F", icon: <FaCheckCircle /> },
+    { label: t("dashboard.statTotalFiled"),  value: stats.total,      accent: "#7B9EFF", icon: <FaFileAlt />     },
+    { label: t("dashboard.statPending"),      value: stats.pending,    accent: "#FFD166", icon: <FaClock />       },
+    { label: t("dashboard.statInProgress"),  value: stats.inProgress, accent: "#FF9F43", icon: <FaSpinner />     },
+    { label: t("dashboard.statResolved"),     value: stats.resolved,   accent: "#2ECC8F", icon: <FaCheckCircle /> },
   ];
 
   return (
@@ -392,42 +412,42 @@ export default function CitizenHistory() {
           />
 
           {/* ── Sidebar ── */}
-          <aside className={`ch-sidebar${sidebarOpen ? " open" : ""}`} aria-label="Navigation">
+          <aside className={`ch-sidebar${sidebarOpen ? " open" : ""}`} aria-label={aria.navigation}>
             <div className="ch-logo">
               <img src={dsgLogo} alt="DumaSafeGuide" className="ch-logo-img" />
               <div>
                 <div className="ch-logo-name">DumaSafeGuide</div>
                 <div className="ch-logo-sub"><span className="ch-pip" />CITIZEN</div>
               </div>
-              <button className="ch-sidebar-close" onClick={() => setSidebarOpen(false)} aria-label="Close">
+              <button className="ch-sidebar-close" onClick={() => setSidebarOpen(false)} aria-label={aria.close}>
                 <FaTimes />
               </button>
             </div>
 
             <nav className="ch-nav-scroll">
-              <div className="ch-nav-label">Portal</div>
+              <div className="ch-nav-label">{t("dashboard.sidebarPortal")}</div>
               <Link to="/citizen/dashboard" className="ch-nav-btn">
                 <span className="ch-nav-ic"><FaHistory /></span>
-                Overview
+                {t("history.overview")}
               </Link>
 
-              <div className="ch-nav-label">Actions</div>
+              <div className="ch-nav-label">{t("history.actions")}</div>
               <Link to="/citizen/report" className="ch-nav-btn">
                 <span className="ch-nav-ic"><FaFileAlt /></span>
-                File Report
+                {t("history.fileReport")}
               </Link>
               <Link to="/citizen/history" className="ch-nav-btn active">
                 <span className="ch-nav-ic"><FaHistory /></span>
-                My Reports
+                {t("history.myReports")}
                 {stats.total > 0 && <span className="ch-badge">{stats.total}</span>}
               </Link>
               <Link to="/citizen/map" className="ch-nav-btn">
                 <span className="ch-nav-ic"><FaMapMarkedAlt /></span>
-                Safety Map
+                {t("history.safetyMap")}
               </Link>
               <Link to="/citizen/safetytips" className="ch-nav-btn">
                 <span className="ch-nav-ic"><FaLightbulb /></span>
-                Safety Tips
+                {t("history.safetyTips")}
               </Link>
             </nav>
 
@@ -436,11 +456,11 @@ export default function CitizenHistory() {
                 <div className="ch-avatar">{initials}</div>
                 <div style={{ minWidth: 0 }}>
                   <div className="ch-user-name">{displayName}</div>
-                  <div className="ch-user-status"><span className="ch-pip" />CITIZEN</div>
+                  <div className="ch-user-status"><span className="ch-pip" />{t("history.citizen")}</div>
                 </div>
               </div>
               <button className="ch-logout-btn" onClick={handleLogout}>
-                <FaSignOutAlt size={12} /> Sign Out
+                <FaSignOutAlt size={12} /> {t("history.signOut")}
               </button>
             </div>
           </aside>
@@ -448,37 +468,37 @@ export default function CitizenHistory() {
           {/* ── Main ── */}
           <div className="ch-main">
 
-            {/* Topbar */}
-            <div className="ch-topbar">
-              <button className="ch-hamburger" onClick={() => setSidebarOpen(true)} aria-label="Open navigation">
-                <FaBars />
-              </button>
-              <div className="ch-crumb">
-                <span className="ch-crumb-hide">DUMASAFEGUIDE</span>
-                <span className="ch-crumb-sep ch-crumb-hide">/</span>
-                <span className="ch-crumb-hide">CITIZEN</span>
-                <span className="ch-crumb-sep ch-crumb-hide">/</span>
-                <span className="ch-crumb-active">My Reports</span>
-              </div>
-              <div className="ch-topbar-right">
-                <span className="ch-clock">{clock}</span>
-                <button className="ch-icon-btn" aria-label="Notifications">
-                  <FaBell size={13} />
-                </button>
-              </div>
-            </div>
+             {/* Topbar */}
+             <div className="ch-topbar">
+                <button className="ch-hamburger" onClick={() => setSidebarOpen(true)} aria-label={aria.openNav}>
+                 <FaBars />
+               </button>
+               <div className="ch-crumb">
+                 <span className="ch-crumb-hide">DUMASAFEGUIDE</span>
+                 <span className="ch-crumb-sep ch-crumb-hide">/</span>
+                 <span className="ch-crumb-hide">{t("history.citizen")}</span>
+                 <span className="ch-crumb-sep ch-crumb-hide">/</span>
+                 <span className="ch-crumb-active">{t("history.pageTitle")}</span>
+               </div>
+               <div className="ch-topbar-right">
+                 <span className="ch-clock">{clock}</span>
+                  <button className="ch-icon-btn" aria-label={aria.notifications}>
+                   <FaBell size={13} />
+                 </button>
+               </div>
+             </div>
 
-            {/* Page content */}
-            <div className="ch-page">
-              <div>
-                {/* Header */}
-                <div className="ch-page-hd">
-                  <div>
-                    <div className="ch-eyebrow">Citizen Portal</div>
-                    <div className="ch-title">My Reports</div>
-                    <div className="ch-subtitle">ALL SUBMITTED INCIDENT REPORTS</div>
-                  </div>
-                </div>
+             {/* Page content */}
+             <div className="ch-page">
+               <div>
+                 {/* Header */}
+                 <div className="ch-page-hd">
+                   <div>
+                     <div className="ch-eyebrow">{t("dashboard.citizenPortal")}</div>
+                     <div className="ch-title">{t("history.pageTitle")}</div>
+                     <div className="ch-subtitle">{t("history.subtitle")}</div>
+                   </div>
+                 </div>
 
                 {/* Stats */}
                 <div className="ch-stat-grid">
@@ -495,29 +515,29 @@ export default function CitizenHistory() {
                   ))}
                 </div>
 
-                {/* Reports panel */}
-                <div className="ch-panel">
-                  <div className="ch-panel-hd">
-                    <span className="ch-panel-title">All Reports</span>
-                    <span className="ch-panel-tag">{loading ? "…" : `${stats.total} TOTAL`}</span>
-                  </div>
+                 {/* Reports panel */}
+                 <div className="ch-panel">
+                   <div className="ch-panel-hd">
+                     <span className="ch-panel-title">{t("history.allReports")}</span>
+                     <span className="ch-panel-tag">{loading ? "…" : `${stats.total} ${t("history.totalLabel")}`}</span>
+                   </div>
 
-                  {loading ? (
-                    <div className="ch-loading">
-                      <div className="ch-spinner" /> Loading reports…
-                    </div>
-                  ) : reports.length === 0 ? (
-                    <div className="ch-empty">
-                      <div className="ch-empty-icon"><FaInbox /></div>
-                      <div className="ch-empty-title">No reports yet</div>
-                      <p className="ch-empty-sub">
-                        You haven't submitted any incident reports. Help keep your community safe by filing one.
-                      </p>
-                      <Link to="/citizen/report" className="ch-empty-link">
-                        <FaFileAlt size={11} /> File a Report
-                      </Link>
-                    </div>
-                  ) : (
+                   {loading ? (
+                     <div className="ch-loading">
+                       <div className="ch-spinner" /> {t("history.loadingReports")}
+                     </div>
+                   ) : reports.length === 0 ? (
+                     <div className="ch-empty">
+                       <div className="ch-empty-icon"><FaInbox /></div>
+                       <div className="ch-empty-title">{t("history.noReportsYet")}</div>
+                       <p className="ch-empty-sub">
+                         {t("history.noReportsSub")}
+                       </p>
+                       <Link to="/citizen/report" className="ch-empty-link">
+                         <FaFileAlt size={11} /> {t("history.fileAReport")}
+                       </Link>
+                     </div>
+                   ) : (
                     <div className="ch-list">
                       {reports.map(r => {
                         const tm = TYPE_META[r.type?.toLowerCase()] ?? TYPE_META.other;
@@ -531,11 +551,11 @@ export default function CitizenHistory() {
                             <div className="ch-row-icon">{tm.icon}</div>
                             <div className="ch-row-body">
                               <div className="ch-row-desc" title={r.description}>
-                                {r.description || "No description"}
+                                {r.description || t("reportDetail.noDescription", "No description")}
                               </div>
                               <div className="ch-row-meta">
                                 <span className="ch-row-date">
-                                  {new Date(r.created_at).toLocaleDateString("en-PH", {
+                                  {new Date(r.created_at).toLocaleDateString(locale, {
                                     month: "short", day: "numeric", year: "numeric",
                                   })}
                                 </span>
@@ -548,7 +568,7 @@ export default function CitizenHistory() {
                                       border: `1px solid ${tm.color}25`,
                                     }}
                                   >
-                                    {r.type}
+                                    {typeLabel(r.type)}
                                   </span>
                                 )}
                               </div>
@@ -563,7 +583,7 @@ export default function CitizenHistory() {
                                 }}
                               >
                                 <span className="ch-pill-dot" />
-                                {sm.label}
+                                {statusLabel(r.status)}
                               </span>
                               <FaChevronRight className="ch-chevron" />
                             </div>

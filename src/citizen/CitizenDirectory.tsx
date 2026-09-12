@@ -1,12 +1,17 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "../js/supabase";
-import dsgLogo from "../assets/dsg_logo.png";
+import { useLanguage } from "../context/LanguageContext";
 import './citizenPages.css';
 interface PhoneEntry { label: string; number: string; }
 interface EmergencyAgency {
   agency: string; label: string; address: string; icon: string; accent: string;
   phones: PhoneEntry[]; notes?: string;
+  /** Optional service category used by the Emergency Hotlines category filter. */
+  category?: string;
+  /** "24/7" style availability badge, shown as-is (language-neutral). */
+  available?: string;
+  /** Dictionary base key (e.g. "directory.redCross") providing localized
+   *  `{name, category, description}` for this entry. */
+  translationKey?: string;
 }
 interface Hospital {
   name: string; address: string; type: string;
@@ -16,23 +21,45 @@ interface Barangay { name: string; hotline: string | null; evacuation: string | 
 
 const emergency: EmergencyAgency[] = [
   { agency: "PNP", label: "Police", address: "Camp Leon Kilat, Dumaguete City", icon: "🚔", accent: "#4A90D9",
-    phones: [{ label: "National", number: "911" }, { label: "Local", number: "116" }, { label: "CRUZTELCO", number: "(035) 225-1766" }, { label: "Globe", number: "0917 933 0022" }, { label: "Smart", number: "0929 200 6999" }],
+    category: "lawEnforcement",
+    phones: [{ label: "National", number: "911" }, { label: "Local", number: "116" }, { label: "Hotline", number: "117" }, { label: "CRUZTELCO", number: "(035) 225-1766" }, { label: "Globe", number: "0917 933 0022" }, { label: "Smart", number: "0929 200 6999" }],
     notes: "Available 24/7 for all police emergencies" },
   { agency: "BFP", label: "Fire Dept.", address: "Real St, Dumaguete City", icon: "🔥", accent: "#e8372a",
-    phones: [{ label: "Emergency", number: "160" }, { label: "CRUZTELCO", number: "(035) 225-3445" }, { label: "Globe", number: "0977 198 1900" }, { label: "Smart", number: "0961 199 8377" }],
+    category: "fireSafety",
+    phones: [{ label: "Emergency", number: "160" }, { label: "Landline", number: "(035) 225-2025" }, { label: "CRUZTELCO", number: "(035) 225-3445" }, { label: "Globe", number: "0977 198 1900" }, { label: "Smart", number: "0961 199 8377" }],
     notes: "Fire suppression, rescue & emergency medical response" },
   { agency: "CDRRMO", label: "City DRRM", address: "City Hall Compound, Dumaguete City", icon: "🛡️", accent: "#F5C842",
+    category: "emergencyRescue",
     phones: [{ label: "Emergency", number: "348" }, { label: "Operations", number: "(035) 225-1911" }, { label: "Globe", number: "0936 795 4163" }],
     notes: "City Disaster Risk Reduction & Management — 24/7" },
+  { agency: "LDRRMO", label: "Local DRRM", address: "Dumaguete City (Provincial)", icon: "⛑️", accent: "#00c8e0",
+    category: "emergencyRescue", translationKey: "directory.ldrrmo",
+    phones: [{ label: "Hotline", number: "(035) 225-3775" }, { label: "Rescue", number: "(035) 422-911" }, { label: "Province DRRM", number: "(035) 422-3636" }, { label: "Rescue 348", number: "(035) 421-5073" }],
+    notes: "Provincial Disaster Risk Reduction & Management Office" },
   { agency: "ONE Rescue", label: "EMS / Ambulance", address: "Oriental Negros Emergency Rescue Foundation", icon: "🚑", accent: "#2ECC8F",
+    category: "emergencyMedical",
     phones: [{ label: "CRUZTELCO", number: "(035) 225-9110" }, { label: "Globe", number: "0905 518 6917" }, { label: "Sun", number: "0922 880 8897" }],
     notes: "Free pre-hospital emergency medical services" },
   { agency: "Coast Guard", label: "Sea Rescue", address: "Dumaguete Boulevard", icon: "⚓", accent: "#00c8e0",
+    category: "emergencyRescue",
     phones: [{ label: "Station", number: "(035) 422-6541" }, { label: "Mobile", number: "0968 771 2455" }],
     notes: "Marine search & rescue operations" },
   { agency: "NORECO II", label: "Electric", address: "Dumaguete City", icon: "⚡", accent: "#a78bfa",
-    phones: [{ label: "CRUZTELCO", number: "(035) 225-4830" }, { label: "Globe", number: "0917 322 4237" }],
+    category: "utilities",
+    phones: [{ label: "CRUZTELCO", number: "(035) 225-4830" }, { label: "Globe", number: "0917-322-2114" }],
     notes: "Power outages, downed lines & electrical emergencies" },
+  { agency: "DCWD", label: "Water District", address: "Dumaguete City", icon: "💧", accent: "#38bdf8",
+    category: "utilities", translationKey: "directory.waterDistrict",
+    phones: [{ label: "Hotline", number: "(035) 225-2374" }, { label: "Alt", number: "(035) 422-4025" }, { label: "Office", number: "(035) 422-6951" }, { label: "Emergency", number: "0998 847 5656" }],
+    notes: "Dumaguete City Water District — supply interruptions & pipe emergencies" },
+  { agency: "City Health Office", label: "Public Health", address: "Dumaguete City", icon: "🏥", accent: "#2ECC8F",
+    category: "medical", available: "weekdays", translationKey: "directory.cityHealth",
+    phones: [{ label: "Trunkline", number: "(035) 225-0211" }],
+    notes: "Public health services, medical consultations, and sanitation programs" },
+  { agency: "Philippine Red Cross - Negros Oriental Chapter", label: "Emergency & Medical", address: "Real St, Dumaguete City, Negros Oriental", icon: "🩺", accent: "#E63946",
+    category: "emergencyMedical", available: "always", translationKey: "directory.redCross",
+    phones: [{ label: "Hotline", number: "(035) 225-2821" }, { label: "Mobile", number: "0917-700-7722" }, { label: "Landline", number: "(035) 225-2835" }, { label: "Landline 2", number: "(035) 522-2815" }],
+    notes: "Emergency blood supply, ambulance services, and disaster response." },
 ];
 
 const hospitals: Hospital[] = [
@@ -90,23 +117,43 @@ const barangays: Barangay[] = [
 function cleanPhone(p: string) { return p.replace(/[^0-9+]/g, ""); }
 function openMaps(q: string) { window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`, "_blank"); }
 
-const NAV_LINK: React.CSSProperties = {
-  display: "flex", alignItems: "center", gap: "10px",
-  padding: "10px 12px", borderRadius: "8px",
-  fontSize: "13px", fontWeight: "500",
-  color: "rgba(238,240,247,0.55)",
-  textDecoration: "none", marginBottom: "2px", transition: "all 0.2s",
-};
+// Tagalog fallbacks for directory descriptive notes, index-aligned with the
+// `emergency` and `hospitals` arrays above. Shown when the Navbar language is
+// Tagalog; agency names, addresses, and phone numbers stay as source data.
+// Entries with a `translationKey` resolve via the dictionary instead — their
+// slots below are kept only to preserve index alignment.
+const AGENCY_NOTES_TL: string[] = [
+  "Bukas 24/7 para sa lahat ng emerhensiyang pulis",
+  "Pag-apula ng sunog, rescue at emergency medical response",
+  "City Disaster Risk Reduction & Management — 24/7",
+  "Panlalawigang pagbabawas ng panganib sa sakuna at rescue operation",
+  "Libreng pre-hospital emergency medical services",
+  "Mga operasyong marine search & rescue",
+  "Mga brownout, naputol na linya at emerhensiyang elektrikal",
+];
+
+const HOSPITAL_NOTES_TL: string[] = [
+  "Pinakamatandang Protestanteng ospital sa Negros Oriental (est. 1903)",
+  "Allied Care Experts — espesyalista at serbisyong pang-emerhensiya",
+  "Katolikong ospital na pinapatakbo ng Sisters of Mount Carmel",
+  "Pangunahing ospital ng gobyerno para sa Negros Oriental",
+];
 
 export default function CitizenDirectory() {
-  const navigate = useNavigate();
+  // Consumes the active Navbar/Header language — any selector change re-renders
+  // this component (directory notes switch via the TL tables above).
+  const { language, t, tList } = useLanguage();
+  void tList;
   const [tab,       setTab]       = useState<"emergency" | "hospitals" | "barangays">("emergency");
   const [bgySearch, setBgySearch] = useState("");
+  // Category filter for the Emergency Hotlines tab ("All" shows every agency).
+  const [catFilter, setCatFilter] = useState("All");
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/login", { replace: true });
-  };
+  // Distinct service categories present in the directory data.
+  const emergencyCategories = ["All", ...Array.from(new Set(emergency.map(e => e.category).filter((c): c is string => Boolean(c))))];
+  const visibleEmergency = catFilter === "All" ? emergency : emergency.filter(e => e.category === catFilter);
+  const categoryLabel = (c: string) =>
+    c === "All" ? t("map.filterAll", "All") : t(`directory.categories.${c}`, c);
 
   const filtered = barangays.filter(b => {
     const q = bgySearch.toLowerCase();
@@ -118,54 +165,28 @@ export default function CitizenDirectory() {
   return (
     <div className="citizen-page">
 
-      {/* ── Sidebar ── */}
-      <aside style={{ position: "fixed", left: 0, top: 0, width: "260px", height: "100vh", backgroundColor: "rgba(8,12,20,0.95)", borderRight: "1px solid rgba(255,255,255,0.07)", display: "flex", flexDirection: "column", zIndex: 200 }}>
-        <div style={{ padding: "20px 16px", display: "flex", alignItems: "center", gap: "12px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-          <img src={dsgLogo} alt="DSG" style={{ width: "40px", height: "40px", borderRadius: "8px", filter: "drop-shadow(0 0 8px rgba(255,255,255,0.6))" }} />
-          <div>
-            <div style={{ fontSize: "15px", fontWeight: "800", color: "#eef0f7" }}>DumaSafeGuide</div>
-            <div style={{ fontSize: "10px", color: "#2ECC8F", marginTop: "2px", fontWeight: "600" }}>● CITIZEN</div>
-          </div>
-        </div>
-
-        <nav style={{ flex: 1, overflowY: "auto", padding: "8px 10px" }}>
-          <div style={{ fontSize: "10px", fontWeight: "700", color: "rgba(238,240,247,0.28)", letterSpacing: "0.14em", textTransform: "uppercase", padding: "12px 8px 6px" }}>Portal</div>
-          <Link to="/citizen/dashboard" style={NAV_LINK}><span>🏠</span> Overview</Link>
-
-          <div style={{ fontSize: "10px", fontWeight: "700", color: "rgba(238,240,247,0.28)", letterSpacing: "0.14em", textTransform: "uppercase", padding: "12px 8px 6px", marginTop: "8px" }}>Actions</div>
-          <Link to="/citizen/report"    style={NAV_LINK}><span>📝</span> File Report</Link>
-          <Link to="/citizen/history"   style={NAV_LINK}><span>📂</span> My Reports</Link>
-          <Link to="/citizen/alerts"    style={NAV_LINK}><span>🔔</span> Barangay Alerts</Link>
-          <Link to="/citizen/map"       style={NAV_LINK}><span>🗺️</span> Safety Map</Link>
-          <Link to="/citizen/safetytips" style={NAV_LINK}><span>💡</span> Safety Tips</Link>
-
-          <div style={{ fontSize: "10px", fontWeight: "700", color: "rgba(238,240,247,0.28)", letterSpacing: "0.14em", textTransform: "uppercase", padding: "12px 8px 6px", marginTop: "8px" }}>Info</div>
-          {/* Active state for directory */}
-          <Link to="/citizen/directory" style={{ ...NAV_LINK, backgroundColor: "rgba(74,144,217,0.12)", color: "#4A90D9", borderLeft: "2px solid #4A90D9", paddingLeft: "10px" }}><span>📋</span> Directory</Link>
-          <Link to="/citizen/resources" style={NAV_LINK}><span>📚</span> Resources</Link>
-        </nav>
-
-        <div style={{ padding: "12px 10px 16px", borderTop: "1px solid rgba(255,255,255,0.07)" }}>
-          <button onClick={handleLogout} style={{ display: "flex", alignItems: "center", gap: "8px", width: "100%", padding: "9px 12px", backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "8px", fontSize: "13px", fontWeight: "500", color: "rgba(238,240,247,0.55)", cursor: "pointer" }}>
-            🚪 Sign Out
-          </button>
-        </div>
-      </aside>
+      {/* Sidebar is provided by the persistent CitizenLayout — see src/citizen/CitizenLayout.tsx. */}
 
       {/* ── Main ── */}
-      <div style={{ marginLeft: "260px", padding: "28px 32px", minHeight: "100vh" }}>
+      <div style={{ padding: "28px 32px", minHeight: "100vh" }}>
 
         {/* Header */}
         <div style={{ marginBottom: "28px" }}>
-          <div style={{ fontSize: "10px", color: "#4A90D9", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "8px", fontWeight: "700" }}>● Emergency Directory</div>
-          <h1 style={{ fontSize: "34px", fontWeight: "900", color: "#eef0f7", marginBottom: "6px" }}>Emergency <span style={{ color: "#4A90D9" }}>Contacts</span></h1>
-          <p style={{ fontSize: "12px", color: "rgba(238,240,247,0.35)", letterSpacing: "0.06em" }}>DUMAGUETE CITY — ALL CRITICAL HOTLINES IN ONE PLACE</p>
+          <div style={{ fontSize: "10px", color: "#4A90D9", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "8px", fontWeight: "700" }}>● {t("directory.hero.line1")} <span style={{ color: "#4A90D9" }}>{t("directory.hero.line1Accent")}</span></div>
+          <h1 style={{ fontSize: "34px", fontWeight: "900", color: "#eef0f7", marginBottom: "6px" }}>{t("directory.hero.line2")} <span style={{ color: "#4A90D9" }}>{t("directory.hero.line2Accent")}</span></h1>
+          <p style={{ fontSize: "12px", color: "rgba(238,240,247,0.35)", letterSpacing: "0.06em" }}>{t("directory.hero.sub")}</p>
         </div>
 
         {/* 911 Banner */}
         <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", backgroundColor: "rgba(232,55,42,0.08)", border: "1px solid rgba(232,55,42,0.3)", borderRadius: "10px", padding: "14px 18px", marginBottom: "24px" }}>
-          <span style={{ fontSize: "11px", fontWeight: "700", color: "#ff8a80", letterSpacing: "0.12em" }}>🚨 UNIVERSAL EMERGENCY</span>
-          {[["911","All Emergencies"],["116","PNP Police"],["160","BFP Fire"],["0936 795 4163","CDRRMO"],["0905 518 6917","ONE Rescue"]].map(([num, lbl]) => (
+          <span style={{ fontSize: "11px", fontWeight: "700", color: "#ff8a80", letterSpacing: "0.12em" }}>{t("directory.banner.label")}</span>
+          {[
+            [t("directory.banner.allEmergencies"), "911"],
+            [t("directory.banner.pnpPolice"), "116"],
+            [t("directory.banner.bfpFire"), "160"],
+            [t("directory.banner.cdrrmo"), "0936 795 4163"],
+            [t("directory.banner.oneRescue"), "0905 518 6917"],
+          ].map(([lbl, num]) => (
             <a key={num} href={`tel:${cleanPhone(num)}`} style={{ display: "inline-flex", alignItems: "center", gap: "5px", backgroundColor: "rgba(232,55,42,0.1)", border: "1px solid rgba(232,55,42,0.3)", borderRadius: "20px", padding: "6px 13px", fontSize: "12px", fontWeight: "500", color: "#eef0f7", textDecoration: "none" }}>
               📞 {num} <span style={{ color: "rgba(238,240,247,0.4)", fontSize: "10px" }}>— {lbl}</span>
             </a>
@@ -174,25 +195,50 @@ export default function CitizenDirectory() {
 
         {/* Tabs */}
         <div style={{ display: "flex", gap: "6px", marginBottom: "20px" }}>
-          {(["emergency","hospitals","barangays"] as const).map(t => (
-            <button key={t} onClick={() => setTab(t)} style={{ padding: "8px 18px", borderRadius: "8px", fontSize: "11px", fontWeight: "700", letterSpacing: "0.10em", textTransform: "uppercase", cursor: "pointer", border: "1px solid", transition: "all 0.2s",
-              backgroundColor: tab === t ? "rgba(74,144,217,0.15)" : "rgba(255,255,255,0.03)",
-              color:           tab === t ? "#4A90D9"               : "rgba(238,240,247,0.35)",
-              borderColor:     tab === t ? "rgba(74,144,217,0.4)"  : "rgba(255,255,255,0.07)",
+          {(["emergency","hospitals","barangays"] as const).map((tabName) => (
+            <button key={tabName} onClick={() => setTab(tabName)} style={{ padding: "8px 18px", borderRadius: "8px", fontSize: "11px", fontWeight: "700", letterSpacing: "0.10em", textTransform: "uppercase", cursor: "pointer", border: "1px solid", transition: "all 0.2s",
+              backgroundColor: tab === tabName ? "rgba(74,144,217,0.15)" : "rgba(255,255,255,0.03)",
+              color:           tab === tabName ? "#4A90D9"               : "rgba(238,240,247,0.35)",
+              borderColor:     tab === tabName ? "rgba(74,144,217,0.4)"  : "rgba(255,255,255,0.07)",
             }}>
-              {t === "emergency" ? "🚨 Emergency" : t === "hospitals" ? "🏥 Hospitals" : "🏘️ Barangays"}
+              {tabName === "emergency" ? `🚨 ${t("directory.emergency.title")}` : tabName === "hospitals" ? `🏥 ${t("directory.hospitals.title")}` : `🏘️ ${t("directory.barangays.title")}`}
             </button>
           ))}
         </div>
 
         {/* ── Emergency Services Tab ── */}
         {tab === "emergency" && (
+          <>
+            {/* Category filter — includes "Emergency & Medical" (localized) so
+                users can filter straight to the Red Cross entry. */}
+            <div style={{ display: "flex", gap: "6px", marginBottom: "16px", flexWrap: "wrap" }}>
+              {emergencyCategories.map(c => (
+                <button
+                  key={c}
+                  onClick={() => setCatFilter(c)}
+                  style={{ padding: "6px 14px", borderRadius: "20px", fontSize: "11px", fontWeight: "500", letterSpacing: "0.07em", textTransform: "uppercase", cursor: "pointer", border: "1px solid", transition: "all 0.18s",
+                    backgroundColor: catFilter === c ? "rgba(74,144,217,0.15)" : "rgba(255,255,255,0.03)",
+                    color:           catFilter === c ? "#4A90D9"               : "rgba(238,240,247,0.35)",
+                    borderColor:     catFilter === c ? "rgba(74,144,217,0.4)"  : "rgba(255,255,255,0.07)",
+                  }}
+                >
+                  {categoryLabel(c)}
+                </button>
+              ))}
+            </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "12px" }}>
-            {emergency.map(item => (
+            {visibleEmergency.map((item) => {
+              const ei = emergency.indexOf(item);
+              const agencyName = item.translationKey ? t(`${item.translationKey}.name`, item.agency) : item.agency;
+              const agencyLabel = item.category ? t(`directory.categories.${item.category}`, item.label) : item.label;
+              const agencyNotes = item.translationKey
+                ? t(`${item.translationKey}.description`, item.notes ?? "")
+                : (language === "tl" ? (AGENCY_NOTES_TL[ei] ?? item.notes) : item.notes);
+              return (
               <div key={item.agency} style={{ backgroundColor: "rgba(15,21,33,0.82)", border: `1px solid rgba(255,255,255,0.07)`, borderTop: `2px solid ${item.accent}`, borderRadius: "14px", padding: "20px", transition: "all 0.2s" }}>
                 <div style={{ fontSize: "24px", marginBottom: "8px" }}>{item.icon}</div>
-                <div style={{ fontSize: "18px", fontWeight: "900", color: item.accent, marginBottom: "2px" }}>{item.agency}</div>
-                <div style={{ fontSize: "10px", color: "rgba(238,240,247,0.35)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "14px" }}>{item.label}</div>
+                <div style={{ fontSize: "18px", fontWeight: "900", color: item.accent, marginBottom: "2px" }}>{agencyName}</div>
+                <div style={{ fontSize: "10px", color: "rgba(238,240,247,0.35)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "14px" }}>{agencyLabel}</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "5px", marginBottom: "12px" }}>
                   {item.phones.map((p, i) => {
                     const isHotline = /^\d{2,3}$/.test(p.number.trim());
@@ -207,30 +253,33 @@ export default function CitizenDirectory() {
                     );
                   })}
                 </div>
-                {item.notes && <p style={{ fontSize: "11px", color: "rgba(238,240,247,0.28)", lineHeight: "1.5", marginBottom: "12px" }}>{item.notes}</p>}
+                {agencyNotes && <p style={{ fontSize: "11px", color: "rgba(238,240,247,0.28)", lineHeight: "1.5", marginBottom: "12px" }}>{agencyNotes}</p>}
+                {item.available && <p style={{ fontSize: "10px", fontWeight: "700", letterSpacing: "0.10em", color: "#2ECC8F", marginBottom: "12px" }}>🕒 {t(`directory.hours.${item.available}`, item.available)}</p>}
                 <div style={{ display: "flex", gap: "6px" }}>
                   <a href={`tel:${cleanPhone(item.phones[0].number)}`} style={{ flex: 1, textAlign: "center", padding: "8px", backgroundColor: `${item.accent}18`, border: `1px solid ${item.accent}55`, borderRadius: "8px", fontSize: "11px", fontWeight: "700", color: item.accent, textDecoration: "none" }}>
-                    📞 Call Now
+                    📞 {t("directory.actions.callNow")}
                   </a>
                   <button onClick={() => openMaps(`${item.agency} ${item.address}`)} style={{ padding: "8px 12px", backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "8px", fontSize: "11px", color: "rgba(238,240,247,0.35)", cursor: "pointer" }}>
-                    📍
+                    📍 {t("directory.actions.map")}
                   </button>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
+          </>
         )}
 
         {/* ── Hospitals Tab ── */}
         {tab === "hospitals" && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: "12px" }}>
-            {hospitals.map(h => {
-              const isGov = h.type.includes("Government");
+            {hospitals.map((h, hi) => {
+              const isGov = h.type.includes("Government") || h.type.includes("Gobyerno");
               return (
                 <div key={h.name} style={{ backgroundColor: "rgba(15,21,33,0.82)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "20px" }}>
                   <div style={{ display: "flex", gap: "8px", marginBottom: "12px", flexWrap: "wrap" }}>
                     <span style={{ fontSize: "9px", fontWeight: "700", letterSpacing: "0.12em", textTransform: "uppercase", color: isGov ? "#4A90D9" : "#2ECC8F", border: `1px solid ${isGov ? "rgba(74,144,217,0.3)" : "rgba(46,204,143,0.3)"}`, borderRadius: "4px", padding: "3px 7px" }}>
-                      {isGov ? "Government" : "Private"}
+                      {isGov ? t("directory.hospitals.government") : t("directory.hospitals.private")}
                     </span>
                     {h.beds && <span style={{ fontSize: "9px", color: "rgba(238,240,247,0.28)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "4px", padding: "3px 7px" }}>🛏 {h.beds}</span>}
                   </div>
@@ -244,10 +293,10 @@ export default function CitizenDirectory() {
                       </div>
                     ))}
                   </div>
-                  {h.notes && <p style={{ fontSize: "11px", color: "rgba(238,240,247,0.28)", lineHeight: "1.5", marginBottom: "12px" }}>{h.notes}</p>}
+                  {h.notes && <p style={{ fontSize: "11px", color: "rgba(238,240,247,0.28)", lineHeight: "1.5", marginBottom: "12px" }}>{language === "tl" ? (HOSPITAL_NOTES_TL[hi] ?? h.notes) : h.notes}</p>}
                   <div style={{ display: "flex", gap: "6px" }}>
-                    <a href={`tel:${cleanPhone(h.phones[0].number)}`} style={{ flex: 1, textAlign: "center", padding: "8px", backgroundColor: "rgba(74,144,217,0.1)", border: "1px solid rgba(74,144,217,0.3)", borderRadius: "8px", fontSize: "11px", fontWeight: "700", color: "#4A90D9", textDecoration: "none" }}>📞 Call</a>
-                    <button onClick={() => openMaps(`${h.name} Dumaguete`)} style={{ padding: "8px 12px", backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "8px", fontSize: "11px", color: "rgba(238,240,247,0.35)", cursor: "pointer" }}>📍</button>
+                    <a href={`tel:${cleanPhone(h.phones[0].number)}`} style={{ flex: 1, textAlign: "center", padding: "8px", backgroundColor: "rgba(74,144,217,0.1)", border: "1px solid rgba(74,144,217,0.3)", borderRadius: "8px", fontSize: "11px", fontWeight: "700", color: "#4A90D9", textDecoration: "none" }}>📞 {t("directory.actions.call")}</a>
+                    <button onClick={() => openMaps(`${h.name} Dumaguete`)} style={{ padding: "8px 12px", backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "8px", fontSize: "11px", color: "rgba(238,240,247,0.35)", cursor: "pointer" }}>📍 {t("directory.actions.map")}</button>
                   </div>
                 </div>
               );
@@ -264,40 +313,40 @@ export default function CitizenDirectory() {
                 type="text"
                 value={bgySearch}
                 onChange={e => setBgySearch(e.target.value)}
-                placeholder="Search barangay, hotline, or evacuation site…"
+                placeholder={t("directory.barangays.searchPlaceholder")}
                 style={{ width: "100%", backgroundColor: "rgba(8,12,20,0.9)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", padding: "11px 36px 11px 36px", fontSize: "13px", color: "#eef0f7", outline: "none", fontFamily: "inherit" }}
               />
               {bgySearch && (
-                <button onClick={() => setBgySearch("")} style={{ position: "absolute", right: "11px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "rgba(238,240,247,0.35)", fontSize: "18px", cursor: "pointer" }}>×</button>
+                <button onClick={() => setBgySearch("")} aria-label={language === "tl" ? "I-clear ang paghahanap" : "Clear search"} style={{ position: "absolute", right: "11px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "rgba(238,240,247,0.35)", fontSize: "18px", cursor: "pointer" }}>×</button>
               )}
             </div>
             <div style={{ display: "flex", gap: "8px", marginBottom: "16px", flexWrap: "wrap" }}>
               {[
-                { label: `${barangays.filter(b => b.hotline).length} with hotlines`,        color: "#4A90D9" },
-                { label: `${barangays.filter(b => b.evacuation).length} with evacuation`,   color: "#2ECC8F" },
-                { label: `${barangays.filter(b => !b.hotline).length} no direct hotline`,   color: "rgba(238,240,247,0.28)" },
+                { label: `${barangays.filter(b => b.hotline).length} ${t("directory.barangays.withHotlines")}`,        color: "#4A90D9" },
+                { label: `${barangays.filter(b => b.evacuation).length} ${t("directory.barangays.withEvac")}`,   color: "#2ECC8F" },
+                { label: `${barangays.filter(b => !b.hotline).length} ${t("directory.barangays.noHotline")}`,   color: "rgba(238,240,247,0.28)" },
               ].map(s => (
                 <span key={s.label} style={{ fontSize: "11px", color: s.color, backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "6px", padding: "4px 10px" }}>{s.label}</span>
               ))}
             </div>
             {filtered.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "48px", color: "rgba(238,240,247,0.28)", fontSize: "13px" }}>No barangay matches your search.</div>
+              <div style={{ textAlign: "center", padding: "48px", color: "rgba(238,240,247,0.28)", fontSize: "13px" }}>{t("directory.barangays.emptyText")}</div>
             ) : (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "10px" }}>
                 {filtered.map(b => (
                   <div key={b.name} style={{ backgroundColor: "rgba(15,21,33,0.82)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "14px" }}>
                     <div style={{ fontSize: "13px", fontWeight: "800", color: "#eef0f7", marginBottom: "8px" }}>{b.name}</div>
                     <div style={{ display: "flex", gap: "4px", marginBottom: "8px", flexWrap: "wrap" }}>
-                      {b.hotline    && <span style={{ fontSize: "8px", fontWeight: "700", letterSpacing: "0.10em", color: "#4A90D9", border: "1px solid rgba(74,144,217,0.25)", borderRadius: "3px", padding: "2px 6px" }}>📞 HOTLINE</span>}
-                      {b.evacuation && <span style={{ fontSize: "8px", fontWeight: "700", letterSpacing: "0.10em", color: "#2ECC8F", border: "1px solid rgba(46,204,143,0.25)", borderRadius: "3px", padding: "2px 6px" }}>🏫 EVAC</span>}
-                      {!b.hotline && !b.evacuation && <span style={{ fontSize: "8px", color: "rgba(238,240,247,0.28)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "3px", padding: "2px 6px" }}>NO DIRECT HOTLINE</span>}
+                      {b.hotline    && <span style={{ fontSize: "8px", fontWeight: "700", letterSpacing: "0.10em", color: "#4A90D9", border: "1px solid rgba(74,144,217,0.25)", borderRadius: "3px", padding: "2px 6px" }}>📞 {t("directory.barangays.hotlineBadge")}</span>}
+                      {b.evacuation && <span style={{ fontSize: "8px", fontWeight: "700", letterSpacing: "0.10em", color: "#2ECC8F", border: "1px solid rgba(46,204,143,0.25)", borderRadius: "3px", padding: "2px 6px" }}>🏫 {t("directory.barangays.evacBadge")}</span>}
+                      {!b.hotline && !b.evacuation && <span style={{ fontSize: "8px", color: "rgba(238,240,247,0.28)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "3px", padding: "2px 6px" }}>{t("directory.barangays.tbdBadge")}</span>}
                     </div>
                     {b.hotline
                       ? <a href={`tel:${cleanPhone(b.hotline.split("/")[0].trim())}`} style={{ fontSize: "12px", fontWeight: "600", color: "#4A90D9", textDecoration: "none", display: "block", marginBottom: "5px" }}>{b.hotline}</a>
-                      : <p style={{ fontSize: "11px", color: "rgba(238,240,247,0.28)", marginBottom: "5px" }}>Call <a href="tel:911" style={{ color: "#ff8a80", textDecoration: "none" }}>911</a> or <a href="tel:09367954163" style={{ color: "#4A90D9", textDecoration: "none" }}>CDRRMO</a></p>
+                      : <p style={{ fontSize: "11px", color: "rgba(238,240,247,0.28)", marginBottom: "5px" }}>{t("directory.barangays.noDirectPrefix")} <a href="tel:911" style={{ color: "#ff8a80", textDecoration: "none" }}>911</a> {t("directory.barangays.orCdrrmo")} <a href="tel:09367954163" style={{ color: "#4A90D9", textDecoration: "none" }}>CDRRMO</a></p>
                     }
                     {b.evacuation && <p style={{ fontSize: "10px", color: "rgba(238,240,247,0.35)", lineHeight: "1.4", marginBottom: "8px" }}>🏫 {b.evacuation}</p>}
-                    <button onClick={() => openMaps(`${b.name} Barangay Dumaguete City`)} style={{ fontSize: "10px", fontWeight: "600", color: "rgba(238,240,247,0.35)", background: "none", border: "none", cursor: "pointer", padding: 0 }}>Navigate →</button>
+                    <button onClick={() => openMaps(`${b.name} Barangay Dumaguete City`)} style={{ fontSize: "10px", fontWeight: "600", color: "rgba(238,240,247,0.35)", background: "none", border: "none", cursor: "pointer", padding: 0 }}>{t("directory.barangays.navigate")} →</button>
                   </div>
                 ))}
               </div>

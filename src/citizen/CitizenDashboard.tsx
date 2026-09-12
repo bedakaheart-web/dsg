@@ -1,19 +1,20 @@
 // src/citizen/CitizenDashboard.tsx
-// ✅ Dark cinematic theme — matches CitizenAlertsPage design language
-// ✅ MOBILE RESPONSIVE: bottom nav on mobile, sidebar on desktop
-
 import { useEffect, useState } from "react";
+import { useLanguage } from "../context/LanguageContext";
 import { supabase } from "../js/supabase";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  FaFileAlt, FaMapMarkedAlt, FaHistory, FaLightbulb,
+  FaFileAlt,
   FaCheckCircle, FaClock, FaSpinner, FaExclamationTriangle,
-  FaBell, FaBars, FaTimes, FaSignOutAlt, FaInfoCircle,
+  FaTimes, FaInfoCircle,
 } from "react-icons/fa";
-import dsgLogo from "../assets/dsg.logo.png";
 import pagesBackground from "../assets/pagesbackground.png";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+import CitizenSafetyTips from "./CitizenSafetyTips";
+import CitizenAlertsPage from "./CitizenAlertsPage";
+import CitizenReport from "./CitizenReport";
+import CitizenReportDetail from "./CitizenReportDetail";
+import CitizenMap from "./CitizenMap";
 
 interface Report {
   id: string;
@@ -37,7 +38,7 @@ interface User {
   user_metadata?: { full_name?: string };
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+type ModalView = null | "safetytips" | "alerts" | "report" | "reportdetail" | "map";
 
 const ALERTS_READ_KEY = "cd_alerts_last_read";
 
@@ -65,8 +66,6 @@ const ALERT_TYPE_META: Record<string, { color: string; bg: string; border: strin
 
 const TYPE_LIST = ["fire", "flood", "medical", "crime", "accident", "other"];
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
 function getUnreadCount(alerts: Alert[]): number {
   try {
     const lastRead = localStorage.getItem(ALERTS_READ_KEY);
@@ -78,8 +77,6 @@ function getUnreadCount(alerts: Alert[]): number {
 function markAlertsRead() {
   try { localStorage.setItem(ALERTS_READ_KEY, new Date().toISOString()); } catch {}
 }
-
-// ─── Clock hook ───────────────────────────────────────────────────────────────
 
 function usePHTClock() {
   const [time, setTime] = useState("");
@@ -96,16 +93,6 @@ function usePHTClock() {
   return time;
 }
 
-function formatRelative(ts: string) {
-  const diff = Math.floor((Date.now() - new Date(ts).getTime()) / 1000);
-  if (diff < 60)    return `${diff}s ago`;
-  if (diff < 3600)  return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return new Date(ts).toLocaleDateString("en-PH", { month: "short", day: "numeric" });
-}
-
-// ─── useIsMobile hook ─────────────────────────────────────────────────────────
-
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   useEffect(() => {
@@ -116,12 +103,33 @@ function useIsMobile() {
   return isMobile;
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
-
 export default function CitizenDashboard() {
+  // Consumes the active Navbar/Header language — any selector change re-renders
+  // this component and re-evaluates every t() call and language-aware helper below.
+  const { language, t, tList } = useLanguage();
+  void tList;
+  const locale = language === "tl" ? "fil-PH" : "en-PH";
   const navigate = useNavigate();
   const clock = usePHTClock();
   const isMobile = useIsMobile();
+
+  // Language-aware status-pill text (status.* in the dictionary, English fallback).
+  const statusLabel = (s: string) =>
+    t(`status.${s === "in-progress" ? "inProgress" : s}`, STATUS_META[s]?.label ?? s);
+  // Language-aware alert-level badge text.
+  const levelLabel = (level: string) =>
+    t(`alerts.levels.${level}`, ALERT_TYPE_META[level]?.label ?? level);
+  // Language-aware report-type name (report.types.* in the dictionary).
+  const typeLabel = (type: string | undefined) =>
+    t(`report.types.${type?.toLowerCase()}`, type ?? "");
+  // Language-aware relative timestamp — computed every render, never cached.
+  const formatRelativeLocal = (ts: string) => {
+    const diff = Math.floor((Date.now() - new Date(ts).getTime()) / 1000);
+    if (diff < 60)    return t("timeAgo.second", "{n}s ago").replace("{n}", String(diff));
+    if (diff < 3600)  return t("timeAgo.minute", "{n}m ago").replace("{n}", String(Math.floor(diff / 60)));
+    if (diff < 86400) return t("timeAgo.hour", "{n}h ago").replace("{n}", String(Math.floor(diff / 3600)));
+    return new Date(ts).toLocaleDateString(locale, { month: "short", day: "numeric" });
+  };
 
   const [reports,     setReports]     = useState<Report[]>([]);
   const [alerts,      setAlerts]      = useState<Alert[]>([]);
@@ -129,7 +137,9 @@ export default function CitizenDashboard() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [user,        setUser]        = useState<User | null>(null);
   const [loading,     setLoading]     = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const [modalView, setModalView] = useState<ModalView>(null);
+  const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
 
   useEffect(() => {
     setUnreadCount(getUnreadCount(alerts));
@@ -207,15 +217,19 @@ export default function CitizenDashboard() {
   }, []);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setSidebarOpen(false); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setModalView(null);
+      }
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
   useEffect(() => {
-    document.body.style.overflow = sidebarOpen ? "hidden" : "";
+    document.body.style.overflow = modalView ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
-  }, [sidebarOpen]);
+  }, [modalView]);
 
   const stats = {
     total:      reports.length,
@@ -224,166 +238,86 @@ export default function CitizenDashboard() {
     resolved:   reports.filter(r => r.status === "resolved").length,
   };
 
-  const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Citizen";
+  // Split on the {count} placeholder instead of English words so the <strong>
+  // emphasis works in every language (Tagalog word order differs from English).
+  const pendingParts = t("dashboard.pendingReports", "You have {count} report(s) awaiting review.").split("{count}");
+  const pendingHtml = `${pendingParts[0] ?? ""}<strong>${stats.pending}</strong>${pendingParts[1] ?? ""}`;
+
+  const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || t("history.citizen", "Citizen");
   const firstName   = displayName.split(" ")[0];
-  const initials    = displayName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
 
   const statCards = [
-    { label: "Total Filed",  value: stats.total,      accent: "#4A90E2", icon: <FaFileAlt />,            },
-    { label: "Pending",      value: stats.pending,    accent: "#EF5B5B", icon: <FaExclamationTriangle />, },
-    { label: "In Progress",  value: stats.inProgress, accent: "#F5C842", icon: <FaSpinner />,             },
-    { label: "Resolved",     value: stats.resolved,   accent: "#2ECC8F", icon: <FaCheckCircle />,         },
+    { label: t("dashboard.statTotalFiled"),  value: stats.total,      accent: "#4A90E2", icon: <FaFileAlt />,            },
+    { label: t("dashboard.statPending"),      value: stats.pending,    accent: "#EF5B5B", icon: <FaExclamationTriangle />, },
+    { label: t("dashboard.statInProgress"),  value: stats.inProgress, accent: "#F5C842", icon: <FaSpinner />,             },
+    { label: t("dashboard.statResolved"),     value: stats.resolved,   accent: "#2ECC8F", icon: <FaCheckCircle />,         },
   ];
 
   const quickActions = [
-    { label: "File Report", icon: "📝", to: "/citizen/report"    },
-    { label: "Safety Map",  icon: "🗺️",  to: "/citizen/map"       },
-    { label: "My Reports",  icon: "📂", to: "/citizen/history"   },
-    { label: "Safety Tips", icon: "💡", to: "/citizen/safetytips"},
+    { label: t("dashboard.quickActionFileReport"), icon: "📝", modal: "report" as const },
+    { label: t("dashboard.quickActionSafetyMap"),  icon: "🗺️",  modal: "map" as const },
+    { label: t("dashboard.quickActionMyReports"),  icon: "📂", to: "/citizen/history"   },
+    { label: t("dashboard.quickActionSafetyTips"), icon: "💡", modal: "safetytips" as const },
   ];
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/login", { replace: true });
-  };
 
   const handleViewAllAlerts = () => {
     markAlertsRead();
     setUnreadCount(0);
-    navigate("/citizen/alerts");
+    setModalView("alerts");
   };
 
-  // ─── Sidebar Nav Content (shared between mobile drawer & desktop sidebar) ───
-  const SidebarNav = () => (
-    <>
-      <div style={{ padding: "20px 16px", display: "flex", alignItems: "center", gap: "12px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-        <img src={dsgLogo} alt="DSG" style={{ width: "40px", height: "40px", borderRadius: "8px" }} />
-        <div>
-          <div style={{ fontSize: "15px", fontWeight: "800", color: "#eef0f7" }}>DumaSafeGuide</div>
-          <div style={{ fontSize: "10px", color: "#2ECC8F", marginTop: "2px", fontWeight: "600" }}>● CITIZEN</div>
-        </div>
-        {isMobile && (
-          <button onClick={() => setSidebarOpen(false)} style={{ marginLeft: "auto", background: "none", border: "none", color: "rgba(238,240,247,0.5)", cursor: "pointer", fontSize: "18px", padding: "4px" }}>
-            <FaTimes />
-          </button>
-        )}
-      </div>
+  const openSafetyTips = () => {
+    setModalView("safetytips");
+  };
 
-      <nav style={{ flex: 1, overflowY: "auto", padding: "8px 10px" }}>
-        <div style={{ fontSize: "10px", fontWeight: "700", color: "rgba(238,240,247,0.28)", letterSpacing: "0.14em", textTransform: "uppercase", padding: "12px 8px 6px" }}>Portal</div>
+  const openAlerts = () => {
+    markAlertsRead();
+    setUnreadCount(0);
+    setModalView("alerts");
+  };
 
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 12px", borderRadius: "8px", fontSize: "13px", fontWeight: "500", color: "#2ECC8F", backgroundColor: "rgba(46,204,143,0.10)", borderLeft: "2px solid #2ECC8F", cursor: "default", marginBottom: "2px" }}>
-          <span>🏠</span> Overview
-        </div>
+  const openFileReport = () => {
+    setModalView("report");
+  };
 
-        <div style={{ fontSize: "10px", fontWeight: "700", color: "rgba(238,240,247,0.28)", letterSpacing: "0.14em", textTransform: "uppercase", padding: "12px 8px 6px", marginTop: "8px" }}>Actions</div>
+  const openReportDetail = (id: string) => {
+    setSelectedReportId(id);
+    setModalView("reportdetail");
+  };
 
-        {[
-          { to: "/citizen/report",     icon: "📝", label: "File Report" },
-          { to: "/citizen/history",    icon: "📂", label: `My Reports (${stats.total})` },
-          { to: "/citizen/alerts",     icon: "🔔", label: "Barangay Alerts", badge: unreadCount },
-          { to: "/citizen/map",        icon: "🗺️",  label: "Safety Map" },
-          { to: "/citizen/safetytips", icon: "💡", label: "Safety Tips" },
-        ].map(item => (
-          <Link key={item.to} to={item.to} onClick={() => setSidebarOpen(false)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 12px", borderRadius: "8px", fontSize: "13px", fontWeight: "500", color: "rgba(238,240,247,0.55)", textDecoration: "none", marginBottom: "2px" }}>
-            <span>{item.icon}</span>
-            {item.label}
-            {item.badge && item.badge > 0 && (
-              <span style={{ fontSize: "10px", backgroundColor: "#EF5B5B", color: "#fff", borderRadius: "10px", padding: "1px 6px", fontWeight: "700", marginLeft: "auto" }}>{item.badge}</span>
-            )}
-          </Link>
-        ))}
-
-        <div style={{ fontSize: "10px", fontWeight: "700", color: "rgba(238,240,247,0.28)", letterSpacing: "0.14em", textTransform: "uppercase", padding: "12px 8px 6px", marginTop: "8px" }}>Info</div>
-
-        {[
-          { to: "/citizen/directory", icon: "📋", label: "Directory" },
-          { to: "/citizen/resources", icon: "📚", label: "Resources" },
-        ].map(item => (
-          <Link key={item.to} to={item.to} onClick={() => setSidebarOpen(false)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 12px", borderRadius: "8px", fontSize: "13px", fontWeight: "500", color: "rgba(238,240,247,0.55)", textDecoration: "none", marginBottom: "2px" }}>
-            <span>{item.icon}</span> {item.label}
-          </Link>
-        ))}
-      </nav>
-
-      <div style={{ padding: "12px 10px 16px", borderTop: "1px solid rgba(255,255,255,0.07)" }}>
-        <button onClick={handleLogout} style={{ display: "flex", alignItems: "center", gap: "8px", width: "100%", padding: "9px 12px", backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "8px", fontSize: "13px", fontWeight: "500", color: "rgba(238,240,247,0.55)", cursor: "pointer" }}>
-          🚪 Sign Out
-        </button>
-      </div>
-    </>
-  );
+  const openMap = () => {
+    setModalView("map");
+  };
 
   return (
     <div style={{ minHeight: "100vh", backgroundImage: `linear-gradient(rgba(8,12,20,0.93), rgba(8,12,20,0.93)), url(${pagesBackground})`, backgroundSize: "cover", backgroundPosition: "center", backgroundAttachment: "fixed", backgroundRepeat: "no-repeat", backgroundColor: "#080c14", color: "#eef0f7", fontFamily: "'Instrument Sans', sans-serif" }}>
 
-      {/* ── DESKTOP SIDEBAR (hidden on mobile) ── */}
-      {!isMobile && (
-        <aside style={{ position: "fixed", left: 0, top: 0, width: "260px", height: "100vh", backgroundColor: "rgba(8,12,20,0.95)", borderRight: "1px solid rgba(255,255,255,0.10)", display: "flex", flexDirection: "column", zIndex: 200 }}>
-          <SidebarNav />
-        </aside>
-      )}
+      {/* Sidebar + mobile nav are provided by the persistent CitizenLayout. */}
 
-      {/* ── MOBILE DRAWER ── */}
-      {isMobile && sidebarOpen && (
-        <>
-          {/* Backdrop */}
-          <div onClick={() => setSidebarOpen(false)} style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.6)", zIndex: 299, backdropFilter: "blur(2px)" }} />
-          {/* Drawer */}
-          <aside style={{ position: "fixed", left: 0, top: 0, width: "280px", height: "100vh", backgroundColor: "rgba(8,12,20,0.98)", borderRight: "1px solid rgba(255,255,255,0.10)", display: "flex", flexDirection: "column", zIndex: 300, animation: "slideIn 0.22s ease" }}>
-            <SidebarNav />
-          </aside>
-          <style>{`@keyframes slideIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }`}</style>
-        </>
-      )}
-
-      {/* ── MOBILE TOP BAR ── */}
-      {isMobile && (
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: "56px", backgroundColor: "rgba(8,12,20,0.97)", borderBottom: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", zIndex: 100 }}>
-          <button onClick={() => setSidebarOpen(true)} style={{ background: "none", border: "none", color: "#eef0f7", cursor: "pointer", fontSize: "18px", padding: "4px", display: "flex", alignItems: "center" }}>
-            <FaBars />
-          </button>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <img src={dsgLogo} alt="DSG" style={{ width: "28px", height: "28px", borderRadius: "6px" }} />
-            <span style={{ fontSize: "14px", fontWeight: "800", color: "#eef0f7" }}>DumaSafeGuide</span>
-          </div>
-          <Link to="/citizen/alerts" style={{ position: "relative", color: "rgba(238,240,247,0.7)", textDecoration: "none", fontSize: "18px" }}>
-            <FaBell />
-            {unreadCount > 0 && (
-              <span style={{ position: "absolute", top: "-4px", right: "-4px", width: "16px", height: "16px", backgroundColor: "#EF5B5B", borderRadius: "50%", fontSize: "9px", fontWeight: "700", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>{unreadCount}</span>
-            )}
-          </Link>
-        </div>
-      )}
-
-      {/* ── MAIN CONTENT ── */}
       <div style={{
-        marginLeft: isMobile ? 0 : "260px",
-        padding: isMobile ? "72px 16px 90px" : "24px",
+        padding: isMobile ? "16px 16px 90px" : "24px",
         minHeight: "100vh",
       }}>
 
-        {/* Header */}
         <div style={{ marginBottom: "20px" }}>
-          <div style={{ fontSize: "10px", color: "#2ECC8F", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "6px", fontWeight: "700" }}>● Citizen Portal</div>
+          <div style={{ fontSize: "10px", color: "#2ECC8F", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "6px", fontWeight: "700" }}>{t("dashboard.portalLabel")}</div>
           <h1 style={{ fontSize: isMobile ? "28px" : "38px", fontWeight: "900", marginBottom: "4px", color: "#eef0f7" }}>
-            Welcome, <span style={{ color: "#2ECC8F" }}>{firstName}.</span>
+            {t("dashboard.welcomeTitle").replace("{name}", firstName)}
           </h1>
-          <p style={{ fontSize: "10px", color: "rgba(238,240,247,0.28)", letterSpacing: "0.12em" }}>DUMAGUETE CITY COMMUNITY SAFETY</p>
+          <p style={{ fontSize: "10px", color: "rgba(238,240,247,0.28)", letterSpacing: "0.12em" }}>{t("dashboard.dumagueteCity")}</p>
         </div>
 
-        {/* Pending banner */}
         {stats.pending > 0 && (
           <div style={{ display: "flex", alignItems: "center", gap: "12px", backgroundColor: "rgba(245,200,66,0.06)", border: "1px solid rgba(245,200,66,0.2)", borderLeft: "3px solid #F5C842", borderRadius: "8px", padding: "12px 14px", marginBottom: "20px", flexWrap: "wrap" }}>
             <span style={{ color: "#F5C842" }}>⚠️</span>
-            <span style={{ fontSize: "13px", color: "rgba(238,240,247,0.55)", flex: 1, minWidth: "120px" }}>
-              You have <strong>{stats.pending}</strong> pending report{stats.pending !== 1 ? "s" : ""} awaiting review.
-            </span>
-            <Link to="/citizen/history" style={{ fontSize: "11px", fontWeight: "700", color: "#F5C842", textDecoration: "none", border: "1px solid rgba(245,200,66,0.3)", borderRadius: "6px", padding: "5px 12px" }}>View</Link>
+            <span
+              style={{ fontSize: "13px", color: "rgba(238,240,247,0.55)", flex: 1, minWidth: "120px" }}
+              dangerouslySetInnerHTML={{ __html: pendingHtml }}
+            />
+            <Link to="/citizen/history" style={{ fontSize: "11px", fontWeight: "700", color: "#F5C842", textDecoration: "none", border: "1px solid rgba(245,200,66,0.3)", borderRadius: "6px", padding: "5px 12px" }}>{t("dashboard.view")}</Link>
           </div>
         )}
 
-        {/* Stats Grid — 2 cols on mobile, 4 on desktop */}
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)", gap: "10px", marginBottom: "16px" }}>
           {statCards.map(c => (
             <div key={c.label} style={{ backgroundColor: "rgba(15,21,33,0.82)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: isMobile ? "14px" : "20px", borderTop: `2px solid ${c.accent}` }}>
@@ -394,39 +328,53 @@ export default function CitizenDashboard() {
           ))}
         </div>
 
-        {/* Quick Actions — 2x2 grid */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "20px" }}>
-          {quickActions.map(q => (
-            <Link key={q.to} to={q.to} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "12px", backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", fontSize: "12px", fontWeight: "600", color: "rgba(238,240,247,0.65)", textDecoration: "none" }}>
-              <span style={{ fontSize: "18px" }}>{q.icon}</span>
-              {q.label}
-            </Link>
-          ))}
+          {quickActions.map(q =>
+            "modal" in q && q.modal ? (
+              <button
+                key={q.label}
+                onClick={() => setModalView(q.modal)}
+                style={{ display: "flex", alignItems: "center", gap: "8px", padding: "12px", backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", fontSize: "12px", fontWeight: "600", color: "rgba(238,240,247,0.65)", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}
+              >
+                <span style={{ fontSize: "18px" }}>{q.icon}</span>
+                {q.label}
+              </button>
+            ) : (
+              <Link key={q.to} to={q.to as string} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "12px", backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", fontSize: "12px", fontWeight: "600", color: "rgba(238,240,247,0.65)", textDecoration: "none" }}>
+                <span style={{ fontSize: "18px" }}>{q.icon}</span>
+                {q.label}
+              </Link>
+            )
+          )}
         </div>
 
-        {/* Recent Reports */}
         <div style={{ backgroundColor: "rgba(15,21,33,0.82)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "16px", marginBottom: "16px" }}>
-          <h2 style={{ fontSize: "10px", color: "rgba(238,240,247,0.28)", letterSpacing: "0.14em", textTransform: "uppercase", fontWeight: "700", marginBottom: "14px" }}>My Recent Reports</h2>
+          <h2 style={{ fontSize: "10px", color: "rgba(238,240,247,0.28)", letterSpacing: "0.14em", textTransform: "uppercase", fontWeight: "700", marginBottom: "14px" }}>{t("dashboard.recentReportsTitle")}</h2>
           {reports.length === 0 ? (
             <div style={{ textAlign: "center", padding: "32px 16px", fontSize: "11px", color: "rgba(238,240,247,0.28)" }}>
-              <p>NO REPORTS YET</p>
-              <Link to="/citizen/report" style={{ marginTop: "10px", fontSize: "11px", fontWeight: "700", color: "#2ECC8F", textDecoration: "none", display: "inline-block" }}>📝 File a Report</Link>
+              <p>{t("dashboard.noReportsYet")}</p>
+              <button
+                onClick={openFileReport}
+                style={{ marginTop: "10px", fontSize: "11px", fontWeight: "700", color: "#2ECC8F", background: "none", border: "none", cursor: "pointer", display: "inline-block", fontFamily: "inherit" }}
+              >
+                {t("dashboard.fileAReport")}
+              </button>
             </div>
           ) : (
             reports.slice(0, 6).map(r => (
-              <div key={r.id} style={{ padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.06)", cursor: "pointer" }} onClick={() => navigate(`/citizen/history/${r.id}`)}>
+              <div key={r.id} style={{ padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.06)", cursor: "pointer" }} onClick={() => openReportDetail(r.id)}>
                 <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
                   <div style={{ width: "34px", height: "34px", minWidth: "34px", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
                     {TYPE_META[r.type?.toLowerCase()]?.icon || "⚠️"}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: "13px", fontWeight: "700", textTransform: "capitalize", marginBottom: "2px", color: TYPE_META[r.type?.toLowerCase()]?.color || "rgba(238,240,247,0.4)" }}>{r.type}</div>
-                    <div style={{ fontSize: "11px", color: "rgba(238,240,247,0.45)", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", marginBottom: "5px" }}>{r.description || "No description"}</div>
+                    <div style={{ fontSize: "13px", fontWeight: "700", textTransform: "capitalize", marginBottom: "2px", color: TYPE_META[r.type?.toLowerCase()]?.color || "rgba(238,240,247,0.4)" }}>{typeLabel(r.type)}</div>
+                    <div style={{ fontSize: "11px", color: "rgba(238,240,247,0.45)", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", marginBottom: "5px" }}>{r.description || t("reportDetail.noDescription", "No description")}</div>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                       <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "9px", padding: "2px 7px", borderRadius: "5px", border: "1px solid", backgroundColor: STATUS_META[r.status]?.bg, color: STATUS_META[r.status]?.color, borderColor: STATUS_META[r.status]?.border, fontWeight: "700" }}>
-                        ● {STATUS_META[r.status]?.label}
+                        ● {statusLabel(r.status)}
                       </span>
-                      <span style={{ fontSize: "10px", color: "rgba(238,240,247,0.28)", fontFamily: "monospace" }}>🕐 {formatRelative(r.created_at)}</span>
+                      <span style={{ fontSize: "10px", color: "rgba(238,240,247,0.28)", fontFamily: "monospace" }}>🕐 {formatRelativeLocal(r.created_at)}</span>
                     </div>
                   </div>
                 </div>
@@ -435,13 +383,12 @@ export default function CitizenDashboard() {
           )}
         </div>
 
-        {/* Alerts */}
         <div style={{ backgroundColor: "rgba(15,21,33,0.82)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "16px" }}>
-          <h2 style={{ fontSize: "10px", color: "rgba(238,240,247,0.28)", letterSpacing: "0.14em", textTransform: "uppercase", fontWeight: "700", marginBottom: "14px" }}>Barangay Alerts 🔴 LIVE</h2>
+          <h2 style={{ fontSize: "10px", color: "rgba(238,240,247,0.28)", letterSpacing: "0.14em", textTransform: "uppercase", fontWeight: "700", marginBottom: "14px" }}>{t("dashboard.alertsTitle")}</h2>
           {alerts.length === 0 ? (
             <div style={{ textAlign: "center", padding: "32px 16px", fontSize: "11px", color: "rgba(238,240,247,0.28)" }}>
-              <p>🔔 NO ACTIVE ALERTS</p>
-              <p style={{ fontSize: "10px", marginTop: "8px" }}>Updates automatically in real-time.</p>
+              <p>{t("dashboard.noActiveAlerts")}</p>
+              <p style={{ fontSize: "10px", marginTop: "8px" }}>{t("dashboard.updatesAutomatically")}</p>
             </div>
           ) : (
             <>
@@ -452,11 +399,11 @@ export default function CitizenDashboard() {
                     <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
                       <div style={{ width: "34px", height: "34px", minWidth: "34px", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", backgroundColor: am.bg, color: am.color, border: `1px solid ${am.border}` }}>{am.icon}</div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: "13px", fontWeight: "700", marginBottom: "2px", color: am.color }}>{a.title || "Alert"}</div>
+                        <div style={{ fontSize: "13px", fontWeight: "700", marginBottom: "2px", color: am.color }}>{a.title || t("alerts.alert")}</div>
                         <div style={{ fontSize: "11px", color: "rgba(238,240,247,0.45)", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", marginBottom: "5px" }}>{a.message}</div>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                          <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "9px", padding: "2px 7px", borderRadius: "5px", border: `1px solid ${am.border}`, backgroundColor: am.bg, color: am.color, fontWeight: "700" }}>● {am.label}</span>
-                          <span style={{ fontSize: "10px", color: "rgba(238,240,247,0.28)", fontFamily: "monospace", marginLeft: "auto" }}>🕐 {formatRelative(a.created_at)}</span>
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "9px", padding: "2px 7px", borderRadius: "5px", border: `1px solid ${am.border}`, backgroundColor: am.bg, color: am.color, fontWeight: "700" }}>● {levelLabel(a.type)}</span>
+                          <span style={{ fontSize: "10px", color: "rgba(238,240,247,0.28)", fontFamily: "monospace", marginLeft: "auto" }}>🕐 {formatRelativeLocal(a.created_at)}</span>
                         </div>
                       </div>
                     </div>
@@ -464,32 +411,104 @@ export default function CitizenDashboard() {
                 );
               })}
               <button onClick={handleViewAllAlerts} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", marginTop: "12px", fontSize: "11px", fontWeight: "700", color: "#F5C842", border: "1px solid rgba(245,200,66,0.25)", borderRadius: "8px", padding: "8px 16px", backgroundColor: "rgba(245,200,66,0.04)", width: "100%", cursor: "pointer" }}>
-                View all alerts →
+                {t("dashboard.viewAllAlerts")}
               </button>
             </>
           )}
         </div>
       </div>
 
-      {/* ── MOBILE BOTTOM NAV ── */}
       {isMobile && (
         <nav style={{ position: "fixed", bottom: 0, left: 0, right: 0, height: "64px", backgroundColor: "rgba(8,12,20,0.97)", borderTop: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "space-around", zIndex: 100, paddingBottom: "env(safe-area-inset-bottom)" }}>
-          {[
-            { to: "/citizen/report",   icon: "📝", label: "Report"  },
-            { to: "/citizen/history",  icon: "📂", label: "History" },
-            { to: "/citizen/alerts",   icon: "🔔", label: "Alerts", badge: unreadCount },
-            { to: "/citizen/map",      icon: "🗺️",  label: "Map"     },
-            { to: "/citizen/safetytips", icon: "💡", label: "Tips"  },
-          ].map(item => (
-            <Link key={item.to} to={item.to} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", textDecoration: "none", position: "relative", flex: 1 }}>
-              <span style={{ fontSize: "20px", lineHeight: 1 }}>{item.icon}</span>
-              <span style={{ fontSize: "9px", color: "rgba(238,240,247,0.4)", fontWeight: "600", letterSpacing: "0.04em" }}>{item.label}</span>
-              {item.badge && item.badge > 0 && (
-                <span style={{ position: "absolute", top: "-2px", right: "calc(50% - 18px)", width: "15px", height: "15px", backgroundColor: "#EF5B5B", borderRadius: "50%", fontSize: "8px", fontWeight: "700", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>{item.badge}</span>
-              )}
-            </Link>
-          ))}
+          <button onClick={openFileReport} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", background: "none", border: "none", flex: 1, fontFamily: "inherit" }}>
+            <span style={{ fontSize: "20px", lineHeight: 1 }}>📝</span>
+            <span style={{ fontSize: "9px", color: "rgba(238,240,247,0.4)", fontWeight: "600", letterSpacing: "0.04em" }}>{t("dashboard.bottomNavReport")}</span>
+          </button>
+          <Link to="/citizen/history" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", textDecoration: "none", flex: 1 }}>
+            <span style={{ fontSize: "20px", lineHeight: 1 }}>📂</span>
+            <span style={{ fontSize: "9px", color: "rgba(238,240,247,0.4)", fontWeight: "600", letterSpacing: "0.04em" }}>{t("dashboard.bottomNavHistory")}</span>
+          </Link>
+          <button onClick={openAlerts} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", background: "none", border: "none", position: "relative", flex: 1, fontFamily: "inherit" }}>
+            <span style={{ fontSize: "20px", lineHeight: 1 }}>🔔</span>
+            <span style={{ fontSize: "9px", color: "rgba(238,240,247,0.4)", fontWeight: "600", letterSpacing: "0.04em" }}>{t("nav.alerts")}</span>
+            {unreadCount > 0 && (
+              <span style={{ position: "absolute", top: "-2px", right: "calc(50% - 18px)", width: "15px", height: "15px", backgroundColor: "#EF5B5B", borderRadius: "50%", fontSize: "8px", fontWeight: "700", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>{unreadCount}</span>
+            )}
+          </button>
+          <button onClick={openMap} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", background: "none", border: "none", flex: 1, fontFamily: "inherit" }}>
+            <span style={{ fontSize: "20px", lineHeight: 1 }}>🗺️</span>
+            <span style={{ fontSize: "9px", color: "rgba(238,240,247,0.4)", fontWeight: "600", letterSpacing: "0.04em" }}>{t("nav.map")}</span>
+          </button>
+          <button onClick={openSafetyTips} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", background: "none", border: "none", flex: 1, fontFamily: "inherit" }}>
+            <span style={{ fontSize: "20px", lineHeight: 1 }}>💡</span>
+            <span style={{ fontSize: "9px", color: "rgba(238,240,247,0.4)", fontWeight: "600", letterSpacing: "0.04em" }}>{t("dashboard.bottomNavTips")}</span>
+          </button>
         </nav>
+      )}
+
+      {modalView && (
+        <div
+          style={{
+            position: "fixed",
+            top: isMobile ? "56px" : 0,
+            left: isMobile ? 0 : "260px",
+            right: 0,
+            bottom: isMobile ? "64px" : 0,
+            zIndex: 150,
+            overflowY: "auto",
+            background: "#080c14",
+            transform: "translateZ(0)",
+            WebkitTransform: "translateZ(0)",
+          }}
+        >
+          <button
+            onClick={() => setModalView(null)}
+            aria-label={language === "tl" ? "Isara" : "Close"}
+            style={{
+              position: "fixed",
+              top: isMobile ? "68px" : "16px",
+              right: "16px",
+              zIndex: 160,
+              width: "38px",
+              height: "38px",
+              borderRadius: "10px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "rgba(15,21,33,0.92)",
+              border: "1px solid rgba(255,255,255,0.14)",
+              color: "#eef0f7",
+              fontSize: "16px",
+              cursor: "pointer",
+              backdropFilter: "blur(12px)",
+            }}
+          >
+            <FaTimes />
+          </button>
+
+          {modalView === "safetytips" && <CitizenSafetyTips />}
+          {modalView === "alerts" && <CitizenAlertsPage />}
+
+          {modalView === "report" && (
+            <CitizenReport
+              onBack={() => setModalView(null)}
+              onViewHistory={() => navigate("/citizen/history")}
+              onViewReport={(id) => openReportDetail(id)}
+            />
+          )}
+
+          {modalView === "reportdetail" && selectedReportId && (
+            <CitizenReportDetail
+              reportId={selectedReportId}
+              onBack={() => setModalView(null)}
+              onViewHistory={() => navigate("/citizen/history")}
+            />
+          )}
+
+          {modalView === "map" && (
+            <CitizenMap onBack={() => setModalView(null)} />
+          )}
+        </div>
       )}
 
     </div>

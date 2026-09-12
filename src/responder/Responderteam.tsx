@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../js/supabase";
+import ResponderChatDrawer from "./components/ResponderChatDrawer";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -55,6 +56,7 @@ const ICONS = {
   chevDown: "M6 9l6 6 6-6",
   chevUp:   "M18 15l-6-6-6 6",
   retry:    "M1 4v6h6M23 20v-6h-6M20.49 9A9 9 0 0 0 5.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 0 1 3.51 15",
+  chat:     "M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z",
 };
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
@@ -692,8 +694,12 @@ function SkeletonCard() {
 
 // ─── Member Card ─────────────────────────────────────────────────────────────
 
-function MemberCard({ member, index }: { member: TeamMember; index: number }) {
+function MemberCard({ member, index, onChat }: {
+  member: TeamMember; index: number; onChat: (m: TeamMember) => void;
+}) {
+  // Hooks first — the null guard below must never precede hook calls.
   const [expanded, setExpanded] = useState(false);
+  if (!member || typeof member !== "object") return null;
 
   const status     = member.status ?? "off_duty";
   const statusMeta = STATUS_META[status] ?? STATUS_META.off_duty;
@@ -811,6 +817,23 @@ function MemberCard({ member, index }: { member: TeamMember; index: number }) {
           <SvgIcon path={ICONS.clock} size={11} />
           Joined {fmtDate(member.joined_at)}
         </span>
+        <span style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
+          <button
+            title={`Chat with ${member.full_name ?? "teammate"}`}
+            aria-label={`Chat with ${member.full_name ?? "teammate"}`}
+            onClick={() => onChat(member)}
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "center",
+              width: 26, height: 26, borderRadius: 7, cursor: "pointer",
+              border: "1px solid rgba(46,204,143,0.4)", background: "rgba(46,204,143,0.10)",
+              color: "#2ECC8F", transition: "all 0.18s",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(46,204,143,0.22)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "rgba(46,204,143,0.10)"; }}
+          >
+            <SvgIcon path={ICONS.chat} size={13} />
+          </button>
+        </span>
       </div>
     </div>
   );
@@ -833,6 +856,24 @@ export default function ResponderTeamPage() {
   const [error,   setError]   = useState<string | null>(null);
   const [search,  setSearch]  = useState("");
   const [filter,  setFilter]  = useState<FilterKey>("all");
+  const [meId,    setMeId]    = useState("");
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatTarget, setChatTarget] = useState<{ id: string; name: string } | null>(null);
+
+  // Open the side-chat drawer initialized with this teammate selected.
+  const openChat = (m: TeamMember) => {
+    if (!m || !m.id) return;
+    // Never open a thread with yourself — fall back to the HQ list instead.
+    if (m.id !== meId) setChatTarget({ id: m.id, name: m.full_name ?? "Teammate" });
+    else setChatTarget(null);
+    setChatOpen(true);
+  };
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) setMeId(data.user.id);
+    });
+  }, []);
 
   const loadTeam = async () => {
     try {
@@ -990,11 +1031,23 @@ export default function ResponderTeamPage() {
               </div>
             </div>
           ) : (
-            visible.map((m, i) => (
-              <MemberCard key={m.id} member={m} index={i} />
-            ))
+            visible.map((m, i) => {
+              if (!m || typeof m !== "object" || !m.id) return null;
+              return <MemberCard key={m.id} member={m} index={i} onChat={() => openChat(m)} />;
+            })
           )}
         </div>
+
+        {/* ── Direct side chat bound to the selected teammate ── */}
+        {meId && (
+          <ResponderChatDrawer
+            responderId={meId}
+            open={chatOpen}
+            onClose={() => setChatOpen(false)}
+            targetId={chatTarget?.id ?? null}
+            targetName={chatTarget?.name ?? null}
+          />
+        )}
 
       </div>
     </>

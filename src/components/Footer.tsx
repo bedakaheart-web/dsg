@@ -20,6 +20,7 @@ import {
 
 import dsgLogo  from "../assets/dsg.logo.png";
 import footerBg from "../assets/footer.png";
+import { useLanguage } from "../context/LanguageContext";
 
 const FONT_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
@@ -63,44 +64,46 @@ interface Hotline {
   pulse?: boolean;
 }
 
-const FOOTER_NAV: FooterColumn[] = [
-  {
-    heading: "Navigate",
-    links: [
-      { label: "Safety Map",         to: "/map",        icon: <FaMapMarkedAlt size={11} /> },
-      { label: "Report Incident",    to: "/report",     icon: <FaClipboardList size={11} /> },
-      { label: "Safety Tips",        to: "/safetytips", icon: <FaLightbulb size={11} /> },
-      { label: "Emergency Contacts", to: "/directory",  icon: <FaAddressBook size={11} /> },
-    ],
-  },
-  {
-    heading: "About",
-    links: [
-      { label: "About DumaSafeGuide", to: "/about",     icon: <FaInfoCircle size={11} /> },
-      { label: "Resources",           to: "/resources", icon: <FaBook size={11} /> },
-      { label: "Privacy Policy",      to: "/privacy",   icon: <FaLock size={11} /> },
-      { label: "Terms of Use",        to: "/terms",     icon: <FaFileAlt size={11} /> },
-    ],
-  },
-];
-
-const HOTLINES: Hotline[] = [
-  { label: "Emergency", number: "911",  dialNumber: "911",  color: "#FF4444", bg: "rgba(255,68,68,0.10)",  pulse: true },
-  { label: "NDRRMC",    number: "8911", dialNumber: "8911", color: "#F4A261", bg: "rgba(244,162,97,0.10)" },
-  { label: "BFP Fire",  number: "160",  dialNumber: "160",  color: "#F39C12", bg: "rgba(243,156,18,0.10)" },
-  { label: "PNP",       number: "117",  dialNumber: "117",  color: "#60B4FF", bg: "rgba(96,180,255,0.10)" },
-];
-
 const HIDDEN_PATHS = ["/signup"];
 
 export default function Footer() {
   const location = useLocation();
   const year     = new Date().getFullYear();
   const [openCol, setOpenCol] = useState<string | null>(null);
+  const { t } = useLanguage();
 
   if (HIDDEN_PATHS.includes(location.pathname)) return null;
 
   const toggle = (h: string) => setOpenCol(p => p === h ? null : h);
+
+  // ── Nav columns & hotlines built from translations (labels change with language) ──
+  const FOOTER_NAV: FooterColumn[] = [
+    {
+      heading: t("footer.navHeading"),
+      links: [
+        { label: t("footer.links.safetyMap"),         to: "/map",        icon: <FaMapMarkedAlt size={11} /> },
+        { label: t("footer.links.reportIncident"),    to: "/report",     icon: <FaClipboardList size={11} /> },
+        { label: t("footer.links.safetyTips"),        to: "/safetytips", icon: <FaLightbulb size={11} /> },
+        { label: t("footer.links.emergencyContacts"), to: "/directory",  icon: <FaAddressBook size={11} /> },
+      ],
+    },
+    {
+      heading: t("footer.aboutHeading"),
+      links: [
+        { label: t("footer.links.aboutDsg"),      to: "/about",     icon: <FaInfoCircle size={11} /> },
+        { label: t("footer.links.resources"),     to: "/resources", icon: <FaBook size={11} /> },
+        { label: t("footer.links.privacyPolicy"), to: "/privacy",   icon: <FaLock size={11} /> },
+        { label: t("footer.links.termsOfUse"),    to: "/terms",     icon: <FaFileAlt size={11} /> },
+      ],
+    },
+  ];
+
+  const HOTLINES: Hotline[] = [
+    { label: t("footer.hotlineLabels.emergency"), number: "911",  dialNumber: "911",  color: "#FF4444", bg: "rgba(255,68,68,0.10)",  pulse: true },
+    { label: t("footer.hotlineLabels.ndrrmc"),    number: "8911", dialNumber: "8911", color: "#F4A261", bg: "rgba(244,162,97,0.10)" },
+    { label: t("footer.hotlineLabels.bfpFire"),   number: "160",  dialNumber: "160",  color: "#F39C12", bg: "rgba(243,156,18,0.10)" },
+    { label: t("footer.hotlineLabels.pnp"),       number: "117",  dialNumber: "117",  color: "#60B4FF", bg: "rgba(96,180,255,0.10)" },
+  ];
 
   return (
     <footer className="ft">
@@ -118,11 +121,11 @@ export default function Footer() {
             <span className="ft-status-dot" />
             <span className="ft-status-city">Dumaguete City</span>
             <span className="ft-status-sep">·</span>
-            <span className="ft-status-text">All systems operational</span>
+            <span className="ft-status-text">{t("footer.statusOperational")}</span>
           </div>
           <div className="ft-status-right">
             <FaShieldAlt size={10} color="rgba(0,200,224,0.55)" />
-            <span>DumaSafeGuide Active</span>
+            <span>{t("footer.statusActive")}</span>
           </div>
         </div>
 
@@ -130,8 +133,8 @@ export default function Footer() {
         <div className="ft-hotlines">
           <div className="ft-hotlines-head">
             <FaPhone size={12} color="#e8372a" />
-            <span className="ft-hotlines-label">Emergency Hotlines</span>
-            <span className="ft-hotlines-hint">Tap to dial instantly</span>
+            <span className="ft-hotlines-label">{t("footer.hotlinesLabel")}</span>
+            <span className="ft-hotlines-hint">{t("footer.hotlinesHint")}</span>
           </div>
           <div className="ft-hotlines-row">
 
@@ -191,7 +194,7 @@ export default function Footer() {
                 lineHeight: 1,
                 animation: "textFlicker 1.8s ease-in-out infinite",
               }}>
-                Emergency
+                {t("footer.emergencyPill")}
               </span>
               <span style={{
                 width: 1, height: 10,
@@ -247,12 +250,11 @@ export default function Footer() {
               </span>
             </Link>
             <p className="ft-brand-desc">
-              A community-built safety platform for the City of Gentle People.
-              Fast access to hotlines, incident reporting, and disaster preparedness.
+              {t("footer.brandDesc")}
             </p>
             <div className="ft-brand-badge">
               <span className="ft-badge-dot" />
-              Serving Dumaguete City · Negros Oriental
+              {t("footer.brandBadge")}
             </div>
           </div>
 
@@ -287,10 +289,10 @@ export default function Footer() {
 
         <div className="ft-bottom">
           <p className="ft-copy">
-            &copy; {year} DumaSafeGuide &mdash; All rights reserved.
+            &copy; {year} DumaSafeGuide &mdash; {t("footer.rightsReserved")}
           </p>
           <p className="ft-love">
-            Built with <FaHeart size={10} color="#e8372a" aria-label="love" /> for the safety of every Dumagueteño
+            {t("footer.builtWithPrefix")} <FaHeart size={10} color="#e8372a" aria-label="love" /> {t("footer.builtWithSuffix")}
           </p>
         </div>
 

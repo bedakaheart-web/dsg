@@ -1,0 +1,24 @@
+{
+  "name": "DumaSafeGuide",
+  "short_name": "DumaSafeGuide",
+  "description": "DumaSafeGuide – Official emergency response portal for Dumaguete City.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d1b2e",
+  "theme_color": "#0d1b2e",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

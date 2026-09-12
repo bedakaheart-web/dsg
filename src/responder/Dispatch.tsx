@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import { Marker, Polyline } from "react-leaflet";
 import { supabase } from "../js/supabase";
+import { TranslatedDescription } from "../components/TranslatedDescription";
+import DispatchMap, { INCIDENT_HEX, MapFollow, incidentPin, unitPin } from "../components/dispatch/DispatchMap";
+import { HQ_POS, formatDistance, formatEta, hasCoords, haversineKm, interpolateRoute, parseCoords, routeLengthKm } from "../components/dispatch/geo";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -7,6 +11,8 @@ interface Report {
   id: string | number;
   type: string;
   description: string | null;
+  description_lang: string | null;
+  description_translated: string | null;
   location: string | null;
   address: string | null;
   reporter_name: string | null;
@@ -33,6 +39,9 @@ const STATUS_META: Record<string, { label: string; colorClass: string }> = {
   "in-progress": { label: "In Progress", colorClass: "status-in-progress" },
   resolved:      { label: "Resolved",    colorClass: "status-resolved" },
 };
+
+// (Incident hex colors live in src/components/dispatch/DispatchMap.tsx as
+// INCIDENT_HEX — shared with AdminDispatch.)
 
 // ─── Unified Dispatch Styles ──────────────────────────────────────────────────
 
@@ -306,7 +315,39 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Ne
 
 /* ── Map ── */
 .dp-map-wrap { width: 100%; height: 540px; position: relative; border-radius: 8px; overflow: hidden; }
-.dp-map-wrap iframe { width:100%; height:100%; border:0; display:block; }
+.dp-map-wrap .leaflet-container { width: 100%; height: 100%; background: #0d1117; touch-action: pan-x pan-y; }
+
+/* ── Telemetry HUD (overlay shell ignores pointer; controls re-enable it) ── */
+.dp-hud { position: absolute; top: 12px; left: 12px; right: 12px; z-index: 600; display: flex; justify-content: flex-start; pointer-events: none; }
+.dp-hud-card {
+  pointer-events: none; max-width: 420px;
+  background: rgba(13,17,23,0.88); border: 1px solid var(--border-med);
+  border-radius: 10px; padding: 10px 12px; backdrop-filter: blur(8px);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.dp-hud-badge {
+  display: inline-flex; align-items: center; gap: 7px; align-self: flex-start;
+  font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+  color: #4D94FF; background: rgba(0,102,255,0.12); border: 1px solid rgba(0,102,255,0.4);
+  border-radius: 20px; padding: 4px 11px;
+}
+.dp-hud-badge.arrived { color: #2FA232; background: rgba(47,162,50,0.12); border-color: rgba(47,162,50,0.45); }
+.dp-hud-badge.idle { color: var(--text-secondary); background: rgba(255,255,255,0.04); border-color: var(--border-med); }
+.dp-hud-pulse { width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: pulse 1.6s ease infinite; flex-shrink: 0; }
+.dp-hud-pulse.idle { animation: none; opacity: 0.5; }
+.dp-hud-meta { font-size: 12px; font-weight: 700; color: var(--text-primary); }
+.dp-hud-sub { font-size: 10.5px; color: var(--text-tertiary); }
+.dp-hud-actions { display: flex; gap: 6px; flex-wrap: wrap; pointer-events: auto; }
+.dp-hud-btn {
+  font-family: inherit; font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+  padding: 7px 12px; border-radius: 7px; cursor: pointer;
+  background: rgba(255,255,255,0.05); border: 1px solid var(--border-med); color: var(--text-primary);
+  transition: all .15s; min-height: 34px;
+}
+.dp-hud-btn:hover { border-color: var(--primary-light); }
+.dp-hud-btn.primary { background: rgba(0,102,255,0.15); border-color: rgba(0,102,255,0.5); color: #4D94FF; }
+.dp-hud-btn.on { border-color: rgba(47,162,50,0.55); color: #2FA232; }
+.dp-hud-btn.danger { border-color: rgba(220,38,38,0.5); color: #DC2626; }
 
 .dp-map-overlay {
   position: absolute;
@@ -648,6 +689,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Ne
   .dp-body { grid-template-columns: 1fr; }
   .dp-filters { flex-direction: column; align-items: flex-start; }
   .dp-filter-group { width: 100%; }
+  /* Queue stacks below the map; shorter map keeps touch gestures smooth. */
+  .dp-map-wrap { height: 380px; }
+  .dp-hud-card { max-width: 100%; }
+  .dp-hud-actions .dp-hud-btn { min-height: 40px; }
 }
 `;
 
@@ -721,15 +766,176 @@ function formatRelative(ts: string): string {
   return new Date(ts).toLocaleDateString();
 }
 
-function hasCoords(loc: string | null): boolean {
-  if (!loc) return false;
-  const parts = loc.split(",").map((s) => parseFloat(s.trim()));
-  return parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1]);
+// (parseCoords/hasCoords/haversineKm/interpolateRoute/routeLengthKm/HQ_POS
+// live in src/components/dispatch/geo.ts — shared with AdminDispatch.)
+
+interface OsrmRoute {
+  path: [number, number][];
+  distanceM: number;
+  durationS: number;
+}
+
+// Real road geometry from the free OSRM demo server. Returns null on any
+// failure (offline, no route, timeout) so callers fall back to the direct
+// interpolated path instead of breaking the dispatch flow.
+async function fetchOsrmRoute(from: [number, number], to: [number, number]): Promise<OsrmRoute | null> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 9000);
+  try {
+    const url =
+      `https://router.project-osrm.org/route/v1/driving/${from[1]},${from[0]};${to[1]},${to[0]}` +
+      `?overview=full&geometries=geojson`;
+    const res = await fetch(url, { signal: ctrl.signal });
+    if (!res.ok) return null;
+    const json = await res.json();
+    const route = json?.routes?.[0];
+    const coords: Array<[number, number]> | undefined = route?.geometry?.coordinates;
+    if (!route || !Array.isArray(coords) || coords.length < 2) return null;
+    return {
+      path: coords.map(([lng, lat]) => [lat, lng] as [number, number]),
+      distanceM: typeof route.distance === "number" ? route.distance : 0,
+      durationS: typeof route.duration === "number" ? route.duration : 0,
+    };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function cls(...args: (string | false | undefined | null)[]): string {
   return args.filter(Boolean).join(" ");
 }
+
+// (MapFollow/unitIcon/incidentIcon live in src/components/dispatch/DispatchMap.tsx —
+// shared with AdminDispatch so markers and follow behavior match exactly.)
+
+// ─── Live map view (Leaflet) + telemetry HUD ────────────────────────────────
+
+interface MapViewProps {
+  reports: Report[];
+  selectedReport: Report | null;
+  markerPos: [number, number] | null;
+  unitHeading: number | null;
+  unitSpeed: number | null;
+  dispatchPath: [number, number][];
+  dispatchReportId: string | null;
+  arrived: boolean;
+  remainingKm: number;
+  etaMin: number;
+  routeViaRoad: boolean | null;
+  routing: boolean;
+  follow: boolean;
+  recenterTick: number;
+  gpsOn: boolean;
+  dutyActive: boolean;
+  gpsError: string | null;
+  onSelect: (id: string | null) => void;
+  onDispatch: (reportId: string, dest: [number, number]) => void;
+  onCancelDispatch: () => void;
+  onArrived: () => void;
+  onRecenter: () => void;
+  onToggleFollow: () => void;
+  onToggleGps: () => void;
+}
+
+function DispatchMapView(props: MapViewProps) {
+  const {
+    reports, selectedReport, markerPos, unitHeading, unitSpeed,
+    dispatchPath, dispatchReportId, arrived, remainingKm, etaMin,
+    routeViaRoad, routing,
+    follow, recenterTick, gpsOn, dutyActive, gpsError,
+    onSelect, onDispatch, onCancelDispatch, onArrived,
+    onRecenter, onToggleFollow, onToggleGps,
+  } = props;
+
+  const selCoords = selectedReport ? parseCoords(selectedReport.location) : null;
+  const center: [number, number] = selCoords ?? markerPos ?? HQ_POS;
+  const dispatching = dispatchPath.length > 1;
+  const withCoords = reports.filter(r => parseCoords(r.location) !== null);
+
+  return (
+    <DispatchMap
+      center={center}
+      hud={
+        <div className="dp-hud-card">
+          {dispatching ? (
+            <>
+              <span className={`dp-hud-badge${arrived ? " arrived" : ""}`}>
+                <span className="dp-hud-pulse" />
+                {arrived
+                  ? `On Scene — Incident #${String(dispatchReportId).slice(0, 8)}`
+                  : `En Route to Incident #${String(dispatchReportId).slice(0, 8)}`}
+              </span>
+              {!arrived && (
+                <span className="dp-hud-meta">
+                  Distance Remaining: {formatDistance(remainingKm)}
+                  {" · "}Estimated Arrival: {formatEta(etaMin)}
+                  {unitSpeed != null && unitSpeed > 0 ? ` · ${(unitSpeed * 3.6).toFixed(0)} km/h` : ""}
+                </span>
+              )}
+              <span className="dp-hud-sub">
+                {routing ? "Finding road route…" : routeViaRoad ? "Road route · OSRM" : routeViaRoad === false ? "Direct path (routing unavailable)" : "Direct path"}
+                {" · "}Follow {follow ? "On" : "Off"}
+              </span>
+              <div className="dp-hud-actions">
+                {!arrived && <button className="dp-hud-btn" onClick={onArrived}>Mark Arrived at Scene</button>}
+                <button className="dp-hud-btn" onClick={onRecenter}>Recenter Map</button>
+                <button className="dp-hud-btn" onClick={onToggleFollow}>{follow ? "Follow: On" : "Follow: Off"}</button>
+                <button className="dp-hud-btn danger" onClick={onCancelDispatch}>Cancel</button>
+              </div>
+            </>
+          ) : (
+            <>
+              <span className="dp-hud-badge idle">
+                <span className="dp-hud-pulse idle" />
+                {selectedReport ? `Incident #${String(selectedReport.id).slice(0, 8)} selected` : "Unit idle — select an incident"}
+              </span>
+              {selCoords && (
+                <div className="dp-hud-actions">
+                  <button className="dp-hud-btn primary" onClick={() => onDispatch(String(selectedReport!.id), selCoords)}>
+                    Dispatch to Incident
+                  </button>
+                </div>
+              )}
+              <div className="dp-hud-actions">
+                <button className={`dp-hud-btn${gpsOn ? " on" : ""}`} onClick={onToggleGps}>
+                  Live GPS Broadcast: {gpsOn ? "On" : "Off"}
+                </button>
+              </div>
+              <span className="dp-hud-sub">
+                {dutyActive ? (gpsOn ? (markerPos ? "Broadcasting position" : "Waiting for GPS fix…") : "GPS broadcast paused") : "Go on duty to broadcast"}
+                {gpsError ? ` · ${gpsError}` : ""}
+              </span>
+            </>
+          )}
+        </div>
+      }
+    >
+      <MapFollow pos={markerPos} follow={follow && dispatching} recenterTick={recenterTick} />
+      {dispatching && (
+        <Polyline positions={dispatchPath} pathOptions={{ color: "#0066FF", weight: 4, opacity: 0.8, dashArray: "8 6" }} />
+      )}
+      {withCoords.map(r => {
+        const pos = parseCoords(r.location)!;
+        const isSel = selectedReport && String(r.id) === String(selectedReport.id);
+        return (
+          <Marker
+            key={String(r.id)}
+            position={pos}
+            icon={incidentPin(INCIDENT_HEX[r.type] ?? INCIDENT_HEX.other, !!isSel)}
+            eventHandlers={{ click: () => onSelect(isSel ? null : String(r.id)) }}
+          />
+        );
+      })}
+      {markerPos && (
+        <Marker position={markerPos} icon={unitPin(unitHeading)} zIndexOffset={1000} />
+      )}
+    </DispatchMap>
+  );
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -742,11 +948,186 @@ export default function Dispatch() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
+  // ── Live unit tracking ─────────────────────────────────────────────────
+  const [unitPos, setUnitPos] = useState<[number, number] | null>(null);
+  const [unitHeading, setUnitHeading] = useState<number | null>(null);
+  const [unitSpeed, setUnitSpeed] = useState<number | null>(null);
+  const [dutyActive, setDutyActive] = useState(false);
+  const [gpsOn, setGpsOn] = useState(true);
+  const [gpsError, setGpsError] = useState<string | null>(null);
+  const lastBroadcast = useRef<{ at: number; pos: [number, number] }>({ at: 0, pos: HQ_POS });
+
+  // ── Dispatch simulation ────────────────────────────────────────────────
+  const [dispatchPath, setDispatchPath] = useState<[number, number][]>([]);
+  const [dispatchT, setDispatchT] = useState(0); // meters travelled along path
+  const [dispatchReportId, setDispatchReportId] = useState<string | null>(null);
+  const [routeMeta, setRouteMeta] = useState<{ viaRoad: boolean; totalM: number; durationS: number } | null>(null);
+  const [routing, setRouting] = useState(false);
+  const [arrived, setArrived] = useState(false);
+  const [follow, setFollow] = useState(true);
+  const [recenterTick, setRecenterTick] = useState(0);
+  const dispatchIdRef = useRef<string | null>(null);
+
+  const SIM_SPEED_MPS = 20; // simulated unit speed along the route
+  const ETA_SPEED_KMH = 30; // urban-average speed used for the ETA readout
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) setResponderId(user.id);
+      if (user) {
+        setResponderId(user.id);
+        supabase.from("profiles").select("status").eq("id", user.id).single().then(({ data }) => {
+          const s = (data as { status?: string } | null)?.status;
+          setDutyActive(s === "on_duty" || s === "responding");
+        });
+      }
     });
   }, []);
+
+  // ── Live device geolocation broadcast (task-spec pattern) ──────────────
+  // Tracks only while the responder is on duty/responding and the GPS toggle
+  // is on. Writes are throttled (moved >15 m or 20 s elapsed) and failures
+  // (e.g. denied permission, missing columns) degrade to local-only tracking.
+  useEffect(() => {
+    if (!dutyActive || !gpsOn) return;
+    if (!navigator.geolocation) {
+      setGpsError("Geolocation not supported on this device.");
+      return;
+    }
+    setGpsError(null);
+    const writeLocation = async (latitude: number, longitude: number, heading: number | null, speed: number | null) => {
+      if (!responderId) return;
+      const last = lastBroadcast.current;
+      const movedM = haversineKm(last.pos, [latitude, longitude]) * 1000;
+      if (Date.now() - last.at < 20000 && movedM < 15) return;
+      lastBroadcast.current = { at: Date.now(), pos: [latitude, longitude] };
+      try {
+        await supabase.from("profiles").update({
+          last_lat: latitude,
+          last_lng: longitude,
+          last_heading: heading,
+          last_speed: speed,
+          location_updated_at: new Date().toISOString(),
+        }).eq("id", responderId);
+      } catch (err) {
+        console.warn("Geolocation broadcast error:", err);
+      }
+    };
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const { latitude, longitude, heading, speed } = pos.coords;
+        setUnitPos([latitude, longitude]);
+        setUnitHeading(heading);
+        setUnitSpeed(speed);
+        void writeLocation(latitude, longitude, heading, speed);
+      },
+      (err) => {
+        console.warn("Geolocation error:", err);
+        setGpsError(err.code === err.PERMISSION_DENIED ? "Location permission denied." : "Location unavailable.");
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [dutyActive, gpsOn, responderId]);
+
+  // ── Dispatch simulator loop (requestAnimationFrame) ────────────────────
+  const pathLengthM = dispatchPath.length > 1 ? routeLengthKm(dispatchPath) * 1000 : 0;
+  useEffect(() => {
+    if (dispatchPath.length < 2 || arrived) return;
+    let raf = 0;
+    let last = performance.now();
+    const tick = (now: number) => {
+      const dt = Math.min((now - last) / 1000, 1);
+      last = now;
+      setDispatchT(prev => {
+        const next = prev + dt * SIM_SPEED_MPS;
+        if (next >= pathLengthM) {
+          setArrived(true);
+          return pathLengthM;
+        }
+        return next;
+      });
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [dispatchPath, arrived, pathLengthM]);
+
+  // Interpolated unit position along the simulated route.
+  const simPos: [number, number] | null = (() => {
+    if (dispatchPath.length < 2) return null;
+    let remaining = Math.min(dispatchT, pathLengthM);
+    for (let i = 1; i < dispatchPath.length; i++) {
+      const segM = haversineKm(dispatchPath[i - 1], dispatchPath[i]) * 1000;
+      if (remaining <= segM) {
+        const f = segM === 0 ? 0 : remaining / segM;
+        return [
+          dispatchPath[i - 1][0] + (dispatchPath[i][0] - dispatchPath[i - 1][0]) * f,
+          dispatchPath[i - 1][1] + (dispatchPath[i][1] - dispatchPath[i - 1][1]) * f,
+        ];
+      }
+      remaining -= segM;
+    }
+    return dispatchPath[dispatchPath.length - 1];
+  })();
+
+  // Live marker = simulated position while dispatching, else the GPS fix.
+  const markerPos = simPos ?? unitPos;
+  const remainingM = simPos ? Math.max(0, pathLengthM - Math.min(dispatchT, pathLengthM)) : 0;
+  const remainingKm = remainingM / 1000;
+
+  // Dynamic ETA: live GPS speed wins; else OSRM duration scaled by remaining
+  // fraction; else urban-average fallback. All in minutes.
+  const etaMin = (() => {
+    if (!simPos || arrived) return 0;
+    if (unitSpeed != null && unitSpeed > 1) return remainingM / unitSpeed / 60;
+    if (routeMeta && routeMeta.durationS > 0 && routeMeta.totalM > 0) {
+      return (routeMeta.durationS * (remainingM / routeMeta.totalM)) / 60;
+    }
+    return (remainingKm / ETA_SPEED_KMH) * 60;
+  })();
+
+  const startDispatch = async (reportId: string, dest: [number, number]) => {
+    const from = unitPos ?? HQ_POS;
+    dispatchIdRef.current = reportId;
+    // Show the run immediately on the direct path, then upgrade to road
+    // geometry once OSRM responds (progress preserved proportionally).
+    setDispatchPath(interpolateRoute(from, dest));
+    setDispatchT(0);
+    setDispatchReportId(reportId);
+    setRouteMeta(null);
+    setRouting(true);
+    setArrived(false);
+    setFollow(true);
+    const osrm = await fetchOsrmRoute(from, dest);
+    // Abandoned/cancelled while routing — don't clobber the newer state.
+    if (dispatchIdRef.current !== reportId) return;
+    if (osrm && osrm.path.length > 1) {
+      const totalM = Math.max(osrm.distanceM, 1);
+      setDispatchPath(osrm.path);
+      setRouteMeta({ viaRoad: true, totalM, durationS: osrm.durationS });
+      setDispatchT(t => Math.min(t, totalM));
+    } else {
+      const straightM = Math.max(routeLengthKm(interpolateRoute(from, dest)) * 1000, 1);
+      setRouteMeta({ viaRoad: false, totalM: straightM, durationS: 0 });
+    }
+    setRouting(false);
+  };
+
+  const cancelDispatch = () => {
+    dispatchIdRef.current = null;
+    setDispatchPath([]);
+    setDispatchT(0);
+    setDispatchReportId(null);
+    setRouteMeta(null);
+    setRouting(false);
+    setArrived(false);
+  };
+
+  // Changing selection mid-dispatch retires the old run.
+  useEffect(() => {
+    if (dispatchReportId && dispatchReportId !== selectedId) cancelDispatch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId]);
 
   const loadReports = async () => {
     const { data } = await supabase
@@ -799,10 +1180,6 @@ export default function Dispatch() {
     ? reports.find((r) => String(r.id) === selectedId) ?? null
     : null;
 
-  const mapSrc = selectedReport?.location
-    ? `https://www.google.com/maps?q=${encodeURIComponent(selectedReport.location)}&z=16&output=embed`
-    : "https://www.google.com/maps?q=Dumaguete+City&z=13&output=embed";
-
   const statusFilters = ["all", "pending", "in-progress", "resolved"];
   const typeFilters = ["all", "fire", "accident", "flood", "crime", "medical", "other"];
 
@@ -820,7 +1197,7 @@ export default function Dispatch() {
             {loading && <div className="dp-spinner" />}
             <div className="dp-live-badge">
               <span className="dp-live-dot" />
-              LIVE FEED
+              LIVE COMMAND FEED
             </div>
           </div>
         </div>
@@ -861,7 +1238,7 @@ export default function Dispatch() {
 
         {/* Main body */}
         <div className="dp-body">
-          {/* Map panel */}
+          {/* Map panel — live Leaflet tracking (replaces the static embed) */}
           <div className="dp-panel">
             <div className="dp-panel-header">
               <span className="dp-panel-title">
@@ -871,35 +1248,32 @@ export default function Dispatch() {
               <span className="dp-count-pill">{filtered.length} Active</span>
             </div>
 
-            {!selectedReport || selectedReport.location ? (
-              <div className="dp-map-wrap">
-                <iframe
-                  key={mapSrc}
-                  title="Incident map"
-                  src={mapSrc}
-                  loading="lazy"
-                  allowFullScreen
-                />
-                {selectedReport && (
-                  <div className="dp-map-overlay">
-                    <span className="dp-map-tag">
-                      <Icon.MapPin />
-                      {selectedReport.address || selectedReport.location}
-                    </span>
-                    <span className="dp-map-tag">
-                      {TYPE_META[selectedReport.type]?.icon}{" "}
-                      {selectedReport.type.toUpperCase()} —{" "}
-                      {STATUS_META[selectedReport.status]?.label}
-                    </span>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="dp-map-empty">
-                <Icon.MapPin />
-                No location data available
-              </div>
-            )}
+            <DispatchMapView
+              reports={filtered}
+              selectedReport={selectedReport}
+              markerPos={markerPos}
+              unitHeading={unitHeading}
+              dispatchPath={dispatchPath}
+              dispatchReportId={dispatchReportId}
+              arrived={arrived}
+              remainingKm={remainingKm}
+              etaMin={etaMin}
+              routeViaRoad={routeMeta?.viaRoad ?? null}
+              routing={routing}
+              follow={follow}
+              recenterTick={recenterTick}
+              gpsOn={gpsOn}
+              dutyActive={dutyActive}
+              gpsError={gpsError}
+              unitSpeed={unitSpeed}
+              onSelect={(id) => setSelectedId(id)}
+              onDispatch={startDispatch}
+              onCancelDispatch={cancelDispatch}
+              onArrived={() => setArrived(true)}
+              onRecenter={() => { setFollow(true); setRecenterTick(t => t + 1); }}
+              onToggleFollow={() => setFollow(f => !f)}
+              onToggleGps={() => setGpsOn(g => !g)}
+            />
           </div>
 
           {/* Queue panel */}
@@ -961,7 +1335,14 @@ export default function Dispatch() {
                       </div>
 
                       {/* Description */}
-                      {r.description && <div className="dp-card-desc">{r.description}</div>}
+                      {r.description && (
+                        <TranslatedDescription
+                          description={r.description}
+                          descriptionLang={r.description_lang}
+                          descriptionTranslated={r.description_translated}
+                          className="dp-card-desc"
+                        />
+                      )}
 
                       {/* Meta chips */}
                       <div className="dp-meta">
@@ -998,6 +1379,28 @@ export default function Dispatch() {
                             Claim
                           </button>
                         )}
+                        {(() => {
+                          const dest = parseCoords(r.location);
+                          const activeHere = dispatchReportId === String(r.id) && dispatchPath.length > 1;
+                          if (!dest || r.status === "resolved") return null;
+                          return activeHere ? (
+                            <button
+                              className="dp-btn dp-btn-nav"
+                              onClick={(e) => { e.stopPropagation(); cancelDispatch(); }}
+                            >
+                              <Icon.Route />
+                              Cancel Dispatch
+                            </button>
+                          ) : (
+                            <button
+                              className="dp-btn dp-btn-claim"
+                              onClick={(e) => { e.stopPropagation(); setSelectedId(String(r.id)); startDispatch(String(r.id), dest); }}
+                            >
+                              <Icon.Route />
+                              Dispatch
+                            </button>
+                          );
+                        })()}
                         {isMine && r.status === "in-progress" && (
                           <button
                             className="dp-btn dp-btn-resolve"

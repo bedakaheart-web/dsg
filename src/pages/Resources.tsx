@@ -1,66 +1,57 @@
 import { Link } from "react-router-dom";
 import directoryBg from "../assets/emergency.jpg";
+import { useLanguage } from "../context/LanguageContext";
 
-const resources = [
+const RESOURCE_META = [
   {
     id: "safety",
     icon: "🛡️",
     accent: "#2ECC8F",
-    tag: "Community",
-    title: "Safety Tips",
-    description:
-      "Practical, barangay-level guidelines to keep yourself and your community protected before, during, and after an emergency.",
+    key: "safety",
     links: [
-      { label: "Before a Typhoon",      to: "/safetytips#typhoon" },
-      { label: "Flood Safety Protocol", to: "/safetytips#flood"   },
-      { label: "Fire Prevention Guide", to: "/safetytips#fire"    },
+      { key: "before", to: "/safetytips#typhoon" },
+      { key: "flood",  to: "/safetytips#flood"   },
+      { key: "fire",   to: "/safetytips#fire"    },
     ],
   },
   {
     id: "agencies",
     icon: "🤝",
     accent: "#4A90D9",
-    tag: "Organizations",
-    title: "Partner Agencies",
-    description:
-      "Government bodies and civil society organizations collaborating with DumaSafeGuide to deliver coordinated emergency response.",
+    key: "agencies",
     links: [
-      { label: "CDRRMO",                    to: "/partner-agencies#cdrrmo"   },
-      { label: "Philippine Red Cross",      to: "/partner-agencies#redcross" },
-      { label: "Bureau of Fire Protection", to: "/partner-agencies#bfp"      },
+      { key: "cdrrmo",   to: "/partner-agencies#cdrrmo"   },
+      { key: "redcross", to: "/partner-agencies#redcross" },
+      { key: "bfp",      to: "/partner-agencies#bfp"      },
     ],
   },
   {
     id: "directory",
     icon: "📋",
     accent: "#F5C842",
-    tag: "Contacts",
-    title: "Emergency Directory",
-    description:
-      "Quick access to all essential emergency hotlines — hospitals, barangay responders, and city-wide disaster management units.",
+    key: "directory",
     links: [
-      { label: "City Emergency Services", to: "/directory#city"      },
-      { label: "Barangay Hotlines",       to: "/directory#barangays" },
-      { label: "Hospitals & Medical",     to: "/directory#hospitals" },
+      { key: "city",       to: "/directory#city"      },
+      { key: "barangays",  to: "/directory#barangays" },
+      { key: "hospitals",  to: "/directory#hospitals" },
     ],
   },
   {
     id: "terms",
     icon: "📜",
     accent: "#e8372a",
-    tag: "Legal",
-    title: "Terms of Service",
-    description:
-      "Understand the rules, user responsibilities, and legal framework governing the use of DumaSafeGuide, including RA 10175.",
+    key: "terms",
     links: [
-      { label: "User Responsibilities", to: "/terms#responsibilities" },
-      { label: "Privacy Policy",        to: "/terms#privacy"          },
-      { label: "RA 10175 Overview",     to: "/terms#ra10175"          },
+      { key: "responsibilities", to: "/terms#responsibilities" },
+      { key: "privacy",          to: "/terms#privacy"          },
+      { key: "ra10175",          to: "/terms#ra10175"          },
     ],
   },
-];
+] as const;
 
 export default function Resources() {
+  const { t } = useLanguage();
+
   return (
     <>
       <style>{`
@@ -362,16 +353,13 @@ export default function Resources() {
 
           <section className="rs-hero">
             <h1>
-              Resources &amp; <span className="accent">Guides</span>
+              {t("resources.heroTitle")} <span className="accent">{t("resources.heroAccent")}</span>
             </h1>
-            <p className="rs-hero-sub">
-              Everything you need to stay informed — safety guides, partner agencies,
-              emergency contacts, and legal references in one place.
-            </p>
+            <p className="rs-hero-sub">{t("resources.heroSub")}</p>
           </section>
 
           <div className="rs-grid">
-            {resources.map((res) => (
+            {RESOURCE_META.map((res) => (
               <div
                 key={res.id}
                 className="rs-card"
@@ -383,15 +371,15 @@ export default function Resources() {
               >
                 <div className="rs-card-top">
                   <span className="rs-icon">{res.icon}</span>
-                  <span className="rs-tag">{res.tag}</span>
+                  <span className="rs-tag">{t(`resources.cards.${res.key}.tag`)}</span>
                 </div>
-                <div className="rs-card-title">{res.title}</div>
-                <p className="rs-card-desc">{res.description}</p>
+                <div className="rs-card-title">{t(`resources.cards.${res.key}.title`)}</div>
+                <p className="rs-card-desc">{t(`resources.cards.${res.key}.description`)}</p>
                 <div className="rs-divider" />
                 <div className="rs-links">
                   {res.links.map((link) => (
-                    <Link key={link.label} to={link.to} className="rs-link">
-                      <span>{link.label}</span>
+                    <Link key={link.key} to={link.to} className="rs-link">
+                      <span>{t(`resources.cards.${res.key}.links.${link.key}`)}</span>
                       <span className="rs-link-arrow">→</span>
                     </Link>
                   ))}
@@ -402,11 +390,11 @@ export default function Resources() {
 
           <div className="rs-cta">
             <div className="rs-cta-text">
-              <h3>Need to report an emergency?</h3>
-              <p>Don't wait — use the incident reporting form to alert local responders immediately.</p>
+              <h3>{t("resources.cta.title")}</h3>
+              <p>{t("resources.cta.desc")}</p>
             </div>
             <Link to="/report" className="rs-cta-btn">
-              <span>🚨</span> Report Now
+              <span>🚨</span> {t("resources.cta.btn")}
             </Link>
           </div>
 

@@ -1,0 +1,126 @@
+// src/context/LanguageContext.tsx
+//
+// Lightweight i18n context — no external library required.
+// Wrap your app root (main.tsx or App.tsx) with <LanguageProvider>
+// so every page can call useLanguage() to read/change the language
+// and translate strings.
+
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { translations, TranslationDict, LanguageCode } from "../translations/index";
+
+export type Language = LanguageCode;
+
+export const LANGUAGE_STORAGE_KEY = "dumasafeguide_lang";
+
+// Languages that read right-to-left. Add codes here if you add
+// another RTL language (e.g. "he" for Hebrew, "ur" for Urdu).
+export const RTL_LANGUAGES: Language[] = ["ar"];
+
+export const LANGUAGE_OPTIONS: { code: Language; label: string; native: string }[] = [
+  { code: "en", label: "English", native: "English" },
+  { code: "tl", label: "Tagalog", native: "Tagalog" },
+  { code: "ceb", label: "Bisaya / Cebuano", native: "Binisaya" },
+  { code: "ko", label: "Korean", native: "한국어" },
+  { code: "zh", label: "Chinese", native: "中文" },
+  { code: "ja", label: "Japanese", native: "日本語" },
+  { code: "ru", label: "Russian", native: "Русский" },
+  { code: "ar", label: "Arabic", native: "العربية" },
+];
+
+const VALID_CODES = new Set(LANGUAGE_OPTIONS.map((o) => o.code));
+
+interface LanguageContextValue {
+  language: Language;
+  setLanguage: (lang: Language) => void;
+  /** Has the user made an explicit choice already (i.e. skip the first-visit modal)? */
+  hasChosenLanguage: boolean;
+  /** True when the current language reads right-to-left (e.g. Arabic). */
+  isRTL: boolean;
+  /** Text direction for the active language: "rtl" or "ltr". Mirrors `isRTL`
+   *  for components that consume `const { t, dir } = useLanguage();`. */
+  dir: "rtl" | "ltr";
+  /** Look up a nested string by dot path. Falls back to English, then to the
+   *  optional `fallback` string, then to the raw path. Example:
+   *  t("hero.subtitle", "Subtitle") */
+  t: (path: string, fallback?: string) => string;
+  /** Look up a nested string array by dot path, e.g. t("ticker.alerts") — for lists */
+  tList: (path: string) => string[];
+}
+
+const LanguageContext = createContext<LanguageContextValue | undefined>(undefined);
+
+function getNested(obj: any, path: string): any {
+  return path.split(".").reduce((acc, key) => (acc == null ? undefined : acc[key]), obj);
+}
+
+function getInitialLanguage(): { language: Language; hasChosen: boolean } {
+  if (typeof window === "undefined") return { language: "en", hasChosen: false };
+  try {
+    const stored = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    if (stored && VALID_CODES.has(stored as Language)) {
+      return { language: stored as Language, hasChosen: true };
+    }
+  } catch {
+    // localStorage unavailable (e.g. private browsing) — fall back silently
+  }
+  return { language: "en", hasChosen: false };
+}
+
+export function LanguageProvider({ children }: { children: ReactNode }) {
+  const [{ language, hasChosen }, setState] = useState(getInitialLanguage);
+  const isRTL = RTL_LANGUAGES.includes(language);
+  const dir: "rtl" | "ltr" = isRTL ? "rtl" : "ltr";
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+    } catch {
+      // ignore storage failures
+    }
+    // Keep the document in sync so native browser behavior (text direction,
+    // spellcheck, font selection, screen readers) matches the chosen language.
+    if (typeof document !== "undefined") {
+      document.documentElement.lang = language;
+      document.documentElement.dir = isRTL ? "rtl" : "ltr";
+    }
+  }, [language, isRTL]);
+
+  const setLanguage = (lang: Language) => {
+    setState({ language: lang, hasChosen: true });
+  };
+
+  const dict: TranslationDict = translations[language];
+
+  const t = (path: string, fallback?: string): string => {
+    const value = getNested(dict, path);
+    if (typeof value === "string") return value;
+    // Fall back to English so the UI never shows a raw key path
+    const en = getNested(translations.en, path);
+    if (typeof en === "string") return en;
+    // Nothing in the dictionary — use the caller-supplied fallback, or the
+    // raw path as a last resort (preserves prior behavior for callers w/o
+    // a fallback).
+    return fallback ?? path;
+  };
+
+  const tList = (path: string): string[] => {
+    const value = getNested(dict, path);
+    if (Array.isArray(value)) return value;
+    const fallback = getNested(translations.en, path);
+    return Array.isArray(fallback) ? fallback : [];
+  };
+
+  return (
+    <LanguageContext.Provider value={{ language, setLanguage, hasChosenLanguage: hasChosen, isRTL, dir, t, tList }}>
+      {children}
+    </LanguageContext.Provider>
+  );
+}
+
+export function useLanguage(): LanguageContextValue {
+  const ctx = useContext(LanguageContext);
+  if (!ctx) {
+    throw new Error("useLanguage() must be used inside a <LanguageProvider>");
+  }
+  return ctx;
+}

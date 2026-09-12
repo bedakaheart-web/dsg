@@ -1,627 +1,367 @@
-
+import { Link } from "react-router-dom";
 import emergencyBg from "../assets/emergency.jpg";
+import { useLanguage } from "../context/LanguageContext";
 
-const sections = [
-  {
-    id: "responsibilities",
-    icon: "👤",
-    accent: "#2ECC8F",
-    tag: "User Conduct",
-    title: "User Responsibilities",
-    content: [
-      {
-        heading: "Accurate Information",
-        body: "Users must provide truthful and accurate information when submitting incident reports, emergency tips, or any content through DumaSafeGuide. Deliberately false reports that trigger unnecessary emergency responses may constitute a criminal offense under Philippine law.",
-      },
-      {
-        heading: "Appropriate Use",
-        body: "This platform is intended solely for disaster preparedness, emergency response coordination, and community safety. Use of this platform for personal disputes, harassment, or any purpose unrelated to public safety is strictly prohibited.",
-      },
-      {
-        heading: "Account Security",
-        body: "If a registered account is provided, users are responsible for maintaining the confidentiality of their credentials. Any unauthorized use of an account must be reported immediately to DumaSafeGuide administrators.",
-      },
-    ],
-  },
-  {
-    id: "privacy",
-    icon: "🔒",
-    accent: "#5B8DEF",
-    tag: "Data & Privacy",
-    title: "Privacy Policy",
-    content: [
-      {
-        heading: "Data We Collect",
-        body: "DumaSafeGuide may collect location data, contact information, and incident details submitted voluntarily by users. This data is used exclusively for emergency coordination and is not sold or shared with commercial third parties.",
-      },
-      {
-        heading: "Data Retention",
-        body: "Incident reports and user-submitted data may be retained for up to three (3) years for archival, analysis, and improvement of emergency response services. Users may request deletion of their personal data by contacting the platform administrators.",
-      },
-      {
-        heading: "Third-Party Sharing",
-        body: "Information may be shared with partner government agencies (CDRRMO, BFP, PNP, Philippine Red Cross) strictly for emergency coordination purposes. No data is shared with private commercial entities without explicit user consent.",
-      },
-    ],
-  },
-  {
-    id: "ra10175",
-    icon: "📜",
-    accent: "#F5C842",
-    tag: "Legal Framework",
-    title: "RA 10175 Overview",
-    content: [
-      {
-        heading: "Cybercrime Prevention Act of 2012",
-        body: "Republic Act 10175, or the Cybercrime Prevention Act of 2012, governs the responsible use of online platforms in the Philippines. DumaSafeGuide operates in full compliance with this law.",
-      },
-      {
-        heading: "Prohibited Online Acts",
-        body: "Under RA 10175, acts such as cyber libel, identity theft, illegal access to systems, and online fraud are criminal offenses. Users who misuse DumaSafeGuide for such purposes may face civil and criminal liability under this Act.",
-      },
-      {
-        heading: "Reporting Violations",
-        body: "If you encounter any content or user behavior on this platform that violates RA 10175 or other applicable laws, report it immediately through the platform's admin contact or directly to the National Bureau of Investigation Cybercrime Division.",
-      },
-    ],
-  },
-  {
-    id: "disclaimer",
-    icon: "⚠️",
-    accent: "#EF5B5B",
-    tag: "Disclaimers",
-    title: "Limitation of Liability",
-    content: [
-      {
-        heading: "No Guarantee of Response",
-        body: "DumaSafeGuide is an information and coordination aid. It does not guarantee emergency response times or outcomes. Users should always contact official emergency services directly (911, local CDRRMO) during life-threatening situations.",
-      },
-      {
-        heading: "Platform Availability",
-        body: "We strive for high availability but cannot guarantee uninterrupted access during extreme disaster events that may affect internet infrastructure. Always have offline emergency plans and barangay-level contacts as backup.",
-      },
-      {
-        heading: "Information Accuracy",
-        body: "While we work to keep all information up to date, contact numbers, agency details, and safety guidelines may change. Always verify critical information with the relevant agency directly before acting on it.",
-      },
-    ],
-  },
-];
+const SECTION_META = [
+  { id: "responsibilities", icon: "👤", accent: "#2ECC8F", accentRgb: "46,204,143", key: "responsibilities", clauses: ["accurate", "appropriate", "security"] },
+  { id: "privacy", icon: "🔒", accent: "#5B8DEF", accentRgb: "91,141,239", key: "privacy", clauses: ["collect", "retention", "thirdParty"] },
+  { id: "ra10175", icon: "📜", accent: "#F5C842", accentRgb: "245,200,66", key: "ra10175", clauses: ["act", "prohibited", "reporting"] },
+  { id: "disclaimer", icon: "⚠️", accent: "#EF5B5B", accentRgb: "239,91,91", key: "disclaimer", clauses: ["noGuarantee", "availability", "accuracy"] },
+] as const;
 
-export default function TermsOfService() {
+export default function TermsOfUse() {
+  const { t, isRTL } = useLanguage();
+
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        .tos-root {
+        :root {
+          --bg:       #07101d;
+          --surface:  rgba(13,27,46,0.72);
+          --surface2: rgba(13,27,46,0.88);
+          --border:   rgba(0,200,224,0.08);
+          --border2:  rgba(0,200,224,0.18);
+          --text:     #ddeef8;
+          --text2:    rgba(160,200,224,0.65);
+          --text3:    rgba(160,200,224,0.30);
+          --red:      #e8372a;
+          --cyan:     #00c8e0;
+          --blue:     #4A90D9;
+          --radius:   13px;
+        }
+
+        .tos {
           min-height: 100vh;
-          font-family: 'DM Sans', sans-serif;
-          color: #e8eaf0;
+          font-family: 'Inter', sans-serif;
+          color: var(--text);
+          background: var(--bg);
           position: relative;
           overflow-x: hidden;
         }
 
-        /* Background image */
-        .tos-bg {
-          position: fixed;
-          inset: 0;
-          z-index: 0;
-          background-image: url(${emergencyBg});
-          background-size: cover;
-          background-position: center;
-          background-repeat: no-repeat;
+        .tos-bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
+        .tos-bg-img {
+          width: 100%; height: 100%;
+          object-fit: cover; object-position: center; display: block;
+          transform-origin: center center;
+          animation: bgDrift 30s ease-in-out infinite;
+          will-change: transform;
         }
 
-        .tos-bg::after {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: rgba(11, 15, 26, 0.90);
+        @keyframes bgDrift {
+          0%   { transform: scale(1.08) translate(0px,   0px);   }
+          25%  { transform: scale(1.11) translate(-16px, -10px); }
+          50%  { transform: scale(1.10) translate(-8px,  -18px); }
+          75%  { transform: scale(1.12) translate(14px,  -6px);  }
+          100% { transform: scale(1.08) translate(0px,   0px);   }
         }
 
-        .tos-overlay {
-          position: fixed;
-          inset: 0;
-          z-index: 1;
+        .tos-bg-overlay {
+          position: absolute; inset: 0;
+          background: linear-gradient(
+            180deg,
+            rgba(7,16,29,0.82) 0%,
+            rgba(7,16,29,0.68) 40%,
+            rgba(7,16,29,0.82) 75%,
+            rgba(7,16,29,0.97) 100%
+          );
+        }
+        .tos-bg-atmosphere {
+          position: absolute; inset: 0; pointer-events: none;
           background:
-            radial-gradient(ellipse 55% 40% at 10% 10%, rgba(239,91,158,0.06) 0%, transparent 65%),
-            radial-gradient(ellipse 45% 50% at 90% 85%, rgba(245,200,66,0.05) 0%, transparent 65%),
-            radial-gradient(ellipse 35% 35% at 50% 50%, rgba(91,141,239,0.03) 0%, transparent 60%);
-          pointer-events: none;
+            radial-gradient(ellipse 60% 50% at 10% 0%,  rgba(232,55,42,0.09)  0%, transparent 65%),
+            radial-gradient(ellipse 55% 60% at 90% 100%, rgba(0,200,224,0.07)  0%, transparent 70%),
+            radial-gradient(ellipse 40% 40% at 55% 45%,  rgba(13,27,46,0.40)   0%, transparent 60%);
+        }
+        .tos-bg-grain {
+          position: absolute; inset: 0;
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+          background-size: 200px; opacity: 0.45; pointer-events: none;
         }
 
-        .tos-noise {
-          position: fixed;
-          inset: 0;
-          z-index: 1;
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-          background-size: 200px;
-          pointer-events: none;
-          opacity: 0.5;
+        .tos-wrap {
+          position: relative; z-index: 1;
+          max-width: 1080px; margin: 0 auto;
+          padding: 0 28px 120px;
         }
 
-        .tos-body {
-          position: relative;
-          z-index: 2;
-          max-width: 1100px;
-          margin: 0 auto;
-          padding: 56px 24px 96px;
+        .tos-nav {
+          display: flex; align-items: center; justify-content: space-between;
+          padding: 28px 0 0;
+          animation: fadeUp .5s ease both;
         }
-
-        /* Breadcrumb */
-        .tos-breadcrumb {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          font-size: 12px;
-          color: rgba(232,234,240,0.3);
-          margin-bottom: 32px;
-          animation: tosFadeUp 0.4s ease both;
+        .tos-logo {
+          display: flex; align-items: center; gap: 10px; text-decoration: none;
+          font-family: 'Poppins', sans-serif;
+          font-size: 15px; font-weight: 700;
+          letter-spacing: 0.12em; text-transform: uppercase;
+          color: var(--text);
         }
-
-        .tos-breadcrumb a {
-          color: rgba(232,234,240,0.3);
-          text-decoration: none;
-          transition: color 0.2s ease;
+        .tos-logo-dot {
+          width: 8px; height: 8px; border-radius: 50%;
+          background: var(--red);
+          box-shadow: 0 0 12px var(--red), 0 0 24px rgba(232,55,42,0.4);
+          animation: breathe 2.4s ease infinite;
         }
-
-        .tos-breadcrumb a:hover { color: #EF5B9E; }
-        .tos-breadcrumb-sep { opacity: 0.3; }
-        .tos-breadcrumb-current { color: #EF5B9E; }
-
-        /* Header */
-        .tos-header {
-          margin-bottom: 64px;
-          animation: tosFadeUp 0.55s ease both;
+        @keyframes breathe {
+          0%,100% { opacity:1; transform:scale(1); }
+          50%      { opacity:.55; transform:scale(.78); }
         }
-
-        .tos-eyebrow {
-          font-size: 11px;
-          font-weight: 500;
-          letter-spacing: 0.2em;
-          text-transform: uppercase;
-          color: #EF5B9E;
-          margin-bottom: 16px;
-          display: flex;
-          align-items: center;
-          gap: 10px;
+        .tos-back {
+          font-family: 'Inter', sans-serif;
+          font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+          color: var(--text3); text-decoration: none;
+          border: 1px solid rgba(0,200,224,0.12); border-radius: 8px;
+          padding: 8px 16px; transition: all .2s;
+          background: rgba(13,27,46,0.60); backdrop-filter: blur(18px);
+          display: flex; align-items: center; gap: 6px;
         }
+        .tos-back:hover { color: var(--text); border-color: rgba(0,200,224,0.30); }
 
-        .tos-eyebrow::after {
-          content: '';
-          display: block;
-          width: 36px;
-          height: 1px;
-          background: #EF5B9E;
-          opacity: 0.5;
+        .tos-hero {
+          margin-top: 72px;
+          margin-bottom: 52px;
+          animation: fadeUp 0.7s 0.1s ease both;
         }
-
-        .tos-title {
-          font-family: 'Syne', sans-serif;
-          font-size: clamp(36px, 6vw, 64px);
-          font-weight: 800;
-          letter-spacing: -0.03em;
-          color: #f0f2f8;
-          line-height: 1;
+        .tos-hero-eyebrow {
+          font-family: 'Inter', sans-serif;
+          font-size: 11px; font-weight: 500;
+          letter-spacing: 0.20em; text-transform: uppercase;
+          color: var(--red); margin-bottom: 20px;
+          display: flex; align-items: center; gap: 10px;
         }
-
-        .tos-title span {
-          color: transparent;
-          -webkit-text-stroke: 1px rgba(240,242,248,0.25);
+        .tos-hero-eyebrow::after {
+          content: ''; display: block;
+          width: 40px; height: 1px;
+          background: var(--red); opacity: 0.5;
         }
-
-        .tos-sub {
-          font-size: 15px;
-          font-weight: 300;
-          color: rgba(232,234,240,0.4);
-          margin-top: 14px;
-          max-width: 480px;
-          line-height: 1.65;
+        .tos-hero h1 {
+          font-family: 'Poppins', sans-serif;
+          font-size: clamp(42px, 6vw, 78px);
+          font-weight: 700; line-height: 0.95;
+          letter-spacing: -0.03em; color: #F8FAFC;
+          margin-bottom: 24px;
         }
-
+        .tos-hero h1 .accent {
+          color: #A8D8FF;
+          -webkit-text-stroke: 0;
+        }
+        .tos-hero-sub {
+          font-family: 'Inter', sans-serif;
+          font-size: 16px; font-weight: 300;
+          color: rgba(160,200,224,0.60);
+          max-width: 520px; line-height: 1.68;
+        }
         .tos-meta {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          font-size: 11px;
-          font-weight: 500;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          color: rgba(232,234,240,0.3);
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 6px;
-          padding: 6px 14px;
-          margin-top: 20px;
+          display: inline-flex; align-items: center; gap: 8px;
+          font-family: 'Inter', sans-serif;
+          font-size: 11px; font-weight: 500; letter-spacing: 0.10em; text-transform: uppercase;
+          color: var(--text3);
+          background: var(--surface); border: 1px solid var(--border);
+          border-radius: 20px; padding: 6px 16px; margin-top: 24px;
+          backdrop-filter: blur(18px);
         }
-
         .tos-meta-dot {
-          width: 5px;
-          height: 5px;
-          border-radius: 50%;
-          background: #2ECC8F;
+          width: 6px; height: 6px; border-radius: 50%;
+          background: var(--red);
+          box-shadow: 0 0 10px var(--red), 0 0 22px rgba(232,55,42,0.35);
+          animation: breathe 2.4s ease infinite;
         }
 
-        /* TOC */
-        .tos-toc {
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.09);
-          border-radius: 14px;
-          padding: 24px 28px;
-          margin-bottom: 32px;
-          animation: tosFadeUp 0.55s ease 0.1s both;
-          backdrop-filter: blur(6px);
-          -webkit-backdrop-filter: blur(6px);
+        .tos-label {
+          font-family: 'Inter', sans-serif;
+          font-size: 10px; font-weight: 500;
+          letter-spacing: 0.20em; text-transform: uppercase;
+          color: var(--text3); margin-bottom: 14px;
         }
 
-        .tos-toc-label {
-          font-size: 10px;
-          font-weight: 600;
-          letter-spacing: 0.18em;
-          text-transform: uppercase;
-          color: rgba(232,234,240,0.3);
-          margin-bottom: 14px;
-        }
+        .tos-section-list { display: flex; flex-direction: column; gap: 13px; }
 
-        .tos-toc-links {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
-        }
-
-        .tos-toc-link {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          font-size: 12.5px;
-          color: rgba(232,234,240,0.45);
-          text-decoration: none;
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.07);
-          border-radius: 6px;
-          padding: 6px 12px;
-          transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
-        }
-
-        .tos-toc-link:hover {
-          color: #f0f2f8;
-          border-color: rgba(255,255,255,0.2);
-          background: rgba(255,255,255,0.07);
-        }
-
-        /* Sections */
-        .tos-sections {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-        }
-
-        .tos-section {
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.09);
-          border-radius: 14px;
-          overflow: hidden;
-          position: relative;
-          transition: border-color 0.25s ease;
-          animation: tosFadeUp 0.55s ease both;
-          backdrop-filter: blur(6px);
-          -webkit-backdrop-filter: blur(6px);
-          /* Offset for sticky nav when anchor-jumping */
+        .tos-card {
+          background: var(--surface);
+          border: 1px solid var(--border);
+          border-top: 2px solid var(--s-accent);
+          border-radius: var(--radius); padding: 26px 28px;
+          position: relative; overflow: hidden;
+          transition: transform .22s, border-color .22s, box-shadow .22s;
+          backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
           scroll-margin-top: 80px;
         }
-
-        .tos-section:nth-child(1) { animation-delay: 0.12s; }
-        .tos-section:nth-child(2) { animation-delay: 0.18s; }
-        .tos-section:nth-child(3) { animation-delay: 0.24s; }
-        .tos-section:nth-child(4) { animation-delay: 0.30s; }
-
-        .tos-section::before {
-          content: '';
-          position: absolute;
-          top: 0; left: 0; right: 0;
-          height: 2px;
-          background: linear-gradient(90deg, var(--tos-accent), transparent);
+        .tos-card::before {
+          content: ''; position: absolute; inset: 0;
+          background: radial-gradient(ellipse 80% 60% at 0% 0%, var(--s-dim), transparent 70%);
+          pointer-events: none;
+        }
+        .tos-card:hover {
+          transform: translateY(-3px);
+          border-color: var(--s-accent);
+          box-shadow: 0 0 20px var(--s-dim), 0 8px 28px rgba(0,0,0,0.4);
         }
 
-        .tos-section:hover {
-          border-color: var(--tos-accent-border);
+        .tos-card-top {
+          display: flex; align-items: flex-start;
+          justify-content: space-between; margin-bottom: 16px;
+          position: relative; z-index: 1;
+        }
+        .tos-card-icon { font-size: 26px; line-height: 1; }
+        .tos-card-tag {
+          font-family: 'Inter', sans-serif;
+          font-size: 9px; font-weight: 700;
+          letter-spacing: 0.15em; text-transform: uppercase;
+          color: var(--s-accent); border: 1px solid var(--s-accent);
+          border-radius: 3px; padding: 3px 7px; opacity: .75;
+        }
+        .tos-card-title {
+          font-family: 'Poppins', sans-serif;
+          font-size: 18px; font-weight: 700;
+          letter-spacing: -0.02em; color: var(--text);
+          margin-bottom: 16px; position: relative; z-index: 1;
         }
 
-        /* Section header */
-        .tos-section-head {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 24px 28px 20px;
-          border-bottom: 1px solid rgba(255,255,255,0.06);
+        .tos-clauses {
+          position: relative; z-index: 1;
+          display: flex; flex-direction: column; gap: 14px;
         }
-
-        .tos-section-left {
-          display: flex;
-          align-items: center;
-          gap: 14px;
-        }
-
-        .tos-section-icon { font-size: 26px; line-height: 1; }
-
-        .tos-section-name {
-          font-family: 'Syne', sans-serif;
-          font-size: 18px;
-          font-weight: 800;
-          color: #f0f2f8;
-          letter-spacing: -0.01em;
-        }
-
-        .tos-section-tag {
-          font-size: 10px;
-          font-weight: 600;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          color: var(--tos-accent);
-          background: var(--tos-alpha);
-          border: 1px solid var(--tos-accent-border);
-          border-radius: 4px;
-          padding: 3px 9px;
-        }
-
-        /* Section body */
-        .tos-section-body {
-          padding: 24px 28px;
-          display: flex;
-          flex-direction: column;
-          gap: 20px;
-        }
-
         .tos-clause-heading {
-          font-size: 13px;
-          font-weight: 500;
-          color: rgba(232,234,240,0.7);
-          margin-bottom: 6px;
-          display: flex;
-          align-items: center;
-          gap: 8px;
+          font-family: 'Inter', sans-serif;
+          font-size: 13px; font-weight: 500;
+          color: var(--text); margin-bottom: 4px;
         }
-
-        .tos-clause-heading::before {
-          content: '';
-          display: block;
-          width: 3px;
-          height: 3px;
-          border-radius: 50%;
-          background: var(--tos-accent);
-          flex-shrink: 0;
-        }
-
         .tos-clause-body {
-          font-size: 14px;
-          font-weight: 300;
-          color: rgba(232,234,240,0.4);
-          line-height: 1.7;
-          padding-left: 11px;
+          font-family: 'Inter', sans-serif;
+          font-size: 13.5px; font-weight: 300;
+          color: var(--text2); line-height: 1.7;
         }
 
-        /* Acceptance bar */
-        .tos-accept {
-          margin-top: 48px;
-          background: rgba(46,204,143,0.05);
-          border: 1px solid rgba(46,204,143,0.2);
-          border-radius: 14px;
-          padding: 28px 36px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 24px;
-          animation: tosFadeUp 0.55s ease 0.36s both;
-          backdrop-filter: blur(6px);
-          -webkit-backdrop-filter: blur(6px);
-        }
-
-        @media (max-width: 600px) {
-          .tos-accept { flex-direction: column; align-items: flex-start; }
-        }
-
-        .tos-accept-text h3 {
-          font-family: 'Syne', sans-serif;
-          font-size: 16px;
-          font-weight: 700;
-          color: #2ECC8F;
-          margin-bottom: 4px;
-        }
-
-        .tos-accept-text p {
-          font-size: 13px;
-          font-weight: 300;
-          color: rgba(232,234,240,0.38);
-          line-height: 1.5;
-          max-width: 420px;
-        }
-
-        .tos-accept-badge {
-          flex-shrink: 0;
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          font-family: 'Syne', sans-serif;
-          font-size: 12px;
-          font-weight: 700;
-          letter-spacing: 0.05em;
-          color: #2ECC8F;
-          background: rgba(46,204,143,0.1);
-          border: 1px solid rgba(46,204,143,0.3);
-          border-radius: 8px;
-          padding: 10px 18px;
-          white-space: nowrap;
-        }
-
-        /* CTA strip */
         .tos-cta {
-          margin-top: 16px;
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.09);
-          border-radius: 14px;
-          padding: 32px 36px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 24px;
-          animation: tosFadeUp 0.55s ease 0.40s both;
-          backdrop-filter: blur(6px);
-          -webkit-backdrop-filter: blur(6px);
+          background: var(--surface);
+          border: 1px solid rgba(232,55,42,0.20);
+          border-radius: var(--radius); padding: 32px 36px;
+          display: flex; align-items: center;
+          justify-content: space-between; gap: 24px;
+          backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+          position: relative; overflow: hidden;
         }
-
-        @media (max-width: 600px) {
-          .tos-cta { flex-direction: column; align-items: flex-start; }
+        .tos-cta::before {
+          content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+          background: linear-gradient(90deg, var(--red), rgba(232,55,42,0.3), transparent);
         }
-
         .tos-cta-text h3 {
-          font-family: 'Syne', sans-serif;
-          font-size: 18px;
-          font-weight: 700;
-          color: #f0f2f8;
+          font-family: 'Poppins', sans-serif;
+          font-size: 18px; font-weight: 700;
+          letter-spacing: -0.02em; color: var(--text);
           margin-bottom: 6px;
         }
-
         .tos-cta-text p {
-          font-size: 14px;
-          font-weight: 300;
-          color: rgba(232,234,240,0.38);
-          line-height: 1.5;
-          max-width: 380px;
+          font-family: 'Inter', sans-serif;
+          font-size: 14px; font-weight: 300;
+          color: var(--text3); line-height: 1.5; max-width: 380px;
         }
-
         .tos-cta-btn {
           flex-shrink: 0;
-          display: inline-flex;
-          align-items: center;
-          gap: 10px;
-          font-family: 'Syne', sans-serif;
-          font-size: 13px;
-          font-weight: 700;
-          letter-spacing: 0.05em;
-          color: #0b0f1a;
-          background: #2ECC8F;
-          border: none;
-          border-radius: 8px;
-          padding: 13px 22px;
-          cursor: pointer;
-          text-decoration: none;
-          transition: background 0.2s ease, transform 0.2s ease;
+          display: inline-flex; align-items: center; gap: 10px;
+          font-family: 'Inter', sans-serif;
+          font-size: 12px; font-weight: 500;
+          letter-spacing: 0.08em; text-transform: uppercase;
+          color: #fff;
+          background: linear-gradient(135deg, var(--red), #b82010);
+          border: none; border-radius: 8px;
+          padding: 13px 24px; cursor: pointer; text-decoration: none;
+          transition: transform .2s, box-shadow .2s;
+          box-shadow: 0 0 28px rgba(232,55,42,0.28);
           white-space: nowrap;
         }
+        .tos-cta-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 0 48px rgba(232,55,42,0.50);
+        }
 
-        .tos-cta-btn:hover { background: #38e09e; transform: translateY(-2px); }
-        .tos-cta-btn span { font-size: 16px; }
+        .tos-section { margin-bottom: 40px; }
 
-        @keyframes tosFadeUp {
-          from { opacity: 0; transform: translateY(20px); }
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(18px); }
           to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 760px) {
+          .tos-wrap { padding: 0 18px 100px; }
+          .tos-hero h1 { font-size: 38px; }
+          .tos-hero { margin-top: 48px; margin-bottom: 36px; }
+          .tos-cta { flex-direction: column; align-items: flex-start; padding: 24px 22px; }
+          .tos-card { padding: 20px 20px; }
+        }
+
+        @media (max-width: 480px) {
+          .tos-hero h1 { font-size: 32px; }
         }
       `}</style>
 
-      <div className="tos-root">
-        {/* Layered background */}
-        <div className="tos-bg" />
-        <div className="tos-overlay" />
-        <div className="tos-noise" />
+      <div className="tos" dir={isRTL ? "rtl" : "ltr"}>
+        <div className="tos-bg">
+          <img src={emergencyBg} alt="" className="tos-bg-img" aria-hidden="true" />
+          <div className="tos-bg-overlay" />
+          <div className="tos-bg-atmosphere" />
+          <div className="tos-bg-grain" />
+        </div>
 
+        <div className="tos-wrap">
 
-        <div className="tos-body">
-
-          {/* Breadcrumb */}
-          <div className="tos-breadcrumb">
-            <a href="/resources">Resources</a>
-            <span className="tos-breadcrumb-sep">›</span>
-            <span className="tos-breadcrumb-current">Terms of Service</span>
-          </div>
-
-          {/* Header */}
-          <div className="tos-header">
-            <div className="tos-eyebrow">Legal</div>
-            <h1 className="tos-title">Terms of<br /><span>Service</span></h1>
-            <p className="tos-sub">
-              The rules, responsibilities, and legal framework governing use of DumaSafeGuide,
-              including applicable Philippine law.
-            </p>
+         
+          <section className="tos-hero">
+            <div className="tos-hero-eyebrow">{t("terms.eyebrow")}</div>
+            <h1>
+              {t("terms.titleLine1")} <span className="accent">{t("terms.titleAccent")}</span>
+            </h1>
+            <p className="tos-hero-sub">{t("terms.sub")}</p>
             <div className="tos-meta">
-              <div className="tos-meta-dot" />
-              Effective Date: January 1, 2025 · Last Updated: June 2025
+              <span className="tos-meta-dot" />
+              {t("terms.meta")}
             </div>
-          </div>
+          </section>
 
-          {/* Table of Contents */}
-          <div className="tos-toc">
-            <div className="tos-toc-label">Jump to Section</div>
-            <div className="tos-toc-links">
-              {sections.map((s) => (
-                <a key={s.id} href={`#${s.id}`} className="tos-toc-link">
-                  <span>{s.icon}</span>
-                  <span>{s.title}</span>
-                </a>
+          <div className="tos-section">
+            <div className="tos-label">{t("terms.sectionsLabel")}</div>
+            <div className="tos-section-list">
+              {SECTION_META.map((s) => (
+                <div
+                  key={s.id}
+                  id={s.id}
+                  className="tos-card"
+                  style={{
+                    "--s-accent": s.accent,
+                    "--s-dim":    `rgba(${s.accentRgb},0.10)`,
+                  } as React.CSSProperties}
+                >
+                  <div className="tos-card-top">
+                    <span className="tos-card-icon">{s.icon}</span>
+                    <span className="tos-card-tag">{t(`terms.sections.${s.key}.tag`)}</span>
+                  </div>
+                  <div className="tos-card-title">{t(`terms.sections.${s.key}.title`)}</div>
+                  <div className="tos-clauses">
+                    {s.clauses.map((c) => (
+                      <div key={c}>
+                        <div className="tos-clause-heading">{t(`terms.sections.${s.key}.${c}.heading`)}</div>
+                        <p className="tos-clause-body">{t(`terms.sections.${s.key}.${c}.body`)}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           </div>
 
-          {/* Sections */}
-          <div className="tos-sections">
-            {sections.map((section) => (
-              <div
-                key={section.id}
-                id={section.id}
-                className="tos-section"
-                style={{
-                  "--tos-accent": section.accent,
-                  "--tos-alpha": `${section.accent}18`,
-                  "--tos-accent-border": `${section.accent}40`,
-                } as React.CSSProperties}
-              >
-                <div className="tos-section-head">
-                  <div className="tos-section-left">
-                    <span className="tos-section-icon">{section.icon}</span>
-                    <span className="tos-section-name">{section.title}</span>
-                  </div>
-                  <span className="tos-section-tag">{section.tag}</span>
-                </div>
-
-                <div className="tos-section-body">
-                  {section.content.map((clause) => (
-                    <div key={clause.heading} className="tos-clause">
-                      <div className="tos-clause-heading">{clause.heading}</div>
-                      <p className="tos-clause-body">{clause.body}</p>
-                    </div>
-                  ))}
-                </div>
+          <div className="tos-section">
+            <div className="tos-cta">
+              <div className="tos-cta-text">
+                <h3>{t("terms.ctaHeading")}</h3>
+                <p>{t("terms.ctaSub")}</p>
               </div>
-            ))}
-          </div>
-
-          {/* Acceptance notice */}
-          <div className="tos-accept">
-            <div className="tos-accept-text">
-              <h3>✓ Implied Acceptance</h3>
-              <p>
-                By accessing and using DumaSafeGuide, you agree to these Terms of Service
-                and the Privacy Policy in full. Continued use constitutes ongoing acceptance.
-              </p>
+              <a href="/report" className="tos-cta-btn">🚨 {t("terms.ctaBtn")}</a>
             </div>
-            <div className="tos-accept-badge">
-              <span>🛡️</span> RA 10175 Compliant
-            </div>
-          </div>
-
-          {/* CTA strip */}
-          <div className="tos-cta">
-            <div className="tos-cta-text">
-              <h3>Need to report an emergency?</h3>
-              <p>
-                Don't wait — use the incident reporting form to alert local responders immediately.
-              </p>
-            </div>
-            <a href="/report" className="tos-cta-btn">
-              <span>🚨</span> Report Now
-            </a>
           </div>
 
         </div>

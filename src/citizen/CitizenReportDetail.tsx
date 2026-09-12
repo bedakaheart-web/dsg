@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useLanguage } from "../context/LanguageContext";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../js/supabase";
 import {
   FaArrowLeft, FaMapMarkerAlt, FaTag, FaClock,
@@ -9,17 +10,31 @@ import {
 
 import pageBg from "../assets/pagesbackground.png";
 
-export default function CitizenReportDetail() {
-  const { id } = useParams();
+interface CitizenReportDetailProps {
+  reportId?: string;
+  onBack?: () => void;
+  onViewHistory?: () => void;
+}
+
+export default function CitizenReportDetail({ reportId, onBack, onViewHistory }: CitizenReportDetailProps = {}) {
+  // Consumes the active Navbar/Header language — any selector change re-renders
+  // this component and re-evaluates every t() call and language-aware helper below.
+  const { language, t, tList } = useLanguage();
+  void tList;
+  const locale = language === "tl" ? "fil-PH" : "en-PH";
+  const { id: routeId } = useParams();
+  const navigate = useNavigate();
+  const id = reportId ?? routeId;
+
+  const goBack    = () => (onBack ? onBack() : navigate("/citizen/dashboard"));
+  const goHistory = () => (onViewHistory ? onViewHistory() : navigate("/citizen/history"));
+
   const [report,  setReport]  = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!id) return;
 
-    // ✅ FIX: fetch everything from the reports row itself.
-    //    responder_notes / action_notes live on the report record —
-    //    there is no separate responder_notes table in this schema.
     const fetchReport = async () => {
       const { data, error } = await supabase
         .from("reports")
@@ -32,7 +47,6 @@ export default function CitizenReportDetail() {
 
     fetchReport();
 
-    // ✅ Real-time: update the card when the responder changes status / adds notes
     const ch = supabase
       .channel(`report-detail-${Date.now()}`)
       .on(
@@ -59,7 +73,12 @@ export default function CitizenReportDetail() {
   const s         = report ? (statusConfig[report.status] ?? { label: report.status, color: "#eef0f7", bg: "rgba(255,255,255,.06)", icon: <FaExclamationCircle size={11} /> }) : null;
   const typeColor = report ? (typeColors[report.type?.toLowerCase()] || "#7B9EFF") : "#7B9EFF";
 
-  // ✅ FIX: pull note text from the two columns that actually exist
+  // Language-aware status-pill text (reportDetail.statusLabels in the dictionary).
+  const statusKey = report?.status === "in-progress" ? "inProgress" : report?.status;
+  const statusName = report ? t(`reportDetail.statusLabels.${statusKey}`, s?.label ?? report.status) : "";
+  // Language-aware report-type name (report.types.* in the dictionary).
+  const typeName = report ? t(`report.types.${report.type?.toLowerCase()}`, report.type) : "";
+
   const noteText = report
     ? (report.responder_notes ?? report.action_notes ?? "").trim()
     : "";
@@ -89,7 +108,6 @@ export default function CitizenReportDetail() {
         .rd-noise { position: fixed; inset: 0; opacity: 0.025; pointer-events: none; z-index: 1; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 200px; }
         .rd-inner { position: relative; z-index: 2; max-width: 860px; margin: 0 auto; padding: 0 24px 80px; }
 
-        /* Nav */
         .rd-nav { display: flex; align-items: center; justify-content: space-between; padding: 24px 0 0; animation: fadeDown .5s ease both; }
         .rd-logo { display: flex; align-items: center; gap: 9px; text-decoration: none; }
         .rd-logo-text { font-family: var(--font-display); font-size: 16px; font-weight: 800; letter-spacing: -.01em; color: var(--text); }
@@ -97,7 +115,6 @@ export default function CitizenReportDetail() {
         .rd-back { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 500; color: var(--text-3); text-decoration: none; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 7px 14px; background: rgba(15,21,33,.82); transition: all .2s; backdrop-filter: blur(16px); }
         .rd-back:hover { color: var(--text); border-color: var(--border-2); background: rgba(15,21,33,.95); }
 
-        /* Hero */
         .rd-hero { margin-top: 40px; margin-bottom: 28px; animation: fadeUp .6s .05s ease both; }
         .rd-hero-tag { display: inline-flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--green); margin-bottom: 14px; }
         .rd-hero-tag-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 2.2s ease infinite; }
@@ -105,12 +122,10 @@ export default function CitizenReportDetail() {
         .rd-hero-heading { font-family: var(--font-display); font-size: clamp(22px,3.5vw,34px); font-weight: 900; line-height: 1.1; letter-spacing: -.03em; color: var(--text); margin-bottom: 6px; }
         .rd-hero-sub { font-size: 13px; color: var(--text-3); }
 
-        /* Section heads */
         .rd-section-head { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
         .rd-section-label { font-size: 10.5px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--text-3); white-space: nowrap; }
         .rd-section-line { flex: 1; height: 1px; background: linear-gradient(90deg, var(--border-2), transparent); }
 
-        /* Detail card */
         .rd-card { background: rgba(15,21,33,.82); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 20px; animation: fadeUp .6s .1s ease both; backdrop-filter: blur(16px); }
         .rd-card-top { padding: 22px 24px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
         .rd-card-top-left { display: flex; align-items: flex-start; gap: 14px; }
@@ -120,7 +135,6 @@ export default function CitizenReportDetail() {
         .rd-status { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; border-radius: 20px; padding: 5px 12px; flex-shrink: 0; }
         .rd-status-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
 
-        /* Meta grid */
         .rd-meta-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 0; }
         @media(max-width:560px){ .rd-meta-grid { grid-template-columns: 1fr; } }
         .rd-meta-item { padding: 16px 24px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 12px; transition: background .15s; }
@@ -138,7 +152,6 @@ export default function CitizenReportDetail() {
         .rd-meta-value { font-size: 13px; font-weight: 500; color: var(--text-2); line-height: 1.4; }
         .rd-type-tag { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: capitalize; border-radius: 6px; padding: 3px 9px; display: inline-block; }
 
-        /* Evidence image */
         .rd-evidence-card { background: rgba(15,21,33,.82); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 20px; animation: fadeUp .6s .15s ease both; backdrop-filter: blur(16px); }
         .rd-evidence-head { padding: 16px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
         .rd-evidence-title { font-family: var(--font-display); font-size: 14px; font-weight: 700; color: var(--text); }
@@ -150,7 +163,6 @@ export default function CitizenReportDetail() {
         .rd-evidence-empty-icon { width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,.03); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--text-3); margin: 0 auto 10px; }
         .rd-evidence-empty-text { font-size: 13px; color: var(--text-3); }
 
-        /* Responder note card */
         .rd-note-card { background: rgba(15,21,33,.82); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; animation: fadeUp .6s .2s ease both; backdrop-filter: blur(16px); margin-bottom: 20px; }
         .rd-note-head { padding: 16px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
         .rd-note-title { font-family: var(--font-display); font-size: 14px; font-weight: 700; color: var(--text); }
@@ -166,7 +178,6 @@ export default function CitizenReportDetail() {
         .rd-note-empty-title { font-size: 13px; font-weight: 600; color: var(--text-3); margin-bottom: 4px; }
         .rd-note-empty-sub { font-size: 12px; color: var(--text-3); opacity: .7; }
 
-        /* Status timeline */
         .rd-timeline-card { background: rgba(15,21,33,.82); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; animation: fadeUp .6s .25s ease both; backdrop-filter: blur(16px); }
         .rd-timeline-head { padding: 16px 22px; border-bottom: 1px solid var(--border); }
         .rd-timeline-title { font-family: var(--font-display); font-size: 14px; font-weight: 700; color: var(--text); }
@@ -180,7 +191,6 @@ export default function CitizenReportDetail() {
         .rd-tl-label { font-size: 13px; font-weight: 600; color: var(--text-2); margin-bottom: 2px; }
         .rd-tl-sub { font-size: 11.5px; color: var(--text-3); }
 
-        /* Loading */
         .rd-loading { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 100vh; color: var(--text-3); font-size: 13px; position: relative; z-index: 2; }
         .rd-spin { width: 16px; height: 16px; border: 2px solid rgba(46,204,143,.2); border-top-color: var(--green); border-radius: 50%; animation: spin .75s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -195,33 +205,38 @@ export default function CitizenReportDetail() {
 
         {loading || !report ? (
           <div className="rd-loading">
-            <div className="rd-spin" />Loading report details…
+            <div className="rd-spin" />{t("history.loadingReports")}
           </div>
         ) : (
           <div className="rd-inner">
 
-            {/* Nav */}
             <nav className="rd-nav">
-              <Link to="/citizen/dashboard" className="rd-logo">
+              <button
+                onClick={goBack}
+                className="rd-logo"
+                style={{ background: "none", border: "none", cursor: "pointer" }}
+              >
                 <span className="rd-logo-text">CITI<span>ZEN</span></span>
-              </Link>
-              <Link to="/citizen/history" className="rd-back">
-                <FaArrowLeft size={10} /> Back to History
-              </Link>
+              </button>
+              <button
+                onClick={goHistory}
+                className="rd-back"
+                style={{ background: "rgba(15,21,33,.82)", cursor: "pointer" }}
+              >
+                <FaArrowLeft size={10} /> {t("reportDetail.backToHistory")}
+              </button>
             </nav>
 
-            {/* Hero */}
             <div className="rd-hero">
-              <div className="rd-hero-tag"><span className="rd-hero-tag-dot" />Report Detail</div>
-              <h1 className="rd-hero-heading">Incident Report</h1>
+              <div className="rd-hero-tag"><span className="rd-hero-tag-dot" />{t("reportDetail.reportDetail")}</div>
+              <h1 className="rd-hero-heading">{t("reportDetail.incidentReport")}</h1>
               <p className="rd-hero-sub">
-                Filed on {new Date(report.created_at).toLocaleDateString("en-PH", { month: "long", day: "numeric", year: "numeric" })}
+                {t("reportDetail.submitted")} {new Date(report.created_at).toLocaleDateString(locale, { month: "long", day: "numeric", year: "numeric" })}
               </p>
             </div>
 
-            {/* ── Report Info ── */}
             <div className="rd-section-head">
-              <span className="rd-section-label">Report Info</span>
+              <span className="rd-section-label">{t("reportDetail.reportInfo")}</span>
               <span className="rd-section-line" />
             </div>
 
@@ -232,13 +247,13 @@ export default function CitizenReportDetail() {
                     <FaExclamationCircle />
                   </div>
                   <div>
-                    <div className="rd-desc">{report.description || "No description provided"}</div>
+                    <div className="rd-desc">{report.description || t("reportDetail.noDescription")}</div>
                     <div className="rd-desc-sub">ID: {report.id}</div>
                   </div>
                 </div>
                 {s && (
                   <span className="rd-status" style={{ color: s.color, background: s.bg }}>
-                    <span className="rd-status-dot" />{s.label}
+                    <span className="rd-status-dot" />{statusName}
                   </span>
                 )}
               </div>
@@ -247,11 +262,11 @@ export default function CitizenReportDetail() {
                 <div className="rd-meta-item">
                   <div className="rd-meta-icon"><FaTag size={11} /></div>
                   <div>
-                    <div className="rd-meta-label">Type</div>
+                    <div className="rd-meta-label">{t("reportDetail.type")}</div>
                     <div className="rd-meta-value">
                       {report.type ? (
                         <span className="rd-type-tag" style={{ color: typeColor, background: `${typeColor}10`, border: `1px solid ${typeColor}25` }}>
-                          {report.type}
+                          {typeName}
                         </span>
                       ) : "—"}
                     </div>
@@ -260,44 +275,43 @@ export default function CitizenReportDetail() {
                 <div className="rd-meta-item">
                   <div className="rd-meta-icon"><FaMapMarkerAlt size={11} /></div>
                   <div>
-                    <div className="rd-meta-label">Location</div>
-                    <div className="rd-meta-value">{report.address || report.location || "Not specified"}</div>
+                    <div className="rd-meta-label">{t("reportDetail.location")}</div>
+                    <div className="rd-meta-value">{report.address || report.location || t("reportDetail.notSpecified")}</div>
                   </div>
                 </div>
                 <div className="rd-meta-item">
                   <div className="rd-meta-icon"><FaClock size={11} /></div>
                   <div>
-                    <div className="rd-meta-label">Submitted</div>
+                    <div className="rd-meta-label">{t("reportDetail.submitted")}</div>
                     <div className="rd-meta-value">
-                      {new Date(report.created_at).toLocaleString("en-PH", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                      {new Date(report.created_at).toLocaleString(locale, { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                     </div>
                   </div>
                 </div>
                 <div className="rd-meta-item">
                   <div className="rd-meta-icon"><FaTag size={11} /></div>
                   <div>
-                    <div className="rd-meta-label">Reporter</div>
-                    <div className="rd-meta-value">{report.reporter_name || "Anonymous"}</div>
+                    <div className="rd-meta-label">{t("reportDetail.reporter")}</div>
+                    <div className="rd-meta-value">{report.reporter_name || t("reportDetail.anonymous")}</div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* ── Status Timeline ── */}
             <div className="rd-section-head" style={{ marginTop: 28 }}>
-              <span className="rd-section-label">Report Progress</span>
+              <span className="rd-section-label">{t("reportDetail.reportProgress")}</span>
               <span className="rd-section-line" />
             </div>
 
             <div className="rd-timeline-card">
               <div className="rd-timeline-head">
-                <div className="rd-timeline-title">Status Timeline</div>
+                <div className="rd-timeline-title">{t("reportDetail.statusTimeline")}</div>
               </div>
               <div className="rd-timeline-body">
                 {[
-                  { key: "pending",     label: "Submitted",    sub: "Your report has been received by the system." },
-                  { key: "in-progress", label: "In Progress",  sub: "A responder has been assigned and is investigating." },
-                  { key: "resolved",    label: "Resolved",     sub: "The incident has been handled and closed." },
+                  { key: "pending",     label: t("reportDetail.submittedLabel"),    sub: t("reportDetail.submittedSub") },
+                  { key: "in-progress", label: t("reportDetail.inProgressLabel"),  sub: t("reportDetail.inProgressSub") },
+                  { key: "resolved",    label: t("reportDetail.resolvedLabel"),     sub: t("reportDetail.resolvedSub") },
                 ].map((step, i) => {
                   const statuses  = ["pending", "in-progress", "resolved"];
                   const curIndex  = statuses.indexOf(report.status);
@@ -321,43 +335,41 @@ export default function CitizenReportDetail() {
               </div>
             </div>
 
-            {/* ── Evidence ── */}
             <div className="rd-section-head" style={{ marginTop: 28 }}>
-              <span className="rd-section-label">Evidence</span>
+              <span className="rd-section-label">{t("reportDetail.evidence")}</span>
               <span className="rd-section-line" />
             </div>
 
             <div className="rd-evidence-card">
               <div className="rd-evidence-head">
-                <span className="rd-evidence-title">Uploaded Evidence</span>
+                <span className="rd-evidence-title">{t("reportDetail.uploadedEvidence")}</span>
               </div>
               {report.evidence_url ? (
                 <div className="rd-evidence-body">
                   {/\.(jpe?g|png|gif|webp)$/i.test(report.evidence_url) ? (
-                    <img src={report.evidence_url} alt="Evidence" className="rd-evidence-img" />
+                    <img src={report.evidence_url} alt={t("reportDetail.evidenceAlt", "Evidence")} className="rd-evidence-img" />
                   ) : null}
                   <a href={report.evidence_url} target="_blank" rel="noopener noreferrer" className="rd-evidence-link">
-                    <FaExternalLinkAlt size={10} /> View / Download Evidence
+                    <FaExternalLinkAlt size={10} /> {t("reportDetail.viewDownloadEvidence")}
                   </a>
                 </div>
               ) : (
                 <div className="rd-evidence-empty">
                   <div className="rd-evidence-empty-icon"><FaPaperclip /></div>
-                  <p className="rd-evidence-empty-text">No evidence was uploaded for this report.</p>
+                  <p className="rd-evidence-empty-text">{t("reportDetail.noEvidence")}</p>
                 </div>
               )}
             </div>
 
-            {/* ── Responder Notes ── */}
             <div className="rd-section-head" style={{ marginTop: 28 }}>
-              <span className="rd-section-label">Responder Updates</span>
+              <span className="rd-section-label">{t("reportDetail.responderUpdates")}</span>
               <span className="rd-section-line" />
             </div>
 
             <div className="rd-note-card">
               <div className="rd-note-head">
-                <span className="rd-note-title">Responder Notes</span>
-                {noteText && <span className="rd-note-badge">✓ Has Update</span>}
+                <span className="rd-note-title">{t("reportDetail.responderNotes")}</span>
+                {noteText && <span className="rd-note-badge">{t("reportDetail.hasUpdate")}</span>}
               </div>
               {noteText ? (
                 <div className="rd-note-body">
@@ -367,8 +379,8 @@ export default function CitizenReportDetail() {
                   <div className="rd-note-content">
                     <div className="rd-note-time">
                       {report.updated_at
-                        ? new Date(report.updated_at).toLocaleString("en-PH", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })
-                        : "Responder update"}
+                        ? new Date(report.updated_at).toLocaleString(locale, { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })
+                        : t("reportDetail.responderUpdates", "Responder update")}
                     </div>
                     <div className="rd-note-msg">{noteText}</div>
                   </div>
@@ -376,9 +388,9 @@ export default function CitizenReportDetail() {
               ) : (
                 <div className="rd-note-empty">
                   <div className="rd-note-empty-icon"><FaStickyNote /></div>
-                  <div className="rd-note-empty-title">No updates yet</div>
+                  <div className="rd-note-empty-title">{t("reportDetail.noUpdatesYet")}</div>
                   <p className="rd-note-empty-sub">
-                    A responder will add notes here once they begin investigating your report.
+                    {t("reportDetail.responderUpdateSub")}
                   </p>
                 </div>
               )}

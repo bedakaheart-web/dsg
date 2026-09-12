@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { useLanguage } from "../context/LanguageContext";
+import CameraCaptureModal from "../components/CameraCaptureModal";
 import { useNavigate } from "react-router-dom";
 import pagesBackground from "../assets/pagesbackground.png";
 import { supabase } from "../js/supabase";
@@ -54,18 +56,6 @@ const CSS = `
     display: flex; align-items: center; justify-content: center; min-height: 80vh;
   }
 
-  /* ── Back Button ── */
-  .cr-back-btn {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 10px 16px; margin-bottom: 20px;
-    background: rgba(15,21,33,.82); border: 1px solid rgba(255,255,255,.07);
-    border-radius: 10px; font-size: 13px; font-weight: 600;
-    color: #2ECC8F; text-decoration: none; cursor: pointer;
-    transition: all 0.2s; margin-top: 20px;
-  }
-  .cr-back-btn:hover { background: rgba(46,204,143,.08); border-color: rgba(46,204,143,.20); }
-
-  /* ── Hero ── */
   .cr-hero { margin-top: 12px; margin-bottom: 28px; }
   .cr-hero-tag {
     display: inline-flex; align-items: center; gap: 7px;
@@ -91,7 +81,6 @@ const CSS = `
     max-width: 480px; line-height: 1.7;
   }
 
-  /* ── Logged-in status banner ── */
   .cr-banner {
     display: flex; align-items: center; gap: 14px;
     background: rgba(46,204,143,.06);
@@ -121,7 +110,6 @@ const CSS = `
   }
   .cr-banner-btn:hover { background: rgba(46,204,143,.18); transform: translateY(-1px); }
 
-  /* ── Steps ── */
   .cr-steps {
     display: flex; align-items: center;
     background: rgba(15,21,33,.82); backdrop-filter: blur(16px);
@@ -150,10 +138,8 @@ const CSS = `
   .cr-step--active .cr-step-label { color: rgba(255,107,107,.80); }
   .cr-step-line { width: 18px; height: 1px; background: rgba(255,255,255,.07); margin: 0 6px; flex-shrink: 0; }
 
-  /* ── Layout ── */
   .cr-layout { display: grid; grid-template-columns: 1fr 290px; gap: 22px; align-items: start; }
 
-  /* ── Form ── */
   .cr-form { display: flex; flex-direction: column; gap: 14px; }
   .cr-card {
     background: rgba(15,21,33,.82); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
@@ -181,7 +167,6 @@ const CSS = `
   }
   .cr-optional { font-size: 11px; font-weight: 400; color: rgba(238,240,247,.22); margin-left: 4px; }
 
-  /* Type grid */
   .cr-type-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
   .cr-type-btn {
     background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.07);
@@ -201,7 +186,6 @@ const CSS = `
     animation: cr-up .28s ease both;
   }
 
-  /* Fields */
   .cr-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .cr-field { display: flex; flex-direction: column; gap: 7px; }
   .cr-label {
@@ -230,7 +214,6 @@ const CSS = `
   .cr-textarea::placeholder { color: rgba(238,240,247,.20); }
   .cr-textarea:focus { border-color: rgba(46,204,143,.40); background: rgba(46,204,143,.03); box-shadow: 0 0 12px rgba(46,204,143,.10); }
 
-  /* Location */
   .cr-loc-row { display: flex; align-items: stretch; gap: 8px; }
   .cr-loc-wrap { position: relative; flex: 1; min-width: 0; display: flex; align-items: center; }
   .cr-loc-dot {
@@ -283,7 +266,6 @@ const CSS = `
   .cr-hint { font-size: 12px; color: rgba(238,240,247,.25); line-height: 1.5; }
   .cr-hint--warn { font-size: 11px; color: rgba(255,209,102,.55); }
 
-  /* Dropzone */
   .cr-dropzone {
     border: 1px dashed rgba(255,255,255,.12); border-radius: 12px;
     padding: 28px 20px; display: flex; flex-direction: column; align-items: center; gap: 6px;
@@ -299,7 +281,6 @@ const CSS = `
   .cr-upload--done      { background: rgba(46,204,143,.08);  color: #2ECC8F; border: 1px solid rgba(46,204,143,.20); }
   .cr-upload--error     { background: rgba(255,107,107,.08); color: #FF6B6B; border: 1px solid rgba(255,107,107,.20); }
 
-  /* Disclaimer */
   .cr-disclaimer {
     background: rgba(255,209,102,.04); border: 1px solid rgba(255,209,102,.12);
     border-radius: 14px; padding: 16px 18px;
@@ -328,7 +309,6 @@ const CSS = `
   }
   .cr-check-text strong { font-weight: 600; color: rgba(255,209,102,.65); }
 
-  /* Error banner */
   .cr-error {
     background: rgba(255,107,107,.08); border: 1px solid rgba(255,107,107,.22);
     border-radius: 10px; padding: 12px 16px;
@@ -342,7 +322,6 @@ const CSS = `
   }
   .cr-skip-btn:hover { background: rgba(255,107,107,.20); }
 
-  /* Submit */
   .cr-submit {
     display: flex; align-items: center; justify-content: center; gap: 10px;
     width: 100%; padding: 15px 24px;
@@ -365,7 +344,6 @@ const CSS = `
   }
   @keyframes cr-spin { to { transform: rotate(360deg); } }
 
-  /* ── Sidebar ── */
   .cr-sidebar { display: flex; flex-direction: column; gap: 12px; position: sticky; top: 72px; animation: cr-up .5s ease .08s both; }
   .cr-sidebar-card {
     background: rgba(15,21,33,.82); backdrop-filter: blur(16px);
@@ -405,7 +383,6 @@ const CSS = `
   .cr-hotline-number { font-family: 'Cabinet Grotesk', sans-serif; font-size: 14px; font-weight: 800; color: #eef0f7; }
   .cr-hotline-call { font-size: 11px; font-weight: 600; color: var(--hc); opacity: .70; }
 
-  /* ── Success ── */
   .cr-success {
     display: flex; flex-direction: column; align-items: center; text-align: center;
     padding: 60px 24px; animation: cr-up .5s ease both;
@@ -458,7 +435,6 @@ const CSS = `
   }
   .cr-success-btn--track:hover { background: #38e09e; border-color: #38e09e; color: #060a10; }
 
-  /* Responsive */
   @media (max-width: 860px) {
     .cr-layout { grid-template-columns: 1fr; }
     .cr-sidebar { position: static; }
@@ -484,16 +460,14 @@ const CSS = `
   }
 `;
 
-// ── Geolocation helpers ──────────────────────────────────────────────────────
-
-async function checkGeolocationPermission(): Promise<PermissionState | "unknown"> {
+async function checkGeolocationPermission() {
   try {
     if ("permissions" in navigator) {
-      const status = await navigator.permissions.query({ name: "geolocation" });
+      const status = await navigator.permissions.query({ name: "geolocation" as PermissionName });
       return status.state;
     }
   } catch {}
-  return "unknown";
+  return "unknown" as PermissionState | "unknown";
 }
 
 async function ipGeolocationFallback(): Promise<{ lat: string; lng: string } | null> {
@@ -550,10 +524,33 @@ function acquireGPS(
   );
 }
 
-// ── Component ────────────────────────────────────────────────────────────────
+interface CitizenReportProps {
+  onBack?: () => void;
+  onViewHistory?: () => void;
+  onViewReport?: (id: string) => void;
+}
 
-export default function CitizenReport() {
+export default function CitizenReport({ onBack, onViewHistory, onViewReport }: CitizenReportProps = {}) {
+  // Consumes the active Navbar/Header language — any selector change re-renders
+  // this form and re-evaluates every t() call and language-aware helper below.
+  const { language, t, tList } = useLanguage();
+  void tList;
   const navigate = useNavigate();
+
+  // Short "Refresh GPS" button label without the 📍 prefix (both languages
+  // prefix the emoji, so stripping it is language-safe).
+  const refreshShort = t("report.form.refreshGps", "📍 Refresh GPS").replace("📍 ", "");
+  // Language-aware incident-type name (report.types.* in the dictionary).
+  const typeName = (v: string | undefined) =>
+    t(`report.types.${v}`, INCIDENT_TYPES.find(i => i.value === v)?.label ?? v ?? "");
+
+  // Note: `onBack` is kept in props for modal callers (CitizenDashboard passes
+  // it); in-page back navigation lives in the persistent CitizenLayout sidebar.
+  const goHistory = () => (onViewHistory ? onViewHistory() : navigate("/citizen/history"));
+  const goReport  = (id: string | null) =>
+    onViewReport
+      ? (id ? onViewReport(id) : goHistory())
+      : (id ? navigate(`/citizen/history/${id}`) : navigate("/citizen/history"));
 
   const [location,        setLocation]        = useState("");
   const [address,         setAddress]         = useState<string | null>(null);
@@ -563,9 +560,12 @@ export default function CitizenReport() {
   const [agreed,          setAgreed]          = useState(false);
   const [submitted,       setSubmitted]       = useState(false);
   const [submittedId,     setSubmittedId]     = useState<string | null>(null);
-  const [fileName,        setFileName]        = useState<string | null>(null);
-  const [fileObject,      setFileObject]      = useState<File | null>(null);
+  // Multi-file evidence attachments (uploads + camera captures).
+  const [evidenceFiles,   setEvidenceFiles]   = useState<{ id: string; file: File; previewUrl: string }[]>([]);
+  const [fileError,       setFileError]       = useState<string | null>(null);
+  const [uploadState,     setUploadState]     = useState<{ done: number; total: number } | null>(null);
   const [uploadProgress,  setUploadProgress]  = useState<"idle"|"uploading"|"done"|"error">("idle");
+  const [showCamera,      setShowCamera]      = useState(false);
   const [gpsAccuracy,     setGpsAccuracy]     = useState<number | null>(null);
   const [currentStep,     setCurrentStep]     = useState(0);
   const [submitting,      setSubmitting]      = useState(false);
@@ -581,7 +581,7 @@ export default function CitizenReport() {
     try {
       const res  = await fetch(
         `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=jsonv2&addressdetails=1`,
-        { headers: { "Accept-Language": "en" } }
+        { headers: { "Accept-Language": language === "tl" ? "fil" : "en" } }
       );
       const data = await res.json();
       if (data?.address) {
@@ -651,14 +651,58 @@ export default function CitizenReport() {
 
   useEffect(() => { resolveLocation(); }, []);
 
+  const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10MB per image
+  const MAX_VIDEO_BYTES = 50 * 1024 * 1024; // 50MB per video
+  const MAX_FILES = 5;
+
+  const describeLimit = (maxMB: number) =>
+    t("report.form.attachmentTooLarge", `File "{name}" is too large (max ${maxMB}MB).`);
+
+  function addEvidenceFiles(incoming: FileList | File[]) {
+    const list = Array.from(incoming);
+    if (!list.length) return;
+    setFileError(null);
+    setUploadProgress("idle");
+    setEvidenceFiles(prev => {
+      const next = [...prev];
+      for (const file of list) {
+        if (next.length >= MAX_FILES) {
+          setFileError(t("report.form.tooManyFiles", `Maximum ${MAX_FILES} files allowed.`));
+          break;
+        }
+        const isVideo = file.type.startsWith("video/");
+        const isImage = file.type.startsWith("image/");
+        if (!isVideo && !isImage) continue;
+        const limit = isVideo ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
+        if (file.size > limit) {
+          setFileError(describeLimit(isVideo ? 50 : 10).replace("{name}", file.name));
+          continue;
+        }
+        next.push({
+          id: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
+          file,
+          previewUrl: URL.createObjectURL(file),
+        });
+      }
+      return next;
+    });
+  }
+
+  function removeEvidenceFile(id: string) {
+    setEvidenceFiles(prev => {
+      const target = prev.find(f => f.id === id);
+      if (target) URL.revokeObjectURL(target.previewUrl);
+      return prev.filter(f => f.id !== id);
+    });
+    setUploadProgress("idle");
+  }
+
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) { setFileName(file.name); setFileObject(file); setUploadProgress("idle"); }
-    else       { setFileName(null); setFileObject(null); }
+    if (e.target.files) addEvidenceFiles(e.target.files);
+    e.target.value = "";
   }
 
   async function uploadEvidence(file: File): Promise<{ url: string | null; errorMsg: string | null }> {
-    setUploadProgress("uploading");
     const safeName   = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
     const ext        = safeName.split(".").pop() ?? "bin";
     const uniqueName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
@@ -671,15 +715,13 @@ export default function CitizenReport() {
         contentType: file.type || "application/octet-stream",
       });
     if (error) {
-      setUploadProgress("error");
-      let msg = `Upload failed: ${error.message}`;
-      if (error.message?.includes("Bucket not found"))  msg = 'Storage bucket "reports-evidence" not found.';
-      else if (error.message?.includes("policy"))       msg = "Upload blocked by storage security policy.";
-      else if (error.message?.includes("too large"))    msg = "File is too large.";
+      let msg = `${t("report.uploadFailed", "Upload failed")}: ${error.message}`;
+      if (error.message?.includes("Bucket not found"))  msg = t("report.form.bucketMissing", 'Storage bucket "reports-evidence" not found.');
+      else if (error.message?.includes("policy"))       msg = t("report.form.uploadBlocked", "Upload blocked by storage security policy.");
+      else if (error.message?.includes("too large"))    msg = t("report.form.uploadTooLarge", "File is too large.");
       return { url: null, errorMsg: msg };
     }
     const { data } = supabase.storage.from("reports-evidence").getPublicUrl(filePath);
-    setUploadProgress("done");
     return { url: data?.publicUrl ?? null, errorMsg: null };
   }
 
@@ -691,32 +733,61 @@ export default function CitizenReport() {
 
     const { data: { user } } = await supabase.auth.getUser();
 
-    let evidenceUrl: string | null = null;
-    if (fileObject) {
-      const { url, errorMsg } = await uploadEvidence(fileObject);
-      if (!url) { setSubmitError(errorMsg ?? "Evidence upload failed."); setSubmitting(false); return; }
-      evidenceUrl = url;
+    // Upload every attachment with per-file progress; first URL stays the
+    // primary evidence_url for all existing readers, the full array persists
+    // in evidence_urls (with legacy fallback if the column is unavailable).
+    let evidenceUrls: string[] = [];
+    if (evidenceFiles.length > 0) {
+      setUploadProgress("uploading");
+      setUploadState({ done: 0, total: evidenceFiles.length });
+      for (let i = 0; i < evidenceFiles.length; i++) {
+        const { url, errorMsg } = await uploadEvidence(evidenceFiles[i].file);
+        if (!url) {
+          setSubmitError(errorMsg ?? t("report.form.evidenceUploadFailed", "Evidence upload failed."));
+          setUploadProgress("error");
+          setUploadState(null);
+          setSubmitting(false);
+          return;
+        }
+        evidenceUrls.push(url);
+        setUploadState({ done: i + 1, total: evidenceFiles.length });
+      }
+      setUploadProgress("done");
+      setUploadState(null);
     }
 
-    const { data: inserted, error } = await supabase
-      .from("reports")
-      .insert({
-        type:             selectedType,
-        description:      description.trim() || null,
-        location:         location || null,
-        address:          address || null,
-        reporter_name:    reporterName.trim() || null,
-        reporter_contact: reporterContact.trim() || null,
-        status:           "pending",
-        user_id:          user?.id ?? null,
-        responder_id:     null,
-        evidence_url:     evidenceUrl,
-      })
-      .select("id")
-      .single();
+    const basePayload = {
+      type:             selectedType,
+      description:      description.trim() || null,
+      location:         location || null,
+      address:          address || null,
+      reporter_name:    reporterName.trim() || null,
+      reporter_contact: reporterContact.trim() || null,
+      status:           "pending",
+      user_id:          user?.id ?? null,
+      responder_id:     null,
+      evidence_url:     evidenceUrls[0] ?? null,
+    };
+    let inserted: { id: string } | null = null;
+    let error: any = null;
+    {
+      const res = await supabase
+        .from("reports")
+        .insert({ ...basePayload, evidence_urls: evidenceUrls })
+        .select("id")
+        .single();
+      inserted = res.data;
+      error = res.error;
+      // Legacy fallback: older DBs without the evidence_urls column.
+      if (error && /evidence_urls/i.test(error.message ?? "")) {
+        const retry = await supabase.from("reports").insert(basePayload).select("id").single();
+        inserted = retry.data;
+        error = retry.error;
+      }
+    }
 
     if (error) {
-      setSubmitError("Failed to submit report. Please try again.");
+      setSubmitError(t("report.form.submitFailed", "Failed to submit report. Please try again."));
       setSubmitting(false);
       return;
     }
@@ -728,19 +799,21 @@ export default function CitizenReport() {
 
   useEffect(() => {
     if (agreed && selectedType)                                    setCurrentStep(5);
-    else if (fileName)                                             setCurrentStep(4);
+    else if (evidenceFiles.length > 0)                             setCurrentStep(4);
     else if (description.trim())                                   setCurrentStep(3);
     else if (locationStatus === "ok" || locationStatus !== "idle") setCurrentStep(2);
     else if (selectedType)                                         setCurrentStep(1);
     else                                                           setCurrentStep(0);
-  }, [selectedType, locationStatus, fileName, agreed, description]);
+  }, [selectedType, locationStatus, evidenceFiles.length, agreed, description]);
 
   function gpsValue() {
-    if (locationStatus === "loading") return "Acquiring location — please wait…";
-    if (locationStatus === "error")   return "Location unavailable — GPS access denied or timed out";
+    if (locationStatus === "loading") return t("report.acquiringLocation");
+    if (locationStatus === "error")   return t("report.locationUnavailable");
     if (locationStatus === "ok") {
       if (address)  return address;
-      if (location) return `Resolving address… (${location})`;
+      // Trim the language-specific "please wait" suffix via its own dictionary
+      // key instead of a hardcoded English substring.
+      if (location) return `${t("report.acquiringLocation").replace(t("report.form.acquiringTrimSuffix", "— please wait"), "")} (${location})`;
     }
     return "";
   }
@@ -752,13 +825,16 @@ export default function CitizenReport() {
     setDescription("");
     setReporterName("");
     setReporterContact("");
-    setFileName(null);
-    setFileObject(null);
+    setEvidenceFiles(prev => {
+      prev.forEach(f => URL.revokeObjectURL(f.previewUrl));
+      return [];
+    });
+    setFileError(null);
+    setUploadState(null);
     setAgreed(false);
     setUploadProgress("idle");
   }
 
-  // ── Success screen ────────────────────────────────────────────────────────
   if (submitted) {
     return (
       <>
@@ -769,39 +845,32 @@ export default function CitizenReport() {
           <div className="cr-inner cr-inner--center">
             <div className="cr-success">
               <div className="cr-success-icon">✓</div>
-              <h2 className="cr-success-title">Report Submitted</h2>
+              <h2 className="cr-success-title">{t("report.success.title")}</h2>
               <p className="cr-success-sub">
-                Your incident report has been received and is now visible to
-                responders. Authorities have been notified and will respond
-                shortly. Keep your phone nearby for follow-up.
+                {t("report.success.sub")}
               </p>
               <div className="cr-success-cards">
                 <div className="cr-success-card">
                   <div className="cr-success-card-icon">📝</div>
-                  <div className="cr-success-card-title">Submit Another Report</div>
+                  <div className="cr-success-card-title">{t("report.success.cardTitle")}</div>
                   <p className="cr-success-card-text">
-                    Report another incident to help keep your community safe.
+                    {t("report.success.cardText")}
                   </p>
                   <button className="cr-success-btn" onClick={resetForm}>
-                    Submit Another Report →
+                    {t("report.success.cardBtn")}
                   </button>
                 </div>
                 <div className="cr-success-card cr-success-card--track">
                   <div className="cr-success-card-icon">📍</div>
-                  <div className="cr-success-card-title">Track My Report</div>
+                  <div className="cr-success-card-title">{t("report.trackMyReport")}</div>
                   <p className="cr-success-card-text">
-                    Monitor your report status and see responder updates in
-                    real-time as authorities investigate your incident.
+                    {t("report.sidebar.trackText")}
                   </p>
                   <button
                     className="cr-success-btn cr-success-btn--track"
-                    onClick={() =>
-                      submittedId
-                        ? navigate(`/citizen/history/${submittedId}`)
-                        : navigate("/citizen/history")
-                    }
+                    onClick={() => goReport(submittedId)}
                   >
-                    Track Incident Report →
+                    {t("report.trackIncidentReport")}
                   </button>
                 </div>
               </div>
@@ -812,7 +881,6 @@ export default function CitizenReport() {
     );
   }
 
-  // ── Main form ─────────────────────────────────────────────────────────────
   return (
     <>
       <style>{CSS}</style>
@@ -822,66 +890,55 @@ export default function CitizenReport() {
 
         <div className="cr-inner">
 
-          {/* ── Back Button ── */}
-          <button
-            className="cr-back-btn"
-            onClick={() => navigate("/citizen/dashboard")}
-            aria-label="Back to dashboard"
-          >
-            ← Back to Dashboard
-          </button>
+          {/* Back navigation lives in the persistent CitizenLayout sidebar. */}
 
-          {/* ── Hero ── */}
           <section className="cr-hero">
             <div className="cr-hero-tag">
               <span className="cr-hero-dot" />
-              Reporting a live incident
+              {t("report.reportingLiveIncident")}
             </div>
-            <h1 className="cr-hero-heading">Report an <em>Incident</em></h1>
+            <h1 className="cr-hero-heading">{t("report.heroTitle")} <em>{t("report.heroAccent")}</em></h1>
             <p className="cr-hero-sub">
-              Submit a report to alert local responders. Provide accurate details
-              so the right team can act fast.
+              {t("report.heroSub")}
             </p>
           </section>
 
-          {/* ── Logged-in status banner (NO "create account" language) ── */}
           <div className="cr-banner">
             <div className="cr-banner-icon">✅</div>
             <div className="cr-banner-body">
-              <div className="cr-banner-title">You're Logged In — Reports Are Tracked Automatically</div>
+              <div className="cr-banner-title">{t("report.bannerTitle")}</div>
               <p className="cr-banner-text">
-                All reports you submit are linked to your account.{" "}
-                <strong>You can monitor status updates and responder activity anytime from My Reports.</strong>
+                {t("report.bannerText")}
               </p>
             </div>
-            <button className="cr-banner-btn" onClick={() => navigate("/citizen/history")}>
-              My Reports →
+            <button className="cr-banner-btn" onClick={goHistory}>
+              {t("report.myReportsBtn")}
             </button>
           </div>
 
-          {/* ── Step progress ── */}
           <div className="cr-steps">
-            {STEPS.map((step, i) => (
-              <div
-                key={step}
-                className={`cr-step${i <= currentStep ? " cr-step--done" : ""}${i === currentStep ? " cr-step--active" : ""}`}
-              >
-                <div className="cr-step-dot">{i < currentStep ? "✓" : i + 1}</div>
-                <span className="cr-step-label">{step}</span>
-                {i < STEPS.length - 1 && <div className="cr-step-line" />}
-              </div>
-            ))}
+            {STEPS.map((step, i) => {
+              const stepKey = ["incidentType", "reporterInfo", "location", "description", "evidence", "submit"][i];
+              return (
+                <div
+                  key={step}
+                  className={`cr-step${i <= currentStep ? " cr-step--done" : ""}${i === currentStep ? " cr-step--active" : ""}`}
+                >
+                  <div className="cr-step-dot">{i < currentStep ? "✓" : i + 1}</div>
+                  <span className="cr-step-label">{t(`report.steps.${stepKey}`)}</span>
+                  {i < STEPS.length - 1 && <div className="cr-step-line" />}
+                </div>
+              );
+            })}
           </div>
 
           <div className="cr-layout">
 
-            {/* ── Form ── */}
             <form className="cr-form" onSubmit={handleSubmit} noValidate>
 
-              {/* Step 1 — Incident Type */}
               <div className="cr-card">
                 <div className="cr-card-label">
-                  <span className="cr-step-badge">01</span>Incident Type
+                  <span className="cr-step-badge">01</span>{t("report.cardLabels.incidentType")}
                 </div>
                 <div className="cr-type-grid">
                   {INCIDENT_TYPES.map(type => (
@@ -897,7 +954,7 @@ export default function CitizenReport() {
                       onClick={() => setSelectedType(type.value)}
                     >
                       <span className="cr-type-icon">{type.icon}</span>
-                      <span className="cr-type-label">{type.label}</span>
+                      <span className="cr-type-label">{t(`report.types.${type.value}`)}</span>
                     </button>
                   ))}
                 </div>
@@ -910,37 +967,36 @@ export default function CitizenReport() {
                     } as React.CSSProperties}
                   >
                     <span>{activeType?.icon}</span>
-                    <span>{activeType?.label} selected</span>
+                    <span>{t("report.selected").replace("{type}", typeName(selectedType))}</span>
                   </div>
                 )}
               </div>
 
-              {/* Step 2 — Reporter Info */}
               <div className="cr-card">
                 <div className="cr-card-label">
-                  <span className="cr-step-badge">02</span>Reporter Information
+                  <span className="cr-step-badge">02</span>{t("report.cardLabels.reporterInfo")}
                 </div>
                 <div className="cr-fields">
                   <div className="cr-field">
                     <label className="cr-label">
-                      Full Name <span className="cr-optional">(Optional)</span>
+                      {t("report.form.fullName")} <span className="cr-optional">{t("report.form.optional")}</span>
                     </label>
                     <input
                       className="cr-input"
                       type="text"
-                      placeholder="e.g. Juan dela Cruz"
+                      placeholder={t("report.form.namePlaceholder", "e.g. Juan dela Cruz")}
                       value={reporterName}
                       onChange={e => setReporterName(e.target.value)}
                     />
                   </div>
                   <div className="cr-field">
                     <label className="cr-label">
-                      Contact Number <span className="cr-optional">(Optional)</span>
+                      {t("report.form.contactNumber")} <span className="cr-optional">{t("report.form.optional")}</span>
                     </label>
                     <input
                       className="cr-input"
                       type="tel"
-                      placeholder="+63 9XX XXX XXXX"
+                      placeholder={t("report.form.contactPlaceholder", "+63 9XX XXX XXXX")}
                       value={reporterContact}
                       onChange={e => setReporterContact(e.target.value)}
                     />
@@ -948,13 +1004,12 @@ export default function CitizenReport() {
                 </div>
               </div>
 
-              {/* Step 3 — Location */}
               <div className="cr-card">
                 <div className="cr-card-label">
-                  <span className="cr-step-badge">03</span>Your Location
+                  <span className="cr-step-badge">03</span>{t("report.cardLabels.location")}
                 </div>
                 <div className="cr-field">
-                  <label className="cr-label">Detected Location</label>
+                  <label className="cr-label">{t("report.form.detectedLocation")}</label>
                   <div className="cr-loc-row">
                     <div className="cr-loc-wrap">
                       <span className="cr-loc-dot" data-status={locationStatus} />
@@ -963,11 +1018,11 @@ export default function CitizenReport() {
                         type="text"
                         readOnly
                         value={gpsValue()}
-                        placeholder="Waiting for GPS…"
+                        placeholder={t("report.form.gpsWaiting", "Waiting for GPS…")}
                       />
                     </div>
                     <button type="button" className="cr-gps-btn" onClick={resolveLocation}>
-                      📍 Refresh GPS
+                      {t("report.form.refreshGps")}
                     </button>
                   </div>
 
@@ -981,7 +1036,7 @@ export default function CitizenReport() {
                           rel="noopener noreferrer"
                           className="cr-maps-link"
                         >
-                          Verify on Maps →
+                          {t("report.form.verifyMaps")}
                         </a>
                       )}
                     </div>
@@ -990,14 +1045,13 @@ export default function CitizenReport() {
                   {locationStatus === "loading" && (
                     <div className="cr-gps-acquiring">
                       <span className="cr-gps-pulse" />
-                      Searching for GPS signal — keep your device still and outdoors.
+                      {t("report.searchingGps")}
                     </div>
                   )}
 
                   {locationStatus === "error" && (
                     <p className="cr-hint cr-hint--warn">
-                      ⚠️ Location access was denied or timed out. Allow location
-                      access and tap <strong>Refresh GPS</strong>.
+                      ⚠️ {t("report.locationUnavailable")} {t("report.form.allowLocationAccess", "Allow location access and tap")} <strong>{refreshShort}</strong>.
                     </p>
                   )}
 
@@ -1006,38 +1060,37 @@ export default function CitizenReport() {
                       <div className="cr-acc-badges">
                         {locationSource === "gps" && gpsAccuracy !== null && (
                           <span className={`cr-acc-badge ${gpsAccuracy <= 20 ? "acc-great" : gpsAccuracy <= 100 ? "acc-ok" : "acc-poor"}`}>
-                            {gpsAccuracy <= 20 ? "✓ High accuracy" : gpsAccuracy <= 100 ? "~ Medium accuracy" : "⚠ Low accuracy"}{" "}
+                            {gpsAccuracy <= 20 ? t("report.highAccuracy") : gpsAccuracy <= 100 ? t("report.mediumAccuracy") : t("report.lowAccuracy")}{" "}
                             (±{Math.round(gpsAccuracy)}m)
                           </span>
                         )}
                         {locationSource === "ip" && (
                           <span className="cr-acc-badge acc-ip">
-                            📡 Approximate location (IP-based — GPS unavailable)
+                            {t("report.approximateLocation")}
                           </span>
                         )}
                         {locationSource === "gps" && gpsAccuracy !== null && gpsAccuracy > 100 && (
-                          <span className="cr-acc-tip">Move outdoors for better accuracy</span>
+                          <span className="cr-acc-tip">{t("report.moveOutdoors")}</span>
                         )}
                       </div>
                       <p className="cr-hint cr-hint--warn">
-                        ⚠️ If the location looks wrong, tap <strong>Refresh GPS</strong> to try again.
+                        ⚠️ {t("report.form.locationLooksWrong", "If the location looks wrong, tap {refresh} to try again.").replace("{refresh}", refreshShort)}
                       </p>
                     </>
                   )}
                 </div>
               </div>
 
-              {/* Step 4 — Description */}
               <div className="cr-card">
                 <div className="cr-card-label">
-                  <span className="cr-step-badge">04</span>Incident Details
+                  <span className="cr-step-badge">04</span>{t("report.cardLabels.description")}
                 </div>
                 <div className="cr-field">
-                  <label className="cr-label">Detailed Description</label>
+                  <label className="cr-label">{t("report.detailedDescription")}</label>
                   <textarea
                     className="cr-textarea"
                     rows={5}
-                    placeholder="Describe what happened — include time, number of people involved, severity, and any other relevant details…"
+                    placeholder={t("report.form.descriptionPlaceholder")}
                     value={description}
                     onChange={e => setDescription(e.target.value)}
                     required
@@ -1045,11 +1098,10 @@ export default function CitizenReport() {
                 </div>
               </div>
 
-              {/* Step 5 — Evidence */}
               <div className="cr-card">
                 <div className="cr-card-label">
-                  <span className="cr-step-badge">05</span>Upload Evidence
-                  <span className="cr-optional">(optional)</span>
+                  <span className="cr-step-badge">05</span>{t("report.cardLabels.evidence")}
+                  <span className="cr-optional">{t("report.form.optional")}</span>
                 </div>
                 <div
                   className="cr-dropzone"
@@ -1057,58 +1109,97 @@ export default function CitizenReport() {
                   onDragOver={e => e.preventDefault()}
                   onDrop={e => {
                     e.preventDefault();
-                    const file = e.dataTransfer.files[0];
-                    if (file && fileRef.current) {
-                      const dt = new DataTransfer();
-                      dt.items.add(file);
-                      fileRef.current.files = dt.files;
-                      setFileName(file.name);
-                      setFileObject(file);
-                      setUploadProgress("idle");
-                    }
+                    if (e.dataTransfer.files.length) addEvidenceFiles(e.dataTransfer.files);
                   }}
                 >
                   <input
                     ref={fileRef}
                     type="file"
                     accept="image/*,video/*"
+                    multiple
                     style={{ display: "none" }}
                     onChange={handleFileChange}
                   />
-                  {fileName ? (
-                    <>
-                      <span className="cr-dropzone-icon">📎</span>
-                      <span className="cr-dropzone-name">{fileName}</span>
-                      <span className="cr-dropzone-change">Click to change</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="cr-dropzone-icon">📤</span>
-                      <span className="cr-dropzone-text">Click to select or drag &amp; drop</span>
-                      <span className="cr-dropzone-hint">Photos or videos accepted</span>
-                    </>
-                  )}
+                  <span className="cr-dropzone-icon">📤</span>
+                  <span className="cr-dropzone-text">{t("report.form.uploadHint")}</span>
+                  <span className="cr-dropzone-hint">{t("report.photosAccepted")}</span>
                 </div>
+                <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    className="cr-gps-btn"
+                    onClick={() => fileRef.current?.click()}
+                  >
+                    📎 {t("report.form.uploadFiles", "Upload Files")}
+                  </button>
+                  <button
+                    type="button"
+                    className="cr-gps-btn"
+                    onClick={() => setShowCamera(true)}
+                  >
+                    📷 {t("report.form.cameraCapture", "Camera Capture")}
+                  </button>
+                </div>
+                {fileError && (
+                  <div className="cr-upload-status cr-upload--error">{fileError}</div>
+                )}
+                {evidenceFiles.length > 0 && (
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 10, marginTop: 12 }}>
+                    {evidenceFiles.map(f => {
+                      const isVideo = f.file.type.startsWith("video/");
+                      return (
+                        <div key={f.id} style={{ position: "relative", borderRadius: 10, overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.4)" }}>
+                          {isVideo ? (
+                            <video src={f.previewUrl} style={{ width: "100%", height: 90, objectFit: "cover", display: "block" }} preload="metadata" />
+                          ) : (
+                            <img src={f.previewUrl} alt={f.file.name} style={{ width: "100%", height: 90, objectFit: "cover", display: "block" }} />
+                          )}
+                          <div style={{ fontSize: 10, color: "rgba(238,240,247,0.6)", padding: "4px 6px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {isVideo ? "🎬 " : "🖼 "}{f.file.name}
+                          </div>
+                          <button
+                            type="button"
+                            aria-label="Remove attachment"
+                            onClick={() => removeEvidenceFile(f.id)}
+                            style={{ position: "absolute", top: 4, right: 4, width: 24, height: 24, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.7)", color: "#fff", fontSize: 13, cursor: "pointer", lineHeight: 1 }}
+                          >×</button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                {showCamera && (
+                  <CameraCaptureModal
+                    onCapture={(file) => addEvidenceFiles([file])}
+                    onClose={() => setShowCamera(false)}
+                  />
+                )}
                 {uploadProgress === "uploading" && (
-                  <div className="cr-upload-status cr-upload--uploading">⏳ Uploading evidence…</div>
+                  <div className="cr-upload-status cr-upload--uploading">
+                    {t("report.uploadingEvidence")}
+                    {uploadState && ` (${uploadState.done}/${uploadState.total})`}
+                  </div>
+                )}
+                {uploadState && uploadProgress === "uploading" && (
+                  <div className="cr-upload-track" style={{ height: 6, borderRadius: 4, background: "rgba(255,255,255,0.08)", overflow: "hidden", marginTop: 8 }}>
+                    <div style={{ height: "100%", width: `${Math.round((uploadState.done / Math.max(uploadState.total, 1)) * 100)}%`, background: "#2ECC8F", transition: "width 0.3s" }} />
+                  </div>
                 )}
                 {uploadProgress === "done" && (
-                  <div className="cr-upload-status cr-upload--done">✅ Evidence uploaded successfully</div>
+                  <div className="cr-upload-status cr-upload--done">{t("report.evidenceUploaded")}</div>
                 )}
                 {uploadProgress === "error" && (
-                  <div className="cr-upload-status cr-upload--error">❌ Upload failed — please try again</div>
+                  <div className="cr-upload-status cr-upload--error">{t("report.uploadFailed")}</div>
                 )}
               </div>
 
-              {/* Disclaimer */}
               <div className="cr-disclaimer">
                 <div className="cr-disclaimer-header">
                   <span style={{ fontSize: 16 }}>⚖️</span>
-                  <span className="cr-disclaimer-title">Legal Acknowledgment</span>
+                  <span className="cr-disclaimer-title">{t("report.form.legalTitle")}</span>
                 </div>
                 <p className="cr-disclaimer-summary">
-                  By submitting this report, you confirm that the information
-                  provided is true and accurate to the best of your knowledge.
+                  {t("report.form.legalSummary")}
                 </p>
                 <label className="cr-check-row">
                   <input
@@ -1120,12 +1211,7 @@ export default function CitizenReport() {
                   />
                   <div className="cr-checkbox-box">{agreed && "✓"}</div>
                   <span className="cr-check-text">
-                    I understand that submitting{" "}
-                    <strong>false, misleading, or malicious reports</strong> is
-                    punishable under the{" "}
-                    <strong>Cybercrime Prevention Act of 2012 (RA 10175)</strong>,
-                    the <strong>Penal Code</strong>, and other applicable Philippine
-                    laws. Penalties may include fines and imprisonment.
+                    {t("report.form.legalCheckText")}
                   </span>
                 </label>
               </div>
@@ -1138,13 +1224,16 @@ export default function CitizenReport() {
                       type="button"
                       className="cr-skip-btn"
                       onClick={() => {
-                        setFileObject(null);
-                        setFileName(null);
+                        setEvidenceFiles(prev => {
+                          prev.forEach(f => URL.revokeObjectURL(f.previewUrl));
+                          return [];
+                        });
                         setUploadProgress("idle");
+                        setUploadState(null);
                         setSubmitError(null);
                       }}
                     >
-                      Remove evidence and submit without it →
+                      {t("report.form.removeEvidence", "Remove evidence and submit without it →")}
                     </button>
                   )}
                 </div>
@@ -1156,68 +1245,62 @@ export default function CitizenReport() {
                 disabled={!agreed || !selectedType || submitting}
               >
                 {submitting ? (
-                  <><span className="cr-spinner" /><span>Submitting…</span></>
+                  <><span className="cr-spinner" /><span>{t("report.form.submitting")}</span></>
                 ) : (
-                  <><span>Submit Incident Report</span><span className="cr-submit-arrow">→</span></>
+                  <><span>{t("report.form.submitBtn")}</span><span className="cr-submit-arrow">→</span></>
                 )}
               </button>
             </form>
 
-            {/* ── Sidebar ── */}
-            <div className="cr-sidebar">
-              <div className="cr-sidebar-card">
-                <div className="cr-sidebar-title">Emergency Hotlines</div>
-                <div className="cr-hotlines">
-                  {EMERGENCY_HOTLINES.map(h => (
-                    <a
-                      key={h.number}
-                      href={`tel:${h.number}`}
-                      className="cr-hotline"
-                      style={{ "--hc": h.color } as React.CSSProperties}
-                    >
-                      <span className="cr-hotline-icon">{h.icon}</span>
-                      <div className="cr-hotline-info">
-                        <span className="cr-hotline-label">{h.label}</span>
-                        <span className="cr-hotline-number">{h.number}</span>
-                      </div>
-                      <span className="cr-hotline-call">Call →</span>
-                    </a>
-                  ))}
-                </div>
-              </div>
+             <div className="cr-sidebar">
+               <div className="cr-sidebar-card">
+                 <div className="cr-sidebar-title">{t("report.sidebar.hotlinesTitle")}</div>
+                 <div className="cr-hotlines">
+{EMERGENCY_HOTLINES.map(h => (
+                      <a
+                        key={h.number}
+                        href={`tel:${h.number}`}
+                        className="cr-hotline"
+                        style={{ "--hc": h.color } as React.CSSProperties}
+                      >
+                        <span className="cr-hotline-icon">{h.icon}</span>
+                        <div className="cr-hotline-info">
+                          <span className="cr-hotline-label">{h.label}</span>
+                          <span className="cr-hotline-number">{h.number}</span>
+                        </div>
+                        <span className="cr-hotline-call">{t("report.call")}</span>
+                      </a>
+                    ))}
+                 </div>
+               </div>
 
-              <div className="cr-sidebar-card cr-sidebar-card--warn">
-                <div className="cr-sidebar-title">⚠️ Emergency Reminder</div>
-                <p className="cr-sidebar-text">
-                  If someone is in immediate danger, call emergency services
-                  directly. Do not rely solely on this form in life-threatening
-                  situations.
-                </p>
-              </div>
+               <div className="cr-sidebar-card cr-sidebar-card--warn">
+                 <div className="cr-sidebar-title">⚠️ {t("report.sidebar.warnTitle")}</div>
+                 <p className="cr-sidebar-text">
+                   {t("report.sidebar.warnText")}
+                 </p>
+               </div>
 
-              <div className="cr-sidebar-card cr-sidebar-card--info">
-                <div className="cr-sidebar-title">🛡️ Your Safety Matters</div>
-                <p className="cr-sidebar-text">
-                  Your identity and contact information are kept strictly
-                  confidential. You may submit anonymously if preferred.
-                </p>
-              </div>
+               <div className="cr-sidebar-card cr-sidebar-card--info">
+                 <div className="cr-sidebar-title">🛡️ {t("report.sidebar.safetyTitle")}</div>
+                 <p className="cr-sidebar-text">
+                   {t("report.sidebar.safetyText")}
+                 </p>
+               </div>
 
-              {/* Sidebar track card — NO create account, just view reports */}
-              <div className="cr-sidebar-card cr-sidebar-card--track">
-                <div className="cr-sidebar-title">📍 Track Your Reports</div>
-                <p className="cr-sidebar-text">
-                  View all your submitted reports and track their status in
-                  real-time as authorities respond and investigate.
-                </p>
-                <button
-                  className="cr-track-btn"
-                  onClick={() => navigate("/citizen/history")}
-                >
-                  View My Reports →
-                </button>
-              </div>
-            </div>
+               <div className="cr-sidebar-card cr-sidebar-card--track">
+                 <div className="cr-sidebar-title">📍 {t("report.sidebar.trackTitle")}</div>
+                 <p className="cr-sidebar-text">
+                   {t("report.sidebar.trackText")}
+                 </p>
+                 <button
+                   className="cr-track-btn"
+                   onClick={goHistory}
+                 >
+                   {t("report.sidebar.trackBtn")}
+                 </button>
+               </div>
+             </div>
 
           </div>
         </div>

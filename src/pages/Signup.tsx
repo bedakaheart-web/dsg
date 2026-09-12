@@ -4,6 +4,7 @@ import { supabase } from "../js/supabase";
 import { FaEye, FaEyeSlash, FaCheck, FaArrowRight } from "react-icons/fa";
 import directorybg from "../assets/directorybg.png";
 import dsgLogo from "../assets/dsg_logo.png";
+import { useLanguage } from "../context/LanguageContext";
 
 
 
@@ -772,7 +773,7 @@ function IconLock() {
   return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>;
 }
 
-function MobileHeader() {
+function MobileHeader({ t }: { t: (key: string) => string }) {
   return (
     <div className="su-mobile-header" style={{ display: "none" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -796,13 +797,13 @@ function MobileHeader() {
           width: 5, height: 5, borderRadius: "50%", background: "#00c8e0",
           display: "inline-block",
         }} />
-        Sign Up
+        {t("signup.mobileBadge")}
       </div>
     </div>
   );
 }
 
-function LeftPanel() {
+function LeftPanel({ t }: { t: (key: string) => string }) {
   return (
     <div className="su-left">
       <div className="su-left-bg" />
@@ -810,7 +811,7 @@ function LeftPanel() {
       <div className="su-left-glow-a" />
       <div className="su-left-glow-b" />
 
-      <MobileHeader />
+      <MobileHeader t={t} />
 
       <div className="su-left-content">
         <div className="su-brand-row">
@@ -824,38 +825,37 @@ function LeftPanel() {
       <div className="su-hero su-left-content">
         <div className="su-hero-eyebrow">
           <span className="su-hero-dot" />
-          Community Safety Platform
+          {t("signup.eyebrow")}
         </div>
         <h1 className="su-hero-title">
-          Join the<br/>
-          <span className="c">emergency</span><br/>
-          <span className="r">response</span>
+          {t("signup.heroLine1")}<br/>
+          <span className="c">{t("signup.heroAccent1")}</span><br/>
+          <span className="r">{t("signup.heroAccent2")}</span>
         </h1>
         <p className="su-hero-desc">
-          Register your account to report incidents, receive real-time alerts,
-          and stay connected with emergency responders across all barangays.
+          {t("signup.heroDesc")}
         </p>
 
         <div className="su-steps">
           <div className="su-step">
             <div className="su-step-num">1</div>
             <div>
-              <div className="su-step-title">Create Account</div>
-              <div className="su-step-desc">Fill your details and select your barangay.</div>
+              <div className="su-step-title">{t("signup.steps.create.title")}</div>
+              <div className="su-step-desc">{t("signup.steps.create.desc")}</div>
             </div>
           </div>
           <div className="su-step">
             <div className="su-step-num">2</div>
             <div>
-              <div className="su-step-title">Instant Access</div>
-              <div className="su-step-desc">Your account is ready immediately after signup.</div>
+              <div className="su-step-title">{t("signup.steps.access.title")}</div>
+              <div className="su-step-desc">{t("signup.steps.access.desc")}</div>
             </div>
           </div>
           <div className="su-step">
             <div className="su-step-num">3</div>
             <div>
-              <div className="su-step-title">Report & Respond</div>
-              <div className="su-step-desc">Submit incidents and coordinate with responders now.</div>
+              <div className="su-step-title">{t("signup.steps.report.title")}</div>
+              <div className="su-step-desc">{t("signup.steps.report.desc")}</div>
             </div>
           </div>
         </div>
@@ -864,7 +864,7 @@ function LeftPanel() {
       <div className="su-left-footer">
         <div className="su-cert-badge">
           <span className="su-cert-dot" />
-          <span className="su-cert-text"><strong>Free for all citizens</strong> in Dumaguete</span>
+          <span className="su-cert-text"><strong>{t("signup.certBold")}</strong> {t("signup.certRest")}</span>
         </div>
       </div>
     </div>
@@ -872,6 +872,8 @@ function LeftPanel() {
 }
 
 export default function Signup() {
+  const { t } = useLanguage();
+
   const [formData, setFormData] = useState({
     firstName: "", lastName: "", email: "", phone: "", barangay: "", password: "", confirmPassword: ""
   });
@@ -934,27 +936,27 @@ export default function Signup() {
     const { firstName, lastName, email, phone, barangay, password, confirmPassword } = formData;
 
     if (!firstName || !lastName || !email || !phone || !barangay || !password || !confirmPassword) {
-      setError("Please complete all fields.");
+      setError(t("signup.errors.missingFields"));
       return;
     }
     if (!isValidEmailFormat(email)) {
-      setError("Please enter a valid email address.");
+      setError(t("signup.errors.invalidEmail"));
       return;
     }
     if (isDisposableEmail(email)) {
-      setError("Temporary or disposable email addresses aren't allowed. Please use a real email you can access.");
+      setError(t("signup.errors.disposableEmail"));
       return;
     }
     if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+      setError(t("signup.errors.passwordMismatch"));
       return;
     }
     if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
+      setError(t("signup.errors.passwordTooShort"));
       return;
     }
     if (!captchaToken) {
-      setError("Please complete the CAPTCHA to verify you're human.");
+      setError(t("signup.errors.needCaptcha"));
       return;
     }
 
@@ -978,7 +980,7 @@ export default function Signup() {
         },
       });
       if (authError) throw authError;
-      if (!authData.user) throw new Error("Signup failed. Please try again.");
+      if (!authData.user) throw new Error(t("signup.errors.unexpected"));
 
       await supabase.auth.signOut();
       setSuccess(true);
@@ -995,7 +997,7 @@ export default function Signup() {
         return;
       }
 
-      setError(err.message || "An unexpected error occurred.");
+      setError(err.message || t("signup.errors.unexpected"));
       setCaptchaToken("");
       if (window.turnstile && captchaWidgetId.current) {
         window.turnstile.reset(captchaWidgetId.current);
@@ -1010,22 +1012,21 @@ export default function Signup() {
       <>
         <style>{CSS}</style>
         <div className="su-root" style={{ '--bg-image': `url(${directorybg})` } as React.CSSProperties}>
-          <LeftPanel />
+          <LeftPanel t={t} />
           <div className="su-right">
             <div className="su-form-wrap">
               <div className="su-success">
                 <div className="su-success-icon"><FaCheck /></div>
-                <div className="su-success-title">Check Your Email</div>
+                <div className="su-success-title">{t("signup.success.title")}</div>
                 <p className="su-success-msg">
-                  Welcome to <strong>DumaSafeGuide</strong>!<br/>
-                  We've sent a confirmation link to your email. Please verify
-                  your address before signing in.
+                  <strong>{t("signup.success.msgIntro")}</strong><br/>
+                  {t("signup.success.msgBody")}
                 </p>
-                <p className="su-success-note">Didn't get it? Check your spam folder.</p>
+                <p className="su-success-note">{t("signup.success.note")}</p>
                 <div className="su-success-div" />
                 <Link to="/login" className="su-success-btn">
                   <FaArrowRight size={12} style={{ marginRight: "2px" }} />
-                  Go to Sign In
+                  {t("signup.success.goToSignIn")}
                 </Link>
               </div>
             </div>
@@ -1039,7 +1040,7 @@ export default function Signup() {
     <>
       <style>{CSS}</style>
       <div className="su-root" style={{ '--bg-image': `url(${directorybg})` } as React.CSSProperties}>
-        <LeftPanel />
+        <LeftPanel t={t} />
 
         <div className="su-right">
           <div className="su-form-wrap">
@@ -1049,12 +1050,12 @@ export default function Signup() {
                 stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M19 12H5M12 5l-7 7 7 7"/>
               </svg>
-              Back to home
+              {t("signup.backToHome")}
             </Link>
 
             <div className="su-form-accent" />
-            <div className="su-form-title">Create Account</div>
-            <div className="su-form-sub">Join DumaSafeGuide — it's completely free for all citizens.</div>
+            <div className="su-form-title">{t("signup.formTitle")}</div>
+            <div className="su-form-sub">{t("signup.formSub")}</div>
 
             {error && (
               <div className="su-error" key={error}>
@@ -1065,20 +1066,20 @@ export default function Signup() {
             <form onSubmit={handleSignup} noValidate>
               <div className="su-row-2">
                 <div className="su-field">
-                  <label className="su-label">First Name</label>
+                  <label className="su-label">{t("signup.labels.firstName")}</label>
                   <div className="su-input-wrap">
                     <span className="su-field-icon"><IconUser /></span>
                     <input className="su-input" name="firstName" type="text"
-                      placeholder="Maria"
+                      placeholder={t("signup.placeholders.firstName")}
                       value={formData.firstName} onChange={handleChange} />
                   </div>
                 </div>
                 <div className="su-field">
-                  <label className="su-label">Last Name</label>
+                  <label className="su-label">{t("signup.labels.lastName")}</label>
                   <div className="su-input-wrap">
                     <span className="su-field-icon"><IconUser /></span>
                     <input className="su-input" name="lastName" type="text"
-                      placeholder="Clara"
+                      placeholder={t("signup.placeholders.lastName")}
                       value={formData.lastName} onChange={handleChange} />
                   </div>
                 </div>
@@ -1086,29 +1087,29 @@ export default function Signup() {
 
               <div className="su-row-2">
                 <div className="su-field">
-                  <label className="su-label">Barangay</label>
+                  <label className="su-label">{t("signup.labels.barangay")}</label>
                   <div className="su-input-wrap">
                     <span className="su-field-icon"><IconMapPin /></span>
                     <select className="su-select" name="barangay"
                       value={formData.barangay} onChange={handleChange}>
-                      <option value="" disabled>Select location</option>
+                      <option value="" disabled>{t("signup.placeholders.selectLocation")}</option>
                       {BARANGAYS.map(b => <option key={b} value={b}>{b}</option>)}
                     </select>
                   </div>
                 </div>
                 <div className="su-field">
-                  <label className="su-label">Phone Number</label>
+                  <label className="su-label">{t("signup.labels.phone")}</label>
                   <div className="su-input-wrap">
                     <span className="su-field-icon"><IconPhone /></span>
                     <input className="su-input" name="phone" type="tel"
-                      placeholder="09XX XXX XXXX"
+                      placeholder={t("signup.placeholders.phone")}
                       value={formData.phone} onChange={handleChange} />
                   </div>
                 </div>
               </div>
 
               <div className="su-field">
-                <label className="su-label">Email Address</label>
+                <label className="su-label">{t("signup.labels.email")}</label>
                 <div className="su-input-wrap">
                   <span className="su-field-icon"><IconMail /></span>
                   <input className="su-input" name="email" type="email"
@@ -1119,19 +1120,19 @@ export default function Signup() {
                 </div>
                 {emailTouched && formData.email && !isValidEmailFormat(formData.email) && (
                   <p style={{ fontSize: 11.5, marginTop: 6, color: "#ff8877" }}>
-                    Please enter a valid email address.
+                    {t("signup.emailInvalid")}
                   </p>
                 )}
                 {!(emailTouched && formData.email && !isValidEmailFormat(formData.email)) && (
                   <p style={{ fontSize: 11, marginTop: 6, color: "rgba(168,216,255,0.35)" }}>
-                    Use an email you can check — we'll send a confirmation link before you can sign in.
+                    {t("signup.emailHint")}
                   </p>
                 )}
               </div>
 
               <div className="su-row-2">
                 <div className="su-field">
-                  <label className="su-label">Password</label>
+                  <label className="su-label">{t("signup.labels.password")}</label>
                   <div className="su-input-wrap">
                     <span className="su-field-icon"><IconLock /></span>
                     <input className="su-input has-eye" name="password"
@@ -1143,7 +1144,7 @@ export default function Signup() {
                   </div>
                 </div>
                 <div className="su-field">
-                  <label className="su-label">Confirm</label>
+                  <label className="su-label">{t("signup.labels.confirmPassword")}</label>
                   <div className="su-input-wrap">
                     <span className="su-field-icon"><IconLock /></span>
                     <input className="su-input has-eye" name="confirmPassword"
@@ -1155,19 +1156,19 @@ export default function Signup() {
                   </div>
                 </div>
               </div>
-              <p className="su-pw-hint">Minimum 6 characters required.</p>
+              <p className="su-pw-hint">{t("signup.pwHint")}</p>
 
               <div className="su-captcha-wrap" ref={captchaContainerRef} />
 
               <button className="su-btn" type="submit" disabled={loading || !captchaToken}>
                 {loading && <span className="su-spinner" />}
-                {loading ? "Creating account…" : "Create Account"}
+                {loading ? t("signup.submitting") : t("signup.submitBtn")}
               </button>
             </form>
 
             <div className="su-form-footer">
-              Already have an account?{" "}
-              <Link to="/login">Sign in →</Link>
+              {t("signup.footerHaveAccount")}{" "}
+              <Link to="/login">{t("signup.footerSignIn")}</Link>
             </div>
 
           </div>

@@ -564,6 +564,7 @@ interface ProfileUser {
   full_name: string | null;
   email: string;
   role: string;
+  status?: string | null;
   created_at?: string;
   last_seen?: string | null;
   source: "auth";
@@ -618,7 +619,7 @@ export default function RespondersPage() {
 
     const { data: profiles, error: profilesError } = await supabase
       .from("profiles")
-      .select("id, full_name, email, role, created_at, last_seen");
+      .select("id, full_name, email, role, status, created_at, last_seen");
 
     if (profilesError) console.error("profiles fetch error:", profilesError.message);
 
@@ -755,6 +756,11 @@ export default function RespondersPage() {
 
   const q = search.toLowerCase();
 
+  // Duty resolver shared by the filter, counts, and row badges so auth rows
+  // (profiles.status) and manual rows (responders.on_duty) behave identically.
+  const isOnDutyRow = (r: ProfileUser | ManualResponder): boolean =>
+    "on_duty" in r ? !!r.on_duty : r.status === "on_duty" || r.status === "responding";
+
   const allResponders: Array<ProfileUser | ManualResponder> = [
     ...profileResponders,
     ...manualResponders,
@@ -764,9 +770,10 @@ export default function RespondersPage() {
     const name  = "full_name" in r ? (r.full_name ?? "") : (r.name ?? "");
     const email = r.email ?? "";
     const matchesSearch = name.toLowerCase().includes(q) || email.toLowerCase().includes(q);
-    if (dutyFilter !== "all" && "on_duty" in r) {
-      if (dutyFilter === "on" && !r.on_duty) return false;
-      if (dutyFilter === "off" && r.on_duty) return false;
+    if (dutyFilter !== "all") {
+      const on = isOnDutyRow(r);
+      if (dutyFilter === "on" && !on) return false;
+      if (dutyFilter === "off" && on) return false;
     }
     return matchesSearch;
   });
@@ -777,8 +784,8 @@ export default function RespondersPage() {
       (c.email ?? "").toLowerCase().includes(q)
   );
 
-  const onDutyCount  = manualResponders.filter((r) => r.on_duty).length;
-  const offDutyCount = manualResponders.filter((r) => !r.on_duty).length;
+  const onDutyCount  = allResponders.filter((r) => isOnDutyRow(r)).length;
+  const offDutyCount = allResponders.length - onDutyCount;
 
   const stats = [
     { label: "Total Responders", value: allResponders.length,     accent: "#0066FF" },
@@ -792,7 +799,7 @@ export default function RespondersPage() {
     const isAuth   = "full_name" in r;
     const name     = isAuth ? (r.full_name ?? "Unknown") : ((r as ManualResponder).name ?? "Unknown");
     const status   = isAuth ? "active" : (r as ManualResponder).status;
-    const isOnDuty = isAuth ? true : (r as ManualResponder).on_duty;
+    const isOnDuty = isOnDutyRow(r);
     const lastSeen = fmtExactDateTime(r.last_seen);
 
     return (

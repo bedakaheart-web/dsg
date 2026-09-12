@@ -4,6 +4,8 @@ import { createPortal } from "react-dom";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../js/supabase";
 import logoImage from "../assets/dsg.logo.png";
+import { useLanguage } from "../context/LanguageContext.tsx";
+import { LanguageSwitcherBadge } from "./LanguageSelectModal.tsx";
 import "./Navbar.css";
 
 export default function Navbar() {
@@ -15,6 +17,7 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen]           = useState(false);
   const navigate  = useNavigate();
   const location  = useLocation();
+  const { t } = useLanguage();
 
   const isCitizenDash = location.pathname === "/citizen/dashboard";
   const isLoggedIn    = user !== null && user !== undefined;
@@ -184,22 +187,22 @@ export default function Navbar() {
   // ── Standard (public) navbar ──────────────────────────────────────────────
   const navLinks = (
     <>
-      <Link to="/directory"  onClick={() => setMenuOpen(false)}>Directory</Link>
-      <Link to="/map"        onClick={() => setMenuOpen(false)}>Map</Link>
-      <Link to="/safetytips" onClick={() => setMenuOpen(false)}>Safety Tips</Link>
-      <Link to="/about"      onClick={() => setMenuOpen(false)}>About</Link>
-      <Link to="/resources"  onClick={() => setMenuOpen(false)}>Resources</Link>    
+      <Link to="/directory"  onClick={() => setMenuOpen(false)}>{t("nav.directory")}</Link>
+      <Link to="/map"        onClick={() => setMenuOpen(false)}>{t("nav.map")}</Link>
+      <Link to="/safetytips" onClick={() => setMenuOpen(false)}>{t("nav.safetyTips")}</Link>
+      <Link to="/about"      onClick={() => setMenuOpen(false)}>{t("nav.about")}</Link>
+      <Link to="/resources"  onClick={() => setMenuOpen(false)}>{t("nav.resources")}</Link>
       {isLoggedIn ? (
         <>
-          {role === "citizen"   && <Link to="/citizen/dashboard"   onClick={() => setMenuOpen(false)}>My Dashboard</Link>}
-          {role === "responder" && <Link to="/responder/dashboard" onClick={() => setMenuOpen(false)}>Responder Panel</Link>}
-          {role === "admin"     && <Link to="/admin/dashboard"     onClick={() => setMenuOpen(false)}>Admin Dashboard</Link>}
+          {role === "citizen"   && <Link to="/citizen/dashboard"   onClick={() => setMenuOpen(false)}>{t("nav.myDashboard")}</Link>}
+          {role === "responder" && <Link to="/responder/dashboard" onClick={() => setMenuOpen(false)}>{t("nav.responderPanel")}</Link>}
+          {role === "admin"     && <Link to="/admin/dashboard"     onClick={() => setMenuOpen(false)}>{t("nav.adminDashboard")}</Link>}
         </>
       ) : (
         user === null && !isHomePage && !isAuthPage && (
           <>
-            <Link to="/login"  className="nav-login-link"  onClick={() => setMenuOpen(false)}>Login</Link>
-            <Link to="/signup" className="nav-signup-btn"  onClick={() => setMenuOpen(false)}>Create Account</Link>
+            <Link to="/login"  className="nav-login-link"  onClick={() => setMenuOpen(false)}>{t("nav.login")}</Link>
+            <Link to="/signup" className="nav-signup-btn"  onClick={() => setMenuOpen(false)}>{t("nav.createAccount")}</Link>
           </>
         )
       )}
@@ -227,32 +230,37 @@ export default function Navbar() {
           </div>
         )}
         <div className="nav-drawer-divider" />
+        {/* ── Language switcher — available in the mobile drawer too ── */}
+        <div style={{ padding: "0 16px 14px" }}>
+          <LanguageSwitcherBadge />
+        </div>
+        <div className="nav-drawer-divider" />
         <nav className="nav-drawer-links">
-          <Link to="/directory"  onClick={() => setMenuOpen(false)}><span className="ndl-icon">🗂</span> Directory</Link>
-          <Link to="/map"        onClick={() => setMenuOpen(false)}><span className="ndl-icon">🗺</span> Map</Link>
-          <Link to="/safetytips" onClick={() => setMenuOpen(false)}><span className="ndl-icon">💡</span> Safety Tips</Link>
-          <Link to="/about"     onClick={() => setMenuOpen(false)}><span className="ndl-icon">ℹ️</span> About</Link>
-          <Link to="/resources" onClick={() => setMenuOpen(false)}><span className="ndl-icon">📚</span> Resources</Link>
+          <Link to="/directory"  onClick={() => setMenuOpen(false)}><span className="ndl-icon">🗂</span> {t("nav.directory")}</Link>
+          <Link to="/map"        onClick={() => setMenuOpen(false)}><span className="ndl-icon">🗺</span> {t("nav.map")}</Link>
+          <Link to="/safetytips" onClick={() => setMenuOpen(false)}><span className="ndl-icon">💡</span> {t("nav.safetyTips")}</Link>
+          <Link to="/about"     onClick={() => setMenuOpen(false)}><span className="ndl-icon">ℹ️</span> {t("nav.about")}</Link>
+          <Link to="/resources" onClick={() => setMenuOpen(false)}><span className="ndl-icon">📚</span> {t("nav.resources")}</Link>
           {isLoggedIn ? (
             <>
               <div className="nav-drawer-divider" />
-              {role === "citizen"   && <Link to="/citizen/dashboard"   onClick={() => setMenuOpen(false)}><span className="ndl-icon">📊</span> My Dashboard</Link>}
-              {role === "responder" && <Link to="/responder/dashboard" onClick={() => setMenuOpen(false)}><span className="ndl-icon">🛡</span> Responder Panel</Link>}
-              {role === "admin"     && <Link to="/admin/dashboard"     onClick={() => setMenuOpen(false)}><span className="ndl-icon">⚙️</span> Admin Dashboard</Link>}
+              {role === "citizen"   && <Link to="/citizen/dashboard"   onClick={() => setMenuOpen(false)}><span className="ndl-icon">📊</span> {t("nav.myDashboard")}</Link>}
+              {role === "responder" && <Link to="/responder/dashboard" onClick={() => setMenuOpen(false)}><span className="ndl-icon">🛡</span> {t("nav.responderPanel")}</Link>}
+              {role === "admin"     && <Link to="/admin/dashboard"     onClick={() => setMenuOpen(false)}><span className="ndl-icon">⚙️</span> {t("nav.adminDashboard")}</Link>}
             </>
           ) : (
             user === null && !isHomePage && !isAuthPage && (
               <>
                 <div className="nav-drawer-divider" />
-                <Link to="/login"  onClick={() => setMenuOpen(false)}><span className="ndl-icon">🔑</span> Login</Link>
-                <Link to="/signup" onClick={() => setMenuOpen(false)}><span className="ndl-icon">✨</span> Create Account</Link>
+                <Link to="/login"  onClick={() => setMenuOpen(false)}><span className="ndl-icon">🔑</span> {t("nav.login")}</Link>
+                <Link to="/signup" onClick={() => setMenuOpen(false)}><span className="ndl-icon">✨</span> {t("nav.createAccount")}</Link>
               </>
             )
           )}
         </nav>
         {isLoggedIn && (
           <div className="nav-drawer-footer">
-            <button onClick={handleLogout} className="nav-drawer-logout">Sign Out</button>
+            <button onClick={handleLogout} className="nav-drawer-logout">{t("nav.signOut")}</button>
           </div>
         )}
       </div>
@@ -273,6 +281,8 @@ export default function Navbar() {
         </div>
         <div className="nav-links nav-links-desktop">
           {navLinks}
+          {/* ── Language switcher — sits next to Login/Logout on desktop ── */}
+          <LanguageSwitcherBadge />
           {isLoggedIn && (
             <button
               onClick={handleLogout}
@@ -293,7 +303,7 @@ export default function Navbar() {
                 (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,107,107,0.3)";
               }}
             >
-              Logout
+              {t("nav.logout")}
             </button>
           )}
         </div>
@@ -469,6 +479,7 @@ const CITIZEN_NAV_CSS = `
   .cn-drawer-nav a:hover    { color: #eef0f7; background: rgba(255,255,255,0.05); }
   .cn-drawer-nav a.cn-active { color: #2ECC8F; background: rgba(46,204,143,0.08); }
   .cn-drawer-nav .cn-div { height: 1px; background: rgba(255,255,255,0.05); margin: 6px 0; }
+  .cn-drawer-lang { padding: 6px 11px 14px; }
 
   .cn-drawer-footer { padding: 14px 18px; border-top: 1px solid rgba(255,255,255,0.06); }
   .cn-drawer-logout {
@@ -496,12 +507,15 @@ const CITIZEN_NAV_CSS = `
     border: 1px solid rgba(239,91,91,0.22); border-radius: 20px; padding: 2px 7px;
   }
 
+  .cn-lang-desktop { display: flex; }
+
   @media (max-width: 820px) {
     .cn-links  { display: none; }
     .cn-sep    { display: none; }
     .cn-report { display: none; }
     .cn-user   { display: none; }
     .cn-logout { display: none; }
+    .cn-lang-desktop { display: none; }
     .cn-ham    { display: flex; }
   }
 `;
@@ -523,6 +537,7 @@ function CitizenNavbar({
   menuOpen, setMenuOpen, handleLogout, handleBellClick, location,
 }: CitizenNavbarProps) {
   const [scrolled, setScrolled] = useState(false);
+  const { t } = useLanguage();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -537,12 +552,12 @@ function CitizenNavbar({
   const isOnDashboard = location.pathname === "/citizen/dashboard";
 
   const navItems = [
-    ...(!isOnDashboard ? [{ to: "/citizen/dashboard", label: "My Dashboard", icon: "📊" }] : []),
-    { to: "/citizen/map",        label: "Map",         icon: "🗺" },
-    { to: "/citizen/safetytips", label: "Safety Tips", icon: "💡" },
-    { to: "/citizen/directory",  label: "Directory",   icon: "🗂" },
-    { to: "/citizen/about",      label: "About",       icon: "ℹ️"  },
-    { to: "/citizen/report",     label: "File Report", icon: "📝" },
+    ...(!isOnDashboard ? [{ to: "/citizen/dashboard", label: t("nav.myDashboard"), icon: "📊" }] : []),
+    { to: "/citizen/map",        label: t("nav.map"),         icon: "🗺" },
+    { to: "/citizen/safetytips", label: t("nav.safetyTips"), icon: "💡" },
+    { to: "/citizen/directory",  label: t("nav.directory"),   icon: "🗂" },
+    { to: "/citizen/about",      label: t("nav.about"),       icon: "ℹ️"  },
+    { to: "/citizen/report",     label: t("nav.fileReport"), icon: "📝" },
   ];
 
   const portalContent = createPortal(
@@ -575,8 +590,13 @@ function CitizenNavbar({
           <div className="cn-drawer-avatar">{initials}</div>
           <div>
             <div className="cn-drawer-uname">{displayName}</div>
-            <div className="cn-drawer-urole">Citizen</div>
+            <div className="cn-drawer-urole">{t("nav.citizen")}</div>
           </div>
+        </div>
+
+        {/* ── Language switcher — mobile drawer ── */}
+        <div className="cn-drawer-lang">
+          <LanguageSwitcherBadge />
         </div>
 
         <nav className="cn-drawer-nav">
@@ -600,7 +620,7 @@ function CitizenNavbar({
             onClick={() => { handleBellClick(); setMenuOpen(false); }}
           >
             <span style={{ width: 18, textAlign: "center" }}>🔔</span>
-            Alerts
+            {t("nav.alerts")}
             {unreadAlerts > 0 && (
               <span className="cn-drawer-bell-count">{unreadAlerts > 9 ? "9+" : unreadAlerts}</span>
             )}
@@ -608,7 +628,7 @@ function CitizenNavbar({
         </nav>
 
         <div className="cn-drawer-footer">
-          <button onClick={handleLogout} className="cn-drawer-logout">Sign Out</button>
+          <button onClick={handleLogout} className="cn-drawer-logout">{t("nav.signOut")}</button>
         </div>
       </div>
     </>,
@@ -643,12 +663,17 @@ function CitizenNavbar({
 
         {/* Right cluster */}
         <div className="cn-right">
+          {/* Language switcher — hidden below 820px; the mobile drawer has its own copy */}
+          <div className="cn-lang-desktop">
+            <LanguageSwitcherBadge />
+          </div>
+
           {/* Bell */}
           <Link
             to="/citizen/alerts"
             className="cn-bell"
             onClick={handleBellClick}
-            title={unreadAlerts > 0 ? `${unreadAlerts} unread alert${unreadAlerts !== 1 ? "s" : ""}` : "Alerts"}
+            title={unreadAlerts > 0 ? `${unreadAlerts} unread alert${unreadAlerts !== 1 ? "s" : ""}` : t("nav.alerts")}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6V11c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
@@ -662,11 +687,11 @@ function CitizenNavbar({
           <div className="cn-user">
             <div className="cn-avatar">{initials}</div>
             <span className="cn-user-name">{displayName}</span>
-            <span className="cn-role-chip">Citizen</span>
+            <span className="cn-role-chip">{t("nav.citizen")}</span>
           </div>
 
           {/* Logout */}
-          <button onClick={handleLogout} className="cn-logout">Logout</button>
+          <button onClick={handleLogout} className="cn-logout">{t("nav.logout")}</button>
 
           {/* Hamburger */}
           <button

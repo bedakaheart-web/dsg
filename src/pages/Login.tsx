@@ -4,6 +4,7 @@ import { supabase } from "../js/supabase";
 import { FaEye, FaEyeSlash, FaCheck, FaArrowRight } from "react-icons/fa";
 import logoImage from "../assets/dsg.logo.png";
 import directorybg from "../assets/directorybg.png";
+import { useLanguage } from "../context/LanguageContext";
 
 // ── Cloudflare Turnstile site key ──
 // Same widget/key used on the Signup page.
@@ -19,6 +20,7 @@ declare global {
   }
 }
 
+// ── CSS-in-JS ──
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
 
@@ -61,7 +63,6 @@ const CSS = `
     50% { opacity: 0.85; transform: scale(1.02); }
   }
 
-  /* ── Back to home button ── */
   .lg-back {
     display: inline-flex; align-items: center; gap: 6px;
     font-family: 'Inter', sans-serif;
@@ -85,14 +86,12 @@ const CSS = `
 
   .lg-back:hover .lg-back-arrow { transform: translateX(-3px); }
 
-  /* ── Page layout ── */
   .lg-page {
     position: relative; z-index: 1;
     width: 100%; max-width: 1080px;
     display: grid;
     grid-template-columns: 1.1fr 440px;
     gap: 0;
-    /* FIXED: unified surface opacity to match About page */
     background: rgba(13, 27, 46, 0.72);
     border-radius: 24px;
     border: 1px solid rgba(0, 200, 224, 0.18);
@@ -112,7 +111,6 @@ const CSS = `
     to { opacity: 1; transform: translateY(0); }
   }
 
-  /* ── Left branding panel ── */
   .lg-brand-panel {
     position: relative;
     display: flex;
@@ -264,13 +262,11 @@ const CSS = `
 
   @keyframes lg-pulse { 0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.75)} }
 
-  /* ── Right form panel ── */
   .lg-form-panel {
     display: flex;
     flex-direction: column;
     justify-content: center;
     padding: 56px 48px;
-    /* FIXED: unified surface opacity to match About page */
     background: rgba(13, 27, 46, 0.72);
     border-left: 1px solid rgba(0, 200, 224, 0.12);
     position: relative;
@@ -367,8 +363,6 @@ const CSS = `
     text-transform: uppercase;
   }
 
-  .lg-input-wrap { position: relative; }
-
   .lg-field-icon {
     position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
     color: rgba(0, 200, 224, 0.35);
@@ -381,7 +375,6 @@ const CSS = `
 
   .lg-input {
     width: 100%;
-    /* FIXED: unified input background to match About page surface */
     background: rgba(13, 27, 46, 0.88);
     border: 1.5px solid rgba(0, 200, 224, 0.16);
     border-radius: 11px;
@@ -578,7 +571,6 @@ const CSS = `
     animation: lg-spin .7s linear infinite;
   }
 
-  /* responsive */
   @media (max-width: 920px) {
     .lg-page {
       grid-template-columns: 1fr;
@@ -613,6 +605,7 @@ const ROLE_REDIRECT: Record<string, string> = {
   citizen:   "/citizen/dashboard",
 };
 
+// ── Helper Icons ────────────────────────────────────────────────────────
 function IconMail() {
   return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>;
 }
@@ -621,140 +614,220 @@ function IconLock() {
   return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>;
 }
 
+// ── Main Component ────────────────────────────────────────────────────────
 export default function Login() {
   const navigate = useNavigate();
-  const [email, setEmail]       = useState("");
-  const [password, setPassword] = useState("");
-  const [remember, setRemember] = useState(false);
-  const [showPw, setShowPw]     = useState(false);
-  const [loading, setLoading]   = useState(false);
-  const [success, setSuccess]   = useState(false);
-  const [error, setError]       = useState("");
-  const [checking, setChecking] = useState(true);
+  const { t } = useLanguage();
+
+  // ── State ─────────────────────────────────────────────────────────────
+  const [email, setEmail]           = useState("");
+  const [password, setPassword]     = useState("");
+  const [remember, setRemember]     = useState(false);
+  const [showPw, setShowPw]         = useState(false);
+  const [loading, setLoading]       = useState(false);
+  const [success, setSuccess]       = useState(false);
+  const [error, setError]           = useState("");
+  const [checking, setChecking]     = useState(true);
   const [captchaToken, setCaptchaToken] = useState("");
 
   const captchaContainerRef = useRef<HTMLDivElement>(null);
   const captchaWidgetId     = useRef<string | null>(null);
 
+  // ── Guard against setState after unmount ────────────────────────────────
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
+  // ── Supabase session check ───────────────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
+
     const checkSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user) { if (!cancelled) setChecking(false); return; }
+        if (!session?.user) {
+          if (!cancelled) setChecking(false);
+          return;
+        }
+
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         if (userError || !user) {
           await supabase.auth.signOut();
           if (!cancelled) setChecking(false);
           return;
         }
+
         const { data: profile } = await supabase
           .from("profiles").select("role").eq("id", user.id).single();
+
         const role = profile?.role?.trim().toLowerCase() ?? "";
-        if (!cancelled) navigate(ROLE_REDIRECT[role] ?? "/citizen/dashboard", { replace: true });
-      } catch { if (!cancelled) setChecking(false); }
+
+        if (!cancelled) {
+          setChecking(false);
+          navigate(ROLE_REDIRECT[role] ?? "/citizen/dashboard", { replace: true });
+        }
+      } catch {
+        if (!cancelled) setChecking(false);
+      }
     };
+
     checkSession();
     return () => { cancelled = true; };
   }, [navigate]);
 
-  // Load the Turnstile script once, then render the widget into our container.
+  // ── Cloudflare Turnstile lifecycle ──────────────────────────────────────
+  // BUG THAT WAS HERE: the previous version put `return () => {...}` (the
+  // cleanup function) as the very FIRST statement in the effect body. In a
+  // useEffect, whatever you `return` immediately ends the function — so every
+  // line after it (the `checking` guard, the container-ref guard, and all the
+  // widget-rendering / script-loading logic) was dead code that never ran.
+  // The widget's callback (which sets captchaToken) was therefore very rarely
+  // wired up, which is why the CAPTCHA state got stuck / wouldn't reset.
+  //
+  // Fix: run the guards and rendering logic FIRST, and only return the
+  // cleanup function at the END of the effect body.
   useEffect(() => {
-    if (checking) return; // don't render the widget while the session check is still on screen
+    // Don't try to render the widget while the session check is still running,
+    // or before the container div exists in the DOM.
+    if (checking) return;
+    if (!captchaContainerRef.current) return;
 
-    const existing = document.querySelector('script[data-turnstile]');
+    let cancelled = false;
 
     const renderWidget = () => {
-      if (!window.turnstile || !captchaContainerRef.current || captchaWidgetId.current) return;
+      if (cancelled) return;
+      if (!captchaContainerRef.current || captchaWidgetId.current) return;
+      if (!window.turnstile) return;
+
       captchaWidgetId.current = window.turnstile.render(captchaContainerRef.current, {
         sitekey: TURNSTILE_SITE_KEY,
         theme: "dark",
         callback: (token: string) => setCaptchaToken(token),
         "expired-callback": () => setCaptchaToken(""),
-        "error-callback": () => setCaptchaToken(""),
+        "error-callback":   () => setCaptchaToken(""),
       });
     };
 
     if (window.turnstile) {
       renderWidget();
-    } else if (!existing) {
-      const script = document.createElement("script");
-      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
-      script.async = true;
-      script.defer = true;
-      script.setAttribute("data-turnstile", "true");
-      script.onload = renderWidget;
-      document.body.appendChild(script);
     } else {
-      existing.addEventListener("load", renderWidget);
+      const existing = document.querySelector<HTMLScriptElement>('script[data-turnstile]');
+      if (existing) {
+        // Script tag is already on the page (e.g. from Signup). If it already
+        // finished loading, render now; otherwise wait for its load event too.
+        if (window.turnstile) {
+          renderWidget();
+        } else {
+          existing.addEventListener("load", renderWidget, { once: true });
+        }
+      } else {
+        const script = document.createElement("script");
+        script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+        script.async = true;
+        script.defer = true;
+        script.setAttribute("data-turnstile", "true");
+        script.addEventListener("load", renderWidget, { once: true });
+        document.body.appendChild(script);
+      }
     }
 
+    // Cleanup: only remove the widget this effect instance created, and only
+    // when the effect actually re-runs / unmounts — not on every render.
     return () => {
+      cancelled = true;
       if (window.turnstile && captchaWidgetId.current) {
         window.turnstile.remove(captchaWidgetId.current);
         captchaWidgetId.current = null;
       }
     };
+    // NOTE: `captchaContainerRef.current` was removed from the deps array.
+    // Refs are not reactive — including `.current` in a dependency array
+    // doesn't do anything useful (React doesn't watch ref mutations), it was
+    // just misleading. `checking` is the only value that should re-trigger this.
   }, [checking]);
 
+  // ── Reset CAPTCHA ───────────────────────────────────────────────────────
+  const resetCaptcha = () => {
+    setCaptchaToken("");
+    if (window.turnstile && captchaWidgetId.current) {
+      window.turnstile.reset(captchaWidgetId.current);
+    }
+  };
+
+  // ── Handle login ────────────────────────────────────────────────────────
   const handleLogin = async () => {
     setError("");
     if (!email.trim() || !password.trim()) {
-      setError("Please enter your email and password.");
+      setError(t("login.errors.missingFields", "Please fill in all required fields."));
       return;
     }
     if (!captchaToken) {
-      setError("Please complete the CAPTCHA to verify you're human.");
+      setError(t("login.errors.needCaptcha", "Please complete the CAPTCHA check."));
       return;
     }
     setLoading(true);
+
     const { data: authData, error: authError } =
       await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
         options: { captchaToken },
       });
+
     if (authError || !authData?.user) {
-      const rawMessage = authError?.message || "";
-      const isUnconfirmed = rawMessage.toLowerCase().includes("email not confirmed");
+      const rawMessage = authError?.message?.toLowerCase() || "";
+      const isUnconfirmed = rawMessage.includes("email not confirmed");
       setError(
         isUnconfirmed
-          ? "Please confirm your email first. We sent a confirmation link to your inbox when you signed up — check your inbox (and spam folder) and click it before signing in."
-          : rawMessage || "Login failed. Please check your credentials."
+          ? t("login.errors.unconfirmedEmail", "Please verify your email before signing in.")
+          : t("login.errors.loginFailed", "Invalid email or password.")
       );
       setLoading(false);
-      setCaptchaToken("");
-      if (window.turnstile && captchaWidgetId.current) {
-        window.turnstile.reset(captchaWidgetId.current);
-      }
+      resetCaptcha();
       return;
     }
+
     const { data: profile, error: profileError } = await supabase
       .from("profiles").select("role").eq("id", authData.user.id).single();
+
     if (profileError || !profile?.role) {
       await new Promise(res => setTimeout(res, 1500));
+      if (!mountedRef.current) return;
+
       const { data: retryProfile } = await supabase
         .from("profiles").select("role").eq("id", authData.user.id).single();
+
+      if (!mountedRef.current) return;
+
       if (!retryProfile?.role) {
-        setError("Profile not ready yet. Please wait a moment and try again.");
+        setError(t("login.errors.profileNotReady", "User profile is taking longer than expected. Please try again."));
         setLoading(false);
         return;
       }
       const role = retryProfile.role.trim().toLowerCase();
-      setSuccess(true); setLoading(false);
-      setTimeout(() => navigate(ROLE_REDIRECT[role] ?? "/citizen/dashboard", { replace: true }), 900);
+      setSuccess(true);
+      setLoading(false);
+      setTimeout(() => {
+        if (mountedRef.current) navigate(ROLE_REDIRECT[role] ?? "/citizen/dashboard", { replace: true });
+      }, 900);
       return;
     }
+
     const role = profile.role.trim().toLowerCase();
-    setSuccess(true); setLoading(false);
-    setTimeout(() => navigate(ROLE_REDIRECT[role] ?? "/citizen/dashboard", { replace: true }), 900);
+    setSuccess(true);
+    setLoading(false);
+    setTimeout(() => {
+      if (mountedRef.current) navigate(ROLE_REDIRECT[role] ?? "/citizen/dashboard", { replace: true });
+    }, 900);
   };
 
+  // ── Render ───────────────────────────────────────────────────────────────
   return (
     <>
       <style>{CSS}</style>
       <div className="lg-root" style={{ '--bg-image': `url(${directorybg})` } as React.CSSProperties}>
-
         <div className="lg-page">
 
           {/* ── Left branding panel ── */}
@@ -772,12 +845,12 @@ export default function Login() {
               </div>
 
               <div className="lg-brand-headline">
-                Emergency<br/><span className="accent">Response</span><br/>Portal
+                {t("login.headline1", "Empowering")}<br/>
+                <span className="accent">{t("login.headlineAccent", "Dumaguete")}</span><br/>
+                {t("login.headline2", "Safety Together.")}
               </div>
               <p className="lg-brand-desc">
-                A unified platform for citizens, responders, and
-                administrators to coordinate emergency response
-                across all barangays in Dumaguete City.
+                {t("login.desc", "Real-time emergency monitoring and citizen response platform.")}
               </p>
             </div>
 
@@ -785,21 +858,21 @@ export default function Login() {
               <div className="lg-brand-stats">
                 <div>
                   <div className="lg-brand-stat-val">30<em>+</em></div>
-                  <div className="lg-brand-stat-label">Barangays</div>
+                  <div className="lg-brand-stat-label">{t("login.stats.barangays", "Barangays Covered")}</div>
                 </div>
                 <div>
                   <div className="lg-brand-stat-val"><em>24</em>/7</div>
-                  <div className="lg-brand-stat-label">Monitoring</div>
+                  <div className="lg-brand-stat-label">{t("login.stats.monitoring", "Monitoring Status")}</div>
                 </div>
                 <div>
                   <div className="lg-brand-stat-val">&lt;<em>5m</em></div>
-                  <div className="lg-brand-stat-label">Avg Response</div>
+                  <div className="lg-brand-stat-label">{t("login.stats.avgResponse", "Average Response Time")}</div>
                 </div>
               </div>
               <div className="lg-brand-divider" />
               <div className="lg-brand-badge">
                 <span className="lg-brand-badge-dot" />
-                Systems operational · Dumaguete City
+                {t("login.badge", "Official City Emergency Portal")}
               </div>
             </div>
           </div>
@@ -809,26 +882,27 @@ export default function Login() {
             {checking ? (
               <div className="lg-checking">
                 <span className="lg-check-spin" />
-                Checking session…
+                {t("login.checkingSession", "Checking session...")}
               </div>
             ) : success ? (
               <div className="lg-success">
                 <div className="lg-success-icon">
                   <FaCheck size={32} color="#00c8e0" />
                 </div>
-                <div className="lg-success-title">Welcome back!</div>
-                <div className="lg-success-sub">Redirecting you to your dashboard…</div>
+                <div className="lg-success-title">{t("login.success.title", "Welcome Back!")}</div>
+                <div className="lg-success-sub">{t("login.success.sub", "Redirecting to your dashboard...")}</div>
               </div>
             ) : (
-              <>
+              <div>
                 <Link to="/" className="lg-back">
                   <span className="lg-back-arrow">←</span>
-                  Back to Home
+                  {t("login.backToHome", "Back to Home")}
                 </Link>
+
                 <div className="lg-form-header">
-                  <div className="lg-form-eyebrow">Secure Sign In</div>
-                  <div className="lg-form-title">Sign In</div>
-                  <div className="lg-form-sub">Enter your credentials to access your dashboard.</div>
+                  <div className="lg-form-eyebrow">{t("login.formEyebrow", "Secure Portal")}</div>
+                  <div className="lg-form-title">{t("login.formTitle", "Welcome Back")}</div>
+                  <div className="lg-form-sub">{t("login.formSub", "Enter your credentials to access your account")}</div>
                 </div>
 
                 <div className="lg-rule" />
@@ -840,7 +914,7 @@ export default function Login() {
                 )}
 
                 <div className="lg-field">
-                  <label className="lg-label">Email Address</label>
+                  <label className="lg-label">{t("login.labels.email", "Email Address")}</label>
                   <div className="lg-input-wrap">
                     <span className="lg-field-icon"><IconMail /></span>
                     <input
@@ -849,7 +923,7 @@ export default function Login() {
                       placeholder=" "
                       value={email}
                       onChange={e => setEmail(e.target.value)}
-                      onKeyDown={e => e.key === "Enter" && handleLogin()}
+                      onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); handleLogin(); } }}
                       autoComplete="email"
                       autoFocus
                     />
@@ -857,7 +931,7 @@ export default function Login() {
                 </div>
 
                 <div className="lg-field">
-                  <label className="lg-label">Password</label>
+                  <label className="lg-label">{t("login.labels.password", "Password")}</label>
                   <div className="lg-input-wrap">
                     <span className="lg-field-icon"><IconLock /></span>
                     <input
@@ -866,10 +940,16 @@ export default function Login() {
                       placeholder="••••••••"
                       value={password}
                       onChange={e => setPassword(e.target.value)}
-                      onKeyDown={e => e.key === "Enter" && handleLogin()}
+                      onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); handleLogin(); } }}
                       autoComplete="current-password"
                     />
-                    <button type="button" className="lg-eye" onClick={() => setShowPw(v => !v)} tabIndex={-1} aria-label={showPw ? "Hide password" : "Show password"}>
+                    <button
+                      type="button"
+                      className="lg-eye"
+                      onClick={() => setShowPw(v => !v)}
+                      tabIndex={-1}
+                      aria-label={showPw ? "Hide password" : "Show password"}
+                    >
                       {showPw ? <FaEyeSlash size={14} /> : <FaEye size={14} />}
                     </button>
                   </div>
@@ -877,32 +957,42 @@ export default function Login() {
 
                 <div className="lg-helper-row">
                   <label className="lg-remember">
-                    <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} />
-                    Remember me
+                    <input
+                      type="checkbox"
+                      checked={remember}
+                      onChange={e => setRemember(e.target.checked)}
+                    />
+                    {t("login.rememberMe", "Remember Me")}
                   </label>
-                  <Link to="/forgot-password" className="lg-forgot">Forgot password?</Link>
+                  <Link to="/forgot-password" className="lg-forgot">
+                    {t("login.forgotPassword", "Forgot Password?")}
+                  </Link>
                 </div>
 
                 <div className="lg-captcha-wrap" ref={captchaContainerRef} />
 
-                <button className="lg-btn" onClick={handleLogin} disabled={loading || !captchaToken} type="button">
+                <button
+                  className="lg-btn"
+                  onClick={handleLogin}
+                  disabled={loading || !captchaToken}
+                  type="button"
+                >
                   {loading && <span className="lg-spinner" />}
-                  {loading ? "Signing in…" : (
+                  {loading ? t("login.submitting", "Signing In...") : (
                     <>
-                      Sign In
+                      {t("login.submitBtn", "Sign In")}
                       <FaArrowRight size={11} />
                     </>
                   )}
                 </button>
 
                 <div className="lg-form-footer">
-                  Don't have an account?{" "}
-                  <Link to="/signup">Create one →</Link>
+                  {t("login.footerNoAccount", "Don't have an account? ")}
+                  <Link to="/signup">{t("login.footerCreateAccount", "Register Here")}</Link>
                 </div>
-              </>
+              </div>
             )}
           </div>
-
         </div>
       </div>
     </>

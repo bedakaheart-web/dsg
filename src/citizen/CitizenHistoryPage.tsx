@@ -1,16 +1,15 @@
 // src/citizen/CitizenHistoryPage.tsx
 import { useEffect, useState, useCallback } from "react";
+import { useLanguage } from "../context/LanguageContext";
 import { supabase } from "../js/supabase";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   FaFileAlt, FaClock, FaSpinner, FaCheckCircle,
   FaExclamationCircle, FaChevronRight, FaInbox,
-  FaMapMarkedAlt, FaLightbulb, FaHistory,
-  FaBell, FaBars, FaTimes, FaSignOutAlt, FaArrowLeft,
+  FaBell, FaArrowLeft,
   FaClipboardCheck, FaUserShield,
 } from "react-icons/fa";
 
-import dsgLogo from '../assets/dsg_logo.png';
 import pagesBackground from '../assets/pagesbackground.png';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -91,7 +90,7 @@ const STYLES = `
 @keyframes spin    { to { transform: rotate(360deg); } }
 
 .ch-portal {
-  position: fixed; inset: 0; z-index: 9000; overflow: hidden;
+  position: relative; min-height: 100vh; z-index: 0; overflow: hidden;
   font-family: var(--font-body); color: var(--text); background: var(--bg);
   background-image: url('${pagesBackground}');
   background-size: cover; background-position: center;
@@ -135,7 +134,7 @@ const STYLES = `
 .ch-logout-btn  { display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 12px; background: rgba(8,12,20,.6); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-weight: 500; color: var(--text-2); cursor: pointer; transition: all 0.2s; }
 .ch-logout-btn:hover { background: rgba(255,107,107,.12); color: var(--red); border-color: var(--red); }
 
-.ch-main { margin-left: 260px; flex: 1; display: flex; flex-direction: column; min-width: 0; height: 100vh; overflow-y: auto; overflow-x: hidden; position: relative; z-index: 1; }
+.ch-main { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 100vh; overflow-x: hidden; position: relative; z-index: 1; }
 .ch-topbar { height: 56px; display: flex; align-items: center; padding: 0 24px; background: rgba(15,21,33,.82); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; gap: 12px; flex-shrink: 0; backdrop-filter: blur(16px); }
 .ch-hamburger { display: none; background: rgba(8,12,20,.6); border: 1px solid var(--border); border-radius: 6px; width: 32px; height: 32px; align-items: center; justify-content: center; color: var(--text-3); cursor: pointer; transition: all 0.2s; flex-shrink: 0; font-size: 14px; }
 .ch-hamburger:hover { background: var(--surface); border-color: var(--text-2); color: var(--text); }
@@ -296,18 +295,36 @@ function usePHTClock() {
   return time;
 }
 
-function fmtDate(ts: string) {
-  return new Date(ts).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" });
+function fmtDate(ts: string, locale = "en-PH") {
+  return new Date(ts).toLocaleDateString(locale, { month: "short", day: "numeric", year: "numeric" });
 }
-function fmtDateTime(ts: string) {
-  return new Date(ts).toLocaleString("en-PH", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+function fmtDateTime(ts: string, locale = "en-PH") {
+  return new Date(ts).toLocaleString(locale, { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
+// Resolution-type key mapping: DB values use kebab-case, the
+// reportDetail.resolutionLabels dictionary uses camelCase.
+function resolutionKey(rt: string | null | undefined): "forwarded" | "followUp" | "fullyResolved" {
+  if (rt === "follow-up") return "followUp";
+  if (rt === "fully-resolved") return "fullyResolved";
+  return "forwarded";
 }
 
 // ─── Detail View ─────────────────────────────────────────────────────────────
 
 function ReportDetail({ report, onBack }: { report: Report; onBack: () => void }) {
+  // Consumes the active Navbar/Header language — re-renders on selector change.
+  const { language, t, tList } = useLanguage();
+  void tList;
+  const locale = language === "tl" ? "fil-PH" : "en-PH";
   const tm      = TYPE_META[report.type?.toLowerCase()] ?? TYPE_META.other;
   const sm      = STATUS_META[report.status]            ?? STATUS_META.pending;
+  // Language-aware labels (dictionary first, English data fallback).
+  const statusLabel = t(`status.${report.status === "in-progress" ? "inProgress" : report.status}`, sm.label);
+  const typeName = t(`report.types.${report.type?.toLowerCase()}`, report.type);
+  const resolutionName = report.resolution_type
+    ? t(`reportDetail.resolutionLabels.${resolutionKey(report.resolution_type)}`, RESOLUTION_META[report.resolution_type]?.label ?? report.resolution_type)
+    : "";
   const rm      = report.resolution_type ? RESOLUTION_META[report.resolution_type] : null;
   const isVideo = report.evidence_url && /\.(mp4|mov|webm)/i.test(report.evidence_url);
 
@@ -320,7 +337,7 @@ function ReportDetail({ report, onBack }: { report: Report; onBack: () => void }
   return (
     <div className="ch-detail">
       <button className="ch-back-btn" onClick={onBack}>
-        <FaArrowLeft size={11} /> Back to Reports
+        <FaArrowLeft size={11} /> {t("reportDetail.backToHistory")}
       </button>
 
       <div className="ch-detail-card" style={{ "--card-top": tm.color } as React.CSSProperties}>
@@ -328,12 +345,12 @@ function ReportDetail({ report, onBack }: { report: Report; onBack: () => void }
           <div className="ch-detail-type-row">
             <div className="ch-detail-type-icon">{tm.icon}</div>
             <div>
-              <div className="ch-detail-type-name" style={{ color: tm.color }}>{report.type}</div>
+              <div className="ch-detail-type-name" style={{ color: tm.color }}>{typeName}</div>
               <div className="ch-detail-id">ID: {report.id}</div>
             </div>
           </div>
           <span className="ch-pill" style={{ color: sm.color, background: sm.bg, borderColor: sm.border }}>
-            <span className="ch-pill-dot" /> {sm.label}
+            <span className="ch-pill-dot" /> {statusLabel}
           </span>
         </div>
 
@@ -341,20 +358,20 @@ function ReportDetail({ report, onBack }: { report: Report; onBack: () => void }
 
           {/* Description + location */}
           <div>
-            <div className="ch-detail-section-title">Report Details</div>
+            <div className="ch-detail-section-title">{t("reportDetail.reportDetails")}</div>
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               <div className="ch-detail-field">
-                <span className="ch-detail-field-label">Description</span>
-                <span className="ch-detail-field-value">{report.description || "No description provided."}</span>
+                <span className="ch-detail-field-label">{t("reportDetail.description")}</span>
+                <span className="ch-detail-field-value">{report.description || t("reportDetail.noDescription")}</span>
               </div>
               <div className="ch-detail-grid">
                 <div className="ch-detail-field">
-                  <span className="ch-detail-field-label">Location</span>
-                  <span className="ch-detail-field-value">{report.address || report.location || "Not specified"}</span>
+                  <span className="ch-detail-field-label">{t("reportDetail.location")}</span>
+                  <span className="ch-detail-field-value">{report.address || report.location || t("reportDetail.notSpecified")}</span>
                 </div>
                 <div className="ch-detail-field">
-                  <span className="ch-detail-field-label">Filed On</span>
-                  <span className="ch-detail-field-value">{fmtDateTime(report.created_at)}</span>
+                  <span className="ch-detail-field-label">{t("reportDetail.submitted")}</span>
+                  <span className="ch-detail-field-value">{fmtDateTime(report.created_at, locale)}</span>
                 </div>
               </div>
             </div>
@@ -363,11 +380,11 @@ function ReportDetail({ report, onBack }: { report: Report; onBack: () => void }
           {/* Evidence */}
           {report.evidence_url && (
             <div>
-              <div className="ch-detail-section-title">Evidence</div>
+              <div className="ch-detail-section-title">{t("reportDetail.evidence")}</div>
               <div className="ch-evidence">
                 {isVideo
                   ? <video src={report.evidence_url} controls preload="metadata" />
-                  : <img src={report.evidence_url} alt="Evidence" onClick={() => window.open(report.evidence_url!, "_blank")} />
+                  : <img src={report.evidence_url} alt={t("reportDetail.evidenceAlt", "Evidence")} onClick={() => window.open(report.evidence_url!, "_blank")} />
                 }
               </div>
             </div>
@@ -375,14 +392,14 @@ function ReportDetail({ report, onBack }: { report: Report; onBack: () => void }
 
           {/* Timeline */}
           <div>
-            <div className="ch-detail-section-title">Report Timeline</div>
+            <div className="ch-detail-section-title">{t("reportDetail.statusTimeline")}</div>
             <div className="ch-timeline">
               <div className="ch-tl-item">
                 <div className="ch-tl-dot resolved">✓</div>
                 <div className="ch-tl-content">
-                  <div className="ch-tl-label">Report Filed</div>
-                  <div className="ch-tl-time">{fmtDateTime(report.created_at)}</div>
-                  <div className="ch-tl-note">Your report was submitted and received by the system.</div>
+                  <div className="ch-tl-label">{t("reportDetail.reportFiled")}</div>
+                  <div className="ch-tl-time">{fmtDateTime(report.created_at, locale)}</div>
+                  <div className="ch-tl-note">{t("reportDetail.reportFiledSub")}</div>
                 </div>
               </div>
               <div className="ch-tl-item">
@@ -391,12 +408,12 @@ function ReportDetail({ report, onBack }: { report: Report; onBack: () => void }
                 </div>
                 <div className="ch-tl-content">
                   <div className={`ch-tl-label ${!report.responder_id ? "inactive" : ""}`}>
-                    {report.responder_id ? "Claimed by Responder" : "Awaiting Responder"}
+                    {report.responder_id ? t("reportDetail.claimedByResponder") : t("reportDetail.awaitingResponder")}
                   </div>
-                  {!report.responder_id && <div className="ch-tl-time">Pending assignment</div>}
+                  {!report.responder_id && <div className="ch-tl-time">{t("reportDetail.awaitingResponderSub")}</div>}
                   {report.responder_id && report.status === "in-progress" && (
                     <div className="ch-tl-note" style={{ borderColor: "rgba(123,158,255,.2)", background: "rgba(123,158,255,.05)" }}>
-                      A responder is currently handling your report.
+                      {t("reportDetail.responderOnItSub")}
                     </div>
                   )}
                 </div>
@@ -407,9 +424,9 @@ function ReportDetail({ report, onBack }: { report: Report; onBack: () => void }
                 </div>
                 <div className="ch-tl-content">
                   <div className={`ch-tl-label ${report.status !== "resolved" ? "inactive" : ""}`}>
-                    {report.status === "resolved" ? "Resolved" : "Resolution Pending"}
+                    {report.status === "resolved" ? t("reportDetail.statusResolved") : t("reportDetail.resolutionPending")}
                   </div>
-                  {report.resolved_at && <div className="ch-tl-time">{fmtDateTime(report.resolved_at)}</div>}
+                  {report.resolved_at && <div className="ch-tl-time">{fmtDateTime(report.resolved_at, locale)}</div>}
                 </div>
               </div>
             </div>
@@ -418,39 +435,39 @@ function ReportDetail({ report, onBack }: { report: Report; onBack: () => void }
           {/* Resolution details — always shown for resolved */}
           {report.status === "resolved" && (
             <div>
-              <div className="ch-detail-section-title">Responder Resolution</div>
+              <div className="ch-detail-section-title">{t("reportDetail.responderUpdates")}</div>
               <div className="ch-resolution">
                 <div className="ch-resolution-hd">
                   <span className="ch-resolution-hd-icon">🛡️</span>
-                  <span className="ch-resolution-hd-title">✓ Resolution Summary</span>
+                  <span className="ch-resolution-hd-title">{t("reportDetail.resolutionSummary")}</span>
                   {rm && (
                     <span className="ch-resolution-type-pill" style={{ color: rm.color, background: rm.bg, borderColor: `${rm.color}40` }}>
-                      {rm.icon} {rm.label}
+                      {rm.icon} {resolutionName}
                     </span>
                   )}
                 </div>
                 <div className="ch-resolution-body">
                   <div className="ch-resolution-field">
                     <span className="ch-resolution-field-label">
-                      <FaUserShield size={10} /> Response Notes
+                      <FaUserShield size={10} /> {t("reportDetail.responseNotes")}
                     </span>
                     <div className={`ch-resolution-field-value ${!safeResponderNotes ? "empty" : ""}`}>
-                      {safeResponderNotes || "No notes provided by the responder."}
+                      {safeResponderNotes || t("reportDetail.noNotesProvided")}
                     </div>
                   </div>
                   <div className="ch-resolution-divider" />
                   <div className="ch-resolution-field">
                     <span className="ch-resolution-field-label">
-                      <FaClipboardCheck size={10} /> Action Taken
+                      <FaClipboardCheck size={10} /> {t("reportDetail.actionTaken")}
                     </span>
                     <div className={`ch-resolution-field-value ${!safeActionNotes ? "empty" : ""}`}>
-                      {safeActionNotes || "No action details were recorded."}
+                      {safeActionNotes || t("reportDetail.noActionDetails")}
                     </div>
                   </div>
                 </div>
                 {report.resolved_at && (
                   <div className="ch-resolution-footer">
-                    🕐 Resolved on {fmtDateTime(report.resolved_at)}
+                    🕐 {t("reportDetail.resolvedOn").replace("{date}", fmtDateTime(report.resolved_at, locale))}
                   </div>
                 )}
               </div>
@@ -462,8 +479,8 @@ function ReportDetail({ report, onBack }: { report: Report; onBack: () => void }
             <div className="ch-status-notice pending">
               <span className="ch-status-notice-icon">⏳</span>
               <div>
-                <div className="ch-status-notice-title">Awaiting Responder</div>
-                <p className="ch-status-notice-text">Your report has been received and is in the queue. A responder will claim and address it shortly.</p>
+                <div className="ch-status-notice-title">{t("reportDetail.awaitingResponder")}</div>
+                <p className="ch-status-notice-text">{t("reportDetail.awaitingResponderSub")}</p>
               </div>
             </div>
           )}
@@ -471,8 +488,8 @@ function ReportDetail({ report, onBack }: { report: Report; onBack: () => void }
             <div className="ch-status-notice in-progress">
               <span className="ch-status-notice-icon">🚨</span>
               <div>
-                <div className="ch-status-notice-title">Responder On It</div>
-                <p className="ch-status-notice-text">A responder has claimed your report and is currently working on it. Check back soon for the resolution update.</p>
+                <div className="ch-status-notice-title">{t("reportDetail.responderOnIt")}</div>
+                <p className="ch-status-notice-text">{t("reportDetail.responderOnItSub")}</p>
               </div>
             </div>
           )}
@@ -486,15 +503,18 @@ function ReportDetail({ report, onBack }: { report: Report; onBack: () => void }
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function CitizenHistoryPage() {
+  // Consumes the active Navbar/Header language — any selector change re-renders
+  // this page and re-evaluates every t() call and language-aware helper below.
+  const { language, t, tList } = useLanguage();
+  void tList;
+  const locale = language === "tl" ? "fil-PH" : "en-PH";
   const navigate     = useNavigate();
   const { id }       = useParams<{ id: string }>();
   const clock        = usePHTClock();
 
   const [reports,     setReports]     = useState<Report[]>([]);
-  const [user,        setUser]        = useState<any>(null);
   const [userId,      setUserId]      = useState<string>("");
   const [loading,     setLoading]     = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [readIds,     setReadIds]     = useState<Set<string>>(new Set());
 
   const refreshReadIds = useCallback((uid: string) => {
@@ -504,7 +524,6 @@ export default function CitizenHistoryPage() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) {
-        setUser(data.user);
         setUserId(data.user.id);
         refreshReadIds(data.user.id);
       }
@@ -540,17 +559,6 @@ export default function CitizenHistoryPage() {
     }
   }, [id, userId, refreshReadIds]);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setSidebarOpen(false); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
-
-  useEffect(() => {
-    document.body.style.overflow = sidebarOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
-  }, [sidebarOpen]);
-
   const stats = {
     total:      reports.length,
     pending:    reports.filter(r => r.status === "pending").length,
@@ -563,19 +571,19 @@ export default function CitizenHistoryPage() {
 
   const selectedReport = id ? reports.find(r => String(r.id) === String(id)) ?? null : null;
 
-  const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Citizen";
-  const initials    = displayName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/login", { replace: true });
-  };
+  // Language-aware labels for the report list (dictionary first, English fallback).
+  const statusLabel = (s: string) =>
+    t(`status.${s === "in-progress" ? "inProgress" : s}`, STATUS_META[s]?.label ?? s);
+  const typeName = (type: string | undefined) =>
+    t(`report.types.${type?.toLowerCase()}`, type ?? "");
+  const resolutionName = (rt: string | null | undefined) =>
+    rt ? t(`reportDetail.resolutionLabels.${resolutionKey(rt)}`, RESOLUTION_META[rt]?.label ?? rt) : "";
 
   const statCards = [
-    { label: "Total Filed",  value: stats.total,      accent: "#7B9EFF", icon: <FaFileAlt />     },
-    { label: "Pending",      value: stats.pending,    accent: "#FFD166", icon: <FaClock />       },
-    { label: "In Progress",  value: stats.inProgress, accent: "#FF9F43", icon: <FaSpinner />     },
-    { label: "Resolved",     value: stats.resolved,   accent: "#2ECC8F", icon: <FaCheckCircle /> },
+    { label: t("dashboard.statTotalFiled"),  value: stats.total,      accent: "#7B9EFF", icon: <FaFileAlt />     },
+    { label: t("dashboard.statPending"),      value: stats.pending,    accent: "#FFD166", icon: <FaClock />       },
+    { label: t("dashboard.statInProgress"),  value: stats.inProgress, accent: "#FF9F43", icon: <FaSpinner />     },
+    { label: t("dashboard.statResolved"),     value: stats.resolved,   accent: "#2ECC8F", icon: <FaCheckCircle /> },
   ];
 
   return (
@@ -584,69 +592,25 @@ export default function CitizenHistoryPage() {
       <div className="ch-portal">
         <div className="ch-shell">
 
-          <div className={`ch-overlay${sidebarOpen ? " open" : ""}`} onClick={() => setSidebarOpen(false)} />
-
-          {/* ── Sidebar ── */}
-          <aside className={`ch-sidebar${sidebarOpen ? " open" : ""}`}>
-            <div className="ch-logo">
-              <img src={dsgLogo} alt="DumaSafeGuide" className="ch-logo-img" />
-              <div>
-                <div className="ch-logo-name">DumaSafeGuide</div>
-                <div className="ch-logo-sub"><span className="ch-pip" />CITIZEN</div>
-              </div>
-              <button className="ch-sidebar-close" onClick={() => setSidebarOpen(false)}><FaTimes /></button>
-            </div>
-
-            <nav className="ch-nav-scroll">
-              <div className="ch-nav-label">Portal</div>
-              <Link to="/citizen/dashboard" className="ch-nav-btn"><span className="ch-nav-ic"><FaHistory /></span>Overview</Link>
-
-              <div className="ch-nav-label">Actions</div>
-              <Link to="/citizen/report"  className="ch-nav-btn"><span className="ch-nav-ic"><FaFileAlt /></span>File Report</Link>
-              <Link to="/citizen/history" className="ch-nav-btn active">
-                <span className="ch-nav-ic"><FaHistory /></span>My Reports
-                {/* Badge shows UNREAD count, disappears when all read */}
-                {unreadCount > 0 && <span className="ch-badge">{unreadCount}</span>}
-              </Link>
-              <Link to="/citizen/alerts"     className="ch-nav-btn"><span className="ch-nav-ic"><FaBell /></span>Barangay Alerts</Link>
-              <Link to="/citizen/map"        className="ch-nav-btn"><span className="ch-nav-ic"><FaMapMarkedAlt /></span>Safety Map</Link>
-              <Link to="/citizen/safetytips" className="ch-nav-btn"><span className="ch-nav-ic"><FaLightbulb /></span>Safety Tips</Link>
-
-              <div className="ch-nav-label">Info</div>
-              <Link to="/citizen/directory" className="ch-nav-btn"><span className="ch-nav-ic">📋</span>Directory</Link>
-              <Link to="/citizen/resources" className="ch-nav-btn"><span className="ch-nav-ic">📚</span>Resources</Link>
-            </nav>
-
-            <div className="ch-sidebar-foot">
-              <div className="ch-user-card">
-                <div className="ch-avatar">{initials}</div>
-                <div style={{ minWidth: 0 }}>
-                  <div className="ch-user-name">{displayName}</div>
-                  <div className="ch-user-status"><span className="ch-pip" />CITIZEN</div>
-                </div>
-              </div>
-              <button className="ch-logout-btn" onClick={handleLogout}><FaSignOutAlt size={12} /> Sign Out</button>
-            </div>
-          </aside>
+          {/* Sidebar is provided by the persistent CitizenLayout — see src/citizen/CitizenLayout.tsx. */}
 
           {/* ── Main ── */}
           <div className="ch-main">
             <div className="ch-topbar">
-              <button className="ch-hamburger" onClick={() => setSidebarOpen(true)}><FaBars /></button>
               <div className="ch-crumb">
                 <span className="ch-crumb-hide">DUMASAFEGUIDE</span>
                 <span className="ch-crumb-sep ch-crumb-hide">/</span>
-                <span className="ch-crumb-hide">CITIZEN</span>
+                <span className="ch-crumb-hide">{t("history.citizen")}</span>
                 <span className="ch-crumb-sep ch-crumb-hide">/</span>
                 <span
                   className={selectedReport ? "ch-crumb-hide" : "ch-crumb-active"}
                   style={{ cursor: selectedReport ? "pointer" : "default" }}
                   onClick={() => selectedReport && navigate("/citizen/history")}
                 >
-                  My Reports
+                  {t("history.pageTitle")}
                 </span>
                 {selectedReport && (
-                  <><span className="ch-crumb-sep">/</span><span className="ch-crumb-active">Report Details</span></>
+                  <><span className="ch-crumb-sep">/</span><span className="ch-crumb-active">{t("reportDetail.reportDetail")}</span></>
                 )}
               </div>
               <div className="ch-topbar-right">
@@ -664,9 +628,9 @@ export default function CitizenHistoryPage() {
                   <>
                     <div className="ch-page-hd">
                       <div>
-                        <div className="ch-eyebrow">Citizen Portal</div>
-                        <div className="ch-title">My Reports</div>
-                        <div className="ch-subtitle">ALL SUBMITTED INCIDENT REPORTS</div>
+                        <div className="ch-eyebrow">{t("dashboard.citizenPortal")}</div>
+                        <div className="ch-title">{t("history.pageTitle")}</div>
+                        <div className="ch-subtitle">{t("history.subtitle")}</div>
                       </div>
                     </div>
 
@@ -682,20 +646,20 @@ export default function CitizenHistoryPage() {
 
                     <div className="ch-panel">
                       <div className="ch-panel-hd">
-                        <span className="ch-panel-title">All Reports</span>
+                        <span className="ch-panel-title">{t("history.allReports")}</span>
                         <span className="ch-panel-tag">
-                          {loading ? "…" : unreadCount > 0 ? `${unreadCount} UNREAD` : `${stats.total} TOTAL`}
+                          {loading ? "…" : unreadCount > 0 ? `${unreadCount} ${t("history.totalLabel")}` : `${stats.total} ${t("history.totalLabel")}`}
                         </span>
                       </div>
 
                       {loading ? (
-                        <div className="ch-loading"><div className="ch-spinner" /> Loading reports…</div>
+                        <div className="ch-loading"><div className="ch-spinner" /> {t("history.loadingReports")}</div>
                       ) : reports.length === 0 ? (
                         <div className="ch-empty">
                           <div className="ch-empty-icon"><FaInbox /></div>
-                          <div className="ch-empty-title">No reports yet</div>
-                          <p className="ch-empty-sub">You haven't submitted any incident reports yet.</p>
-                          <Link to="/citizen/report" className="ch-empty-link"><FaFileAlt size={11} /> File a Report</Link>
+                          <div className="ch-empty-title">{t("history.noReportsYet")}</div>
+                          <p className="ch-empty-sub">{t("history.noReportsSub")}</p>
+                          <Link to="/citizen/report" className="ch-empty-link"><FaFileAlt size={11} /> {t("history.fileAReport")}</Link>
                         </div>
                       ) : (
                         <div className="ch-list">
@@ -711,17 +675,17 @@ export default function CitizenHistoryPage() {
                               >
                                 <div className="ch-row-icon">{tm.icon}</div>
                                 <div className="ch-row-body">
-                                  <div className="ch-row-desc" title={r.description}>{r.description || "No description"}</div>
+                                   <div className="ch-row-desc" title={r.description}>{r.description || t("reportDetail.noDescription")}</div>
                                   <div className="ch-row-meta">
-                                    <span className="ch-row-date">{fmtDate(r.created_at)}</span>
+                                    <span className="ch-row-date">{fmtDate(r.created_at, locale)}</span>
                                     {r.type && (
                                       <span className="ch-row-type" style={{ color: tm.color, background: `${tm.color}12`, border: `1px solid ${tm.color}25` }}>
-                                        {r.type}
+                                        {typeName(r.type)}
                                       </span>
                                     )}
                                     {r.status === "resolved" && r.resolution_type && RESOLUTION_META[r.resolution_type] && (
                                       <span style={{ fontSize: "9px", fontWeight: "700", color: "#2ECC8F", background: "rgba(46,204,143,.1)", border: "1px solid rgba(46,204,143,.2)", borderRadius: "4px", padding: "2px 6px" }}>
-                                        {RESOLUTION_META[r.resolution_type].icon} {RESOLUTION_META[r.resolution_type].label}
+                                        {RESOLUTION_META[r.resolution_type].icon} {resolutionName(r.resolution_type)}
                                       </span>
                                     )}
                                   </div>
@@ -729,7 +693,7 @@ export default function CitizenHistoryPage() {
                                 <div className="ch-row-right">
                                   {isUnread && <span className="ch-unread-dot" />}
                                   <span className="ch-pill" style={{ color: sm.color, background: sm.bg, borderColor: sm.border }}>
-                                    <span className="ch-pill-dot" />{sm.label}
+                                    <span className="ch-pill-dot" />{statusLabel(r.status)}
                                   </span>
                                   <FaChevronRight className="ch-chevron" />
                                 </div>

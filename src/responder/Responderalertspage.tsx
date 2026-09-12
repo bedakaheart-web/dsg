@@ -11,6 +11,7 @@ interface Alert {
   created_at: string;
   created_by?: string | null;
   target_role?: string | null;
+  acknowledged_by?: string[] | null;
 }
 
 // ─── Meta ─────────────────────────────────────────────────────────────────────
@@ -784,7 +785,7 @@ const FILTER_OPTIONS = [
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function ResponderAlertsPage() {
+export default function ResponderAlertsPage({ onNavigate }: { onNavigate?: (v: "dispatch") => void } = {}) {
   const [alerts,    setAlerts]    = useState<Alert[]>([]);
   const [loading,   setLoading]   = useState(true);
   const [sending,   setSending]   = useState(false);
@@ -796,6 +797,67 @@ export default function ResponderAlertsPage() {
 
   // ── Read tracking ──
   const [readIds, setReadIds] = useState<Set<string>>(loadReadIds);
+
+  // ── Acknowledge tracking (local per-user set merged with server column) ──
+  const [ackIds, setAckIds] = useState<Set<string>>(() => {
+    try {
+      const raw = localStorage.getItem("rap_ack_alert_ids");
+      return new Set(raw ? JSON.parse(raw) : []);
+    } catch {
+      return new Set();
+    }
+  });
+  const [myId, setMyId] = useState("");
+  const [respondingId, setRespondingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) setMyId(data.user.id);
+    });
+  }, []);
+
+  const isAcked = (a: Alert) =>
+    ackIds.has(String(a.id)) || (myId !== "" && (a.acknowledged_by ?? []).includes(myId));
+
+  const acknowledge = async (a: Alert) => {
+    const id = String(a.id);
+    setAckIds(prev => {
+      const next = new Set(prev);
+      next.add(id);
+      try { localStorage.setItem("rap_ack_alert_ids", JSON.stringify([...next])); } catch { /* ignore */ }
+      return next;
+    });
+    // Best-effort server persistence (migration 20260912_add_alert_acknowledged_by);
+    // RLS or a missing column must never break the local badge.
+    try {
+      if (!myId) return;
+      const current = (a.acknowledged_by ?? []).includes(myId)
+        ? (a.acknowledged_by ?? [])
+        : [...(a.acknowledged_by ?? []), myId];
+      const { error } = await supabase.from("alerts").update({ acknowledged_by: current }).eq("id", a.id);
+      if (error) throw error;
+      setAlerts(prev => prev.map(x => String(x.id) === id ? { ...x, acknowledged_by: current } : x));
+    } catch {
+      // local badge already applied above
+    }
+  };
+
+  const respondSelf = async (a: Alert) => {
+    const id = String(a.id);
+    setRespondingId(id);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from("profiles")
+          .update({ status: "responding", last_seen: new Date().toISOString() })
+          .eq("id", user.id);
+      }
+    } finally {
+      setRespondingId(null);
+    }
+    await acknowledge(a);
+    onNavigate?.("dispatch");
+  };
 
   const markRead = (id: string) => {
     if (readIds.has(id)) return;
@@ -834,21 +896,39 @@ export default function ResponderAlertsPage() {
   const handleSend = async () => {
     if (!title.trim() || !message.trim()) return;
     setSending(true);
+    // Optimistic row so the broadcast appears instantly; the realtime feed
+    // (and the refetch below) reconciles it with the persisted record.
+    // Filter resets to "All" so the new alert is immediately visible.
+    const tempId = `temp-${Date.now()}`;
+    const optimistic: Alert = {
+      id: tempId,
+      title: title.trim(),
+      message: message.trim(),
+      type: alertType,
+      created_at: new Date().toISOString(),
+    };
+    setAlerts(prev => [optimistic, ...prev]);
+    setFilter("all");
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from("alerts").insert({
+      const { data, error } = await supabase.from("alerts").insert({
         title:       title.trim(),
         message:     message.trim(),
         type:        alertType,
         created_by:  user?.id ?? null,
         target_role: "citizen",
-      });
+      }).select().single();
+      if (error) throw error;
+      if (data) setAlerts(prev => prev.map(a => String(a.id) === tempId ? data : a));
       setTitle("");
       setMessage("");
       setAlertType("warning");
       setSent(true);
       setTimeout(() => setSent(false), 3500);
       await loadAlerts();
+    } catch {
+      // Drop the optimistic row on failure; realtime/loadAlerts recovers truth.
+      setAlerts(prev => prev.filter(a => String(a.id) !== tempId));
     } finally {
       setSending(false);
     }
@@ -1007,8 +1087,31 @@ export default function ResponderAlertsPage() {
                           <SvgIcon path={ICONS.clock} size={11} />
                           {formatRelative(a.created_at)}
                         </span>
-                        {isRead && (
-                          <span className="rap-card-meta" style={{ marginLeft: "auto" }}>
+                        {isAcked(a) ? (
+                          <span className="rap-card-meta" style={{ marginLeft: "auto", color: "#2ECC8F", fontWeight: 700 }}>
+                            <SvgIcon path={ICONS.check} size={11} /> Acknowledged
+                          </span>
+                        ) : (
+                          <span style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
+                            <button
+                              className="rap-ack-btn"
+                              onClick={(e) => { e.stopPropagation(); void acknowledge(a); }}
+                              style={{ fontSize: 11, fontWeight: 700, color: "#2ECC8F", background: "rgba(46,204,143,0.1)", border: "1px solid rgba(46,204,143,0.3)", borderRadius: 6, padding: "5px 10px", cursor: "pointer" }}
+                            >
+                              Acknowledge Alert
+                            </button>
+                            <button
+                              className="rap-respond-btn"
+                              onClick={(e) => { e.stopPropagation(); void respondSelf(a); }}
+                              disabled={respondingId === String(a.id)}
+                              style={{ fontSize: 11, fontWeight: 700, color: "#4A90D9", background: "rgba(74,144,217,0.1)", border: "1px solid rgba(74,144,217,0.3)", borderRadius: 6, padding: "5px 10px", cursor: "pointer", opacity: respondingId === String(a.id) ? 0.5 : 1 }}
+                            >
+                              {respondingId === String(a.id) ? "Responding…" : "Respond / Dispatch Self"}
+                            </button>
+                          </span>
+                        )}
+                        {isRead && !isAcked(a) && (
+                          <span className="rap-card-meta" style={{ marginLeft: isAcked(a) ? undefined : 0 }}>
                             Read
                           </span>
                         )}

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useLanguage } from "../context/LanguageContext";
 import { supabase } from "../js/supabase";
 import {
   FaBellSlash, FaExclamationTriangle, FaInfoCircle,
-  FaCheckCircle, FaClock, FaChevronLeft,
+  FaCheckCircle, FaClock,
 } from "react-icons/fa";
 import pagesBackground from "../assets/pagesbackground.png";
 
@@ -26,13 +26,57 @@ const ALERT_TYPE_META: Record<string, {
   success: { color: "#2ECC8F", bg: "rgba(46,204,143,0.08)", border: "rgba(46,204,143,0.2)", icon: <FaCheckCircle />,         label: "All Clear" },
 };
 
-function timeAgo(ts: string) {
-  const s = (Date.now() - new Date(ts).getTime()) / 1000;
-  if (s < 60)    return `${Math.floor(s)}s ago`;
-  if (s < 3600)  return `${Math.floor(s / 60)}m ago`;
-  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
-  return new Date(ts).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" });
-}
+// English fallback labels for alert levels — the rendered label always goes
+// through t(`alerts.levels.*`) so the Navbar language selector applies instantly.
+const ALERT_LEVEL_FALLBACK: Record<string, string> = {
+  danger: "Danger", warning: "Warning", info: "Info", success: "All Clear",
+};
+
+// Well-known mock/seed alert titles mapped to stable translation slugs.
+// Alerts from the database whose title is NOT listed here (or which have no
+// title at all) fall back gracefully to their original stored text.
+const KNOWN_ALERT_SLUGS: Record<string, string> = {
+  "Earthquake Advisory": "earthquake",
+  "General Emergency": "general",
+  "Typhoon Advisory": "typhoon",
+};
+
+// Per-slug card text for language codes WITHOUT dictionary alerts coverage
+// (es/ilo have no dictionary block yet). All 8 active codes resolve through
+// the dictionary; these entries future-proof the two extra codes so they also
+// translate instantly instead of inheriting English.
+const ALERT_EXTRA_TEXT: Record<string, Record<string, { title: string; message: string }>> = {
+  earthquake: {
+    es: {
+      title: "Advertencia de terremoto",
+      message: "⚠️Advertencia de terremoto: se detectó actividad sísmica. Revise daños estructurales, aléjese de edificios dañados, no use ascensores y esté atento a réplicas.",
+    },
+    ilo: {
+      title: "Pakaammo iti Gingined",
+      message: "⚠️Pakaammo iti gingined: adda namataan a panaggingined. Kitaen ti didigra ti pasdek, umadayo kadagiti nadadael a bilding, saan nga agusar iti elevator, ken agannad kadagiti aftershocks.",
+    },
+  },
+  general: {
+    es: {
+      title: "Emergencia general",
+      message: "⚠️Aviso de emergencia: se reportó una emergencia en su zona. Mantenga la calma, permanezca dentro y siga a los oficiales del barangay y rescatistas.",
+    },
+    ilo: {
+      title: "Sapasap nga Emerhensiya",
+      message: "⚠️Pakaammo ti emerhensiya: adda nai-report nga emerhensiya iti lugaryo. Kalma lang, agtalinaed iti uneg, ken suroten dagiti opisial ti barangay ken responder.",
+    },
+  },
+  typhoon: {
+    es: {
+      title: "Advertencia de tifón",
+      message: "🌀Advertencia de tifón: se emitió un aviso de tifón para Dumaguete. Asegure su casa y prepárese.",
+    },
+    ilo: {
+      title: "Pakaammo iti Bagyo",
+      message: "🌀Pakaammo iti bagyo: adda babala ti bagyo para iti Siudad ti Dumaguete. Siguraduen ti balay ken agsagana.",
+    },
+  },
+};
 
 function ping() {
   try {
@@ -73,27 +117,6 @@ const CSS = `
   .ca-glow-b { position: absolute; width: 500px; height: 500px; border-radius: 50%; background: radial-gradient(circle, rgba(123,158,255,.06) 0%, transparent 70%); bottom: -140px; right: -60px; }
 
   .ca-inner { position: relative; z-index: 2; max-width: 860px; margin: 0 auto; padding: 0 24px 80px; }
-
-  /* Back button */
-  .ca-back {
-    display: inline-flex; align-items: center; gap: 8px;
-    margin-top: 32px; margin-bottom: 0;
-    font-size: 12px; font-weight: 600;
-    color: rgba(238,240,247,0.4);
-    text-decoration: none;
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 8px;
-    padding: 7px 14px;
-    background: rgba(255,255,255,0.03);
-    transition: all 0.2s;
-    font-family: 'Instrument Sans', sans-serif;
-    letter-spacing: 0.02em;
-  }
-  .ca-back:hover {
-    color: rgba(238,240,247,0.75);
-    background: rgba(255,255,255,0.07);
-    border-color: rgba(255,255,255,0.15);
-  }
 
   /* Hero */
   .ca-hero { margin-top: 20px; margin-bottom: 32px; }
@@ -181,7 +204,61 @@ const CSS = `
 `;
 
 export default function CitizenAlertsPage() {
-  const [alerts, setAlerts]       = useState<Alert[]>([]);
+  // Consumes the active Navbar/Header language — any selector change re-renders
+  // this page and re-evaluates every t() call and language-aware helper below.
+  const { language, t, tList } = useLanguage();
+  void tList;
+  const locale = language === "tl" ? "fil-PH" : "en-PH";
+
+  // Language-aware alert-level badge text (alerts.levels.* in the dictionary,
+  // English fallback when a key is missing).
+  const levelLabel = (level: string) =>
+    t(`alerts.levels.${level}`, ALERT_LEVEL_FALLBACK[level] ?? ALERT_TYPE_META[level]?.label ?? level);
+
+  // Language-aware relative timestamp — re-computed every render so it follows
+  // the active language instead of being cached in state.
+  const timeAgo = (ts: string) => {
+    const s = (Date.now() - new Date(ts).getTime()) / 1000;
+    if (s < 60)    return t("timeAgo.second", "{n}s ago").replace("{n}", String(Math.floor(s)));
+    if (s < 3600)  return t("timeAgo.minute", "{n}m ago").replace("{n}", String(Math.floor(s / 60)));
+    if (s < 86400) return t("timeAgo.hour", "{n}h ago").replace("{n}", String(Math.floor(s / 3600)));
+    return new Date(ts).toLocaleDateString(locale, { month: "short", day: "numeric", year: "numeric" });
+  };
+
+  // Resolve the translation slug for well-known mock/seed alerts by exact
+  // English title match. Returns null for real backend alerts, which then
+  // render their original stored text verbatim (backward compatible).
+  const alertSlug = (a: Alert): string | null =>
+    KNOWN_ALERT_SLUGS[(a.title ?? "").trim()] ?? null;
+
+  // Dynamic card title: per-language table override (es/ilo) first, then
+  // t(`alerts.types.<slug>.title`) for dictionary-covered codes, original
+  // title (or generic "Alert" fallback) otherwise.
+  const alertTitle = (a: Alert): string => {
+    const slug = alertSlug(a);
+    if (slug) {
+      const extra = ALERT_EXTRA_TEXT[slug]?.[language];
+      if (extra) return extra.title;
+      return t(`alerts.types.${slug}.title`, a.title);
+    }
+    return a.title || t("alerts.alert", "Alert");
+  };
+
+  // Message translator: per-language table override (es/ilo) first, then
+  // t(`alerts.items.<slug>.message`); unknown messages pass through untouched
+  // so backend alerts never render a raw key path. The final `?? ""` guards
+  // against null message bodies from the database.
+  const translateAlertMessage = (a: Alert): string => {
+    const slug = alertSlug(a);
+    if (slug) {
+      const extra = ALERT_EXTRA_TEXT[slug]?.[language];
+      if (extra) return extra.message;
+      return t(`alerts.items.${slug}.message`, a.message ?? "");
+    }
+    return a.message ?? "";
+  };
+
+  const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading]     = useState(true);
   const [connected, setConnected] = useState(false);
   const [filter, setFilter]       = useState<"all" | "danger" | "warning" | "info">("all");
@@ -246,24 +323,20 @@ export default function CitizenAlertsPage() {
 
         <div className="ca-inner">
 
-          {/* Back button */}
-          <Link to="/citizen/dashboard" className="ca-back">
-            <FaChevronLeft size={10} />
-            Back to Dashboard
-          </Link>
+          {/* Back navigation lives in the persistent CitizenLayout sidebar. */}
 
           {/* Hero */}
           <section className="ca-hero">
             <div className="ca-hero-tag">
               <span className="ca-hero-dot" />
-              Citizen Portal
+              {t("alerts.citizenPortal")}
             </div>
             <h1 className="ca-hero-heading">
-              Barangay <em>Alerts</em>
+              {t("alerts.barangayAlerts", "Barangay Alerts")}
             </h1>
             <p className="ca-hero-sub">
               <span className={`ca-live-dot ${connected ? "on" : "off"}`} />
-              {connected ? "Live — updates automatically" : "Connecting…"}
+              {connected ? t("alerts.live") : t("alerts.connecting")}
             </p>
           </section>
 
@@ -275,7 +348,7 @@ export default function CitizenAlertsPage() {
                 className={`ca-pill ca-pill--${f}${filter === f ? " on" : ""}`}
                 onClick={() => setFilter(f)}
               >
-                {f === "all" ? `ALL (${counts.all})` : `${f.toUpperCase()} (${counts[f]})`}
+                {f === "all" ? `${t("alerts.allAlerts", "All Alerts")} (${counts.all})` : `${levelLabel(f)} (${counts[f]})`}
               </button>
             ))}
           </div>
@@ -283,25 +356,25 @@ export default function CitizenAlertsPage() {
           {/* Section head */}
           <div className="ca-sec">
             <span className="ca-sec-label">
-              {filter === "all" ? "All Alerts" : `${filter.charAt(0).toUpperCase() + filter.slice(1)} Alerts`}
+              {filter === "all" ? t("alerts.allAlerts", "All Alerts") : `${levelLabel(filter)} ${t("alerts.alert", "Alert")}`}
             </span>
             <span className="ca-sec-line" />
-            <span className="ca-sec-count">{filtered.length} total</span>
+            <span className="ca-sec-count">{filtered.length} {t("alerts.total")}</span>
           </div>
 
           {/* Content */}
           {loading ? (
             <div className="ca-loading">
-              <span className="ca-spin" /> Loading alerts…
+              <span className="ca-spin" /> {t("alerts.loadingAlerts")}
             </div>
           ) : filtered.length === 0 ? (
             <div className="ca-empty">
               <div className="ca-empty-icon"><FaBellSlash /></div>
-              <div className="ca-empty-title">No Active Alerts</div>
+              <div className="ca-empty-title">{t("alerts.noActiveAlerts")}</div>
               <p className="ca-empty-sub">
                 {alerts.length === 0
-                  ? "No emergency alerts have been issued. This page updates automatically in real-time."
-                  : "No alerts match this filter."}
+                  ? t("alerts.noAlertsYet")
+                  : t("alerts.noAlertsMatch")}
               </p>
             </div>
           ) : (
@@ -327,8 +400,8 @@ export default function CitizenAlertsPage() {
                           {meta.icon}
                         </div>
                         <div className="ca-card-info">
-                          <div className="ca-card-title">{a.title || "Alert"}</div>
-                          <div className="ca-card-msg">{a.message}</div>
+                          <div className="ca-card-title">{alertTitle(a)}</div>
+                          <div className="ca-card-msg">{translateAlertMessage(a)}</div>
                         </div>
                       </div>
                       <div className="ca-card-footer">
@@ -336,11 +409,11 @@ export default function CitizenAlertsPage() {
                           className="ca-tag"
                           style={{ background: meta.bg, color: meta.color, border: `1px solid ${meta.border}` }}
                         >
-                          {meta.label}
+                          {levelLabel(a.type)}
                         </span>
                         {isNew && (
                           <span className="ca-new-badge">
-                            <span className="ca-new-badge-dot" />NEW
+                            <span className="ca-new-badge-dot" />{t("alerts.isNew")}
                           </span>
                         )}
                         <span className="ca-time">

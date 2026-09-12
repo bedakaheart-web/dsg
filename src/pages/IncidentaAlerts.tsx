@@ -628,10 +628,11 @@ export default function IncidentAlerts() {
                   const tCfg = getType(report);
                   const sCfg = getStatus(report);
                   const isNew = newIds.has(report.id);
+                  /* Incident-detail route isn't implemented yet; the card is
+                      non-navigating to avoid a dead /responder/reports/:id destination. */
                   return (
-                    <Link
+                    <div
                       key={report.id}
-                      to={`/responder/reports/${report.id}`}
                       className={`ia-card${isNew ? " is-new" : ""}`}
                       style={{ animationDelay: `${Math.min(idx * 0.04, 0.4)}s` }}
                     >
@@ -669,7 +670,7 @@ export default function IncidentAlerts() {
                         </div>
                         {isNew && <span className="ia-new-badge">NEW</span>}
                       </div>
-                    </Link>
+                    </div>
                   );
                 })}
               </div>

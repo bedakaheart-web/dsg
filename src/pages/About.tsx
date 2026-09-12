@@ -1,51 +1,22 @@
 import { Link } from "react-router-dom";
 import emergencyBg from "../assets/emergency.jpg";
+import { useLanguage } from "../context/LanguageContext";
 
-const pillars = [
-  {
-    id: "mission",
-    icon: "🎯",
-    accent: "#e8372a",
-    accentRgb: "232,55,42",
-    tag: "Purpose",
-    title: "Our Mission",
-    body: "To improve public safety awareness, enhance emergency accessibility, and support timely communication between the public and emergency service providers in Dumaguete City.",
-  },
-  {
-    id: "vision",
-    icon: "🔭",
-    accent: "#4A90D9",
-    accentRgb: "74,144,217",
-    tag: "Future",
-    title: "Our Vision",
-    body: "A safer, more informed Dumaguete City where residents, students, and visitors can access reliable emergency information anytime, anywhere — without barriers.",
-  },
-];
+const PILLAR_META = [
+  { id: "mission", icon: "🎯", accent: "#e8372a", accentRgb: "232,55,42", key: "mission" },
+  { id: "vision", icon: "🔭", accent: "#4A90D9", accentRgb: "74,144,217", key: "vision" },
+] as const;
 
-const features = [
-  {
-    icon: "📋",
-    label: "Verified Contacts",
-    detail: "Curated, regularly updated emergency hotlines for hospitals, barangay offices, and city-wide disaster response units.",
-  },
-  {
-    icon: "🛡️",
-    label: "Safety Guidelines",
-    detail: "Practical, barangay-level preparedness tips covering typhoons, floods, fires, and other common local emergencies.",
-  },
-  {
-    icon: "🚨",
-    label: "Incident Reporting",
-    detail: "A fast, accessible reporting form that lets residents alert local responders directly — no delays, no confusion.",
-  },
-  {
-    icon: "🤝",
-    label: "Partner Network",
-    detail: "Coordinated with CDRRMO, Philippine Red Cross, Bureau of Fire Protection, and other key government agencies.",
-  },
-];
+const FEATURE_META = [
+  { icon: "📋", key: "contacts" },
+  { icon: "🛡️", key: "guidelines" },
+  { icon: "🚨", key: "reporting" },
+  { icon: "🤝", key: "partners" },
+] as const;
 
 export default function About() {
+  const { t } = useLanguage();
+
   return (
     <>
       <style>{`
@@ -398,37 +369,28 @@ export default function About() {
           </nav>
 
           <section className="ab-hero">
-          
+
             <h1>
-              About <span className="accent">DumaSafe</span><br />
-              <span className="accent">Guide</span>
+              {t("about.heroTitle")} <span className="accent">DumaSafeGuide</span>
             </h1>
-            <p className="ab-hero-sub">
-              A web-based public safety and emergency reporting system built for
-              Dumaguete City — consolidating everything you need in one place.
-            </p>
+            <p className="ab-hero-sub">{t("about.heroSub")}</p>
             <div className="ab-meta">
               <span className="ab-meta-dot" />
-              Serving Dumaguete City · Est. 2025
+              {t("about.metaText")}
             </div>
           </section>
 
           <div className="ab-section">
             <div className="ab-intro">
-              <div className="ab-intro-label">What is DumaSafeGuide?</div>
-              <p className="ab-intro-text">
-                <strong>DumaSafeGuide (DSG)</strong> is a web-based public safety and emergency reporting
-                system designed specifically for <strong>Dumaguete City</strong>. It consolidates verified
-                emergency contacts, safety tips, preparedness guidelines, and reporting features into
-                one accessible platform — so that when seconds matter, you're never searching for answers.
-              </p>
+              <div className="ab-intro-label">{t("about.introLabel")}</div>
+              <p className="ab-intro-text">{t("about.introText")}</p>
             </div>
           </div>
 
           <div className="ab-section">
-            <div className="ab-label">Mission &amp; Vision</div>
+            <div className="ab-label">{t("about.pillarsLabel")}</div>
             <div className="ab-pillars">
-              {pillars.map((p) => (
+              {PILLAR_META.map((p) => (
                 <div
                   key={p.id}
                   className="ab-pillar"
@@ -439,24 +401,24 @@ export default function About() {
                 >
                   <div className="ab-pillar-top">
                     <span className="ab-pillar-icon">{p.icon}</span>
-                    <span className="ab-pillar-tag">{p.tag}</span>
+                    <span className="ab-pillar-tag">{t(`about.${p.key}.tag`)}</span>
                   </div>
-                  <div className="ab-pillar-title">{p.title}</div>
-                  <p className="ab-pillar-body">{p.body}</p>
+                  <div className="ab-pillar-title">{t(`about.${p.key}.title`)}</div>
+                  <p className="ab-pillar-body">{t(`about.${p.key}.body`)}</p>
                 </div>
               ))}
             </div>
           </div>
 
           <div className="ab-section">
-            <div className="ab-label">What We Provide</div>
+            <div className="ab-label">{t("about.featuresLabel")}</div>
             <div className="ab-features">
-              {features.map((f) => (
-                <div key={f.label} className="ab-feature">
+              {FEATURE_META.map((f) => (
+                <div key={f.key} className="ab-feature">
                   <span className="ab-feature-icon">{f.icon}</span>
                   <div>
-                    <div className="ab-feature-label">{f.label}</div>
-                    <p className="ab-feature-detail">{f.detail}</p>
+                    <div className="ab-feature-label">{t(`about.features.${f.key}.label`)}</div>
+                    <p className="ab-feature-detail">{t(`about.features.${f.key}.detail`)}</p>
                   </div>
                 </div>
               ))}
@@ -466,10 +428,10 @@ export default function About() {
           <div className="ab-section">
             <div className="ab-cta">
               <div className="ab-cta-text">
-                <h3>Need to report an emergency?</h3>
-                <p>Don't wait — use the incident reporting form to alert local responders immediately.</p>
+                <h3>{t("about.cta.title")}</h3>
+                <p>{t("about.cta.desc")}</p>
               </div>
-              <a href="/report" className="ab-cta-btn">🚨 Report Now →</a>
+              <a href="/report" className="ab-cta-btn">🚨 {t("about.cta.btn")}</a>
             </div>
           </div>
 

@@ -377,23 +377,26 @@ function parseActionTags(raw: string[] | string | null): string[] {
 
 function exportCSV(data: HistoryReport[]) {
   const headers = ["ID","Type","Status","Reporter","Contact","Location","Description","Responder Notes","Action Notes","Resolution Type","Resolved At","Created","Responder"];
+  // RFC 4180 quoting: wrap every field in double quotes and double any
+  // embedded quotes, so commas/quotes/newlines in descriptions survive Excel.
+  const q = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
   const rows = data.map(r => [
-    String(r.id).slice(0, 8),
-    r.type,
-    r.status,
-    r.reporter_name ?? "Anonymous",
-    r.reporter_contact ?? "",
-    r.address || r.location || "",
-    (r.description ?? "").replace(/,/g, ";"),
-    (r.responder_notes ?? "").replace(/,/g, ";"),
-    (r.action_notes ?? "").replace(/,/g, ";"),
-    r.resolution_type ?? "",
-    r.resolved_at ? formatDate(r.resolved_at) : "",
-    formatDate(r.created_at),
-    r.responder_name ?? r.responder_id ?? "",
+    q(r.id),
+    q(r.type),
+    q(r.status),
+    q(r.reporter_name ?? "Anonymous"),
+    q(r.reporter_contact ?? ""),
+    q(r.address || r.location || ""),
+    q(r.description ?? ""),
+    q(r.responder_notes ?? ""),
+    q(r.action_notes ?? ""),
+    q(r.resolution_type ?? ""),
+    q(r.resolved_at ? formatDate(r.resolved_at) : ""),
+    q(formatDate(r.created_at)),
+    q(r.responder_name ?? r.responder_id ?? ""),
   ]);
-  const csv = [headers, ...rows].map(r => r.join(",")).join("\n");
-  const blob = new Blob([csv], { type: "text/csv" });
+  const csv = [headers.map(q), ...rows].map(r => r.join(",")).join("\r\n");
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement("a");
   a.href = url; a.download = `dumasafeguide-history-${Date.now()}.csv`; a.click();
@@ -473,16 +476,17 @@ export default function AdminHistoryLog() {
     return keys.sort((a, b) => b.localeCompare(a)); // newest first
   }, [reports]);
 
-  // ── Derived ──────────────────────────────────────────────────────────────
+  // ── Derived (type matching is case-insensitive: DB values like "Fire"
+  // must still match the "fire" pill) ─────────────────────────────────────
   const filtered = reports
     .filter(r => {
-      if (statusFilter !== "all" && r.status !== statusFilter) return false;
-      if (typeFilter   !== "all" && r.type   !== typeFilter)   return false;
+      if (statusFilter !== "all" && (r.status ?? "").toLowerCase() !== statusFilter) return false;
+      if (typeFilter   !== "all" && (r.type   ?? "").toLowerCase() !== typeFilter)   return false;
       if (monthFilter  !== "all" && getMonthKey(r.created_at) !== monthFilter) return false;
       if (search) {
         const q = search.toLowerCase();
         return (
-          r.type.includes(q) ||
+          (r.type ?? "").toLowerCase().includes(q) ||
           (r.description ?? "").toLowerCase().includes(q) ||
           (r.address ?? r.location ?? "").toLowerCase().includes(q) ||
           (r.reporter_name ?? "").toLowerCase().includes(q) ||
@@ -703,8 +707,9 @@ export default function AdminHistoryLog() {
                   }
 
                   const { report: r, idx } = row;
-                  const tm    = TYPE_META[r.type]     ?? TYPE_META.other;
-                  const sm    = STATUS_META[r.status] ?? STATUS_META.pending;
+                  const tm    = TYPE_META[(r.type ?? "").toLowerCase()] ?? TYPE_META.other;
+                  const smBase = STATUS_META[r.status];
+                  const sm = smBase ?? { ...STATUS_META.pending, label: (r.status ?? "unknown").toUpperCase() };
                   const isOpen = expandedId === r.id;
                   const resMeta = r.resolution_type ? RESOLUTION_META[r.resolution_type] : null;
                   const tags  = parseActionTags(r.action_tags);
@@ -721,7 +726,7 @@ export default function AdminHistoryLog() {
                           <div className="hl-type-cell">
                             <div className="hl-type-icon-wrap">{tm.icon}</div>
                             <span className="hl-type-name" style={{ color: tm.color }}>
-                              {r.type.replace(/_/g," ")}
+                              {(r.type ?? "other").replace(/_/g," ")}
                             </span>
                           </div>
                         </td>
@@ -768,7 +773,23 @@ export default function AdminHistoryLog() {
                               {/* Full Address */}
                               <div className="hl-expand-field">
                                 <span className="hl-expand-field-label"><FaMapMarkerAlt size={8} /> Full Address</span>
-                                <span className="hl-expand-field-val">{r.address || r.location || "—"}</span>
+                                <span className="hl-expand-field-val">
+                                  {r.address || r.location || "—"}
+                                  {(r.address || r.location) && (
+                                    <>
+                                      {" "}
+                                      <a
+                                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.address || r.location || "")}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style={{ color: "var(--hl-success)", textDecoration: "none", fontSize: 11 }}
+                                        onClick={e => e.stopPropagation()}
+                                      >
+                                        View on Map →
+                                      </a>
+                                    </>
+                                  )}
+                                </span>
                               </div>
 
                               {/* Reporter */}
@@ -796,6 +817,16 @@ export default function AdminHistoryLog() {
                               <div className="hl-expand-field">
                                 <span className="hl-expand-field-label"><FaClock size={8} /> Reported At</span>
                                 <span className="hl-expand-field-val">{formatDate(r.created_at)}</span>
+                              </div>
+
+                              {/* Timeline */}
+                              <div className="hl-expand-field" style={{ gridColumn: "1 / -1" }}>
+                                <span className="hl-expand-field-label"><FaHistory size={8} /> Timeline</span>
+                                <span className="hl-expand-field-val" style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                  <span>✓ Filed — {formatDate(r.created_at)}</span>
+                                  <span>{r.responder_id ? `✓ Claimed${r.responder_name ? ` by ${r.responder_name}` : ""}` : "○ Awaiting responder"}</span>
+                                  <span>{r.status === "resolved" ? `✓ Resolved${r.resolved_at ? ` — ${formatDate(r.resolved_at)}` : ""}` : "○ Resolution pending"}</span>
+                                </span>
                               </div>
 
                               {/* Responder */}

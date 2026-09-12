@@ -3,14 +3,38 @@ import { useNavigate } from "react-router-dom";
 
 import reportBg from "../assets/report.bg.png";
 import { supabase } from "../js/supabase";
+import { useLanguage } from "../context/LanguageContext";
 
-const INCIDENT_TYPES = [
-  { value: "fire",     label: "Fire Incident",    icon: "🔥", accent: "#EF5B5B" },
-  { value: "accident", label: "Road Accident",     icon: "🚗", accent: "#F5C842" },
-  { value: "flood",    label: "Flood",             icon: "🌊", accent: "#5B8DEF" },
-  { value: "crime",    label: "Crime",             icon: "🚨", accent: "#EF5B9E" },
-  { value: "medical",  label: "Medical Emergency", icon: "🏥", accent: "#2ECC8F" },
-  { value: "other",    label: "Other",             icon: "⚠️", accent: "#B0B8CC" },
+// Translates the user's description to English server-side via the
+// translate-report edge function (free MyMemory API — no key required).
+// The translation happens server-side so no credentials ever reach the
+// browser; the client only receives the translated text back.
+async function translateDescription(text: string, sourceLang: string): Promise<string | null> {
+  if (!text) return null;
+  if (sourceLang === "en") return text; // already English — skip the API call
+  try {
+    const { data, error } = await supabase.functions.invoke("translate-report", {
+      body: { text, sourceLang },
+    });
+    if (error) {
+      console.error("Translation failed:", error);
+      return null;
+    }
+    return data?.translatedText ?? null;
+  } catch (err) {
+    console.error("Translation request failed:", err);
+    return null;
+  }
+}
+
+// value/icon/accent only — labels are localized inside the component via t()
+const INCIDENT_TYPE_META = [
+  { value: "fire",     icon: "🔥", accent: "#EF5B5B" },
+  { value: "accident", icon: "🚗", accent: "#F5C842" },
+  { value: "flood",    icon: "🌊", accent: "#5B8DEF" },
+  { value: "crime",    icon: "🚨", accent: "#EF5B9E" },
+  { value: "medical",  icon: "🏥", accent: "#2ECC8F" },
+  { value: "other",    icon: "⚠️", accent: "#B0B8CC" },
 ];
 
 const EMERGENCY_HOTLINES = [
@@ -20,12 +44,24 @@ const EMERGENCY_HOTLINES = [
   { label: "PDRRMO", number: "422-3006", icon: "🏥", color: "#2ECC8F" },
 ];
 
-const STEPS = ["Incident Type", "Reporter Info", "Location", "Description", "Evidence", "Submit"];
-
-
-
 export default function Report() {
   const navigate = useNavigate();
+  const { t, language } = useLanguage();
+
+  const INCIDENT_TYPES = INCIDENT_TYPE_META.map((m) => ({
+    ...m,
+    label: t(`report.types.${m.value}`),
+  }));
+
+  const STEPS = [
+    t("report.steps.incidentType"),
+    t("report.steps.reporterInfo"),
+    t("report.steps.location"),
+    t("report.steps.description"),
+    t("report.steps.evidence"),
+    t("report.steps.submit"),
+  ];
+
   const [location, setLocation]             = useState("");
   const [address, setAddress]               = useState<string | null>(null);
   const [locationStatus, setLocationStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
@@ -34,6 +70,7 @@ export default function Report() {
   const [submitted, setSubmitted]           = useState(false);
   const [fileName, setFileName]             = useState<string | null>(null);
   const [fileObject, setFileObject]         = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl]         = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<"idle" | "uploading" | "done" | "error">("idle");
   const [gpsAccuracy, setGpsAccuracy]       = useState<number | null>(null);
   const [currentStep, setCurrentStep]       = useState(0);
@@ -45,6 +82,12 @@ export default function Report() {
 
   const fileRef = useRef<HTMLInputElement>(null);
   const activeType = INCIDENT_TYPES.find((t) => t.value === selectedType);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
   async function reverseGeocode(lat: string, lng: string) {
     try {
@@ -122,8 +165,17 @@ export default function Report() {
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (file) { setFileName(file.name); setFileObject(file); setUploadProgress("idle"); }
-    else { setFileName(null); setFileObject(null); }
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    if (file) {
+      setFileName(file.name);
+      setFileObject(file);
+      setUploadProgress("idle");
+      setPreviewUrl(URL.createObjectURL(file));
+    } else {
+      setFileName(null);
+      setFileObject(null);
+      setPreviewUrl(null);
+    }
   }
 
   async function uploadEvidence(file: File): Promise<{ url: string | null; errorMsg: string | null }> {
@@ -158,9 +210,18 @@ export default function Report() {
       if (!url) { setSubmitError(errorMsg ?? "Evidence upload failed."); setSubmitting(false); return; }
       evidenceUrl = url;
     }
+    // Translate the description to English server-side so staff get a
+    // readable version without the user's API key ever leaving the browser.
+    const rawDescription = description.trim() || null;
+    let translated: string | null = null;
+    if (rawDescription) {
+      translated = await translateDescription(rawDescription, language);
+    }
     const payload = {
       type: selectedType,
-      description: description.trim() || null,
+      description: rawDescription,
+      description_lang: rawDescription ? language : null,
+      description_translated: translated,
       location: location || null,
       address: address || null,
       reporter_name: reporterName.trim() || null,
@@ -209,19 +270,19 @@ export default function Report() {
           <div className="rp-body rp-body--center">
             <div className="rp-success">
               <div className="rp-success-icon">✓</div>
-              <h2 className="rp-success-title">Report Submitted</h2>
-              <p className="rp-success-sub">Your incident report has been received and is now visible to responders. Authorities have been notified and will respond shortly. Keep your phone nearby for follow-up.</p>
+              <h2 className="rp-success-title">{t("report.success.title")}</h2>
+              <p className="rp-success-sub">{t("report.success.sub")}</p>
               <div className="rp-success-actions">
                 <div className="rp-success-card">
                   <div className="rp-success-card-icon">📝</div>
-                  <div className="rp-success-card-title">Submit Another Report</div>
-                  <p className="rp-success-card-text">Report another incident to help keep your community safe.</p>
+                  <div className="rp-success-card-title">{t("report.success.cardTitle")}</div>
+                  <p className="rp-success-card-text">{t("report.success.cardText")}</p>
                   <button className="rp-btn-primary rp-btn-primary--ghost" onClick={() => {
                     setSubmitted(false); setSelectedType(null); setDescription("");
                     setReporterName(""); setReporterContact(""); setFileName(null);
-                    setFileObject(null); setAgreed(false); setUploadProgress("idle");
+                    setFileObject(null); setPreviewUrl(null); setAgreed(false); setUploadProgress("idle");
                   }}>
-                    Submit Another Report →
+                    {t("report.success.cardBtn")}
                   </button>
                 </div>
               </div>
@@ -250,11 +311,10 @@ export default function Report() {
           {/* ── Hero ── */}
           <section className="rp-hero">
             <h1 className="rp-title">
-              Report an <span className="accent">Incident</span>
+              {t("report.heroTitle")} <span className="accent">{t("report.heroAccent")}</span>
             </h1>
             <p className="rp-sub">
-              Submit a report to alert local responders. Provide accurate details
-              so the right team can act fast.
+              {t("report.heroSub")}
             </p>
           </section>
 
@@ -262,10 +322,10 @@ export default function Report() {
           <div className="rp-tracking-banner">
             <div className="rp-banner-icon">📍</div>
             <div className="rp-banner-content">
-              <div className="rp-banner-title">Track Your Report in Real-Time</div>
-              <p className="rp-banner-text">Create an account to monitor the status of your incident report and receive updates as authorities respond. <strong>Don't have an account? Sign up after submission!</strong></p>
+              <div className="rp-banner-title">{t("report.bannerTitle")}</div>
+              <p className="rp-banner-text">{t("report.bannerText")}</p>
             </div>
-            <button onClick={() => navigate("/signup")} className="rp-banner-cta" style={{ cursor: "pointer" }}>Create Account →</button>
+            <button onClick={() => navigate("/signup")} className="rp-banner-cta" style={{ cursor: "pointer" }}>{t("report.bannerCta")}</button>
           </div>
 
           {/* ── Step progress ── */}
@@ -287,7 +347,7 @@ export default function Report() {
 
                 {/* Step 1 — Incident Type */}
                 <div className="rp-card">
-                  <div className="rp-card-label"><span className="rp-step-badge">01</span>Incident Type</div>
+                  <div className="rp-card-label"><span className="rp-step-badge">01</span>{t("report.cardLabels.incidentType")}</div>
                   <div className="rp-type-grid">
                     {INCIDENT_TYPES.map((type) => (
                       <button key={type.value} type="button"
@@ -308,14 +368,14 @@ export default function Report() {
 
                 {/* Step 2 — Reporter Info */}
                 <div className="rp-card">
-                  <div className="rp-card-label"><span className="rp-step-badge">02</span>Reporter Information</div>
+                  <div className="rp-card-label"><span className="rp-step-badge">02</span>{t("report.cardLabels.reporterInfo")}</div>
                   <div className="rp-fields">
                     <div className="rp-field">
-                      <label className="rp-label">Full Name <span className="rp-optional">(Optional)</span></label>
+                      <label className="rp-label">{t("report.form.fullName")} <span className="rp-optional">{t("report.form.optional")}</span></label>
                       <input className="rp-input" type="text" placeholder="e.g. Juan dela Cruz" value={reporterName} onChange={e => setReporterName(e.target.value)} />
                     </div>
                     <div className="rp-field">
-                      <label className="rp-label">Contact Number <span className="rp-optional">(Optional)</span></label>
+                      <label className="rp-label">{t("report.form.contactNumber")} <span className="rp-optional">{t("report.form.optional")}</span></label>
                       <input className="rp-input" type="tel" placeholder="+63 9XX XXX XXXX" value={reporterContact} onChange={e => setReporterContact(e.target.value)} />
                     </div>
                   </div>
@@ -323,9 +383,9 @@ export default function Report() {
 
                 {/* Step 3 — Location */}
                 <div className="rp-card">
-                  <div className="rp-card-label"><span className="rp-step-badge">03</span>Your Location</div>
+                  <div className="rp-card-label"><span className="rp-step-badge">03</span>{t("report.cardLabels.location")}</div>
                   <div className="rp-field">
-                    <label className="rp-label">Detected Location</label>
+                    <label className="rp-label">{t("report.form.detectedLocation")}</label>
 
                     <div className="rp-location-row">
                       <div className="rp-location-input-wrap">
@@ -344,7 +404,7 @@ export default function Report() {
                           setLocation(`${lat}, ${lng}`); setGpsAccuracy(acc); setLocationStatus("ok");
                           await reverseGeocode(lat, lng);
                         }, () => setLocationStatus("error"));
-                      }}>📍 Refresh GPS</button>
+                      }}>{t("report.form.refreshGps")}</button>
                     </div>
 
                     {/* Raw coords + Maps link */}
@@ -359,7 +419,7 @@ export default function Report() {
                             rel="noopener noreferrer"
                             className="rp-maps-verify"
                           >
-                            Verify on Maps →
+                            {t("report.form.verifyMaps")}
                           </a>
                         )}
                       </div>
@@ -397,16 +457,16 @@ export default function Report() {
 
                 {/* Step 4 — Description */}
                 <div className="rp-card">
-                  <div className="rp-card-label"><span className="rp-step-badge">04</span>Incident Details</div>
+                  <div className="rp-card-label"><span className="rp-step-badge">04</span>{t("report.cardLabels.description")}</div>
                   <div className="rp-field">
-                    <label className="rp-label">Detailed Description</label>
-                    <textarea className="rp-textarea" rows={5} placeholder="Describe what happened — include time, number of people involved, severity, and any other relevant details…" value={description} onChange={e => setDescription(e.target.value)} required />
+                    <label className="rp-label">{t("report.cardLabels.description")}</label>
+                    <textarea className="rp-textarea" rows={5} placeholder={t("report.form.descriptionPlaceholder")} value={description} onChange={e => setDescription(e.target.value)} required />
                   </div>
                 </div>
 
                 {/* Step 5 — Evidence */}
                 <div className="rp-card">
-                  <div className="rp-card-label"><span className="rp-step-badge">05</span>Upload Evidence <span className="rp-optional">(optional)</span></div>
+                  <div className="rp-card-label"><span className="rp-step-badge">05</span>{t("report.cardLabels.evidence")} <span className="rp-optional">{t("report.form.optional")}</span></div>
                   <div className="rp-dropzone" onClick={() => fileRef.current?.click()}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => {
@@ -416,13 +476,29 @@ export default function Report() {
                         const dt = new DataTransfer(); dt.items.add(file);
                         fileRef.current.files = dt.files;
                         setFileName(file.name); setFileObject(file); setUploadProgress("idle");
+                        if (previewUrl) URL.revokeObjectURL(previewUrl);
+                        setPreviewUrl(URL.createObjectURL(file));
                       }
                     }}>
                     <input ref={fileRef} type="file" accept="image/*,video/*" style={{ display: "none" }} onChange={handleFileChange} />
-                    {fileName
-                      ? (<><span className="rp-dropzone-icon">📎</span><span className="rp-dropzone-name">{fileName}</span><span className="rp-dropzone-change">Click to change</span></>)
-                      : (<><span className="rp-dropzone-icon">📤</span><span className="rp-dropzone-text">Click to select or drag & drop</span><span className="rp-dropzone-hint">Photos or Videos accepted</span></>)
-                    }
+                    {fileName && previewUrl ? (
+                      <div className="rp-dropzone-preview">
+                        {fileObject?.type.startsWith("video/") ? (
+                          <video className="rp-preview-media" src={previewUrl} controls preload="metadata" />
+                        ) : (
+                          <img className="rp-preview-media" src={previewUrl} alt="Preview" />
+                        )}
+                        <div className="rp-preview-info">
+                          <span className="rp-dropzone-icon">📎</span>
+                          <span className="rp-dropzone-name">{fileName}</span>
+                          <span className="rp-dropzone-change">Click to change</span>
+                        </div>
+                      </div>
+                    ) : fileName ? (
+                      <><span className="rp-dropzone-icon">📎</span><span className="rp-dropzone-name">{fileName}</span><span className="rp-dropzone-change">Click to change</span></>
+                    ) : (
+                      <><span className="rp-dropzone-icon">📤</span><span className="rp-dropzone-text">{t("report.form.uploadHint")}</span><span className="rp-dropzone-hint">Photos or Videos accepted</span></>
+                    )}
                   </div>
                   {uploadProgress === "uploading" && <div className="rp-upload-status rp-upload-status--uploading">⏳ Uploading evidence…</div>}
                   {uploadProgress === "done"      && <div className="rp-upload-status rp-upload-status--done">✅ Evidence uploaded successfully</div>}
@@ -433,13 +509,16 @@ export default function Report() {
                 <div className="rp-disclaimer">
                   <div className="rp-disclaimer-header">
                     <span className="rp-disclaimer-icon">⚖️</span>
-                    <span className="rp-disclaimer-title">Legal Acknowledgment</span>
+                    <span className="rp-disclaimer-title">{t("report.form.legalTitle")}</span>
                   </div>
-                  <p className="rp-disclaimer-summary">By submitting this report, you confirm that the information provided is true and accurate to the best of your knowledge.</p>
+                  <p className="rp-disclaimer-summary">{t("report.form.legalSummary")}</p>
                   <label className="rp-check-label">
                     <input type="checkbox" className="rp-checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} required />
                     <span className="rp-check-box" aria-hidden="true">{agreed ? "✓" : ""}</span>
-                    <span className="rp-check-text">I understand that submitting <strong>false, misleading, or malicious reports</strong> is punishable under the <strong>Cybercrime Prevention Act of 2012 (RA 10175)</strong>, the <strong>Penal Code</strong>, and other applicable Philippine laws. Penalties may include fines and imprisonment. All reports are logged and may be investigated by authorities.</span>
+                    <span
+                      className="rp-check-text"
+                      dangerouslySetInnerHTML={{ __html: t("report.form.legalCheckText") }}
+                    />
                   </label>
                 </div>
 
@@ -458,11 +537,11 @@ export default function Report() {
                   {submitting ? (
                     <>
                       <span className="rp-loader"></span>
-                      <span>Submitting…</span>
+                      <span>{t("report.form.submitting")}</span>
                     </>
                   ) : (
                     <>
-                      <span>Submit Incident Report</span>
+                      <span>{t("report.form.submitBtn")}</span>
                       <span className="rp-submit-arrow">→</span>
                     </>
                   )}
@@ -474,7 +553,7 @@ export default function Report() {
             {/* RIGHT — Sidebar */}
             <div className="rp-right">
               <div className="rp-sidebar-card">
-                <div className="rp-sidebar-title">Emergency Hotlines</div>
+                <div className="rp-sidebar-title">{t("report.sidebar.hotlinesTitle")}</div>
                 <div className="rp-hotlines">
                   {EMERGENCY_HOTLINES.map((h) => (
                     <a key={h.number} href={`tel:${h.number}`} className="rp-hotline" style={{ "--h-color": h.color } as React.CSSProperties}>
@@ -489,17 +568,17 @@ export default function Report() {
                 </div>
               </div>
               <div className="rp-sidebar-card rp-sidebar-card--warn">
-                <div className="rp-sidebar-title">⚠️ Emergency Reminder</div>
-                <p className="rp-sidebar-text">If someone is in immediate danger, call emergency services directly. Do not rely solely on this form in life-threatening situations.</p>
+                <div className="rp-sidebar-title">{t("report.sidebar.warnTitle")}</div>
+                <p className="rp-sidebar-text">{t("report.sidebar.warnText")}</p>
               </div>
               <div className="rp-sidebar-card rp-sidebar-card--info">
-                <div className="rp-sidebar-title">🛡️ Your Safety Matters</div>
-                <p className="rp-sidebar-text">Your identity and contact information are kept strictly confidential. You may submit anonymously if preferred.</p>
+                <div className="rp-sidebar-title">{t("report.sidebar.safetyTitle")}</div>
+                <p className="rp-sidebar-text">{t("report.sidebar.safetyText")}</p>
               </div>
               <div className="rp-sidebar-card rp-sidebar-card--track">
-                <div className="rp-sidebar-title">📍 Track Your Report</div>
-                <p className="rp-sidebar-text">Create an account to track the status of your incident reports in real-time. You'll receive updates as authorities respond and investigate your report.</p>
-                <button onClick={() => navigate("/signup")} className="rp-track-link" style={{ cursor: "pointer", marginLeft: 0 }}>Create Account or Login →</button>
+                <div className="rp-sidebar-title">{t("report.sidebar.trackTitle")}</div>
+                <p className="rp-sidebar-text">{t("report.sidebar.trackText")}</p>
+                <button onClick={() => navigate("/signup")} className="rp-track-link" style={{ cursor: "pointer", marginLeft: 0 }}>{t("report.sidebar.trackBtn")}</button>
               </div>
             </div>
 
@@ -851,16 +930,15 @@ const styles = `
   .rp-hint { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 300; color: var(--text3); line-height: 1.5; }
   .rp-hint--warn { font-size: 11px; color: rgba(245,200,66,0.60); }
 
-  .rp-dropzone {
-    border: 1px dashed var(--border2); border-radius: 10px;
-    padding: 28px 20px; display: flex; flex-direction: column; align-items: center; gap: 6px;
-    cursor: pointer; transition: border-color 0.2s, background 0.2s; text-align: center;
-  }
+  .rp-dropzone { border: 1px dashed var(--border2); border-radius: 10px; padding: 28px 20px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; transition: border-color 0.2s, background 0.2s; text-align: center; }
   .rp-dropzone:hover { border-color: rgba(0,200,224,0.35); background: rgba(0,200,224,0.03); }
   .rp-dropzone-icon { font-size: 24px; }
   .rp-dropzone-text  { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 400; color: var(--text2); }
   .rp-dropzone-name  { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; color: var(--cyan); }
   .rp-dropzone-hint, .rp-dropzone-change { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 300; color: var(--text3); }
+  .rp-dropzone-preview { position: relative; width: 100%; border-radius: 8px; overflow: hidden; background: var(--input-bg); border: 1px solid var(--border); }
+  .rp-preview-media { display: block; width: 100%; max-height: 260px; object-fit: contain; background: var(--input-bg); }
+  .rp-preview-info { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--surface); border-top: 1px solid var(--border); flex-wrap: wrap; }
   .rp-upload-status { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500; padding: 8px 12px; border-radius: 7px; }
   .rp-upload-status--uploading { background: rgba(245,200,66,0.08); color: var(--yellow); border: 1px solid rgba(245,200,66,0.20); }
   .rp-upload-status--done      { background: rgba(46,204,143,0.08); color: var(--green);  border: 1px solid rgba(46,204,143,0.20); }

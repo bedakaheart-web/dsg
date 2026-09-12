@@ -1,5 +1,28 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, Component, type ReactNode } from "react";
 import { supabase } from "../js/supabase";
+import AdminChatDrawer from "./components/AdminChatDrawer";
+
+// ─── Section error boundary ───────────────────────────────────────────────
+// Isolates crashes in the team grid / chat drawer so one bad render can never
+// blank the entire AdminDashboard tree — shows a retryable fallback instead.
+class TeamSectionBoundary extends Component<{ children: ReactNode; label: string }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch(err: unknown) {
+    console.error(`[TeamSectionBoundary:${this.props.label}]`, err);
+  }
+  render() {
+    if (this.state.failed) {
+      return (
+        <div className="atp-empty">
+          <div className="atp-empty-text">Something went wrong loading {this.props.label}.</div>
+          <button className="atp-retry-btn" onClick={() => this.setState({ failed: false })}>Retry</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -65,7 +88,8 @@ const ICONS = {
   retry:    "M1 4v6h6M23 20v-6h-6M20.49 9A9 9 0 0 0 5.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 0 1 3.51 15",
   badge:    "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z",
   settings: "M12 1v6m0 6v6M4.22 4.22l4.24 4.24m3.08 3.08l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m3.08-3.08l4.24-4.24M19.78 19.78l-4.24-4.24m-3.08-3.08l-4.24-4.24",
-  trash:    "M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h16zM10 11v6M14 11v6",
+  trash:    "M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2-2H7a2 2 0 0 1-2-2V6h16zM10 11v6M14 11v6",
+  chat:     "M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z",
 };
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
@@ -626,6 +650,12 @@ const STYLES = `
   background: rgba(8,12,20,0.93);
 }
 
+.atp-action-btn.chat:hover {
+  color: #4A90D9;
+  border-color: rgba(74,144,217,0.55);
+  background: rgba(74,144,217,0.10);
+}
+
 .atp-action-btn.danger:hover {
   color: var(--danger);
   border-color: var(--danger);
@@ -725,10 +755,27 @@ function fmtDate(ts?: string) {
 function fmtRelative(ts?: string) {
   if (!ts) return "—";
   const diff = Math.floor((Date.now() - new Date(ts).getTime()) / 1000);
+  if (diff < 0)    return "just now";
   if (diff < 60)    return `${diff}s ago`;
   if (diff < 3600)  return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
   return fmtDate(ts);
+}
+
+// ── Last-seen display policy (never a blank dash) ──────────────────────────
+// • On Duty / Responding → "Active Now" with a green indicator dot.
+// • Off Duty + timestamp   → relative time ("2 hours ago" / "Aug 5, 2026").
+// • Off Duty + no stamp    → joined-date baseline, else "No recent activity logged".
+function lastSeenDisplay(m: { status?: string | null; last_seen?: string | null; joined_at?: string }): {
+  text: string; active: boolean;
+} {
+  const status = (m.status ?? "off_duty").toLowerCase();
+  if (status === "on_duty" || status === "responding") {
+    return { text: "Active Now", active: true };
+  }
+  if (m.last_seen) return { text: fmtRelative(m.last_seen), active: false };
+  if (m.joined_at) return { text: `Joined ${fmtDate(m.joined_at)}`, active: false };
+  return { text: "No recent activity logged", active: false };
 }
 
 // ─── Skeleton Card ────────────────────────────────────────────────────────────
@@ -754,8 +801,19 @@ function SkeletonCard() {
 
 // ─── Member Card ─────────────────────────────────────────────────────────────
 
-function MemberCard({ member, index }: { member: TeamMember; index: number }) {
+export function MemberCard({ member, index, onToggleDuty, onEdit, onChat, toggling }: {
+  member: TeamMember; index: number;
+  onToggleDuty: (m: TeamMember) => void;
+  onEdit: (m: TeamMember) => void;
+  onChat: (m: TeamMember) => void;
+  toggling: boolean;
+}) {
+  // Defensive: a malformed row (null/undefined from the data layer) renders
+  // nothing instead of throwing and unmounting the whole dashboard.
+  // NOTE: hooks must stay above this guard — an early return before useState
+  // breaks hook order across renders ("Rendered fewer hooks than expected").
   const [expanded, setExpanded] = useState(false);
+  if (!member || typeof member !== "object") return null;
 
   const status     = member.status ?? "off_duty";
   const statusMeta = STATUS_META[status] ?? STATUS_META.off_duty;
@@ -771,6 +829,7 @@ function MemberCard({ member, index }: { member: TeamMember; index: number }) {
 
   const displayName = member.full_name ?? "Unknown Member";
   const displayRole = member.role ?? "—";
+  const seen = lastSeenDisplay(member);
 
   return (
     <div
@@ -874,13 +933,26 @@ function MemberCard({ member, index }: { member: TeamMember; index: number }) {
             { key: "Role",      val: displayRole,                       color: roleColor },
             { key: "Unit",      val: unit,                              color: unitColor },
             { key: "Status",    val: statusMeta.label,                  color: statusMeta.color },
-            { key: "Last seen", val: fmtRelative(member.last_seen),    color: undefined },
           ].map(({ key, val, color }) => (
             <div key={key} className="atp-detail-row">
               <span className="atp-detail-key">{key}</span>
               <span className="atp-detail-val" style={color ? { color } : undefined}>{val}</span>
             </div>
           ))}
+          <div className="atp-detail-row">
+            <span className="atp-detail-key">Last seen</span>
+            <span
+              className="atp-detail-val"
+              style={seen.active
+                ? { color: "#00B074", display: "inline-flex", alignItems: "center", gap: 6, fontWeight: 600 }
+                : undefined}
+            >
+              {seen.active && (
+                <span className="atp-dot is-responding" style={{ ["--dot-color" as any]: "#00B074" }} />
+              )}
+              {seen.text}
+            </span>
+          </div>
         </div>
       )}
 
@@ -891,11 +963,25 @@ function MemberCard({ member, index }: { member: TeamMember; index: number }) {
           Joined {fmtDate(member.joined_at)}
         </span>
         <div className="atp-card-actions">
-          <button className="atp-action-btn" title="Edit member" onClick={() => console.log("Edit", member.id)}>
-            <SvgIcon path={ICONS.settings} size={12} />
+          <button
+            onClick={() => onChat(member)}
+            className="atp-action-btn chat"
+            title="Open Direct Chat"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
           </button>
-          <button className="atp-action-btn danger" title="Remove member" onClick={() => console.log("Delete", member.id)}>
-            <SvgIcon path={ICONS.trash} size={12} />
+          <button
+            className="atp-action-btn"
+            title={status === "on_duty" ? "Set off duty" : "Set on duty (Toggle Duty Status)"}
+            onClick={() => onToggleDuty(member)}
+            disabled={toggling}
+          >
+            <SvgIcon path={ICONS.activity} size={12} />
+          </button>
+          <button className="atp-action-btn" title="Edit contact" onClick={() => onEdit(member)}>
+            <SvgIcon path={ICONS.settings} size={12} />
           </button>
         </div>
       </div>
@@ -920,6 +1006,20 @@ export default function AdminTeamPage() {
   const [error,   setError]   = useState<string | null>(null);
   const [search,  setSearch]  = useState("");
   const [filter,  setFilter]  = useState<FilterKey>("all");
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [editTarget, setEditTarget] = useState<TeamMember | null>(null);  const [editPhone, setEditPhone] = useState("");
+  const [editUnit,  setEditUnit]  = useState("");
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatTarget, setChatTarget] = useState<string | null>(null);
+
+  // Open the side-chat drawer initialized with this responder selected.
+  const openChat = (m: TeamMember) => {
+    if (!m || !m.id) return;
+    setChatTarget(m.id);
+    setChatOpen(true);
+  };
 
   const loadTeam = async () => {
     try {
@@ -953,6 +1053,53 @@ export default function AdminTeamPage() {
     on_duty:    members.filter((m) => m.status === "on_duty").length,
     responding: members.filter((m) => m.status === "responding").length,
     off_duty:   members.filter((m) => !m.status || m.status === "off_duty").length,
+  };
+
+  // ── Toggle Duty Status (persisted to profiles, optimistic UI) ──
+  // Writes last_seen on every toggle so session tracking stays fresh and the
+  // Last Seen fallback never has to render a blank dash.
+  const toggleDuty = async (m: TeamMember) => {
+    if (!m || !m.id) return;
+    const next = m.status === "on_duty" ? "off_duty" : "on_duty";
+    const stamped = new Date().toISOString();
+    setTogglingId(m.id);
+    setMembers(prev => prev.map(x => x.id === m.id ? { ...x, status: next, last_seen: stamped } : x));
+    try {
+      const { error: err } = await supabase.from("profiles").update({ status: next, last_seen: stamped }).eq("id", m.id);
+      if (err) throw err;
+    } catch (e: any) {
+      setError("Duty toggle failed: " + (e?.message ?? "network error"));
+      loadTeam();
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
+  // ── Edit Contact ──
+  const openEdit = (m: TeamMember) => {
+    setEditTarget(m);
+    setEditPhone(m.phone ?? "");
+    setEditUnit(m.unit ?? "");
+    setFormError(null);
+  };
+
+  const saveEdit = async () => {
+    if (!editTarget) return;
+    setSaving(true);
+    setFormError(null);
+    try {
+      const { error: err } = await supabase.from("profiles")
+        .update({ phone: editPhone.trim() || null, unit: editUnit.trim() || null })
+        .eq("id", editTarget.id);
+      if (err) throw err;
+    } catch (e: any) {
+      setFormError("Save failed: " + (e?.message ?? "network error"));
+      setSaving(false);
+      return;
+    }
+    setSaving(false);
+    setEditTarget(null);
+    loadTeam();
   };
 
   const visible = members.filter((m) => {
@@ -1052,6 +1199,7 @@ export default function AdminTeamPage() {
 
         {/* ── Grid ── */}
         <div className="atp-grid">
+          <TeamSectionBoundary label="team roster">
           {loading ? (
             Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
           ) : error ? (
@@ -1077,11 +1225,65 @@ export default function AdminTeamPage() {
               </div>
             </div>
           ) : (
-            visible.map((m, i) => (
-              <MemberCard key={m.id} member={m} index={i} />
-            ))
+            visible.map((m, i) => {
+              // Guard: skip malformed rows and always pass deferred handlers
+              // (never invoke during render) so one bad record can't crash the grid.
+              if (!m || typeof m !== "object" || !m.id) return null;
+              return (
+                <MemberCard
+                  key={m.id}
+                  member={m}
+                  index={i}
+                  onToggleDuty={() => toggleDuty(m)}
+                  onEdit={() => openEdit(m)}
+                  onChat={() => openChat(m)}
+                  toggling={togglingId === m.id}
+                />
+              );
+            })
           )}
+          </TeamSectionBoundary>
         </div>
+
+        {/* ── Edit Contact modal ── */}
+        {editTarget && (
+          <div
+            style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,.6)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
+            onClick={() => !saving && setEditTarget(null)}
+          >
+            <div
+              style={{ width: "100%", maxWidth: 420, background: "#0f1623", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: 22 }}
+              onClick={e => e.stopPropagation()}
+            >
+              <div style={{ fontSize: 15, fontWeight: 700, color: "#eef0f7", marginBottom: 4 }}>Edit Contact</div>
+              <div style={{ fontSize: 12, color: "rgba(238,240,247,0.55)", marginBottom: 14 }}>{editTarget.full_name ?? "Unknown Member"}</div>
+              <label style={{ display: "block", fontSize: 11, color: "rgba(238,240,247,0.55)", marginBottom: 4 }}>Phone</label>
+              <input
+                value={editPhone}
+                onChange={e => setEditPhone(e.target.value)}
+                placeholder="+63 …"
+                style={{ width: "100%", marginBottom: 12, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "9px 12px", color: "#eef0f7", fontSize: 13, outline: "none" }}
+              />
+              <label style={{ display: "block", fontSize: 11, color: "rgba(238,240,247,0.55)", marginBottom: 4 }}>Unit</label>
+              <input
+                value={editUnit}
+                onChange={e => setEditUnit(e.target.value)}
+                placeholder="HQ"
+                style={{ width: "100%", marginBottom: 12, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "9px 12px", color: "#eef0f7", fontSize: 13, outline: "none" }}
+              />
+              {formError && <div style={{ color: "#FF3B30", fontSize: 11, marginBottom: 8 }}>{formError}</div>}
+              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                <button className="atp-action-btn" disabled={saving} onClick={() => setEditTarget(null)}>Cancel</button>
+                <button className="atp-action-btn" disabled={saving} onClick={saveEdit}>{saving ? "Saving…" : "Save Contact"}</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Direct side chat bound to the selected responder ── */}
+        <TeamSectionBoundary label="team chat">
+          <AdminChatDrawer open={chatOpen} onClose={() => setChatOpen(false)} targetId={chatTarget} />
+        </TeamSectionBoundary>
 
       </div>
     </>

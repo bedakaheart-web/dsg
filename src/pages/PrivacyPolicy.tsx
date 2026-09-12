@@ -1,76 +1,44 @@
+// src/pages/PrivacyPolicy.tsx
 import { Link } from "react-router-dom";
 import emergencyBg from "../assets/emergency.jpg";
-
-const sections = [
-  {
-    id: "what-we-collect",
-    heading: "Information We Collect",
-    icon: "📥",
-    items: [
-      {
-        label: "Basic user details for authentication",
-        detail:
-          "Name, email address, and contact information provided during account registration, used solely to authenticate you on the platform.",
-      },
-      {
-        label: "Emergency reports submitted through the system",
-        detail:
-          "Location data, incident descriptions, photos, and timestamps attached to any emergency report you file through DumaSafeGuide.",
-      },
-      {
-        label: "Feedback provided voluntarily",
-        detail:
-          "Ratings, suggestions, or comments you choose to submit to help us improve the platform's responsiveness and usability.",
-      },
-    ],
-  },
-  {
-    id: "data-usage",
-    heading: "Data Usage",
-    icon: "⚙️",
-    items: [
-      {
-        label: "Improve system functionality",
-        detail:
-          "Aggregated, anonymized data helps us identify bottlenecks in report processing and improve response times across barangays.",
-      },
-      {
-        label: "Support emergency responders",
-        detail:
-          "Relevant incident details are shared with authorized CDRRMO, BFP, and Red Cross personnel to coordinate on-ground response.",
-      },
-      {
-        label: "Enhance public safety awareness",
-        detail:
-          "Trend data from reported incidents may be published in anonymized form to help the community understand local hazard patterns.",
-      },
-    ],
-  },
-  {
-    id: "data-rights",
-    heading: "Your Rights",
-    icon: "✋",
-    items: [
-      {
-        label: "Right to Access",
-        detail:
-          "You may request a copy of all personal data we hold about you at any time by contacting the platform administrators.",
-      },
-      {
-        label: "Right to Deletion",
-        detail:
-          "You may request removal of your personal data. Requests will be processed within 30 days, subject to legal retention requirements.",
-      },
-      {
-        label: "Right to Correction",
-        detail:
-          "If any of your stored information is inaccurate, you may request a correction through your account settings or by contacting us directly.",
-      },
-    ],
-  },
-];
+import { useLanguage } from "../context/LanguageContext";
 
 export default function PrivacyPolicy() {
+  const { t, isRTL } = useLanguage();
+
+  const sections = [
+    {
+      id: "what-we-collect",
+      heading: t("privacy.collectHeading"),
+      icon: "📥",
+      items: [
+        { label: t("privacy.collectItems.auth.label"), detail: t("privacy.collectItems.auth.detail") },
+        { label: t("privacy.collectItems.reports.label"), detail: t("privacy.collectItems.reports.detail") },
+        { label: t("privacy.collectItems.feedback.label"), detail: t("privacy.collectItems.feedback.detail") },
+      ],
+    },
+    {
+      id: "data-usage",
+      heading: t("privacy.usageHeading"),
+      icon: "⚙️",
+      items: [
+        { label: t("privacy.usageItems.improve.label"), detail: t("privacy.usageItems.improve.detail") },
+        { label: t("privacy.usageItems.support.label"), detail: t("privacy.usageItems.support.detail") },
+        { label: t("privacy.usageItems.awareness.label"), detail: t("privacy.usageItems.awareness.detail") },
+      ],
+    },
+    {
+      id: "data-rights",
+      heading: t("privacy.rightsHeading"),
+      icon: "✋",
+      items: [
+        { label: t("privacy.rightsItems.access.label"), detail: t("privacy.rightsItems.access.detail") },
+        { label: t("privacy.rightsItems.deletion.label"), detail: t("privacy.rightsItems.deletion.detail") },
+        { label: t("privacy.rightsItems.correction.label"), detail: t("privacy.rightsItems.correction.detail") },
+      ],
+    },
+  ];
+
   return (
     <>
       <style>{`
@@ -175,16 +143,6 @@ export default function PrivacyPolicy() {
           0%,100% { opacity:1; transform:scale(1); }
           50%      { opacity:.55; transform:scale(.78); }
         }
-        .pp-back {
-          font-family: 'DM Sans', sans-serif;
-          font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
-          color: var(--text3); text-decoration: none;
-          border: 1px solid rgba(0,200,224,0.12); border-radius: 8px;
-          padding: 8px 16px; transition: all .2s;
-          background: rgba(13,27,46,0.60); backdrop-filter: blur(18px);
-          display: flex; align-items: center; gap: 6px;
-        }
-        .pp-back:hover { color: var(--text); border-color: rgba(0,200,224,0.30); }
 
         /* ── Hero ── */
         .pp-hero {
@@ -421,7 +379,7 @@ export default function PrivacyPolicy() {
         }
       `}</style>
 
-      <div className="pp">
+      <div className="pp" dir={isRTL ? "rtl" : "ltr"}>
         {/* ── Background ── */}
         <div className="pp-bg">
           <img src={emergencyBg} alt="" className="pp-bg-img" aria-hidden="true" />
@@ -434,42 +392,33 @@ export default function PrivacyPolicy() {
 
           {/* ── Nav ── */}
           <nav className="pp-nav">
-            <Link to="/" className="pp-logo">
-              <span className="pp-logo-dot" />
-              DumaSafeGuide
-            </Link>
+           
           </nav>
 
           {/* ── Hero ── */}
           <section className="pp-hero">
             <div className="pp-breadcrumb">
-              <a href="/resources">Resources</a>
+             
               <span className="pp-breadcrumb-sep">›</span>
-              <a href="/terms">Terms of Service</a>
+        
               <span className="pp-breadcrumb-sep">›</span>
-              <span className="pp-breadcrumb-current">Privacy Policy</span>
+              <span className="pp-breadcrumb-current">{t("privacy.breadcrumbCurrent")}</span>
             </div>
 
-            <div className="pp-hero-eyebrow">Data &amp; Privacy</div>
+            <div className="pp-hero-eyebrow">{t("privacy.eyebrow")}</div>
             <h1>
-              Privacy <span className="accent">Policy</span>
+              {t("privacy.titleLine1")} <span className="accent">{t("privacy.titleAccent")}</span>
             </h1>
-            <p className="pp-hero-sub">
-              DumaSafeGuide values your privacy. We only collect what's necessary
-              to power emergency reporting and community safety services.
-            </p>
+            <p className="pp-hero-sub">{t("privacy.heroSub")}</p>
             <div className="pp-meta">
               <div className="pp-meta-dot" />
-              Effective Date: January 1, 2025 · Last Updated: June 2025
+              {t("privacy.meta")}
             </div>
           </section>
 
           {/* ── Intro ── */}
           <div className="pp-intro">
-            <strong>Your data is never sold.</strong> Information collected through DumaSafeGuide is used
-            exclusively to coordinate emergency responses and improve platform safety features.
-            It is not shared with commercial third parties except as required by Philippine law or
-            to support authorized emergency responders.
+            <strong>{t("privacy.introStrong")}</strong> {t("privacy.introRest")}
           </div>
 
           {/* ── Content sections ── */}
@@ -497,19 +446,17 @@ export default function PrivacyPolicy() {
 
           {/* ── Notice ── */}
           <div className="pp-notice">
-            <strong>Questions about your data?</strong> Contact DumaSafeGuide administrators at
-            admin@dumasafeguide.ph or reach out through the platform's feedback form. Data deletion
-            requests are processed within 30 days, subject to legal retention obligations under Philippine law.
+            <strong>{t("privacy.noticeStrong")}</strong> {t("privacy.noticeRest")}
           </div>
 
           {/* ── CTA ── */}
           <div className="pp-cta">
             <div className="pp-cta-text">
-              <h3>Need to report an emergency?</h3>
-              <p>Don't wait — use the incident reporting form to alert local responders immediately.</p>
+              <h3>{t("privacy.ctaHeading")}</h3>
+              <p>{t("privacy.ctaSub")}</p>
             </div>
             <a href="/report" className="pp-cta-btn">
-              <span>🚨</span> Report Now
+              <span>🚨</span> {t("privacy.ctaBtn")}
             </a>
           </div>
 

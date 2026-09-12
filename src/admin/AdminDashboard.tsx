@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../js/supabase";
 import {
   FaTachometerAlt,
+  FaCompass,
   FaClipboardList,
   FaBell,
   FaUsers,
@@ -20,6 +21,7 @@ import {
   FaBars,
   FaTimes,
   FaHistory,
+  FaComments,
 } from "react-icons/fa";
 
 import AdminAlertsPage from "./AdminAlertsPage";
@@ -28,13 +30,16 @@ import IncidentAnalytics from "./IncidentAnalytics";
 import RespondersPage from "./RespondersPage";
 import AdminTeamPage from "./AdminTeamPage";
 import AdminHistoryLog from "./AdminHistoryLog";
+import AdminDispatch from "./AdminDispatch";
+import AdminChatDrawer from "./components/AdminChatDrawer";
+import { fetchUnreadCounts } from "../hooks/useRealtimeChat";
 
 import dsgLogo from "../assets/dsg.logo.png";
 import footerBg from "../assets/footer.png";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type ViewId = "overview" | "incidents" | "alerts" | "responders" | "team" | "analytics" | "history";
+type ViewId = "overview" | "dispatch" | "incidents" | "alerts" | "responders" | "team" | "analytics" | "history";
 
 interface NavItem {
   id: ViewId;
@@ -60,8 +65,9 @@ interface Report {
 // ─── Navigation Items ─────────────────────────────────────────────────────────
 
 const NAV: NavItem[] = [
-  { id: "overview",   label: "Overview",    icon: <FaTachometerAlt />, group: "Command"    },
-  { id: "incidents",  label: "Incidents",   icon: <FaClipboardList />, group: "Command"    },
+{ id: "overview",   label: "Overview",    icon: <FaTachometerAlt />, group: "Command"    },
+{ id: "dispatch",   label: "Dispatch",    icon: <FaCompass />,       group: "Command"    },
+{ id: "incidents",  label: "Incidents",   icon: <FaClipboardList />, group: "Command"    },
   { id: "alerts",     label: "Alerts",      icon: <FaBell />,          group: "Command"    },
   { id: "responders", label: "Responders",  icon: <FaUsers />,         group: "Management" },
   { id: "team",       label: "Team",        icon: <FaUsers />,         group: "Management" },
@@ -347,6 +353,18 @@ const DASH_STYLE = `
 .hud-panel-title { font-size: 11px; color: var(--text-secondary); letter-spacing: 0.5px; text-transform: uppercase; font-weight: 600; font-family: inherit; }
 .hud-panel-tag { font-size: 9px; color: var(--primary); border: 1px solid var(--primary); border-radius: 4px; padding: 3px 8px; background: rgba(0,102,255,0.05); font-weight: 600; white-space: nowrap; }
 
+/* ── Feed card quick actions + modals (single page scroll, no nested scrollbar) ── */
+.hud-act-btn { font-family: inherit; font-size: 11px; font-weight: 600; padding: 7px 12px; border-radius: 7px; border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); cursor: pointer; transition: all .15s; }
+.hud-act-btn:hover { border-color: var(--primary); color: var(--text); }
+.hud-act-btn:disabled { opacity: .5; cursor: not-allowed; }
+.hud-act-btn--primary { border-color: rgba(0,102,255,.4); color: #4A90D9; background: rgba(0,102,255,.08); }
+.hud-act-btn--success { border-color: rgba(0,176,116,.4); color: #00B074; background: rgba(0,176,116,.08); }
+.hud-modal-overlay { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,.6); display: flex; align-items: center; justify-content: center; padding: 20px; }
+.hud-modal { width: 100%; max-width: 520px; max-height: 85vh; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.hud-modal-head { display: flex; align-items: center; justify-content: space-between; font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 12px; }
+.hud-modal-x { background: none; border: none; color: var(--text-tertiary); font-size: 20px; cursor: pointer; line-height: 1; }
+.hud-select { font-family: inherit; font-size: 13px; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 7px; padding: 8px 10px; }
+
 /* ── Incident cards ── */
 .hud-inc-full {
   display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px;
@@ -461,12 +479,49 @@ function isVideo(url: string) {
   return /\.(mp4|mov|avi|webm|mkv)/i.test(url);
 }
 
-function IncidentCard({ r }: { r: Report }) {
+function IncidentCard({ r, onChanged }: { r: Report; onChanged: () => void }) {
   const tm = TYPE_META[r.type] ?? TYPE_META.other;
   const sm = STATUS_META[r.status] ?? STATUS_META.pending;
   const hasContact  = r.reporter_contact;
   const hasEvidence = r.evidence_url;
   const vid = hasEvidence && isVideo(r.evidence_url!);
+
+  const [action, setAction] = useState<null | "dispatch" | "resolve" | "details">(null);
+  const [responders, setResponders] = useState<{ id: string; name: string }[]>([]);
+  const [assignee, setAssignee] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const openDispatch = async () => {
+    setAction("dispatch");
+    setError(null);
+    setAssignee("");
+    const { data } = await supabase.from("responders").select("id,name").eq("on_duty", true).order("name");
+    setResponders((data ?? []) as { id: string; name: string }[]);
+  };
+
+  const confirmDispatch = async () => {
+    if (!assignee) { setError("Select a responder first."); return; }
+    setBusy(true);
+    setError(null);
+    const { error: err } = await supabase.from("reports")
+      .update({ responder_id: assignee, status: "in-progress" })
+      .eq("id", r.id);
+    setBusy(false);
+    if (err) { setError("Assign failed. Please try again."); return; }
+    setAction(null);
+    onChanged();
+  };
+
+  const confirmResolve = async () => {
+    setBusy(true);
+    setError(null);
+    const { error: err } = await supabase.from("reports").update({ status: "resolved" }).eq("id", r.id);
+    setBusy(false);
+    if (err) { setError("Resolve failed. Please try again."); return; }
+    setAction(null);
+    onChanged();
+  };
 
   return (
     <div className="hud-inc-full">
@@ -520,6 +575,85 @@ function IncidentCard({ r }: { r: Report }) {
             View {vid ? "Video" : "Photo"} Evidence
             <FaExternalLinkAlt size={9} style={{ opacity: .5 }} />
           </a>
+        </div>
+      )}
+
+      {/* ── Quick actions per feed card ── */}
+      <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
+        <button className="hud-act-btn" onClick={() => setAction("details")}>View Details</button>
+        {r.status !== "resolved" && (
+          <>
+            <button className="hud-act-btn hud-act-btn--primary" onClick={openDispatch}>Dispatch Responder</button>
+            <button className="hud-act-btn hud-act-btn--success" onClick={() => { setError(null); setAction("resolve"); }}>Mark Resolved</button>
+          </>
+        )}
+      </div>
+      {error && <div style={{ color: "#FF3B30", fontSize: 11, marginTop: 6 }}>{error}</div>}
+
+      {/* ── Details modal ── */}
+      {action === "details" && (
+        <div className="hud-modal-overlay" onClick={() => setAction(null)}>
+          <div className="hud-modal" onClick={e => e.stopPropagation()}>
+            <div className="hud-modal-head">
+              <span style={{ color: tm.color, textTransform: "capitalize" }}>{r.type.replace(/_/g, " ")} #{String(r.id).slice(0, 8)}</span>
+              <button className="hud-modal-x" onClick={() => setAction(null)} aria-label="Close">×</button>
+            </div>
+            <div className="hud-inc-full-grid">
+              <div className="hud-inc-field"><span className="hud-inc-field-label">Status</span><span className="hud-inc-field-val">{sm.label}</span></div>
+              <div className="hud-inc-field"><span className="hud-inc-field-label">Reported</span><span className="hud-inc-field-val">{formatRelative(r.created_at)}</span></div>
+              <div className="hud-inc-field"><span className="hud-inc-field-label">Location</span><span className="hud-inc-field-val">{r.address || r.location || "—"}</span></div>
+              <div className="hud-inc-field"><span className="hud-inc-field-label">Reporter</span><span className="hud-inc-field-val">{r.reporter_name || "Anonymous"}{r.reporter_contact ? ` (${r.reporter_contact})` : ""}</span></div>
+            </div>
+            {r.description && <div className="hud-inc-desc">{r.description}</div>}
+            {hasEvidence && (
+              <a href={r.evidence_url!} target="_blank" rel="noopener noreferrer" className="hud-inc-evidence-large">
+                {vid ? <FaVideo size={12} /> : <FaImage size={12} />}
+                View {vid ? "Video" : "Photo"} Evidence
+                <FaExternalLinkAlt size={9} style={{ opacity: .5 }} />
+              </a>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Dispatch modal ── */}
+      {action === "dispatch" && (
+        <div className="hud-modal-overlay" onClick={() => setAction(null)}>
+          <div className="hud-modal" onClick={e => e.stopPropagation()}>
+            <div className="hud-modal-head">
+              <span>Dispatch Responder</span>
+              <button className="hud-modal-x" onClick={() => setAction(null)} aria-label="Close">×</button>
+            </div>
+            <p style={{ fontSize: 12, opacity: .6, marginBottom: 10 }}>Assign an on-duty responder to #{String(r.id).slice(0, 8)}. Status flips to In Progress.</p>
+            <select value={assignee} onChange={e => setAssignee(e.target.value)} className="hud-select" style={{ width: "100%", marginBottom: 10 }}>
+              <option value="">Select responder…</option>
+              {responders.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+            </select>
+            {responders.length === 0 && <p style={{ fontSize: 11, opacity: .55, marginBottom: 10 }}>No on-duty responders found.</p>}
+            {error && <p style={{ color: "#FF3B30", fontSize: 11, marginBottom: 8 }}>{error}</p>}
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button className="hud-act-btn" onClick={() => setAction(null)}>Cancel</button>
+              <button className="hud-act-btn hud-act-btn--primary" disabled={busy} onClick={confirmDispatch}>{busy ? "Assigning…" : "Assign Responder"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Resolve confirm ── */}
+      {action === "resolve" && (
+        <div className="hud-modal-overlay" onClick={() => setAction(null)}>
+          <div className="hud-modal" onClick={e => e.stopPropagation()}>
+            <div className="hud-modal-head">
+              <span>Mark Resolved</span>
+              <button className="hud-modal-x" onClick={() => setAction(null)} aria-label="Close">×</button>
+            </div>
+            <p style={{ fontSize: 12, opacity: .6, marginBottom: 12 }}>Mark report #{String(r.id).slice(0, 8)} as resolved?</p>
+            {error && <p style={{ color: "#FF3B30", fontSize: 11, marginBottom: 8 }}>{error}</p>}
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button className="hud-act-btn" onClick={() => setAction(null)}>Cancel</button>
+              <button className="hud-act-btn hud-act-btn--success" disabled={busy} onClick={confirmResolve}>{busy ? "Saving…" : "Yes, Resolve"}</button>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -611,7 +745,8 @@ function OverviewPanel({ onNavigate }: { onNavigate: (v: ViewId) => void }) {
       </div>
 
       <div className="hud-panels-row">
-        <div className="hud-panel" style={{ overflow: "auto", maxHeight: 520 }}>
+        {/* Feed panel flows with the main page scroll (no nested scrollbar). */}
+        <div className="hud-panel">
           <div className="hud-panel-head">
             <span className="hud-panel-title">Live Incident Feed</span>
             <span className="hud-panel-tag">REAL-TIME</span>
@@ -621,7 +756,7 @@ function OverviewPanel({ onNavigate }: { onNavigate: (v: ViewId) => void }) {
           ) : recentReports.length === 0 ? (
             <div className="hud-empty">No reports yet</div>
           ) : (
-            recentReports.map(r => <IncidentCard key={String(r.id)} r={r} />)
+            recentReports.map(r => <IncidentCard key={String(r.id)} r={r} onChanged={loadData} />)
           )}
         </div>
 
@@ -674,7 +809,10 @@ export default function AdminDashboard() {
   const [view, setView] = useState<ViewId>("overview");
   const [pendingCount, setPendingCount] = useState(0);
   const [adminName, setAdminName] = useState("Admin");
+  const [adminId, setAdminId] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatUnread, setChatUnread] = useState(0);
 
   const handleNavigate = (v: ViewId) => {
     setView(v);
@@ -696,10 +834,13 @@ export default function AdminDashboard() {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        setAdminId(user.id);
         const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
         if (profile?.full_name) setAdminName(profile.full_name);
         await supabase.from("profiles").update({ status: "on_duty", last_seen: new Date().toISOString() }).eq("id", user.id);
         await supabase.from("responders").update({ status: "on_duty" }).eq("email", user.email);
+        const unread = await fetchUnreadCounts(user.id);
+        setChatUnread(Object.values(unread.bySender).reduce((a, b) => a + b, 0) + unread.broadcast);
       }
       const { data } = await supabase.from("reports").select("id").eq("status", "pending");
       setPendingCount((data ?? []).length);
@@ -712,6 +853,19 @@ export default function AdminDashboard() {
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
+
+  // Chat unread badge: refresh whenever any side-chat message lands.
+  useEffect(() => {
+    if (!adminId) return;
+    const ch = supabase
+      .channel("dashboard-chat-unread")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, async () => {
+        const unread = await fetchUnreadCounts(adminId);
+        setChatUnread(Object.values(unread.bySender).reduce((a, b) => a + b, 0) + unread.broadcast);
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [adminId]);
 
   const handleLogout = async () => {
     const { data: { user: logoutUser } } = await supabase.auth.getUser();
@@ -727,6 +881,7 @@ export default function AdminDashboard() {
 
   const PAGE_TITLE: Record<ViewId, string> = {
     overview:   "Overview",
+    dispatch:   "Dispatch",
     incidents:  "Incidents",
     alerts:     "Alerts",
     responders: "Responders",
@@ -826,6 +981,27 @@ export default function AdminDashboard() {
               <div className="hud-topbar-right">
                 <span className="hud-topbar-time">{clock}</span>
                 <div className="hud-notif-wrap">
+                  <button
+                    id="admin-chat-trigger"
+                    className="hud-topbar-btn"
+                    aria-label="Open team chat"
+                    title="Team chat"
+                    onClick={() => { setIsChatOpen(true); setChatUnread(0); }}
+                    style={{ position: "relative" }}
+                  >
+                    <FaComments size={13} />
+                    {chatUnread > 0 && (
+                      <span style={{
+                        position: "absolute", top: -5, right: -5, minWidth: 16, height: 16, borderRadius: 8,
+                        background: "#FF3B30", color: "#fff", fontSize: 9, fontWeight: 700,
+                        display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px",
+                      }}>
+                        {chatUnread > 99 ? "99+" : chatUnread}
+                      </span>
+                    )}
+                  </button>
+                </div>
+                <div className="hud-notif-wrap">
                   <button className="hud-topbar-btn" aria-label="Notifications"><FaBell size={13} /></button>
                   {pendingCount > 0 && <span className="hud-notif-dot" />}
                 </div>
@@ -834,6 +1010,7 @@ export default function AdminDashboard() {
 
             <div className="hud-page">
               {view === "overview"   && <OverviewPanel onNavigate={handleNavigate} />}
+              {view === "dispatch"   && <AdminDispatch />}
               {view === "incidents"  && <IncidentsPage />}
               {view === "alerts"     && <AdminAlertsPage />}
               {view === "responders" && <RespondersPage />}
@@ -842,6 +1019,9 @@ export default function AdminDashboard() {
               {view === "history"    && <AdminHistoryLog />}
             </div>
           </div>
+
+          {/* Real-time side chat (all admin views) */}
+          <AdminChatDrawer open={isChatOpen} onClose={() => setIsChatOpen(false)} />
         </div>
       </div>
     </>

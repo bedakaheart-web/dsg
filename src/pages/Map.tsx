@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import mapBg from "../assets/mapbg.png";
+import { useLanguage } from "../context/LanguageContext";
 
 // ── FIX 1: Leaflet default icon broken by bundlers (Vite/webpack) ──
 // Without this, markers show as broken images or don't appear at all.
@@ -41,12 +42,15 @@ const LOCATIONS: Location[] = [
   { id: 14, category: "evacuation", label: "Taclobo National High School",     address: "Barangay Taclobo, Dumaguete City",               phone: "(035) 226-3953",  lat: 9.3130,  lng: 123.3025 },
   { id: 15, category: "evacuation", label: "Talay Multi-purpose Center",       address: "Barangay Talay, Dumaguete City",                 phone: "09190834553",     lat: 9.2970,  lng: 123.3010 },
   { id: 16, category: "evacuation", label: "City Central Elementary School",   address: "Poblacion 1, Dumaguete City",                    phone: "09264603953",     lat: 9.3072,  lng: 123.3058 },
+  { id: 17, category: "emergency",  label: "Philippine Red Cross (Negros Oriental)", address: "Bishop Epifanio Surban St., Brgy. 4, Dumaguete City", phone: "(035) 225-2835",  lat: 9.2992,  lng: 123.3043 },
 ];
 
-const CAT_CONFIG: Record<string, { color: string; bg: string; border: string; icon: string; label: string; glow: string }> = {
-  emergency: { color: "#e8372a", bg: "rgba(232,55,42,0.12)",  border: "rgba(232,55,42,0.35)",  icon: "🚨", label: "Emergency Services", glow: "rgba(232,55,42,0.20)"  },
-  hospital:  { color: "#4A90D9", bg: "rgba(74,144,217,0.12)", border: "rgba(74,144,217,0.35)", icon: "🏥", label: "Hospitals",          glow: "rgba(74,144,217,0.20)" },
-  evacuation:{ color: "#00c8e0", bg: "rgba(0,200,224,0.12)",  border: "rgba(0,200,224,0.35)",  icon: "🏫", label: "Evacuation Centers", glow: "rgba(0,200,224,0.20)"  },
+// Static (non-translatable) visual config. Category display names now
+// come from the translation dictionary via t(`map.categories.${cat}`).
+const CAT_CONFIG: Record<string, { color: string; bg: string; border: string; icon: string; glow: string }> = {
+  emergency: { color: "#e8372a", bg: "rgba(232,55,42,0.12)",  border: "rgba(232,55,42,0.35)",  icon: "🚨", glow: "rgba(232,55,42,0.20)"  },
+  hospital:  { color: "#4A90D9", bg: "rgba(74,144,217,0.12)", border: "rgba(74,144,217,0.35)", icon: "🏥", glow: "rgba(74,144,217,0.20)" },
+  evacuation:{ color: "#00c8e0", bg: "rgba(0,200,224,0.12)",  border: "rgba(0,200,224,0.35)",  icon: "🏫", glow: "rgba(0,200,224,0.20)"  },
 };
 
 const CATEGORY_ORDER: Array<"emergency" | "hospital" | "evacuation"> = ["emergency", "hospital", "evacuation"];
@@ -84,6 +88,7 @@ function createIcon(category: string, isSelected = false) {
 
 export default function CitizenMap() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [flyTarget, setFlyTarget]     = useState<[number, number] | null>(null);
   const [search, setSearch]           = useState("");
   const [activeFilter, setFilter]     = useState<string | null>(null);
@@ -92,6 +97,10 @@ export default function CitizenMap() {
 
   const markerInstancesRef = useRef<Record<number, L.Marker>>({});
   const cardRefs = useRef<Record<number, HTMLDivElement>>({});
+
+  // Translated category label helper — falls back gracefully via t()'s
+  // own English fallback if a key is ever missing.
+  const catLabel = (cat: string) => t(`map.categories.${cat}`);
 
   function handleSelect(loc: Location) {
     setSelectedId(loc.id);
@@ -610,7 +619,7 @@ export default function CitizenMap() {
         {/* ── TOPBAR WITH BACK BUTTON ── */}
         <div className="fl-topbar">
           <button className="fl-back-btn" onClick={() => navigate(-1)}>
-            ← Back to Dashboard
+            ← {t("map.backBtn")}
           </button>
         </div>
 
@@ -620,8 +629,8 @@ export default function CitizenMap() {
             <div className="fl-eyebrow">
             
             </div>
-            <h1>Find Help <span className="accent">Near You</span></h1>
-            <p className="fl-header-sub">Emergency services, hospitals &amp; evacuation centers across Dumaguete City</p>
+            <h1>{t("map.titleStart")} <span className="accent">{t("map.titleAccent")}</span></h1>
+            <p className="fl-header-sub">{t("map.subtitle")}</p>
           </div>
           <div className="fl-header-stats">
             {CATEGORY_ORDER.map((cat) => (
@@ -632,14 +641,14 @@ export default function CitizenMap() {
             ))}
             <div className="fl-hstat">
               <div className="fl-hstat-val">{LOCATIONS.length}</div>
-              <div className="fl-hstat-label">Total</div>
+              <div className="fl-hstat-label">{t("map.statTotal")}</div>
             </div>
           </div>
         </header>
 
         {/* ── FILTER BAR ── */}
         <div className="fl-filterbar">
-          <span className="fl-filter-label">Filter</span>
+          <span className="fl-filter-label">{t("map.filterLabel")}</span>
           <button
             className="fl-pill"
             onClick={() => setFilter(null)}
@@ -648,7 +657,7 @@ export default function CitizenMap() {
               border: `1px solid ${!activeFilter ? "rgba(0,200,224,0.38)" : "rgba(0,200,224,0.09)"}`,
               color: !activeFilter ? "#00c8e0" : "rgba(160,200,224,0.38)",
             }}
-          >All ({LOCATIONS.length})</button>
+          >{t("map.filterAll")} ({LOCATIONS.length})</button>
           {CATEGORY_ORDER.map((cat) => {
             const cfg = CAT_CONFIG[cat];
             const active = activeFilter === cat;
@@ -663,7 +672,7 @@ export default function CitizenMap() {
                 }}
               >
                 <span className="fl-pill-dot" style={{ background: cfg.color }} />
-                {cfg.icon} {cfg.label}
+                {cfg.icon} {catLabel(cat)}
               </button>
             );
           })}
@@ -679,14 +688,14 @@ export default function CitizenMap() {
               <span className="fl-search-icon">🔍</span>
               <input
                 type="text"
-                placeholder="Search facilities or addresses…"
+                placeholder={t("map.searchPlaceholder")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="fl-search-input"
               />
             </div>
             <div className="fl-sidebar-meta">
-              Showing <span>{filtered.length}</span> of {LOCATIONS.length} facilities
+              {t("map.showingPrefix")} <span>{filtered.length}</span> {t("map.showingOf")} {LOCATIONS.length} {t("map.showingSuffix")}
             </div>
 
             <div className="fl-list">
@@ -700,7 +709,7 @@ export default function CitizenMap() {
                     {idx > 0 && <div className="fl-cat-divider" />}
                     <div className="fl-cat-header">
                       <div className="fl-cat-dot" style={{ background: cfg.color }} />
-                      <span className="fl-cat-title" style={{ color: cfg.color }}>{cfg.icon} {cfg.label}</span>
+                      <span className="fl-cat-title" style={{ color: cfg.color }}>{cfg.icon} {catLabel(cat)}</span>
                       <span className="fl-cat-badge">{items.length}</span>
                     </div>
                     {items.map((loc) => (
@@ -723,7 +732,7 @@ export default function CitizenMap() {
                           <button
                             className="fl-card-nav-btn"
                             onClick={(e) => { e.stopPropagation(); openGoogleMaps(loc.lat, loc.lng); }}
-                          >Navigate →</button>
+                          >{t("map.navigateBtn")} →</button>
                         </div>
                       </div>
                     ))}
@@ -733,7 +742,7 @@ export default function CitizenMap() {
               {filtered.length === 0 && (
                 <div className="fl-empty">
                   <div className="fl-empty-icon">🔍</div>
-                  No facilities match your search.
+                  {t("map.emptyTitle")}
                 </div>
               )}
             </div>
@@ -776,7 +785,7 @@ export default function CitizenMap() {
                     <Popup minWidth={230} maxWidth={280}>
                       <div style={{ fontFamily: "'Inter', sans-serif" }}>
                         <div className="fl-popup-head">
-                          <div className="fl-popup-cat" style={{ color: cfg.color }}>{cfg.icon} {cfg.label}</div>
+                          <div className="fl-popup-cat" style={{ color: cfg.color }}>{cfg.icon} {catLabel(loc.category)}</div>
                           <div className="fl-popup-name">{loc.label}</div>
                         </div>
                         <div className="fl-popup-body">
@@ -786,7 +795,7 @@ export default function CitizenMap() {
                             <a href={`tel:${loc.phone.replace(/[^0-9+]/g, "")}`} className="fl-popup-phone" style={{ color: cfg.color }}>{loc.phone}</a>
                           </div>
                           <button onClick={() => openGoogleMaps(loc.lat, loc.lng)} className="fl-popup-btn" style={{ background: cfg.color }}>
-                            🗺️ Get Directions
+                            🗺️ {t("map.getDirections")}
                           </button>
                         </div>
                       </div>
@@ -797,14 +806,14 @@ export default function CitizenMap() {
             </MapContainer>
 
             <div className="fl-map-legend">
-              <div className="fl-legend-title">Map Legend</div>
+              <div className="fl-legend-title">{t("map.legendTitle")}</div>
               {CATEGORY_ORDER.map((cat) => {
                 const cfg = CAT_CONFIG[cat];
                 const count = filtered.filter((l) => l.category === cat).length;
                 return (
                   <div key={cat} className="fl-legend-row">
                     <div className="fl-legend-dot" style={{ background: cfg.color }} />
-                    <span>{cfg.icon} {cfg.label}</span>
+                    <span>{cfg.icon} {catLabel(cat)}</span>
                     <span className="fl-legend-n">{count}</span>
                   </div>
                 );
@@ -814,9 +823,9 @@ export default function CitizenMap() {
             <div className="fl-live-badge">
               <div className="fl-live-row">
                 <div className="fl-live-dot" />
-                <div className="fl-live-title">Dumaguete Coastal Watch</div>
+                <div className="fl-live-title">{t("map.liveTitle")}</div>
               </div>
-              <div className="fl-live-sub">Live map — all {LOCATIONS.length} facilities active</div>
+              <div className="fl-live-sub">{t("map.liveSubPrefix")} {LOCATIONS.length} {t("map.liveSubSuffix")}</div>
             </div>
 
             <button

@@ -1,4 +1,5 @@
 // src/citizen/CitizenAbout.tsx
+import { useLanguage } from "../context/LanguageContext";
 import { Link } from "react-router-dom";
 import pagesBackground from "../assets/pagesbackground.png";
 import {
@@ -336,6 +337,7 @@ const pillars = [
 
 const features = [
   {
+    id: "contacts",
     icon: <FaPhoneAlt />,
     label: "Verified Contacts",
     detail: "Curated, regularly updated emergency hotlines for hospitals, barangay offices, and city-wide disaster response units.",
@@ -344,6 +346,7 @@ const features = [
     border: "rgba(46,204,143,.22)",
   },
   {
+    id: "guidelines",
     icon: <FaShieldAlt />,
     label: "Safety Guidelines",
     detail: "Practical, barangay-level preparedness tips covering typhoons, floods, fires, and other common local emergencies.",
@@ -352,6 +355,7 @@ const features = [
     border: "rgba(123,158,255,.22)",
   },
   {
+    id: "reporting",
     icon: <FaClipboardList />,
     label: "Incident Reporting",
     detail: "A fast, accessible reporting form that lets residents alert local responders directly — no delays, no confusion.",
@@ -360,6 +364,7 @@ const features = [
     border: "rgba(255,107,107,.22)",
   },
   {
+    id: "partners",
     icon: <FaHandshake />,
     label: "Partner Network",
     detail: "Coordinated with CDRRMO, Philippine Red Cross, Bureau of Fire Protection, and other key government agencies.",
@@ -379,6 +384,11 @@ const partners = [
 ];
 
 export default function CitizenAbout() {
+  // Consumes the active Navbar/Header language — any selector change re-renders
+  // this component and re-evaluates every t() call below.
+  const { language, t, tList } = useLanguage();
+  void tList;
+  const locale = language === "tl" ? "fil-PH" : "en";
   return (
     <>
       <style>{CSS}</style>
@@ -396,40 +406,36 @@ export default function CitizenAbout() {
           <section className="ca-hero">
             <div className="ca-hero-tag">
               <span className="ca-hero-dot" />
-              About Us
+              {t("about.heroTitle")}
             </div>
             <h1 className="ca-hero-heading">
-              About<br />
+              {t("about.heroTitle")}<br />
               <em>DumaSafe</em>Guide
             </h1>
             <p className="ca-hero-sub">
-              A web-based public safety and emergency reporting system built for
-              Dumaguete City — consolidating everything you need in one place.
+              {t("about.heroSub")}
             </p>
             <div className="ca-meta">
               <span className="ca-meta-dot" />
-              Serving Dumaguete City · Est. 2025
+              {t("about.metaText")}
             </div>
           </section>
 
           {/* ── What is DSG ── */}
           <div className="ca-sec">
-            <span className="ca-sec-label">Overview</span>
+            <span className="ca-sec-label">{t("history.overview")}</span>
             <span className="ca-sec-line" />
           </div>
           <div className="ca-intro" style={{ marginBottom: 32 }}>
-            <div className="ca-intro-eyebrow">What is DumaSafeGuide?</div>
+            <div className="ca-intro-eyebrow">{t("about.introLabel")}</div>
             <p className="ca-intro-text">
-              <strong>DumaSafeGuide (DSG)</strong> is a web-based public safety and emergency reporting
-              system designed specifically for <strong>Dumaguete City</strong>. It consolidates verified
-              emergency contacts, safety tips, preparedness guidelines, and reporting features into
-              one accessible platform — so that when seconds matter, you're never searching for answers.
+              {t("about.introText")}
             </p>
           </div>
 
           {/* ── Mission & Vision ── */}
           <div className="ca-sec">
-            <span className="ca-sec-label">Mission &amp; Vision</span>
+            <span className="ca-sec-label">{t("about.pillarsLabel")}</span>
             <span className="ca-sec-line" />
           </div>
           <div className="ca-pillars" style={{ marginBottom: 32 }}>
@@ -441,26 +447,26 @@ export default function CitizenAbout() {
               >
                 <div className="ca-pillar-top">
                   <div className="ca-pillar-icon-wrap">{p.icon}</div>
-                  <span className="ca-pillar-tag">{p.tag}</span>
+                  <span className="ca-pillar-tag">{t(`about.${p.id}.tag`, p.id === "mission" ? "Purpose" : "Future")}</span>
                 </div>
-                <div className="ca-pillar-title">{p.title}</div>
-                <p className="ca-pillar-body">{p.body}</p>
+                <div className="ca-pillar-title">{t(`about.${p.id}.title`, p.id === "mission" ? "Our Mission" : "Our Vision")}</div>
+                <p className="ca-pillar-body">{t(`about.${p.id}.body`, p.id === "mission" ? "To improve public safety awareness, enhance emergency accessibility, and support timely communication between the public and emergency service providers in Dumaguete City." : "A safer, more informed Dumaguete City where residents, students, and visitors can access reliable emergency information anytime, anywhere — without barriers.")}</p>
               </div>
             ))}
           </div>
 
           {/* ── What We Provide ── */}
           <div className="ca-sec">
-            <span className="ca-sec-label">What We Provide</span>
+            <span className="ca-sec-label">{t("about.featuresLabel")}</span>
             <span className="ca-sec-line" />
           </div>
           <div className="ca-features" style={{ marginBottom: 32 }}>
             <div className="ca-features-header">
-              <span className="ca-features-title">Platform Features</span>
-              <span className="ca-feat-count">{features.length} features</span>
+              <span className="ca-features-title">{t("about.featuresLabel")}</span>
+              <span className="ca-feat-count">{features.length} {t("about.featuresLabel", "What We Provide").toLocaleLowerCase(locale)}</span>
             </div>
             {features.map((f) => (
-              <div key={f.label} className="ca-feature">
+              <div key={f.id} className="ca-feature">
                 <div
                   className="ca-feat-icon"
                   style={{ "--fc": f.color, "--fi": f.bg, "--fb": f.border } as React.CSSProperties}
@@ -468,8 +474,8 @@ export default function CitizenAbout() {
                   {f.icon}
                 </div>
                 <div>
-                  <div className="ca-feat-label">{f.label}</div>
-                  <p className="ca-feat-detail">{f.detail}</p>
+                  <div className="ca-feat-label">{t(`about.features.${f.id}.label`, f.label)}</div>
+                  <p className="ca-feat-detail">{t(`about.features.${f.id}.detail`, f.detail)}</p>
                 </div>
               </div>
             ))}
@@ -477,11 +483,11 @@ export default function CitizenAbout() {
 
           {/* ── Partners ── */}
           <div className="ca-sec">
-            <span className="ca-sec-label">Partner Agencies</span>
+            <span className="ca-sec-label">{t("about.partnersLabel", "Our Partners")}</span>
             <span className="ca-sec-line" />
           </div>
           <div className="ca-partners" style={{ marginBottom: 32 }}>
-            <div className="ca-partners-eyebrow">Coordinated With</div>
+            <div className="ca-partners-eyebrow">{t("about.coordinatedWith", "Coordinated With")}</div>
             <div className="ca-partners-list">
               {partners.map((p) => (
                 <span key={p} className="ca-partner-badge">
@@ -495,11 +501,11 @@ export default function CitizenAbout() {
           {/* ── CTA ── */}
           <div className="ca-cta">
             <div className="ca-cta-text">
-              <h3>Need to report an emergency?</h3>
-              <p>Don't wait — use the incident reporting form to alert local responders immediately.</p>
+              <h3>{t("about.cta.title")}</h3>
+              <p>{t("about.cta.desc")}</p>
             </div>
             <Link to="/report" className="ca-cta-btn">
-              <FaFileAlt size={12} /> Report Now <FaChevronRight size={10} />
+              <FaFileAlt size={12} /> {t("about.cta.btn")} <FaChevronRight size={10} />
             </Link>
           </div>
 

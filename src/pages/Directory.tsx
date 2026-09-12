@@ -2,11 +2,18 @@ import { useState } from "react";
 import Footer from "../components/Footer";
 import { Link } from "react-router-dom";
 import directoryBg from "../assets/directorybg.png";
+import { useLanguage } from "../context/LanguageContext";
 
 interface PhoneEntry { label: string; number: string; }
 interface EmergencyAgency {
   agency: string; label: string; address: string; icon: string; accent: string;
   phones: PhoneEntry[]; facebook?: string; notes?: string;
+  /** Optional service category key (e.g. "utilities") localized via directory.categories. */
+  category?: string;
+  /** Availability key ("always" | "weekdays") localized via directory.hours. */
+  available?: string;
+  /** Dictionary base key (e.g. "directory.redCross") for localized name/description. */
+  translationKey?: string;
 }
 interface Hospital {
   name: string; address: string; icon: string; type: string;
@@ -18,9 +25,11 @@ const emergency: EmergencyAgency[] = [
   {
     agency: "PNP", label: "Police",
     address: "Camp Leon Kilat, Dumaguete City", icon: "🚔", accent: "#4A90D9",
+    category: "lawEnforcement",
     phones: [
       { label: "National Hotline", number: "911" },
       { label: "Local Hotline",    number: "116" },
+      { label: "Hotline",          number: "117" },
       { label: "CRUZTELCO 1",      number: "(035) 225-1766" },
       { label: "CRUZTELCO 2",      number: "(035) 225-1163" },
       { label: "Globe Mobile",     number: "0917 933 0022" },
@@ -33,11 +42,13 @@ const emergency: EmergencyAgency[] = [
   {
     agency: "BFP", label: "Fire Dept.",
     address: "Real St, Dumaguete City", icon: "🔥", accent: "#e8372a",
+    category: "fireSafety",
     phones: [
       { label: "Emergency",      number: "160" },
+      { label: "Landline",       number: "(035) 225-2025" },
       { label: "CRUZTELCO",      number: "(035) 225-3445" },
-      { label: "Globe Landline", number: "(035) 422-9672" },
-      { label: "Globe Mobile",   number: "0977 198 1900" },
+      { label: "Globe Landline", number: "(035) 421-0224" },
+      { label: "Globe Mobile",   number: "0917 822 0043" },
       { label: "Smart Mobile",   number: "0961 199 8377" },
     ],
     facebook: "DUMAGUETECITY FIRESTATION",
@@ -46,6 +57,7 @@ const emergency: EmergencyAgency[] = [
   {
     agency: "CDRRMO", label: "City DRRM",
     address: "City Hall Compound, Dumaguete City", icon: "🛡️", accent: "#e8b830",
+    category: "emergencyRescue",
     phones: [
       { label: "Emergency 348",  number: "348" },
       { label: "Admin Landline", number: "(035) 226-3483" },
@@ -58,7 +70,10 @@ const emergency: EmergencyAgency[] = [
   {
     agency: "LDRRMO", label: "Local DRRM",
     address: "Dumaguete City (Provincial)", icon: "⛑️", accent: "#00c8e0",
+    category: "emergencyRescue", translationKey: "directory.ldrrmo",
     phones: [
+      { label: "Hotline",       number: "(035) 225-3775" },
+      { label: "Rescue",        number: "(035) 422-911" },
       { label: "Province DRRM", number: "(035) 422-3636" },
       { label: "Rescue 348",    number: "(035) 421-5073" },
     ],
@@ -67,6 +82,7 @@ const emergency: EmergencyAgency[] = [
   {
     agency: "ONE Rescue", label: "EMS / Ambulance",
     address: "Oriental Negros Emergency Rescue Foundation, Inc.", icon: "🚑", accent: "#e8b830",
+    category: "emergencyMedical",
     phones: [
       { label: "CRUZTELCO",      number: "(035) 225-9110" },
       { label: "Globe Landline", number: "(035) 422-9110" },
@@ -79,6 +95,7 @@ const emergency: EmergencyAgency[] = [
   {
     agency: "Coast Guard", label: "Sea Rescue",
     address: "Dumaguete Boulevard, Dumaguete City", icon: "⚓", accent: "#00c8e0",
+    category: "emergencyRescue",
     phones: [
       { label: "Station", number: "(035) 422-6541" },
       { label: "Mobile",  number: "0968 771 2455" },
@@ -88,22 +105,48 @@ const emergency: EmergencyAgency[] = [
   {
     agency: "NORECO II", label: "Power / Electric",
     address: "Dumaguete City", icon: "⚡", accent: "#a78bfa",
+    category: "utilities",
     phones: [
       { label: "CRUZTELCO",      number: "(035) 225-4830" },
       { label: "Globe Landline", number: "(035) 422-6522" },
-      { label: "Globe Mobile",   number: "0917 322 4237" },
+      { label: "Globe Mobile",   number: "0917-322-2114" },
     ],
     facebook: "NORECO II",
     notes: "For power outages, downed lines, and electrical emergencies",
   },
   {
-    agency: "Metro Water", label: "Water District",
+    agency: "DCWD", label: "Water District",
     address: "Dumaguete City", icon: "💧", accent: "#38bdf8",
+    category: "utilities", translationKey: "directory.waterDistrict",
     phones: [
+      { label: "Hotline",   number: "(035) 225-2374" },
+      { label: "Alt",       number: "(035) 422-4025" },
       { label: "Office",    number: "(035) 422-6951" },
       { label: "Emergency", number: "0998 847 5656" },
     ],
-    notes: "Metro Dumaguete Water District — supply interruptions & pipe emergencies",
+    notes: "Dumaguete City Water District — supply interruptions & pipe emergencies",
+  },
+  {
+    agency: "City Health Office", label: "Public Health",
+    address: "Dumaguete City", icon: "🏥", accent: "#2ECC8F",
+    category: "medical", available: "weekdays", translationKey: "directory.cityHealth",
+    phones: [
+      { label: "Trunkline", number: "(035) 225-0211" },
+    ],
+    notes: "Public health services, medical consultations, and sanitation programs",
+  },
+  {
+    agency: "Red Cross", label: "PRC Negros Oriental",
+    address: "Real St, Dumaguete City, Negros Oriental", icon: "➕", accent: "#e8372a",
+    category: "emergencyMedical", available: "always", translationKey: "directory.redCross",
+    phones: [
+      { label: "Hotline",    number: "(035) 225-2821" },
+      { label: "Mobile",     number: "0917-700-7722" },
+      { label: "Landline 1", number: "(035) 225-2835" },
+      { label: "Landline 2", number: "(035) 522-2815" },
+    ],
+    facebook: "prcnegrosoriental",
+    notes: "Emergency blood supply, ambulance services, and disaster response.",
   },
 ];
 
@@ -215,6 +258,11 @@ function PhoneLink({ number, className }: { number: string; className: string })
 }
 
 export default function Directory() {
+  // Consumes the active Navbar/Header language — any selector change re-renders
+  // this page and re-evaluates every t() call and language-aware helper below.
+  const { language, t, tList } = useLanguage();
+  void tList;
+
   const [bgySearch,   setBgySearch]   = useState("");
   const [emergSearch, setEmergSearch] = useState("");
   const [hospSearch,  setHospSearch]  = useState("");
@@ -459,24 +507,21 @@ export default function Directory() {
           {/* Hero */}
           <section className="dr-hero">
             <h1>
-              Stay <span className="accent">Connected</span>,<br />
-              Stay <span className="accent">Safe</span>
+              {t("directory.hero.line1")} <span className="accent">{t("directory.hero.line1Accent")}</span>,<br />
+              {t("directory.hero.line2")} <span className="accent">{t("directory.hero.line2Accent")}</span>
             </h1>
-            <p className="dr-hero-sub">
-              All critical contacts for Dumaguete City — landlines and mobile numbers
-              for emergency services, hospitals, and every barangay hotline in one place.
-            </p>
+            <p className="dr-hero-sub">{t("directory.hero.sub")}</p>
           </section>
 
           {/* Universal 911 banner */}
           <div className="dr-banner">
-            <div className="dr-banner-label">🚨 Universal Emergency</div>
+            <div className="dr-banner-label">{t("directory.banner.label")}</div>
             <div className="dr-banner-pills">
-              <a href="tel:911"         className="dr-banner-pill">📞 911 — All Emergencies</a>
-              <a href="tel:116"         className="dr-banner-pill">🚔 116 — PNP Police</a>
-              <a href="tel:160"         className="dr-banner-pill">🔥 160 — BFP Fire</a>
-              <a href="tel:09367954163" className="dr-banner-pill">🛡️ 0936 795 4163 — CDRRMO</a>
-              <a href="tel:09055186917" className="dr-banner-pill">🚑 0905 518 6917 — ONE Rescue</a>
+              <a href="tel:911"         className="dr-banner-pill">📞 911 — {t("directory.banner.allEmergencies")}</a>
+              <a href="tel:116"         className="dr-banner-pill">🚔 116 — {t("directory.banner.pnpPolice")}</a>
+              <a href="tel:160"         className="dr-banner-pill">🔥 160 — {t("directory.banner.bfpFire")}</a>
+              <a href="tel:09367954163" className="dr-banner-pill">🛡️ 0936 795 4163 — {t("directory.banner.cdrrmo")}</a>
+              <a href="tel:09055186917" className="dr-banner-pill">🚑 0905 518 6917 — {t("directory.banner.oneRescue")}</a>
             </div>
           </div>
 
@@ -484,10 +529,10 @@ export default function Directory() {
           <div className="dr-disclaimer">
             <span className="dr-disclaimer-icon">ℹ️</span>
             <p className="dr-disclaimer-text">
-              <strong>911, 116, and 160 are free to call from any mobile or landline</strong>{" "}
-              in the Philippines — no load required, no charges. Mobile numbers (09xx) and
-              landlines (035) may incur standard call rates. When in doubt, dial{" "}
-              <span className="red">911</span> first.
+              <strong>{t("directory.disclaimer.bold")}</strong>{" "}
+              {t("directory.disclaimer.rest")}{" "}
+              <span className="red">{t("directory.disclaimer.red")}</span>{" "}
+              {t("directory.disclaimer.end")}
             </p>
           </div>
 
@@ -495,9 +540,9 @@ export default function Directory() {
           <div id="city" className="dr-section">
             <div className="dr-section-head">
               <span className="dr-section-icon">🚨</span>
-              <h2>Emergency Services</h2>
+              <h2>{t("directory.emergency.title")}</h2>
               <span className="dr-section-line" />
-              <span className="dr-section-count">{filteredEmergency.length} agencies</span>
+              <span className="dr-section-count">{filteredEmergency.length} {t("directory.emergency.countLabel")}</span>
             </div>
 
             {/* 🔍 Emergency search bar */}
@@ -506,29 +551,39 @@ export default function Directory() {
               <input
                 type="text"
                 className="dr-search-input"
-                placeholder="Search agency, number, or service type…"
+                placeholder={t("directory.emergency.searchPlaceholder")}
                 value={emergSearch}
                 onChange={(e) => setEmergSearch(e.target.value)}
-                aria-label="Search emergency services"
+                aria-label={t("directory.emergency.title")}
               />
               {emergSearch && (
-                <button className="dr-search-clear" onClick={() => setEmergSearch("")} aria-label="Clear search">×</button>
+                <button className="dr-search-clear" onClick={() => setEmergSearch("")} aria-label={language === "tl" ? "I-clear ang paghahanap" : "Clear search"}>×</button>
               )}
             </div>
 
             {filteredEmergency.length === 0 ? (
-              <p className="dr-search-empty">No emergency service matches your search.</p>
+              <p className="dr-search-empty">{t("directory.emergency.emptyText")}</p>
             ) : (
               <div className="dr-grid-emergency">
-                {filteredEmergency.map((item) => (
+                {filteredEmergency.map((item) => {
+                  // Localized display strings (dictionary first, English data fallback).
+                  const agencyName = item.translationKey ? t(`${item.translationKey}.name`, item.agency) : item.agency;
+                  const agencyCat = item.category ? t(`directory.categories.${item.category}`, item.label) : item.label;
+                  const agencyNotes = item.translationKey ? t(`${item.translationKey}.description`, item.notes ?? "") : item.notes;
+                  return (
                   <div
                     key={item.agency}
                     className="dr-emerg-card"
                     style={{ "--accent": item.accent, "--accent-dim": `${item.accent}18` } as React.CSSProperties}
                   >
                     <div className="dr-emerg-icon">{item.icon}</div>
-                    <div className="dr-emerg-agency">{item.agency}</div>
-                    <div className="dr-emerg-label">{item.label}</div>
+                    <div className="dr-emerg-agency">{agencyName}</div>
+                    <div className="dr-emerg-label">{agencyCat}</div>
+                    {item.available && (
+                      <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.10em", color: "#2ECC8F", marginBottom: "10px" }}>
+                        🕒 {t(`directory.hours.${item.available}`, item.available)}
+                      </div>
+                    )}
                     <div className="dr-phone-list">
                       {item.phones.map((p, i) => {
                         const isMobile  = p.number.startsWith("09") || p.number.startsWith("+639");
@@ -546,17 +601,18 @@ export default function Directory() {
                         );
                       })}
                     </div>
-                    {item.notes && <p className="dr-emerg-note">{item.notes}</p>}
+                    {agencyNotes && <p className="dr-emerg-note">{agencyNotes}</p>}
                     <div className="dr-card-actions">
                       <a href={`tel:${cleanPhone(item.phones[0].number)}`} className="dr-act-btn dr-act-call">
-                        📞 Call Now
+                        📞 {t("directory.actions.callNow")}
                       </a>
                       <button className="dr-act-btn dr-act-nav" onClick={() => openMaps(`${item.agency} ${item.address}`)}>
-                        📍 Map
+                        📍 {t("directory.actions.map")}
                       </button>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -565,9 +621,9 @@ export default function Directory() {
           <div id="hospitals" className="dr-section">
             <div className="dr-section-head">
               <span className="dr-section-icon">🏥</span>
-              <h2>Hospitals &amp; Medical Facilities</h2>
+              <h2>{t("directory.hospitals.title")}</h2>
               <span className="dr-section-line" />
-              <span className="dr-section-count">{filteredHospitals.length} facilities</span>
+              <span className="dr-section-count">{filteredHospitals.length} {t("directory.hospitals.countLabel")}</span>
             </div>
 
             {/* 🔍 Hospital search bar */}
@@ -576,28 +632,28 @@ export default function Directory() {
               <input
                 type="text"
                 className="dr-search-input"
-                placeholder="Search hospital name, address, or phone number…"
+                placeholder={t("directory.hospitals.searchPlaceholder")}
                 value={hospSearch}
                 onChange={(e) => setHospSearch(e.target.value)}
-                aria-label="Search hospitals"
+                aria-label={t("directory.hospitals.title")}
               />
               {hospSearch && (
-                <button className="dr-search-clear" onClick={() => setHospSearch("")} aria-label="Clear search">×</button>
+                <button className="dr-search-clear" onClick={() => setHospSearch("")} aria-label={language === "tl" ? "I-clear ang paghahanap" : "Clear search"}>×</button>
               )}
             </div>
 
             {filteredHospitals.length === 0 ? (
-              <p className="dr-search-empty">No hospital matches your search.</p>
+              <p className="dr-search-empty">{t("directory.hospitals.emptyText")}</p>
             ) : (
               <div className="dr-grid-hospital">
                 {filteredHospitals.map((h) => {
-                  const isGov = h.type.includes("Government");
+                  const isGov = h.type.includes("Government") || h.type.includes("Gobyerno");
                   return (
                     <div key={h.name} className="dr-hosp-card">
                       <div className="dr-hosp-top">
                         <div className="dr-hosp-tags">
                           <span className={`dr-hosp-tag${isGov ? " gov" : ""}`}>
-                            {isGov ? "Government" : "Private"}
+                            {isGov ? t("directory.hospitals.government") : t("directory.hospitals.private")}
                           </span>
                           <span className="dr-hosp-tag" style={{ color: "#a78bfa", borderColor: "rgba(167,139,250,0.25)" }}>
                             {h.type.split("—")[1]?.trim() || "Hospital"}
@@ -630,10 +686,10 @@ export default function Directory() {
                           className="dr-act-btn dr-act-call"
                           style={{ "--accent": "#A8D8FF", "--accent-dim": "rgba(168,216,255,0.10)" } as React.CSSProperties}
                         >
-                          📞 Call
+                          📞 {t("directory.actions.call")}
                         </a>
                         <button className="dr-act-btn dr-act-nav" onClick={() => openMaps(`${h.name} Dumaguete`)}>
-                          📍 Navigate
+                          📍 {t("directory.actions.navigate")}
                         </button>
                       </div>
                     </div>
@@ -647,44 +703,44 @@ export default function Directory() {
           <div id="barangays" className="dr-section">
             <div className="dr-section-head">
               <span className="dr-section-icon">🏘️</span>
-              <h2>Barangay Emergency Contacts</h2>
+              <h2>{t("directory.barangays.title")}</h2>
               <span className="dr-section-line" />
-              <span className="dr-section-count">{filteredBarangays.length} barangays</span>
+              <span className="dr-section-count">{filteredBarangays.length} {t("directory.barangays.countLabel")}</span>
             </div>
 
-            {/* 🔍 Barangay search bar (unchanged) */}
+            {/* 🔍 Barangay search bar */}
             <div className="dr-search-wrap">
               <span className="dr-search-icon">🔍</span>
               <input
                 type="text"
                 className="dr-search-input"
-                placeholder="Search barangay, hotline, or evacuation site…"
+                placeholder={t("directory.barangays.searchPlaceholder")}
                 value={bgySearch}
                 onChange={(e) => setBgySearch(e.target.value)}
-                aria-label="Search barangay emergency contacts"
+                aria-label={t("directory.barangays.title")}
               />
               {bgySearch && (
-                <button className="dr-search-clear" onClick={() => setBgySearch("")} aria-label="Clear search">×</button>
+                <button className="dr-search-clear" onClick={() => setBgySearch("")} aria-label={language === "tl" ? "I-clear ang paghahanap" : "Clear search"}>×</button>
               )}
             </div>
 
             <div className="dr-bgy-stats">
-              <div className="dr-bgy-stat"><span>{barangays.filter((b) => b.hotline).length}</span> with hotlines</div>
-              <div className="dr-bgy-stat"><span>{barangays.filter((b) => b.evacuation).length}</span> with evacuation sites</div>
-              <div className="dr-bgy-stat"><span>{barangays.filter((b) => !b.hotline && !b.evacuation).length}</span> no direct hotline</div>
+              <div className="dr-bgy-stat"><span>{barangays.filter((b) => b.hotline).length}</span> {t("directory.barangays.withHotlines")}</div>
+              <div className="dr-bgy-stat"><span>{barangays.filter((b) => b.evacuation).length}</span> {t("directory.barangays.withEvac")}</div>
+              <div className="dr-bgy-stat"><span>{barangays.filter((b) => !b.hotline && !b.evacuation).length}</span> {t("directory.barangays.noHotline")}</div>
             </div>
 
             {filteredBarangays.length === 0 ? (
-              <p className="dr-search-empty">No barangay matches your search.</p>
+              <p className="dr-search-empty">{t("directory.barangays.emptyText")}</p>
             ) : (
               <div className="dr-grid-barangay">
                 {filteredBarangays.map((bgy) => (
                   <div key={bgy.name} className="dr-bgy-card">
                     <div className="dr-bgy-name">{bgy.name}</div>
                     <div className="dr-bgy-badges">
-                      {bgy.hotline    && <span className="dr-bgy-badge dr-bgy-badge-hotline">📞 Hotline</span>}
-                      {bgy.evacuation && <span className="dr-bgy-badge dr-bgy-badge-evac">🏫 Evacuation</span>}
-                      {!bgy.hotline && !bgy.evacuation && <span className="dr-bgy-badge dr-bgy-badge-tbd">No Direct Hotline</span>}
+                      {bgy.hotline    && <span className="dr-bgy-badge dr-bgy-badge-hotline">📞 {t("directory.barangays.hotlineBadge")}</span>}
+                      {bgy.evacuation && <span className="dr-bgy-badge dr-bgy-badge-evac">🏫 {t("directory.barangays.evacBadge")}</span>}
+                      {!bgy.hotline && !bgy.evacuation && <span className="dr-bgy-badge dr-bgy-badge-tbd">{t("directory.barangays.tbdBadge")}</span>}
                     </div>
                     {bgy.hotline ? (
                       <div className="dr-bgy-info-row">
@@ -695,9 +751,9 @@ export default function Directory() {
                       <div className="dr-bgy-info-row">
                         <span className="dr-bgy-info-icon">⚠️</span>
                         <span className="dr-bgy-info-text">
-                          No direct hotline — call{" "}
+                          {t("directory.barangays.noDirectPrefix")}{" "}
                           <a href="tel:911" style={{ color: "#ff8a80", fontWeight: 500, textDecoration: "none" }}>911</a>
-                          {" "}or CDRRMO{" "}
+                          {" "}{t("directory.barangays.orCdrrmo")}{" "}
                           <a href="tel:09367954163" style={{ color: "#A8D8FF", fontWeight: 500, textDecoration: "none" }}>0936 795 4163</a>
                         </span>
                       </div>
@@ -709,7 +765,7 @@ export default function Directory() {
                       </div>
                     )}
                     <button className="dr-bgy-nav-btn" onClick={() => openMaps(`${bgy.name} Barangay Dumaguete City`)}>
-                      Navigate →
+                      {t("directory.barangays.navigate")} →
                     </button>
                   </div>
                 ))}

@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { FaMapMarkedAlt, FaUsers, FaLightbulb, FaPhoneAlt, FaEye, FaEyeSlash, FaShieldAlt } from "react-icons/fa";
 import { supabase } from "../js/supabase";
 import homepageBg from "../assets/homepage.bg.jpg";
+import { useLanguage } from "../context/LanguageContext";
+import { LanguageSelectModal } from "../components/LanguageSelectModal";
 
 
 // ── Cloudflare Turnstile site key ──
@@ -21,13 +23,9 @@ declare global {
 }
 
 function EmergencyRunner() {
+  const { t, tList } = useLanguage();
   const [dismissed, setDismissed] = useState(false);
-  const alerts = [
-    "🔴  ADVISORY: Typhoon Signal No. 1 raised for Negros Occidental — monitor official updates",
-    "🚨  INCIDENT: Vehicular accident reported along Lacson St — avoid the area",
-    "⚠️  REMINDER: Hotline 911 is active 24/7 — do not use for non-emergencies",
-    "🔴  ADVISORY: Flash flood watch in effect for low-lying barangays — stay alert",
-  ];
+  const alerts = tList("ticker.alerts");
   if (dismissed) return null;
   return (
     <>
@@ -158,7 +156,7 @@ function EmergencyRunner() {
       <div className="hp-runner" role="marquee" aria-label="Emergency alerts ticker">
         <div className="hp-runner-badge">
           <span className="hp-runner-dot" aria-hidden="true" />
-          <span className="hp-runner-badge-label">Live</span>
+          <span className="hp-runner-badge-label">{t("common.live")}</span>
         </div>
         <div className="hp-runner-track">
           <div className="hp-runner-tape" aria-hidden="true">
@@ -176,7 +174,7 @@ function EmergencyRunner() {
               <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.68A2 2 0 012 .82h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
             </svg>
           </div>
-          <span className="hp-911-label">Emergency</span>
+          <span className="hp-911-label">{t("common.emergency")}</span>
           <span className="hp-911-divider" aria-hidden="true" />
           <span className="hp-911-number">911</span>
         </a>
@@ -191,46 +189,18 @@ function EmergencyRunner() {
   );
 }
 
-const cards = [
-  {
-    icon: <FaMapMarkedAlt size={28} />,
-    label: "Safety Map",
-    desc: "View live incident zones and safe routes",
-    to: "/map",
-    accent: "#00c8e0",
-    tag: "LIVE",
-  },
-  {
-    icon: <FaUsers size={28} />,
-    label: "Directory",
-    desc: "Barangay officials and contact persons",
-    to: "/directory",
-    accent: "#4A90D9",
-    tag: "PEOPLE",
-  },
-  {
-    icon: <FaLightbulb size={28} />,
-    label: "Safety Tips",
-    desc: "Preparedness guides for every situation",
-    to: "/safetytips",
-    accent: "#e8b830",
-    tag: "TIPS",
-  },
-  {
-    icon: <FaPhoneAlt size={28} />,
-    label: "Emergency Contacts",
-    desc: "Reach responders and hotlines instantly",
-    to: "/resources",
-    accent: "#e8372a",
-    tag: "URGENT",
-  },
-];
+const CARD_META = [
+  { icon: <FaMapMarkedAlt size={28} />, to: "/map", accent: "#00c8e0", key: "map" },
+  { icon: <FaUsers size={28} />, to: "/directory", accent: "#4A90D9", key: "directory" },
+  { icon: <FaLightbulb size={28} />, to: "/safetytips", accent: "#e8b830", key: "tips" },
+  { icon: <FaPhoneAlt size={28} />, to: "/resources", accent: "#e8372a", key: "contacts" },
+] as const;
 
-const STATS = [
-  { value: 30, label: "Barangays Covered", suffix: "" },
-  { value: 24, label: "Hour Response", suffix: "/7" },
-  { value: 5, label: "Avg. Response (min)", suffix: "m" },
-];
+const STAT_META = [
+  { key: "barangays", value: 30, suffix: "" },
+  { key: "hourResponse", value: 24, suffix: "/7" },
+  { key: "avgResponse", value: 5, suffix: "m" },
+] as const;
 
 const ROLE_REDIRECT: Record<string, string> = {
   admin: "/admin/dashboard",
@@ -285,6 +255,7 @@ function StatCounter({
 }
 
 export default function Homepage() {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -378,11 +349,11 @@ export default function Homepage() {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      setError("Please enter your email and password.");
+      setError(t("auth.errMissingFields"));
       return;
     }
     if (!captchaToken) {
-      setError("Please complete the CAPTCHA to verify you're human.");
+      setError(t("auth.errNeedCaptcha"));
       return;
     }
     setLoading(true);
@@ -395,7 +366,7 @@ export default function Homepage() {
           options: { captchaToken },
         });
       if (authError || !authData.user) {
-        setError(authError?.message || "Login failed.");
+        setError(authError?.message || t("auth.errLoginFailed"));
         setLoading(false);
         setCaptchaToken("");
         if (window.turnstile && captchaWidgetId.current) {
@@ -416,7 +387,7 @@ export default function Homepage() {
           .eq("id", authData.user.id)
           .single();
         if (!retryProfile?.role) {
-          setError("Profile not ready yet. Please wait a moment and try again.");
+          setError(t("auth.errProfileNotReady"));
           setLoading(false);
           return;
         }
@@ -431,7 +402,7 @@ export default function Homepage() {
       await new Promise((res) => setTimeout(res, 100));
       navigate(ROLE_REDIRECT[role] ?? "/citizen/dashboard", { replace: true });
     } catch (err: any) {
-      setError(err.message || "Login failed.");
+      setError(err.message || t("auth.errLoginFailed"));
       setLoading(false);
       setCaptchaToken("");
       if (window.turnstile && captchaWidgetId.current) {
@@ -442,6 +413,7 @@ export default function Homepage() {
 
   return (
     <>
+      <LanguageSelectModal />
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap');
 
@@ -1353,24 +1325,21 @@ export default function Homepage() {
             <section className="hp-hero">
               <div className="hp-hero-copy">
                 <h1>
-                  Emergency
+                  {t("hero.titleLine1")}
                   <br />
-                  <span className="accent">Response</span> at Your Fingertips
+                  <span className="accent">{t("hero.titleAccent")}</span> {t("hero.titleRest")}
                 </h1>
-                <p className="hp-hero-sub">
-                  A centralized safety platform for the City of Gentle People.
-                  Fast access to hotlines, facilities, and safety guidelines.
-                </p>
+                <p className="hp-hero-sub">{t("hero.subtitle")}</p>
                 <Link to="/report" className="hp-hero-cta">
-                  Report a Live Incident
+                  {t("hero.cta")}
                   <span className="hp-hero-cta-arrow">→</span>
                 </Link>
                 <div className="hp-stats" ref={statsRef}>
-                  {STATS.map((s) => (
+                  {STAT_META.map((s) => (
                     <StatCounter
-                      key={s.label}
+                      key={s.key}
                       value={s.value}
-                      label={s.label}
+                      label={t(`stats.${s.key}`)}
                       suffix={s.suffix}
                       start={statsVisible}
                     />
@@ -1384,12 +1353,10 @@ export default function Homepage() {
                 <div className="hp-auth-watermark">
                   <FaShieldAlt />
                 </div>
-                <div className="hp-auth-title">Welcome Back</div>
-                <div className="hp-auth-subtitle">
-                  Login to access the DumaSafeGuide emergency dashboard.
-                </div>
+                <div className="hp-auth-title">{t("auth.welcomeTitle")}</div>
+                <div className="hp-auth-subtitle">{t("auth.welcomeSubtitle")}</div>
                 <div className="hp-auth-field">
-                  <label className="hp-auth-label">Email Address</label>
+                  <label className="hp-auth-label">{t("auth.emailLabel")}</label>
                   <input
                     className="hp-auth-input"
                     type="email"
@@ -1403,7 +1370,7 @@ export default function Homepage() {
                   />
                 </div>
                 <div className="hp-auth-field">
-                  <label className="hp-auth-label">Password</label>
+                  <label className="hp-auth-label">{t("auth.passwordLabel")}</label>
                   <div style={{ position: "relative", width: "100%" }}>
                     <input
                       className="hp-auth-input"
@@ -1445,10 +1412,10 @@ export default function Homepage() {
                 </div>
                 <div className="hp-auth-row">
                   <label className="hp-auth-remember">
-                    <input type="checkbox" aria-label="Remember me" /> Remember me
+                    <input type="checkbox" aria-label="Remember me" /> {t("auth.rememberMe")}
                   </label>
                   <Link to="/forgot-password" className="hp-auth-forgot">
-                    Forgot Password?
+                    {t("auth.forgotPassword")}
                   </Link>
                 </div>
                 {error && (
@@ -1464,28 +1431,28 @@ export default function Homepage() {
                   disabled={loading || !captchaToken}
                   aria-busy={loading}
                 >
-                  {loading ? "Signing in…" : "Login Account"}
+                  {loading ? t("auth.loggingIn") : t("auth.loginBtn")}
                 </button>
                 <div className="hp-auth-or">
                   <span className="hp-auth-or-line" />
-                  <span className="hp-auth-or-text">No account yet?</span>
+                  <span className="hp-auth-or-text">{t("auth.noAccount")}</span>
                   <span className="hp-auth-or-line" />
                 </div>
                 <Link to="/signup" className="hp-auth-create">
-                  Create Account →
+                  {t("auth.createAccount")}
                 </Link>
               </div>
             </section>
 
             {/* ── Quick Access Divider ── */}
             <div className="hp-divider">
-              <span className="hp-divider-label">Quick Access</span>
+              <span className="hp-divider-label">{t("common.quickAccess")}</span>
               <span className="hp-divider-line" />
             </div>
 
             {/* ── Cards Grid ── */}
             <div className="hp-grid">
-              {cards.map((card) => (
+              {CARD_META.map((card) => (
                 <Link
                   key={card.to}
                   to={card.to}
@@ -1499,12 +1466,12 @@ export default function Homepage() {
                     <div className="hp-card-icon" aria-hidden="true">
                       {card.icon}
                     </div>
-                    <span className="hp-card-tag">{card.tag}</span>
+                    <span className="hp-card-tag">{t(`cards.${card.key}.tag`)}</span>
                   </div>
-                  <div className="hp-card-title">{card.label}</div>
-                  <div className="hp-card-desc">{card.desc}</div>
+                  <div className="hp-card-title">{t(`cards.${card.key}.label`)}</div>
+                  <div className="hp-card-desc">{t(`cards.${card.key}.desc`)}</div>
                   <div className="hp-card-action">
-                    Explore <span aria-hidden="true">→</span>
+                    {t("common.explore")} <span aria-hidden="true">→</span>
                   </div>
                 </Link>
               ))}

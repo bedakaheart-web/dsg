@@ -277,10 +277,18 @@ export default function IncidentAnalytics() {
     fetchAll();
   }, []);
 
+  // Normalize statuses (DB values can vary in case or contain legacy values);
+  // unknown statuses roll into "other" so the donut ring always closes.
+  const normStatus = (s: unknown) => {
+    const v = String(s ?? "").toLowerCase().replace(/[\s_]+/g, "-");
+    return v === "pending" || v === "in-progress" || v === "inprogress" || v === "resolved" ? v.replace("inprogress", "in-progress") : "other";
+  };
+
   const total = incidents.length;
-  const pending  = incidents.filter((i) => i.status === "pending").length;
-  const inProg   = incidents.filter((i) => i.status === "in-progress").length;
-  const resolved = incidents.filter((i) => i.status === "resolved").length;
+  const pending  = incidents.filter((i) => normStatus(i.status) === "pending").length;
+  const inProg   = incidents.filter((i) => normStatus(i.status) === "in-progress").length;
+  const resolved = incidents.filter((i) => normStatus(i.status) === "resolved").length;
+  const other    = total - pending - inProg - resolved;
   const resRate  = total > 0 ? Math.round((resolved / total) * 100) : 0;
 
   // Monthly counts (last 6 months)
@@ -309,6 +317,7 @@ export default function IncidentAnalytics() {
     { label: "Resolved",    count: resolved, color: "#00B074" },
     { label: "In Progress", count: inProg,   color: "#FF9500" },
     { label: "Pending",     count: pending,  color: "#FF3B30" },
+    ...(other > 0 ? [{ label: "Other", count: other, color: "#9CA3AF" }] : []),
   ];
   const donutRadius = 50;
   const donutCircumference = 2 * Math.PI * donutRadius;

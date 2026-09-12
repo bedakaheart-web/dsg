@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../js/supabase";
+import { TranslatedDescription } from "../components/TranslatedDescription";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -7,6 +8,8 @@ type Incident = {
   id: string;
   type: string;
   description: string | null;
+  description_lang: string | null;
+  description_translated: string | null;
   location: string | null;
   address: string | null;
   reporter_name: string | null;
@@ -669,7 +672,7 @@ export default function IncidentsPage() {
     setLoading(true);
     const { data } = await supabase
       .from("reports")
-      .select("id,type,description,location,address,reporter_name,reporter_contact,status,evidence_url,created_at,responder_id,responder_notes,action_notes,resolution_type,resolved_at")
+      .select("id,type,description,description_lang,description_translated,location,address,reporter_name,reporter_contact,status,evidence_url,created_at,responder_id,responder_notes,action_notes,resolution_type,resolved_at")
       .eq("status", status)
       .order("created_at", { ascending: false });
     setIncidents(data ?? []);
@@ -727,7 +730,7 @@ export default function IncidentsPage() {
                 className={cls("ip-filter-btn", filter === f.key && filterActiveClass[f.key])}
                 onClick={() => setFilter(f.key)}
               >
-                {f.label}
+                {f.label} ({counts[f.key as keyof typeof counts] ?? 0})
               </button>
             ))}
           </div>
@@ -809,7 +812,14 @@ export default function IncidentsPage() {
                       </div>
                     </div>
 
-                    {inc.description && <div className="ip-desc">{inc.description}</div>}
+                    {inc.description && (
+  <TranslatedDescription
+    description={inc.description}
+    descriptionLang={inc.description_lang}
+    descriptionTranslated={inc.description_translated}
+    className="ip-desc"
+  />
+)}
 
                     {/* Resolution summary (resolved cards) */}
                     <ResolutionSummary inc={inc} />

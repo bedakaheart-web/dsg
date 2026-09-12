@@ -1,12 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
-import { useNavigate } from "react-router-dom";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import mapBg from "../assets/pagesbackground.png";
+import mapBg from "../assets/mapbg.png";
+import { useLanguage } from "../context/LanguageContext";
 
-// ── FIX 1: Leaflet default icon broken by bundlers (Vite/webpack) ──
-// Without this, markers show as broken images or don't appear at all.
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
@@ -43,12 +41,6 @@ const LOCATIONS: Location[] = [
   { id: 16, category: "evacuation", label: "City Central Elementary School",   address: "Poblacion 1, Dumaguete City",                    phone: "09264603953",     lat: 9.3072,  lng: 123.3058 },
 ];
 
-const CAT_CONFIG: Record<string, { color: string; bg: string; border: string; icon: string; label: string; glow: string }> = {
-  emergency: { color: "#e8372a", bg: "rgba(232,55,42,0.12)",  border: "rgba(232,55,42,0.35)",  icon: "🚨", label: "Emergency Services", glow: "rgba(232,55,42,0.20)"  },
-  hospital:  { color: "#4A90D9", bg: "rgba(74,144,217,0.12)", border: "rgba(74,144,217,0.35)", icon: "🏥", label: "Hospitals",          glow: "rgba(74,144,217,0.20)" },
-  evacuation:{ color: "#00c8e0", bg: "rgba(0,200,224,0.12)",  border: "rgba(0,200,224,0.35)",  icon: "🏫", label: "Evacuation Centers", glow: "rgba(0,200,224,0.20)"  },
-};
-
 const CATEGORY_ORDER: Array<"emergency" | "hospital" | "evacuation"> = ["emergency", "hospital", "evacuation"];
 
 function openGoogleMaps(lat: number, lng: number) {
@@ -63,27 +55,45 @@ function FlyTo({ target }: { target: [number, number] | null }) {
   return null;
 }
 
-function createIcon(category: string, isSelected = false) {
-  const cfg = CAT_CONFIG[category];
-  const size = isSelected ? 44 : 38;
-  return L.divIcon({
-    className: "",
-    html: `<div style="
-        width:${size}px;height:${size}px;border-radius:9999px;
-        background:${cfg.color};
-        display:flex;align-items:center;justify-content:center;
-        font-size:${isSelected ? 18 : 15}px;
-        border:${isSelected ? "3px" : "2px"} solid #0d1b2e;
-        box-shadow:0 2px 16px rgba(0,0,0,0.50),0 0 0 ${isSelected ? "5px" : "3px"} ${cfg.color}55;
-        ${isSelected ? "transform:scale(1.1)" : ""}
-      ">${cfg.icon}</div>`,
-    iconSize:   [size, size],
-    iconAnchor: [size / 2, size / 2],
-  });
+interface CitizenMapProps {
+  onBack?: () => void;
 }
 
-export default function CitizenMap() {
-  const navigate = useNavigate();
+export default function CitizenMap({ onBack }: CitizenMapProps = {}) {
+  // Note: `onBack` is kept in props for modal callers (CitizenDashboard passes
+  // it); in-page back navigation lives in the persistent CitizenLayout sidebar.
+  void onBack;
+  // Consumes the active Navbar/Header language — any selector change re-renders
+  // this component and re-evaluates every t() call below (including CAT_CONFIG).
+  const { language, t, tList } = useLanguage();
+  void tList;
+  void language;
+
+  const CAT_CONFIG: Record<string, { color: string; bg: string; border: string; icon: string; label: string; glow: string }> = {
+    emergency: { color: "#e8372a", bg: "rgba(232,55,42,0.12)",  border: "rgba(232,55,42,0.35)",  icon: "🚨", label: t("map.categories.emergency"), glow: "rgba(232,55,42,0.20)"  },
+    hospital:  { color: "#4A90D9", bg: "rgba(74,144,217,0.12)", border: "rgba(74,144,217,0.35)", icon: "🏥", label: t("map.categories.hospital"),  glow: "rgba(74,144,217,0.20)" },
+    evacuation:{ color: "#00c8e0", bg: "rgba(0,200,224,0.12)",  border: "rgba(0,200,224,0.35)",  icon: "🏫", label: t("map.categories.evacuation"), glow: "rgba(0,200,224,0.20)"  },
+  };
+
+  function createIcon(category: string, isSelected = false) {
+    const cfg = CAT_CONFIG[category];
+    const size = isSelected ? 44 : 38;
+    return L.divIcon({
+      className: "",
+      html: `<div style="
+          width:${size}px;height:${size}px;border-radius:9999px;
+          background:${cfg.color};
+          display:flex;align-items:center;justify-content:center;
+          font-size:${isSelected ? 18 : 15}px;
+          border:${isSelected ? "3px" : "2px"} solid #0d1b2e;
+          box-shadow:0 2px 16px rgba(0,0,0,0.50),0 0 0 ${isSelected ? "5px" : "3px"} ${cfg.color}55;
+          ${isSelected ? "transform:scale(1.1)" : ""}
+        ">${cfg.icon}</div>`,
+      iconSize:   [size, size],
+      iconAnchor: [size / 2, size / 2],
+    });
+  }
+
   const [flyTarget, setFlyTarget]     = useState<[number, number] | null>(null);
   const [search, setSearch]           = useState("");
   const [activeFilter, setFilter]     = useState<string | null>(null);
@@ -149,36 +159,10 @@ export default function CitizenMap() {
           33%      { transform: scale(1.09) translate(-12px,-8px); }
           66%      { transform: scale(1.07) translate(10px,-14px); }
         }
-
-        .fl-topbar {
-          position: relative; z-index: 100; flex-shrink: 0;
-          padding: 16px var(--page-px);
-          background: rgba(6,15,28,0.85);
-          border-bottom: 1px solid rgba(0,200,224,0.10);
-          backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-          display: flex; align-items: center; gap: 16px;
-          animation: slideDown 0.5s ease both;
-        }
         @keyframes slideDown {
           from { opacity:0; transform:translateY(-12px); }
           to   { opacity:1; transform:translateY(0); }
         }
-
-        .fl-back-btn {
-          display: inline-flex; align-items: center; gap: 8px;
-          padding: 8px 14px; border-radius: 8px;
-          background: rgba(0,200,224,0.08); border: 1px solid rgba(0,200,224,0.20);
-          color: #00c8e0; font-family: 'Inter', sans-serif; font-size: 13px;
-          font-weight: 500; letter-spacing: 0.03em;
-          cursor: pointer; transition: all 0.2s ease;
-          -webkit-tap-highlight-color: transparent;
-        }
-        .fl-back-btn:hover {
-          background: rgba(0,200,224,0.15);
-          border-color: rgba(0,200,224,0.35);
-          transform: translateX(-2px);
-        }
-        .fl-back-btn:active { transform: scale(0.97); }
 
         .fl-header {
           position: relative; z-index: 10; flex-shrink: 0;
@@ -447,7 +431,6 @@ export default function CitizenMap() {
           width: 100%; height: 100%; background: #0d1b2e;
         }
 
-        /* Leaflet popup styles */
         .leaflet-popup-content-wrapper {
           background: #ffffff !important; border: none !important;
           border-radius: 14px !important;
@@ -571,8 +554,6 @@ export default function CitizenMap() {
           .fl-map-legend { top: 10px; right: 10px; min-width: 150px; }
         }
         @media (max-width: 480px) {
-          .fl-topbar { padding: 12px 16px; }
-          .fl-back-btn { padding: 6px 10px; font-size: 12px; }
           .fl-header { padding: 12px 16px 10px; gap: 10px; }
           .fl-header h1 { font-size: 18px; }
           .fl-header-sub { display: none; }
@@ -590,7 +571,6 @@ export default function CitizenMap() {
           .fl-header h1 { font-size: 16px; }
           .fl-hstat-val { font-size: 13px; }
           .fl-hstat { min-width: 40px; padding: 5px 6px; }
-          .fl-back-btn { padding: 5px 8px; font-size: 11px; }
         }
 
         .fl-drawer-backdrop {
@@ -607,22 +587,15 @@ export default function CitizenMap() {
           <div className="fl-bg-overlay" />
         </div>
 
-        {/* ── TOPBAR WITH BACK BUTTON ── */}
-        <div className="fl-topbar">
-          <button className="fl-back-btn" onClick={() => navigate(-1)}>
-            ← Back to Dashboard
-          </button>
-        </div>
+        {/* Back navigation lives in the persistent CitizenLayout sidebar. */}
 
-        {/* ── HEADER ── */}
         <header className="fl-header">
           <div className="fl-header-left">
             <div className="fl-eyebrow">
-              <span className="fl-eyebrow-line" />
-              Facility Locator
+            
             </div>
-            <h1>Find Help <span className="accent">Near You</span></h1>
-            <p className="fl-header-sub">Emergency services, hospitals &amp; evacuation centers across Dumaguete City</p>
+            <h1>{t("map.titleStart")} <span className="accent">{t("map.titleAccent")}</span></h1>
+            <p className="fl-header-sub">{t("map.subtitle")}</p>
           </div>
           <div className="fl-header-stats">
             {CATEGORY_ORDER.map((cat) => (
@@ -633,14 +606,13 @@ export default function CitizenMap() {
             ))}
             <div className="fl-hstat">
               <div className="fl-hstat-val">{LOCATIONS.length}</div>
-              <div className="fl-hstat-label">Total</div>
+              <div className="fl-hstat-label">{t("map.statTotal")}</div>
             </div>
           </div>
         </header>
 
-        {/* ── FILTER BAR ── */}
         <div className="fl-filterbar">
-          <span className="fl-filter-label">Filter</span>
+          <span className="fl-filter-label">{t("map.filterLabel")}</span>
           <button
             className="fl-pill"
             onClick={() => setFilter(null)}
@@ -649,7 +621,7 @@ export default function CitizenMap() {
               border: `1px solid ${!activeFilter ? "rgba(0,200,224,0.38)" : "rgba(0,200,224,0.09)"}`,
               color: !activeFilter ? "#00c8e0" : "rgba(160,200,224,0.38)",
             }}
-          >All ({LOCATIONS.length})</button>
+          >{t("map.filterAll")} ({LOCATIONS.length})</button>
           {CATEGORY_ORDER.map((cat) => {
             const cfg = CAT_CONFIG[cat];
             const active = activeFilter === cat;
@@ -670,24 +642,22 @@ export default function CitizenMap() {
           })}
         </div>
 
-        {/* ── MAIN STAGE ── */}
         <div className="fl-stage">
           <div className={`fl-drawer-backdrop ${sidebarOpen ? "is-open" : ""}`} onClick={() => setSidebarOpen(false)} />
 
-          {/* ── SIDEBAR ── */}
           <aside className={`fl-sidebar ${sidebarOpen ? "is-open" : ""}`}>
             <div className="fl-search-wrap">
               <span className="fl-search-icon">🔍</span>
               <input
                 type="text"
-                placeholder="Search facilities or addresses…"
+                placeholder={t("map.searchPlaceholder")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="fl-search-input"
               />
             </div>
             <div className="fl-sidebar-meta">
-              Showing <span>{filtered.length}</span> of {LOCATIONS.length} facilities
+              {t("map.showingPrefix")} <span>{filtered.length}</span> {t("map.showingOf")} {LOCATIONS.length} {t("map.showingSuffix")}
             </div>
 
             <div className="fl-list">
@@ -724,7 +694,7 @@ export default function CitizenMap() {
                           <button
                             className="fl-card-nav-btn"
                             onClick={(e) => { e.stopPropagation(); openGoogleMaps(loc.lat, loc.lng); }}
-                          >Navigate →</button>
+                          >{t("map.navigateBtn")} →</button>
                         </div>
                       </div>
                     ))}
@@ -734,21 +704,19 @@ export default function CitizenMap() {
               {filtered.length === 0 && (
                 <div className="fl-empty">
                   <div className="fl-empty-icon">🔍</div>
-                  No facilities match your search.
+                  {t("map.emptyTitle")}
                 </div>
               )}
             </div>
 
             <div className="fl-scroll-hint">
               <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-              scroll
+              {t("map.scrollHint", "scroll")}
             </div>
           </aside>
 
-          {/* ── GLOWING DIVIDER ── */}
           <div className="fl-divider" />
 
-          {/* ── MAP PANEL ── */}
           <main className="fl-map-panel">
             <MapContainer
               center={[9.3077, 123.3054]}
@@ -787,7 +755,7 @@ export default function CitizenMap() {
                             <a href={`tel:${loc.phone.replace(/[^0-9+]/g, "")}`} className="fl-popup-phone" style={{ color: cfg.color }}>{loc.phone}</a>
                           </div>
                           <button onClick={() => openGoogleMaps(loc.lat, loc.lng)} className="fl-popup-btn" style={{ background: cfg.color }}>
-                            🗺️ Get Directions
+                            🗺️ {t("map.getDirections")}
                           </button>
                         </div>
                       </div>
@@ -798,7 +766,7 @@ export default function CitizenMap() {
             </MapContainer>
 
             <div className="fl-map-legend">
-              <div className="fl-legend-title">Map Legend</div>
+              <div className="fl-legend-title">{t("map.legendTitle")}</div>
               {CATEGORY_ORDER.map((cat) => {
                 const cfg = CAT_CONFIG[cat];
                 const count = filtered.filter((l) => l.category === cat).length;
@@ -815,15 +783,15 @@ export default function CitizenMap() {
             <div className="fl-live-badge">
               <div className="fl-live-row">
                 <div className="fl-live-dot" />
-                <div className="fl-live-title">Dumaguete Coastal Watch</div>
+                <div className="fl-live-title">{t("map.liveTitle")}</div>
               </div>
-              <div className="fl-live-sub">Live map — all {LOCATIONS.length} facilities active</div>
+              <div className="fl-live-sub">{t("map.liveSubPrefix")} {LOCATIONS.length} {t("map.liveSubSuffix")}</div>
             </div>
 
             <button
               className="fl-sidebar-toggle"
               onClick={() => setSidebarOpen((v) => !v)}
-              aria-label="Toggle facility list"
+              aria-label={t("map.toggleList", "Toggle facility list")}
             >{sidebarOpen ? "✕" : "☰"}</button>
           </main>
         </div>

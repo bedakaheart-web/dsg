@@ -75,6 +75,13 @@ export default function ProtectedRoute({ children, allowedRole }: Props) {
     // present (INITIAL_SESSION) or was just written (SIGNED_IN).
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        // React to explicit sign-outs and remote session revocation so a
+        // user can't stay stuck on a protected route after their session ends.
+        if (event === "SIGNED_OUT") {
+          if (cancelled) return;
+          setAuthState({ status: "unauthenticated" });
+          return;
+        }
         // Skip transient events that fire during token refresh etc.
         if (event !== "INITIAL_SESSION" && event !== "SIGNED_IN") return;
         resolve(session?.user?.id ?? null);
@@ -118,7 +125,7 @@ export default function ProtectedRoute({ children, allowedRole }: Props) {
 
   // ── Not logged in → go to homepage (which holds the login form) ───────────
   if (authState.status === "unauthenticated") {
-    return <Navigate to="/" state={{ from: location }} replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // ── Wrong role → redirect to that role's own dashboard ───────────────────
