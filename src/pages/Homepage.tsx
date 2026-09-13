@@ -311,6 +311,7 @@ export default function Homepage() {
 // ── Load the Turnstile script once, then render the widget into our
 // container. Mirrors the logic used on the Login page. ──
   useEffect(() => {
+    window.onTurnstileSuccess = (token) => setCaptchaToken(token);
     // Load Turnstile script with explicit render mode
     const existing = document.querySelector('script[src*="turnstile"]');
     if (!existing) {
@@ -1425,7 +1426,7 @@ export default function Homepage() {
                   </div>
                 )}
                 {/* ── Turnstile CAPTCHA widget — required by Supabase Auth ── */}
-                <div className="cf-turnstile my-3 flex justify-center" data-sitekey="0x4AAAAAAAEeWeQHuqgMoh8cd"></div>
+                <div className="cf-turnstile my-4 flex justify-center min-h-[65px]" data-sitekey="0x4AAAAAAAEeWeQHuqgMoh8cd"></div>
                 <button
                   className="hp-auth-btn"
                   onClick={handleLogin}

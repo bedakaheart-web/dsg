@@ -679,6 +679,7 @@ export default function Login() {
   // ── Cloudflare Turnstile lifecycle ──
   // Load the Turnstile script and render the widget into our container.
   useEffect(() => {
+    window.onTurnstileSuccess = (token) => setCaptchaToken(token);
     const existing = document.querySelector('script[src*="turnstile"]');
     if (!existing) {
       const script = document.createElement("script");
@@ -935,7 +936,7 @@ export default function Login() {
                   </Link>
                 </div>
 
-                <div className="cf-turnstile my-3 flex justify-center" data-sitekey="0x4AAAAAAAEeWeQHuqgMoh8cd"></div>
+                <div className="cf-turnstile my-4 flex justify-center min-h-[65px]" data-sitekey="0x4AAAAAAAEeWeQHuqgMoh8cd"></div>
 
                 <button
                   className="lg-btn"
