@@ -677,27 +677,12 @@ export default function Login() {
     return () => { cancelled = true; };
   }, [navigate]);
 
-  // ── Cloudflare Turnstile lifecycle ──────────────────────────────────────
-  // BUG THAT WAS HERE: the previous version put `return () => {...}` (the
-  // cleanup function) as the very FIRST statement in the effect body. In a
-  // useEffect, whatever you `return` immediately ends the function — so every
-  // line after it (the `checking` guard, the container-ref guard, and all the
-  // widget-rendering / script-loading logic) was dead code that never ran.
-  // The widget's callback (which sets captchaToken) was therefore very rarely
-  // wired up, which is why the CAPTCHA state got stuck / wouldn't reset.
-  //
-  // Fix: run the guards and rendering logic FIRST, and only return the
-  // cleanup function at the END of the effect body.
+  // ── Cloudflare Turnstile lifecycle ──
+  // Load the Turnstile script and render the widget into our container.
   useEffect(() => {
-    // Don't try to render the widget while the session check is still running,
-    // or before the container div exists in the DOM.
-    if (checking) return;
     if (!captchaContainerRef.current) return;
 
-    let cancelled = false;
-
     const renderWidget = () => {
-      if (cancelled) return;
       if (!captchaContainerRef.current || captchaWidgetId.current) return;
       if (!window.turnstile) return;
 
@@ -706,7 +691,7 @@ export default function Login() {
         theme: "dark",
         callback: (token: string) => setCaptchaToken(token),
         "expired-callback": () => setCaptchaToken(""),
-        "error-callback":   () => setCaptchaToken(""),
+        "error-callback": () => setCaptchaToken(""),
       });
     };
 
@@ -715,12 +700,19 @@ export default function Login() {
     } else {
       const existing = document.querySelector<HTMLScriptElement>('script[data-turnstile]');
       if (existing) {
-        // Script tag is already on the page (e.g. from Signup). If it already
-        // finished loading, render now; otherwise wait for its load event too.
         if (window.turnstile) {
           renderWidget();
         } else {
-          existing.addEventListener("load", renderWidget, { once: true });
+          const pollInterval = setInterval(() => {
+            if (window.turnstile) {
+              clearInterval(pollInterval);
+              renderWidget();
+            }
+          }, 100);
+          existing.addEventListener("load", () => {
+            clearInterval(pollInterval);
+            renderWidget();
+          }, { once: true });
         }
       } else {
         const script = document.createElement("script");
@@ -728,25 +720,19 @@ export default function Login() {
         script.async = true;
         script.defer = true;
         script.setAttribute("data-turnstile", "true");
-        script.addEventListener("load", renderWidget, { once: true });
+        script.onload = () => { setTimeout(renderWidget, 50); };
+        script.onerror = () => { console.error("Failed to load Turnstile script"); };
         document.body.appendChild(script);
       }
     }
 
-    // Cleanup: only remove the widget this effect instance created, and only
-    // when the effect actually re-runs / unmounts — not on every render.
     return () => {
-      cancelled = true;
       if (window.turnstile && captchaWidgetId.current) {
         window.turnstile.remove(captchaWidgetId.current);
         captchaWidgetId.current = null;
       }
     };
-    // NOTE: `captchaContainerRef.current` was removed from the deps array.
-    // Refs are not reactive — including `.current` in a dependency array
-    // doesn't do anything useful (React doesn't watch ref mutations), it was
-    // just misleading. `checking` is the only value that should re-trigger this.
-  }, [checking]);
+  }, []);
 
   // ── Reset CAPTCHA ───────────────────────────────────────────────────────
   const resetCaptcha = () => {
@@ -965,7 +951,7 @@ export default function Login() {
                   </Link>
                 </div>
 
-                <div className="lg-captcha-wrap" ref={captchaContainerRef} />
+                <div className="lg-captcha-wrap" ref={captchaContainerRef} data-sitekey={TURNSTILE_SITE_KEY} />
 
                 <button
                   className="lg-btn"

@@ -12,6 +12,16 @@ import { useLanguage } from "../context/LanguageContext";
 // Same widget/key used on the Signup page.
 const TURNSTILE_SITE_KEY = "0x4AAAAAAAEyFhcXnOeX5PXf";
 
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (container: string | HTMLElement, options: Record<string, any>) => string;
+      reset: (widgetId?: string) => void;
+      remove: (widgetId?: string) => void;
+    };
+  }
+}
+
 
 // ── Disposable / throwaway email domains to block ──
 // Not exhaustive, but catches the most common temp-mail services.
@@ -890,7 +900,7 @@ export default function Signup() {
 
   // Load the Turnstile script once, then render the widget into our container.
   useEffect(() => {
-    const existing = document.querySelector('script[data-turnstile]');
+    if (!captchaContainerRef.current) return;
 
     const renderWidget = () => {
       if (!window.turnstile || !captchaContainerRef.current || captchaWidgetId.current) return;
@@ -905,16 +915,33 @@ export default function Signup() {
 
     if (window.turnstile) {
       renderWidget();
-    } else if (!existing) {
-      const script = document.createElement("script");
-      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
-      script.async = true;
-      script.defer = true;
-      script.setAttribute("data-turnstile", "true");
-      script.onload = renderWidget;
-      document.body.appendChild(script);
     } else {
-      existing.addEventListener("load", renderWidget);
+      const existing = document.querySelector('script[data-turnstile]');
+      if (existing) {
+        if (window.turnstile) {
+          renderWidget();
+        } else {
+          const pollInterval = setInterval(() => {
+            if (window.turnstile) {
+              clearInterval(pollInterval);
+              renderWidget();
+            }
+          }, 100);
+          existing.addEventListener("load", () => {
+            clearInterval(pollInterval);
+            renderWidget();
+          }, { once: true });
+        }
+      } else {
+        const script = document.createElement("script");
+        script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+        script.async = true;
+        script.defer = true;
+        script.setAttribute("data-turnstile", "true");
+        script.onload = () => { setTimeout(renderWidget, 50); };
+        script.onerror = () => { console.error("Failed to load Turnstile script"); };
+        document.body.appendChild(script);
+      }
     }
 
     return () => {
@@ -953,10 +980,6 @@ export default function Signup() {
     }
     if (password.length < 6) {
       setError(t("signup.errors.passwordTooShort"));
-      return;
-    }
-    if (!captchaToken) {
-      setError(t("signup.errors.needCaptcha"));
       return;
     }
 
@@ -1158,9 +1181,10 @@ export default function Signup() {
               </div>
               <p className="su-pw-hint">{t("signup.pwHint")}</p>
 
-              <div className="su-captcha-wrap" ref={captchaContainerRef} />
+              {/* ── Turnstile CAPTCHA widget — required by Supabase Auth ── */}
+              <div className="su-captcha-wrap" ref={captchaContainerRef} data-sitekey={TURNSTILE_SITE_KEY} />
 
-              <button className="su-btn" type="submit" disabled={loading || !captchaToken}>
+              <button className="su-btn" type="submit" disabled={loading}>
                 {loading && <span className="su-spinner" />}
                 {loading ? t("signup.submitting") : t("signup.submitBtn")}
               </button>

@@ -21,6 +21,7 @@ declare global {
     };
   }
 }
+}
 
 function EmergencyRunner() {
   const { t, tList } = useLanguage();
@@ -309,8 +310,8 @@ export default function Homepage() {
     return () => observer.disconnect();
   }, []);
 
-  // ── Load the Turnstile script once, then render the widget into our
-  // container. Mirrors the logic used on the Login page. ──
+// ── Load the Turnstile script once, then render the widget into our
+// container. Mirrors the logic used on the Login page. ──
   useEffect(() => {
     const existing = document.querySelector('script[data-turnstile]');
 
@@ -334,9 +335,27 @@ export default function Homepage() {
       script.defer = true;
       script.setAttribute("data-turnstile", "true");
       script.onload = renderWidget;
+      script.onerror = () => {
+        console.error("Failed to load Turnstile script");
+      };
       document.body.appendChild(script);
     } else {
-      existing.addEventListener("load", renderWidget);
+      // Script already exists but window.turnstile might not be ready yet
+      // (e.g., cached). Poll until available, then render.
+      if (window.turnstile) {
+        renderWidget();
+      } else {
+        const pollInterval = setInterval(() => {
+          if (window.turnstile) {
+            clearInterval(pollInterval);
+            renderWidget();
+          }
+        }, 100);
+        existing.addEventListener("load", () => {
+          clearInterval(pollInterval);
+          renderWidget();
+        }, { once: true });
+      }
     }
 
     return () => {
@@ -350,10 +369,6 @@ export default function Homepage() {
   const handleLogin = async () => {
     if (!email || !password) {
       setError(t("auth.errMissingFields"));
-      return;
-    }
-    if (!captchaToken) {
-      setError(t("auth.errNeedCaptcha"));
       return;
     }
     setLoading(true);
@@ -1424,11 +1439,11 @@ export default function Homepage() {
                   </div>
                 )}
                 {/* ── Turnstile CAPTCHA widget — required by Supabase Auth ── */}
-                <div className="hp-auth-captcha" ref={captchaContainerRef} />
+                <div className="hp-auth-captcha" ref={captchaContainerRef} data-sitekey={TURNSTILE_SITE_KEY} />
                 <button
                   className="hp-auth-btn"
                   onClick={handleLogin}
-                  disabled={loading || !captchaToken}
+                  disabled={loading}
                   aria-busy={loading}
                 >
                   {loading ? t("auth.loggingIn") : t("auth.loginBtn")}
