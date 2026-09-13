@@ -10,7 +10,7 @@ import { useLanguage } from "../context/LanguageContext";
 
 // ── Cloudflare Turnstile site key ──
 // Same widget/key used on the Signup page.
-const TURNSTILE_SITE_KEY = "1x00000000000000000000AA";
+const TURNSTILE_SITE_KEY = "0x4AAAAAAAEyFhcXnOeX5PXf";
 
 
 // ── Disposable / throwaway email domains to block ──
