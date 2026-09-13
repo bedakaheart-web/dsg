@@ -338,7 +338,7 @@ export default function Homepage() {
       script.onerror = () => {
         console.error("Failed to load Turnstile script");
       };
-      document.body.appendChild(script);
+      document.head.appendChild(script);
     } else {
       // Script already exists but window.turnstile might not be ready yet
       // (e.g., cached). Poll until available, then render.
@@ -1439,7 +1439,7 @@ export default function Homepage() {
                   </div>
                 )}
                 {/* ── Turnstile CAPTCHA widget — required by Supabase Auth ── */}
-                <div className="hp-auth-captcha" ref={captchaContainerRef} data-sitekey={TURNSTILE_SITE_KEY} />
+                <div className="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY} />
                 <button
                   className="hp-auth-btn"
                   onClick={handleLogin}

@@ -940,7 +940,7 @@ export default function Signup() {
         script.setAttribute("data-turnstile", "true");
         script.onload = () => { setTimeout(renderWidget, 50); };
         script.onerror = () => { console.error("Failed to load Turnstile script"); };
-        document.body.appendChild(script);
+        document.head.appendChild(script);
       }
     }
 
@@ -1182,7 +1182,7 @@ export default function Signup() {
               <p className="su-pw-hint">{t("signup.pwHint")}</p>
 
               {/* ── Turnstile CAPTCHA widget — required by Supabase Auth ── */}
-              <div className="su-captcha-wrap" ref={captchaContainerRef} data-sitekey={TURNSTILE_SITE_KEY} />
+              <div className="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY} />
 
               <button className="su-btn" type="submit" disabled={loading}>
                 {loading && <span className="su-spinner" />}

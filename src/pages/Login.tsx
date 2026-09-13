@@ -722,7 +722,7 @@ export default function Login() {
         script.setAttribute("data-turnstile", "true");
         script.onload = () => { setTimeout(renderWidget, 50); };
         script.onerror = () => { console.error("Failed to load Turnstile script"); };
-        document.body.appendChild(script);
+        document.head.appendChild(script);
       }
     }
 
@@ -951,7 +951,7 @@ export default function Login() {
                   </Link>
                 </div>
 
-                <div className="lg-captcha-wrap" ref={captchaContainerRef} data-sitekey={TURNSTILE_SITE_KEY} />
+                <div className="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY} />
 
                 <button
                   className="lg-btn"
