@@ -8,7 +8,7 @@ import { useLanguage } from "../context/LanguageContext";
 
 // ── Cloudflare Turnstile site key ──
 // Same widget/key used on the Signup page.
-const TURNSTILE_SITE_KEY = "0x4AAAAAAEyFhcXnOeX5xPXf";
+const TURNSTILE_SITE_KEY = "0x4AAAAAAAEeWeQHuqgMoh8cd";
 
 declare global {
   interface Window {
@@ -630,8 +630,7 @@ export default function Login() {
   const [checking, setChecking]     = useState(true);
   const [captchaToken, setCaptchaToken] = useState("");
 
-  const captchaContainerRef = useRef<HTMLDivElement>(null);
-  const captchaWidgetId     = useRef<string | null>(null);
+  const captchaWidgetId = useRef<string | null>(null);
 
   // ── Guard against setState after unmount ────────────────────────────────
   const mountedRef = useRef(true);
@@ -680,49 +679,34 @@ export default function Login() {
   // ── Cloudflare Turnstile lifecycle ──
   // Load the Turnstile script and render the widget into our container.
   useEffect(() => {
-    if (!captchaContainerRef.current) return;
-
-    const renderWidget = () => {
-      if (!captchaContainerRef.current || captchaWidgetId.current) return;
-      if (!window.turnstile) return;
-
-      captchaWidgetId.current = window.turnstile.render(captchaContainerRef.current, {
-        sitekey: TURNSTILE_SITE_KEY,
-        theme: "dark",
-        callback: (token: string) => setCaptchaToken(token),
-        "expired-callback": () => setCaptchaToken(""),
-        "error-callback": () => setCaptchaToken(""),
-      });
-    };
-
-    if (window.turnstile) {
-      renderWidget();
-    } else {
-      const existing = document.querySelector<HTMLScriptElement>('script[data-turnstile]');
-      if (existing) {
+    const existing = document.querySelector('script[src*="turnstile"]');
+    if (!existing) {
+      const script = document.createElement("script");
+      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+      script.onload = () => {
         if (window.turnstile) {
-          renderWidget();
-        } else {
-          const pollInterval = setInterval(() => {
-            if (window.turnstile) {
-              clearInterval(pollInterval);
-              renderWidget();
-            }
-          }, 100);
-          existing.addEventListener("load", () => {
-            clearInterval(pollInterval);
-            renderWidget();
-          }, { once: true });
+          const container = document.querySelector('.cf-turnstile');
+          if (container && !captchaWidgetId.current) {
+            captchaWidgetId.current = window.turnstile.render(container, {
+              sitekey: TURNSTILE_SITE_KEY,
+              theme: "dark",
+              callback: (token: string) => setCaptchaToken(token),
+            });
+          }
         }
-      } else {
-        const script = document.createElement("script");
-        script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
-        script.async = true;
-        script.defer = true;
-        script.setAttribute("data-turnstile", "true");
-        script.onload = () => { setTimeout(renderWidget, 50); };
-        script.onerror = () => { console.error("Failed to load Turnstile script"); };
-        document.head.appendChild(script);
+      };
+    } else {
+      if (window.turnstile) {
+        const container = document.querySelector('.cf-turnstile');
+        if (container && !captchaWidgetId.current) {
+          captchaWidgetId.current = window.turnstile.render(container, {
+            sitekey: TURNSTILE_SITE_KEY,
+            theme: "dark",
+          });
+        }
       }
     }
 
@@ -951,7 +935,7 @@ export default function Login() {
                   </Link>
                 </div>
 
-                <div className="cf-turnstile my-3 flex justify-center" data-sitekey="0x4AAAAAAEyFhcXnOeX5xPXf"></div>
+                <div className="cf-turnstile my-3 flex justify-center" data-sitekey="0x4AAAAAAAEeWeQHuqgMoh8cd"></div>
 
                 <button
                   className="lg-btn"

@@ -10,7 +10,7 @@ import { LanguageSelectModal } from "../components/LanguageSelectModal";
 
 // ── Cloudflare Turnstile site key ──
 // Same widget/key used on the Signup page and Login page.
-const TURNSTILE_SITE_KEY = "0x4AAAAAAEyFhcXnOeX5xPXf";
+const TURNSTILE_SITE_KEY = "0x4AAAAAAAEeWeQHuqgMoh8cd";
 
 declare global {
   interface Window {
@@ -272,7 +272,6 @@ export default function Homepage() {
   // on the dedicated /login page (which already had the widget) and
   // silently failed here. ──
   const [captchaToken, setCaptchaToken] = useState("");
-  const captchaContainerRef = useRef<HTMLDivElement>(null);
   const captchaWidgetId = useRef<string | null>(null);
 
   useEffect(() => {
@@ -312,48 +311,36 @@ export default function Homepage() {
 // ── Load the Turnstile script once, then render the widget into our
 // container. Mirrors the logic used on the Login page. ──
   useEffect(() => {
-    const existing = document.querySelector('script[data-turnstile]');
-
-    const renderWidget = () => {
-      if (!window.turnstile || !captchaContainerRef.current || captchaWidgetId.current) return;
-      captchaWidgetId.current = window.turnstile.render(captchaContainerRef.current, {
-        sitekey: TURNSTILE_SITE_KEY,
-        theme: "dark",
-        callback: (token: string) => setCaptchaToken(token),
-        "expired-callback": () => setCaptchaToken(""),
-        "error-callback": () => setCaptchaToken(""),
-      });
-    };
-
-    if (window.turnstile) {
-      renderWidget();
-    } else if (!existing) {
+    // Load Turnstile script with explicit render mode
+    const existing = document.querySelector('script[src*="turnstile"]');
+    if (!existing) {
       const script = document.createElement("script");
-      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
       script.async = true;
       script.defer = true;
-      script.setAttribute("data-turnstile", "true");
-      script.onload = renderWidget;
-      script.onerror = () => {
-        console.error("Failed to load Turnstile script");
-      };
       document.head.appendChild(script);
-    } else {
-      // Script already exists but window.turnstile might not be ready yet
-      // (e.g., cached). Poll until available, then render.
-      if (window.turnstile) {
-        renderWidget();
-      } else {
-        const pollInterval = setInterval(() => {
-          if (window.turnstile) {
-            clearInterval(pollInterval);
-            renderWidget();
+      script.onload = () => {
+        if (window.turnstile) {
+          const container = document.querySelector('.cf-turnstile');
+          if (container && !captchaWidgetId.current) {
+            captchaWidgetId.current = window.turnstile.render(container, {
+              sitekey: TURNSTILE_SITE_KEY,
+              theme: "dark",
+              callback: (token: string) => setCaptchaToken(token),
+            });
           }
-        }, 100);
-        existing.addEventListener("load", () => {
-          clearInterval(pollInterval);
-          renderWidget();
-        }, { once: true });
+        }
+      };
+    } else {
+      // Script already loaded — render immediately
+      if (window.turnstile) {
+        const container = document.querySelector('.cf-turnstile');
+        if (container && !captchaWidgetId.current) {
+          captchaWidgetId.current = window.turnstile.render(container, {
+            sitekey: TURNSTILE_SITE_KEY,
+            theme: "dark",
+          });
+        }
       }
     }
 
@@ -1438,7 +1425,7 @@ export default function Homepage() {
                   </div>
                 )}
                 {/* ── Turnstile CAPTCHA widget — required by Supabase Auth ── */}
-                <div className="cf-turnstile my-3 flex justify-center" data-sitekey="0x4AAAAAAEyFhcXnOeX5xPXf"></div>
+                <div className="cf-turnstile my-3 flex justify-center" data-sitekey="0x4AAAAAAAEeWeQHuqgMoh8cd"></div>
                 <button
                   className="hp-auth-btn"
                   onClick={handleLogin}
