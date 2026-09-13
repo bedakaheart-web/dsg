@@ -21,7 +21,6 @@ declare global {
     };
   }
 }
-}
 
 function EmergencyRunner() {
   const { t, tList } = useLanguage();
