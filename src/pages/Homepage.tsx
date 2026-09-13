@@ -10,7 +10,7 @@ import { LanguageSelectModal } from "../components/LanguageSelectModal";
 
 // ── Cloudflare Turnstile site key ──
 // Same widget/key used on the Signup page and Login page.
-const TURNSTILE_SITE_KEY = "0x4AAAAAAEeWeQHuqgMoh8cd";
+const TURNSTILE_SITE_KEY = "1x00000000000000000000AA";
 
 declare global {
   interface Window {

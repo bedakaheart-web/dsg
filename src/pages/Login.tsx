@@ -8,7 +8,7 @@ import { useLanguage } from "../context/LanguageContext";
 
 // ── Cloudflare Turnstile site key ──
 // Same widget/key used on the Signup page.
-const TURNSTILE_SITE_KEY = "0x4AAAAAAEeWeQHuqgMoh8cd";
+const TURNSTILE_SITE_KEY = "1x00000000000000000000AA";
 
 declare global {
   interface Window {
@@ -763,10 +763,6 @@ export default function Login() {
       setError(t("login.errors.missingFields", "Please fill in all required fields."));
       return;
     }
-    if (!captchaToken) {
-      setError(t("login.errors.needCaptcha", "Please complete the CAPTCHA check."));
-      return;
-    }
     setLoading(true);
 
     const { data: authData, error: authError } =
@@ -974,7 +970,7 @@ export default function Login() {
                 <button
                   className="lg-btn"
                   onClick={handleLogin}
-                  disabled={loading || !captchaToken}
+                  disabled={loading}
                   type="button"
                 >
                   {loading && <span className="lg-spinner" />}
