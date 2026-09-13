@@ -1,3 +1,9 @@
+declare global {
+  interface ImportMeta {
+    readonly env: Record<string, string | undefined>;
+  }
+}
+
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "../js/supabase";
@@ -9,15 +15,15 @@ import { useLanguage } from "../context/LanguageContext";
 declare global {
   interface Window {
     turnstile?: {
-      render: (container: string | HTMLElement, options: any) => string;
-      remove: (widgetId: string) => void;
-      reset: (widgetId: string) => void;
+      render: (container: string | HTMLElement, options: Record<string, any>) => string;
+      remove: (widgetId?: string) => void;
+      reset: (widgetId?: string) => void;
     };
     onloadTurnstileCallback?: () => void;
   }
 }
 
-const TURNSTILE_SITE_KEY = '0x4AAAAAAEeWeQHuqgMoh8cd';
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '0x4AAAAAAEeWeQHuqgMoh8cd';
 
 // ── CSS-in-JS ──
 const CSS = `
@@ -731,7 +737,7 @@ export default function Login() {
       await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
-        options: { captchaToken },
+        options: { captchaToken: captchaToken ?? undefined },
       });
 
     if (authError || !authData?.user) {
