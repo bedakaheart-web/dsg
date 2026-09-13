@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "../js/supabase";
 import { FaEye, FaEyeSlash, FaCheck, FaArrowRight } from "react-icons/fa";
@@ -6,19 +6,18 @@ import logoImage from "../assets/dsg.logo.png";
 import directorybg from "../assets/directorybg.png";
 import { useLanguage } from "../context/LanguageContext";
 
-// ── Cloudflare Turnstile site key ──
-// Same widget/key used on the Signup page.
-const TURNSTILE_SITE_KEY = "0x4AAAAAAAEeWeQHuqgMoh8cd";
-
 declare global {
   interface Window {
     turnstile?: {
-      render: (container: string | HTMLElement, options: Record<string, any>) => string;
-      reset: (widgetId?: string) => void;
-      remove: (widgetId?: string) => void;
+      render: (container: string | HTMLElement, options: any) => string;
+      remove: (widgetId: string) => void;
+      reset: (widgetId: string) => void;
     };
+    onloadTurnstileCallback?: () => void;
   }
 }
+
+const TURNSTILE_SITE_KEY = '0x4AAAAAAEeWeQHuqgMoh8cd';
 
 // ── CSS-in-JS ──
 const CSS = `
@@ -446,14 +445,6 @@ const CSS = `
     letter-spacing: 0.5px;
   }
 
-  .lg-captcha-wrap {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 24px;
-    min-height: 65px;
-    position: relative; z-index: 1;
-  }
-
   .lg-btn {
     width: 100%;
     padding: 15px 22px;
@@ -628,15 +619,58 @@ export default function Login() {
   const [success, setSuccess]       = useState(false);
   const [error, setError]           = useState("");
   const [checking, setChecking]     = useState(true);
-  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const turnstileContainerRef = useRef<HTMLDivElement>(null);
+  const widgetIdRef = useRef<string | null>(null);
 
-  const captchaWidgetId = useRef<string | null>(null);
-
-  // ── Guard against setState after unmount ────────────────────────────────
+  // ── Guard against setState after unmount ──
   const mountedRef = useRef(true);
   useEffect(() => {
     mountedRef.current = true;
     return () => { mountedRef.current = false; };
+  }, []);
+
+  // ── Cloudflare Turnstile lifecycle ──
+  useEffect(() => {
+    const renderWidget = () => {
+      if (window.turnstile && turnstileContainerRef.current && !widgetIdRef.current) {
+        try {
+          widgetIdRef.current = window.turnstile.render(turnstileContainerRef.current, {
+            sitekey: TURNSTILE_SITE_KEY,
+            theme: 'dark',
+            callback: (token: string) => setCaptchaToken(token),
+            'error-callback': (err: any) => console.error('Turnstile Error:', err),
+          });
+        } catch (e) {
+          console.error('Failed to render Turnstile:', e);
+        }
+      }
+    };
+
+    if (window.turnstile) {
+      renderWidget();
+      return;
+    }
+
+    window.onloadTurnstileCallback = () => {
+      renderWidget();
+    };
+
+    let script = document.querySelector<HTMLScriptElement>('script[src*="turnstile"]');
+    if (!script) {
+      script = document.createElement("script");
+      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback";
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    }
+
+    return () => {
+      if (widgetIdRef.current && window.turnstile) {
+        window.turnstile.remove(widgetIdRef.current);
+        widgetIdRef.current = null;
+      }
+    };
   }, []);
 
   // ── Supabase session check ───────────────────────────────────────────────
@@ -676,54 +710,11 @@ export default function Login() {
     return () => { cancelled = true; };
   }, [navigate]);
 
-  // ── Cloudflare Turnstile lifecycle ──
-  // Load the Turnstile script and render the widget into our container.
-  useEffect(() => {
-    window.onTurnstileSuccess = (token) => setCaptchaToken(token);
-    const existing = document.querySelector('script[src*="turnstile"]');
-    if (!existing) {
-      const script = document.createElement("script");
-      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
-      script.async = true;
-      script.defer = true;
-      document.head.appendChild(script);
-      script.onload = () => {
-        if (window.turnstile) {
-          const container = document.querySelector('.cf-turnstile');
-          if (container && !captchaWidgetId.current) {
-            captchaWidgetId.current = window.turnstile.render(container, {
-              sitekey: TURNSTILE_SITE_KEY,
-              theme: "dark",
-              callback: (token: string) => setCaptchaToken(token),
-            });
-          }
-        }
-      };
-    } else {
-      if (window.turnstile) {
-        const container = document.querySelector('.cf-turnstile');
-        if (container && !captchaWidgetId.current) {
-          captchaWidgetId.current = window.turnstile.render(container, {
-            sitekey: TURNSTILE_SITE_KEY,
-            theme: "dark",
-          });
-        }
-      }
-    }
-
-    return () => {
-      if (window.turnstile && captchaWidgetId.current) {
-        window.turnstile.remove(captchaWidgetId.current);
-        captchaWidgetId.current = null;
-      }
-    };
-  }, []);
-
-  // ── Reset CAPTCHA ───────────────────────────────────────────────────────
+  // ── Reset CAPTCHA ──
   const resetCaptcha = () => {
-    setCaptchaToken("");
-    if (window.turnstile && captchaWidgetId.current) {
-      window.turnstile.reset(captchaWidgetId.current);
+    setCaptchaToken(null);
+    if (window.turnstile && widgetIdRef.current) {
+      window.turnstile.reset(widgetIdRef.current);
     }
   };
 
@@ -936,7 +927,9 @@ export default function Login() {
                   </Link>
                 </div>
 
-                <div className="cf-turnstile my-3 flex justify-center" data-sitekey="0x4AAAAAAAEeWeQHuqgMoh8cd"></div>
+                <div className="w-full flex justify-center my-4 min-h-[65px] h-[65px]">
+                  <div ref={turnstileContainerRef} />
+                </div>
 
                 <button
                   className="lg-btn"
