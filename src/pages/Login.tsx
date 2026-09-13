@@ -936,7 +936,7 @@ export default function Login() {
                   </Link>
                 </div>
 
-                <div className="cf-turnstile my-4 flex justify-center min-h-[65px]" data-sitekey="0x4AAAAAAAEeWeQHuqgMoh8cd"></div>
+                <div className="cf-turnstile my-3 flex justify-center" data-sitekey="0x4AAAAAAAEeWeQHuqgMoh8cd"></div>
 
                 <button
                   className="lg-btn"

@@ -1168,7 +1168,7 @@ export default function Signup() {
               <p className="su-pw-hint">{t("signup.pwHint")}</p>
 
               {/* ── Turnstile CAPTCHA widget — required by Supabase Auth ── */}
-              <div className="cf-turnstile my-4 flex justify-center min-h-[65px]" data-sitekey="0x4AAAAAAAEeWeQHuqgMoh8cd"></div>
+              <div className="cf-turnstile my-3 flex justify-center" data-sitekey="0x4AAAAAAAEeWeQHuqgMoh8cd"></div>
 
               <button className="su-btn" type="submit" disabled={loading}>
                 {loading && <span className="su-spinner" />}
