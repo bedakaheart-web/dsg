@@ -10,7 +10,7 @@ import { LanguageSelectModal } from "../components/LanguageSelectModal";
 
 // ── Cloudflare Turnstile site key ──
 // Same widget/key used on the Signup page and Login page.
-const TURNSTILE_SITE_KEY = "0x4AAAAAAAEyFhcXnOeX5PXf";
+const TURNSTILE_SITE_KEY = "0x4AAAAAAEyFhcXnOeX5xPXf";
 
 declare global {
   interface Window {
@@ -1439,7 +1439,7 @@ export default function Homepage() {
                   </div>
                 )}
                 {/* ── Turnstile CAPTCHA widget — required by Supabase Auth ── */}
-                <div className="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY} />
+                <div className="cf-turnstile my-3 flex justify-center" data-sitekey="0x4AAAAAAEyFhcXnOeX5xPXf"></div>
                 <button
                   className="hp-auth-btn"
                   onClick={handleLogin}
