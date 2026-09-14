@@ -51,7 +51,8 @@ export default function ChatBox({
   assignedResponderId,
   incidentId,
   userRole,
-}: { assignedResponderId?: string | null; incidentId?: string | null; userRole?: string }) {
+  recipientName: recipientNameProp,
+}: { assignedResponderId?: string | null; incidentId?: string | null; userRole?: string; recipientName?: string }) {
   const { t } = useLanguage();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState("");
@@ -126,18 +127,19 @@ export default function ChatBox({
   }, []);
 
   // ── Build query for chat_messages with role-based enforcement ──
-  // Citizen: strict 1-on-1 pair (me ↔ assigned responder) + active incident_id.
-  // Responder/Admin: own threads only (sender or recipient = me); RLS enforces.
+  // Any 1-on-1 thread (citizen ↔ responder, responder ↔ admin, admin ↔
+  // responder) is the strict pair + optional incident_id scope. Citizens
+  // additionally can never address admins (enforced in lists + send).
   const buildChatQuery = useCallback((userId: string) => {
     let query = supabase.from("chat_messages").select("*");
-    if (isCitizen && recipientId && incidentId) {
+    if (recipientId && incidentId) {
       query = query
         .or(
           `and(sender_id.eq.${userId},recipient_id.eq.${recipientId}),` +
           `and(sender_id.eq.${recipientId},recipient_id.eq.${userId})`
         )
         .eq("incident_id", incidentId);
-    } else if (isCitizen && recipientId) {
+    } else if (recipientId) {
       query = query.or(
         `and(sender_id.eq.${userId},recipient_id.eq.${recipientId}),` +
         `and(sender_id.eq.${recipientId},recipient_id.eq.${userId})`
@@ -146,6 +148,7 @@ export default function ChatBox({
       query = query.eq("sender_id", userId);
     } else {
       query = query.or(`sender_id.eq.${userId},recipient_id.eq.${userId}`);
+      if (incidentId) query = query.eq("incident_id", incidentId);
     }
     return query.order("created_at", { ascending: true });
   }, [isCitizen, recipientId, incidentId]);
@@ -192,7 +195,7 @@ export default function ChatBox({
           if (!cancelled) {
             // Role-based filtering for real-time messages (mirror the query).
             const me = userIdRef.current;
-            if (isCitizen && recipientId) {
+            if (recipientId) {
               const inPair =
                 (newMsg.sender_id === me && newMsg.recipient_id === recipientId) ||
                 (newMsg.sender_id === recipientId && newMsg.recipient_id === me);
@@ -269,9 +272,11 @@ export default function ChatBox({
           .single();
         const rRole = ((recipientProfile?.role as string) ?? "").toLowerCase();
         const mRole = (myRole ?? "").toLowerCase();
+        // Allowed pairs: citizen ↔ responder, responder ↔ admin,
+        // admin ↔ responder. Citizen ↔ admin is strictly blocked.
         const allowed =
           (mRole === "citizen" && rRole === "responder") ||
-          (mRole === "responder" && rRole === "admin") ||
+          (mRole === "responder" && (rRole === "admin" || rRole === "citizen")) ||
           (mRole === "admin" && rRole === "responder");
         if (!allowed) {
           alert("You cannot send messages to this user.");
@@ -339,9 +344,10 @@ export default function ChatBox({
 
   // ── Role-based warning ──
   const recipientName = useMemo(() => {
+    if (recipientNameProp) return recipientNameProp;
     const p = participants.find(p => p.id === recipientId);
     return p?.full_name ?? p?.email ?? "";
-  }, [participants, recipientId]);
+  }, [participants, recipientId, recipientNameProp]);
 
   return (
     <div style={{
