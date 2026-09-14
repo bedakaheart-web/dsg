@@ -441,3 +441,85 @@ textarea { resize: vertical; line-height: 1.6; }
   pointer-events: none;
   z-index: 0;
 }
+
+/* ── RTL (Arabic) overrides ───────────────────────────────────────────────
+   dir="rtl" on <html> is INTENTIONAL for Arabic (set by LanguageContext) —
+   it makes flex/grid flow, text alignment, and auto margins follow Arabic
+   reading order automatically. The rules below only mirror PHYSICAL
+   properties (left/right/translateX/text-align/border-side) that would
+   otherwise overlap content or point the wrong way. html[dir="rtl"]
+   specificity (0,2,1) beats the component-level rules (0,1,0) regardless
+   of stylesheet order. */
+
+/* Login inputs: icon + password eye mirror with the input padding so the
+   glyphs never overlap typed text in RTL. */
+html[dir="rtl"] .lg-field-icon { left: auto; right: 14px; }
+html[dir="rtl"] .lg-input { padding: 13px 42px 13px 16px; }
+html[dir="rtl"] .lg-input.has-eye { padding-left: 44px; }
+html[dir="rtl"] .lg-eye { right: auto; left: 14px; }
+@media (max-width: 480px) {
+  html[dir="rtl"] .lg-input { padding: 11px 38px 11px 14px; }
+}
+
+/* Back/forward chevrons + directional arrows point along reading order. */
+html[dir="rtl"] .lg-back-arrow,
+html[dir="rtl"] .rp-submit-arrow,
+html[dir="rtl"] .rs-link-arrow,
+html[dir="rtl"] .pa-link-arrow { display: inline-block; transform: scaleX(-1); }
+html[dir="rtl"] .lg-back:hover .lg-back-arrow { transform: scaleX(-1) translateX(-3px); }
+html[dir="rtl"] .rp-submit:hover:not(:disabled) .rp-submit-arrow { transform: scaleX(-1) translateX(4px); }
+html[dir="rtl"] .rs-link-arrow,
+html[dir="rtl"] .pa-link-arrow { transform: scaleX(-1) translateX(4px); }
+html[dir="rtl"] .rs-link:hover .rs-link-arrow,
+html[dir="rtl"] .pa-link:hover .pa-link-arrow { transform: scaleX(-1) translateX(0); }
+html[dir="rtl"] .rs-link:hover { padding-left: 0; padding-right: 4px; }
+html[dir="rtl"] .pa-link:hover { padding-left: 0; padding-right: 4px; }
+html[dir="rtl"] .ri-rt-card:hover { transform: translateX(-2px); }
+
+/* Slide-in drawers dock to the inline-end side (left in RTL). */
+html[dir="rtl"] .nav-drawer,
+html[dir="rtl"] .cn-drawer {
+  right: auto; left: 0;
+  transform: translateX(-100%);
+  border-left: none;
+}
+html[dir="rtl"] .nav-drawer { border-right: 1px solid rgba(0, 200, 224, 0.12); }
+html[dir="rtl"] .cn-drawer { border-right: 1px solid rgba(255,255,255,0.07); }
+html[dir="rtl"] .nav-drawer.open,
+html[dir="rtl"] .cn-drawer.open { transform: translateX(0); }
+
+/* Responder dashboard sidebar offset follows the docked side. */
+html[dir="rtl"] .rd-main { margin-left: 0; margin-right: 260px; }
+@media (max-width: 768px) {
+  html[dir="rtl"] .rd-main { margin-right: 0; }
+  html[dir="rtl"] .rd-sidebar { transform: translateX(100%); box-shadow: -4px 0 12px rgba(0,0,0,0.1); }
+  html[dir="rtl"] .rd-sidebar.open { transform: translateX(0); }
+}
+html[dir="rtl"] .rd-sidebar { left: auto; right: 0; }
+html[dir="rtl"] .rd-topbar-right { margin-left: 0; margin-right: auto; }
+html[dir="rtl"] .rd-badge,
+html[dir="rtl"] .rd-badge-blue { margin-left: 0; margin-right: auto; }
+html[dir="rtl"] .cn-drawer-bell-count { margin-left: 0; margin-right: auto; }
+
+/* Left-aligned text + accent rails mirror to the inline-start side. */
+html[dir="rtl"] .table th,
+html[dir="rtl"] .rd-qbtn,
+html[dir="rtl"] .ri-rt-card { text-align: right; }
+html[dir="rtl"] .ri-sum,
+html[dir="rtl"] .ri-ag-card { border-left: none; border-right: 3px solid var(--primary); }
+html[dir="rtl"] .ri-sum.t-fire,
+html[dir="rtl"] .ri-ag-card.ag-red,
+html[dir="rtl"] .ri-ag-card.ag-pink { border-right-color: var(--danger-light); }
+html[dir="rtl"] .ri-sum.t-accident,
+html[dir="rtl"] .ri-ag-card.ag-amber { border-right-color: var(--warning-light); }
+html[dir="rtl"] .ri-sum.t-flood { border-right-color: var(--primary); }
+html[dir="rtl"] .ri-sum.t-medical,
+html[dir="rtl"] .ri-ag-card.ag-green { border-right-color: var(--success-light); }
+html[dir="rtl"] .ri-sum.t-other,
+html[dir="rtl"] .ri-ag-card.ag-slate { border-right-color: var(--text-tertiary); }
+html[dir="rtl"] .ri-ag-card.ag-blue { border-right-color: var(--primary); }
+html[dir="rtl"] .pa-role {
+  border-left: none; border-right: 3px solid rgba(var(--d-rgb), 0.6);
+  border-radius: 6px 0 0 6px;
+}
+html[dir="rtl"] .ri-srch-ic { left: auto; right: 12px; }

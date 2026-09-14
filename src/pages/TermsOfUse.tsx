@@ -360,7 +360,7 @@ export default function TermsOfUse() {
                 <h3>{t("terms.ctaHeading")}</h3>
                 <p>{t("terms.ctaSub")}</p>
               </div>
-              <a href="/report" className="tos-cta-btn">🚨 {t("terms.ctaBtn")}</a>
+              <Link to="/report" className="tos-cta-btn">🚨 {t("terms.ctaBtn")}</Link>
             </div>
           </div>
 

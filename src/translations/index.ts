@@ -890,7 +890,7 @@ export const translations: Record<LanguageCode, TranslationDict> = {
     auth: {
       welcomeTitle: "Maligayang Pagbabalik",
       welcomeSubtitle: "Mag-login para ma-access ang DumaSafeGuide emergency dashboard.",
-      emailLabel: "Email Address",
+emailLabel: "Email Address",
       passwordLabel: "Password",
       rememberMe: "Tandaan ako",
       forgotPassword: "Nakalimutan ang Password?",

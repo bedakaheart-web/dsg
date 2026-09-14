@@ -570,13 +570,15 @@ export default function PartnerAgencies() {
           font-family: 'DM Sans', sans-serif;
           font-size: 13px; font-weight: 700;
           letter-spacing: 0.08em; text-transform: uppercase;
-          color: #0b0f1a; background: #2ECC8F;
+          color: #fff;
+          background: linear-gradient(135deg, var(--red), #b82010);
           border: none; border-radius: 8px;
           padding: 13px 22px; cursor: pointer; text-decoration: none;
-          transition: background .2s, transform .2s;
+          transition: transform .2s, box-shadow .2s;
+          box-shadow: 0 0 28px rgba(232,55,42,0.28);
           white-space: nowrap;
         }
-        .pa-cta-btn:hover { background: #38e09e; transform: translateY(-2px); }
+        .pa-cta-btn:hover { transform: translateY(-2px); box-shadow: 0 0 48px rgba(232,55,42,0.50); }
         .pa-cta-btn span { font-size: 16px; }
 
         @keyframes fadeUp {

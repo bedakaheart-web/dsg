@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import safetyTipsBg from "../assets/safetytips.jpg";
 import { useLanguage } from "../context/LanguageContext";
 
@@ -268,11 +268,17 @@ export default function SafetyTips() {
   const phaseTips: PhaseTip[] = translatedTips.length ? translatedTips : (disaster ? disaster[activePhase] : []);
   const activePhaseObj = { tips: phaseTips };
 
+  // Deep-link support for /safetytips#<disaster-id> (e.g. from Resources or
+  // PartnerAgencies). React Router exposes the fragment via location.hash —
+  // do NOT parse window.location.hash here: under HashRouter it also
+  // contains the route itself (e.g. `#/safetytips#fire`), which never
+  // matches a disaster id.
+  const location = useLocation();
   useEffect(() => {
-    const hash = window.location.hash.replace("#", "");
+    const hash = decodeURIComponent(location.hash.replace(/^#/, ""));
     const idx = DISASTERS.findIndex(d => d.id === hash);
     if (idx !== -1) setActiveTab(idx);
-  }, []);
+  }, [location.hash]);
 
   return (
     <>

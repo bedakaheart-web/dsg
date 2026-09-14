@@ -455,9 +455,9 @@ export default function PrivacyPolicy() {
               <h3>{t("privacy.ctaHeading")}</h3>
               <p>{t("privacy.ctaSub")}</p>
             </div>
-            <a href="/report" className="pp-cta-btn">
+            <Link to="/report" className="pp-cta-btn">
               <span>🚨</span> {t("privacy.ctaBtn")}
-            </a>
+            </Link>
           </div>
 
         </div>

@@ -4,26 +4,50 @@ declare global {
   }
 }
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import { supabase } from "../js/supabase";
 import { FaEye, FaEyeSlash, FaCheck, FaArrowRight } from "react-icons/fa";
 import logoImage from "../assets/dsg.logo.png";
 import directorybg from "../assets/directorybg.png";
 import { useLanguage } from "../context/LanguageContext";
 
-declare global {
-  interface Window {
-    turnstile?: {
-      render: (container: string | HTMLElement, options: Record<string, any>) => string;
-      remove: (widgetId?: string) => void;
-      reset: (widgetId?: string) => void;
-    };
-    onloadTurnstileCallback?: () => void;
-  }
-}
+// ── Cloudflare Turnstile site key ──
+// Priority: VITE_TURNSTILE_SITE_KEY → REACT_APP_TURNSTILE_SITE_KEY → dev dummy.
+// Cloudflare's official dummy sitekey for localhost/dev (always passes):
+//   1x00000000000000000000AA
+// (see https://developers.cloudflare.com/turnstile/troubleshooting/testing/).
+// The key MUST match the key configured in Supabase Auth > CAPTCHA settings,
+// otherwise signInWithPassword() calls sending `options: { captchaToken }`
+// will be rejected.
+const DUMMY_SITE_KEY = "1x00000000000000000000AA";
 
-const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '0x4AAAAAAEeWeQHuqgMoh8cd';
+function resolveTurnstileSiteKey(): { siteKey: string; isDummy: boolean; missingEnv: boolean } {
+  const envKey =
+    (import.meta.env.VITE_TURNSTILE_SITE_KEY ||
+      import.meta.env.REACT_APP_TURNSTILE_SITE_KEY ||
+      "").trim();
+  if (envKey) return { siteKey: envKey, isDummy: false, missingEnv: false };
+  const hostname =
+    typeof window !== "undefined" ? window.location.hostname : "";
+  const isLocalhost =
+    /^(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])$/.test(hostname) ||
+    hostname.endsWith(".localhost");
+  const isDev =
+    Boolean(import.meta.env.DEV) || isLocalhost;
+  if (isDev) {
+    console.warn(
+      "[Turnstile] VITE_TURNSTILE_SITE_KEY / REACT_APP_TURNSTILE_SITE_KEY is missing — using Cloudflare dummy sitekey for localhost development:",
+      DUMMY_SITE_KEY
+    );
+  } else {
+    console.error(
+      "[Turnstile] VITE_TURNSTILE_SITE_KEY / REACT_APP_TURNSTILE_SITE_KEY is missing — falling back to dummy sitekey for rendering. Login CAPTCHA verification will fail until a real site key is configured."
+    );
+  }
+  return { siteKey: DUMMY_SITE_KEY, isDummy: true, missingEnv: true };
+}
 
 // ── CSS-in-JS ──
 const CSS = `
@@ -376,6 +400,11 @@ const CSS = `
     transition: color .25s ease;
   }
 
+  /* Anchor the absolutely-positioned field icon + password eye to the input
+     itself (not .lg-field, which also contains the label and would offset
+     top:50% upward, leaving the icon misplaced/overlapping the label). */
+  .lg-input-wrap { position: relative; }
+
   .lg-input-wrap:focus-within .lg-field-icon { color: rgba(0, 200, 224, 0.65); }
 
   .lg-input {
@@ -520,6 +549,31 @@ const CSS = `
     letter-spacing: 0.5px;
   }
 
+  .lg-captcha {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 78px;
+    margin: 4px 0 22px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .lg-captcha-widget {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 65px;
+    min-width: 300px;
+  }
+
+  .lg-captcha-widget iframe {
+    display: block !important;
+    visibility: visible !important;
+  }
+
   .lg-success {
     display: flex; flex-direction: column; align-items: center;
     text-align: center; padding: 28px 0;
@@ -625,9 +679,17 @@ export default function Login() {
   const [success, setSuccess]       = useState(false);
   const [error, setError]           = useState("");
   const [checking, setChecking]     = useState(true);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-  const turnstileContainerRef = useRef<HTMLDivElement>(null);
-  const widgetIdRef = useRef<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [captchaStatus, setCaptchaStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [captchaMsg, setCaptchaMsg] = useState("");
+  // Ref to the <Turnstile /> wrapper instance (reset/remove/getResponse).
+  const turnstileRef = useRef<TurnstileInstance | null>(null);
+
+  // Resolve once per mount: env key → localhost dummy fallback (with logging).
+  const { siteKey: TURNSTILE_SITE_KEY, isDummy: TURNSTILE_IS_DUMMY } = useMemo(
+    resolveTurnstileSiteKey,
+    []
+  );
 
   // ── Guard against setState after unmount ──
   const mountedRef = useRef(true);
@@ -636,48 +698,34 @@ export default function Login() {
     return () => { mountedRef.current = false; };
   }, []);
 
-  // ── Cloudflare Turnstile lifecycle ──
-  useEffect(() => {
-    const renderWidget = () => {
-      if (window.turnstile && turnstileContainerRef.current && !widgetIdRef.current) {
-        try {
-          widgetIdRef.current = window.turnstile.render(turnstileContainerRef.current, {
-            sitekey: TURNSTILE_SITE_KEY,
-            theme: 'dark',
-            callback: (token: string) => setCaptchaToken(token),
-            'error-callback': (err: any) => console.error('Turnstile Error:', err),
-          });
-        } catch (e) {
-          console.error('Failed to render Turnstile:', e);
-        }
-      }
-    };
-
-    if (window.turnstile) {
-      renderWidget();
-      return;
+  // Keep latest translator without re-rendering the widget on every
+  // keystroke (`t` is re-created each render and is NOT referentially stable).
+  // The <Turnstile /> wrapper uses stable callbacks by default
+  // (rerenderOnCallbackChange=false), so translation updates flow through
+  // this ref instead of tearing down the widget.
+  const tRef = useRef(t);
+  tRef.current = t;
+  const tr = (path: string, fallback: string) => {
+    try {
+      return tRef.current(path, fallback);
+    } catch {
+      return fallback;
     }
+  };
 
-    window.onloadTurnstileCallback = () => {
-      renderWidget();
-    };
-
-    let script = document.querySelector<HTMLScriptElement>('script[src*="turnstile"]');
-    if (!script) {
-      script = document.createElement("script");
-      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback";
-      script.async = true;
-      script.defer = true;
-      document.head.appendChild(script);
-    }
-
-    return () => {
-      if (widgetIdRef.current && window.turnstile) {
-        window.turnstile.remove(widgetIdRef.current);
-        widgetIdRef.current = null;
-      }
-    };
-  }, []);
+  // ── Retry CAPTCHA (used by the UI when the widget errors/expires) ──
+  // The <Turnstile /> component owns the widget lifecycle + the
+  // https://challenges.cloudflare.com/turnstile/v0/api.js script (preloaded
+  // in index.html <head> with id="cf-turnstile-script", reused by the wrapper
+  // instead of injecting a duplicate), so retry is just a reset.
+  const retryCaptcha = () => {
+    setCaptchaMsg("");
+    setCaptchaStatus("loading");
+    setTurnstileToken(null);
+    try {
+      turnstileRef.current?.reset();
+    } catch { /* ignore — widget will re-render on its own */ }
+  };
 
   // ── Supabase session check ───────────────────────────────────────────────
   useEffect(() => {
@@ -717,36 +765,72 @@ export default function Login() {
   }, [navigate]);
 
   // ── Reset CAPTCHA ──
+  // The <Turnstile /> wrapper owns the widget; reset via its instance ref.
   const resetCaptcha = () => {
-    setCaptchaToken(null);
-    if (window.turnstile && widgetIdRef.current) {
-      window.turnstile.reset(widgetIdRef.current);
+    setTurnstileToken(null);
+    try {
+      turnstileRef.current?.reset();
+    } catch {
+      // If reset fails (e.g. widget removed), the wrapper re-renders on its own.
     }
   };
 
   // ── Handle login ────────────────────────────────────────────────────────
+  // Sends the Turnstile token as `options.captchaToken` (Supabase verifies it
+  // server-side against the sitekey/secret pair in Auth > CAPTCHA settings).
   const handleLogin = async () => {
     setError("");
     if (!email.trim() || !password.trim()) {
       setError(t("login.errors.missingFields", "Please fill in all required fields."));
       return;
     }
+    if (captchaStatus === "loading") {
+      setError(t("login.errors.captchaLoading", "Security check is still loading. Please wait a moment and try again."));
+      return;
+    }
+    if (!turnstileToken) {
+      setError(
+        captchaMsg ||
+          t("login.errors.needCaptcha", "Please complete the CAPTCHA to verify you're human.")
+      );
+      return;
+    }
     setLoading(true);
 
-    const { data: authData, error: authError } =
-      await supabase.auth.signInWithPassword({
+    let authData: any = null;
+    let authError: any = null;
+    try {
+      const res = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
-        options: { captchaToken: captchaToken ?? undefined },
+        options: { captchaToken: turnstileToken },
       });
+      authData = res.data;
+      authError = res.error;
+    } catch (e: any) {
+      authError = e;
+    }
 
     if (authError || !authData?.user) {
-      const rawMessage = authError?.message?.toLowerCase() || "";
+      const rawMessage = (authError?.message || "").toLowerCase();
       const isUnconfirmed = rawMessage.includes("email not confirmed");
+      const isCaptcha =
+        rawMessage.includes("captcha") ||
+        rawMessage.includes("turnstile") ||
+        rawMessage.includes("challenge") ||
+        rawMessage.includes("robot") ||
+        rawMessage.includes("bot ") ||
+        rawMessage.includes("verification") ||
+        rawMessage.includes("human");
       setError(
         isUnconfirmed
           ? t("login.errors.unconfirmedEmail", "Please verify your email before signing in.")
-          : t("login.errors.loginFailed", "Invalid email or password.")
+          : isCaptcha
+            ? t(
+                "login.errors.captchaFailed",
+                "Security check failed. Please complete the CAPTCHA again and retry."
+              )
+            : t("login.errors.loginFailed", "Invalid email or password.")
       );
       setLoading(false);
       resetCaptcha();
@@ -933,11 +1017,83 @@ export default function Login() {
                   </Link>
                 </div>
 
-                <div className="w-full flex justify-center my-4 min-h-[65px] h-[65px]">
-                  <div ref={turnstileContainerRef} />
+                <div className="lg-captcha" id="login-turnstile-wrapper">
+                  {/* ── Cloudflare Turnstile — renders directly above MAG-LOGIN.
+                      Script: https://challenges.cloudflare.com/turnstile/v0/api.js
+                      preloaded in index.html <head> (id="cf-turnstile-script");
+                      the wrapper reuses it instead of injecting a duplicate. ── */}
+                  <Turnstile
+                    ref={turnstileRef as React.Ref<TurnstileInstance | undefined>}
+                    siteKey={TURNSTILE_SITE_KEY}
+                    options={{ theme: "dark" }}
+                    onWidgetLoad={() => {
+                      if (!mountedRef.current) return;
+                      setCaptchaStatus("ready");
+                    }}
+                    onSuccess={(token) => {
+                      setTurnstileToken(token);
+                      if (!mountedRef.current) return;
+                      setCaptchaMsg("");
+                      setCaptchaStatus("ready");
+                    }}
+                    onExpire={() => {
+                      if (!mountedRef.current) return;
+                      setTurnstileToken(null);
+                      setCaptchaMsg(tr("login.errors.captchaExpired", "Security check expired. Please verify again."));
+                      try { turnstileRef.current?.reset(); } catch { /* ignore */ }
+                    }}
+                    onTimeout={() => {
+                      if (!mountedRef.current) return;
+                      setTurnstileToken(null);
+                      setCaptchaStatus("error");
+                      setCaptchaMsg(tr("login.errors.captchaTimeout", "Security check timed out. Please retry."));
+                    }}
+                    onError={(err) => {
+                      console.error("Turnstile Error:", err);
+                      if (!mountedRef.current) return;
+                      setTurnstileToken(null);
+                      setCaptchaStatus("error");
+                      setCaptchaMsg(
+                        tr("login.errors.captchaLoadFailed", "Security check failed to load. Check your connection / ad-blocker and retry.")
+                      );
+                    }}
+                  />
+                  {TURNSTILE_IS_DUMMY && (
+                    <div style={{ fontSize: 11, color: "rgba(255,180,166,0.75)", marginTop: 6, textAlign: "center", maxWidth: 320 }}>
+                      Dev mode: using Cloudflare dummy sitekey — Supabase CAPTCHA verification must be disabled or use matching test keys.
+                    </div>
+                  )}
+                  {captchaStatus === "loading" && !turnstileToken && (
+                    <div style={{ fontSize: 12, color: "rgba(168,216,255,0.55)", marginTop: 8 }}>
+                      {t("login.captchaLoading", "Loading security check…")}
+                    </div>
+                  )}
+                  {captchaMsg && (
+                    <div style={{ fontSize: 12, color: "#ffb4a6", marginTop: 8, textAlign: "center", maxWidth: 320 }}>
+                      {captchaMsg}{" "}
+                      <button
+                        type="button"
+                        onClick={retryCaptcha}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "#00c8e0",
+                          cursor: "pointer",
+                          fontWeight: 700,
+                          fontSize: 12,
+                          padding: 0,
+                          marginLeft: 4,
+                        }}
+                      >
+                        {t("login.captchaRetry", "Retry")}
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <button
+                  id="MAG-LOGIN"
+                  data-testid="MAG-LOGIN"
                   className="lg-btn"
                   onClick={handleLogin}
                   disabled={loading}

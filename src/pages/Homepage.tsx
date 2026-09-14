@@ -9,8 +9,10 @@ import { LanguageSelectModal } from "../components/LanguageSelectModal";
 
 
 // ── Cloudflare Turnstile site key ──
-// Same widget/key used on the Signup page and Login page.
-const TURNSTILE_SITE_KEY = "0x4AAAAAAAEeWeQHuqgMoh8cd";
+// Supplied via VITE_TURNSTILE_SITE_KEY (must match the key configured in
+// Supabase Auth CAPTCHA settings). Fallback keeps dev working when unset.
+const TURNSTILE_SITE_KEY =
+  (import.meta as any)?.env?.VITE_TURNSTILE_SITE_KEY || "0x4AAAAAAAEeWeQHuqgMoh8cd";
 
 declare global {
   interface Window {
@@ -19,6 +21,7 @@ declare global {
       reset: (widgetId?: string) => void;
       remove: (widgetId?: string) => void;
     };
+    onTurnstileSuccess?: (token: string) => void;
   }
 }
 
@@ -272,7 +275,69 @@ export default function Homepage() {
   // on the dedicated /login page (which already had the widget) and
   // silently failed here. ──
   const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaStatus, setCaptchaStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [captchaMsg, setCaptchaMsg] = useState("");
   const captchaWidgetId = useRef<string | null>(null);
+  const turnstileContainerRef = useRef<HTMLDivElement>(null);
+
+  const resetCaptcha = () => {
+    setCaptchaToken("");
+    try {
+      if (window.turnstile) {
+        if (captchaWidgetId.current) window.turnstile.reset(captchaWidgetId.current);
+        else window.turnstile.reset();
+      }
+    } catch {
+      captchaWidgetId.current = null;
+    }
+  };
+
+  const retryCaptcha = () => {
+    setCaptchaMsg("");
+    setCaptchaStatus("loading");
+    setCaptchaToken("");
+    try {
+      if (window.turnstile && captchaWidgetId.current) {
+        window.turnstile.reset(captchaWidgetId.current);
+        setCaptchaStatus("ready");
+        return;
+      }
+    } catch { /* fall through to re-render */ }
+    captchaWidgetId.current = null;
+    if (turnstileContainerRef.current) turnstileContainerRef.current.innerHTML = "";
+    setTimeout(() => {
+      if (!window.turnstile || !turnstileContainerRef.current || captchaWidgetId.current) {
+        setCaptchaStatus("error");
+        setCaptchaMsg(t("auth.errNeedCaptcha"));
+        return;
+      }
+      try {
+        captchaWidgetId.current = window.turnstile.render(turnstileContainerRef.current, {
+          sitekey: TURNSTILE_SITE_KEY,
+          theme: "dark",
+          callback: (token: string) => {
+            setCaptchaToken(token);
+            setCaptchaMsg("");
+            setCaptchaStatus("ready");
+          },
+          "expired-callback": () => {
+            setCaptchaToken("");
+            setCaptchaMsg(t("auth.errNeedCaptcha"));
+          },
+          "error-callback": (err: any) => {
+            console.error("Turnstile Error:", err);
+            setCaptchaToken("");
+            setCaptchaStatus("error");
+            setCaptchaMsg(t("auth.errNeedCaptcha"));
+          },
+        });
+        setCaptchaStatus("ready");
+      } catch (e) {
+        console.error("Failed to re-render Turnstile:", e);
+        setCaptchaStatus("error");
+      }
+    }, 50);
+  };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -308,54 +373,119 @@ export default function Homepage() {
     return () => observer.disconnect();
   }, []);
 
-// ── Load the Turnstile script once, then render the widget into our
-// container. Mirrors the logic used on the Login page. ──
+// ── Load the Turnstile widget into our container. ──
+// index.html loads the Turnstile script globally (explicit render), so this
+// effect waits for window.turnstile instead of injecting a duplicate script.
   useEffect(() => {
-    window.onTurnstileSuccess = (token) => setCaptchaToken(token);
-    // Load Turnstile script with explicit render mode
-    const existing = document.querySelector('script[src*="turnstile"]');
-    if (!existing) {
-      const script = document.createElement("script");
-      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
-      script.async = true;
-      script.defer = true;
-      document.head.appendChild(script);
-      script.onload = () => {
+    let cancelled = false;
+    let pollTimer: ReturnType<typeof setInterval> | null = null;
+
+    const renderWidget = () => {
+      if (cancelled) return false;
+      if (!window.turnstile || !turnstileContainerRef.current || captchaWidgetId.current) {
+        return !!captchaWidgetId.current;
+      }
+      if (turnstileContainerRef.current.childElementCount > 0) {
+        turnstileContainerRef.current.innerHTML = "";
+      }
+      try {
+        captchaWidgetId.current = window.turnstile.render(turnstileContainerRef.current, {
+          sitekey: TURNSTILE_SITE_KEY,
+          theme: "dark",
+          callback: (token: string) => {
+            if (cancelled) return;
+            setCaptchaToken(token);
+            setCaptchaMsg("");
+            setCaptchaStatus("ready");
+          },
+          "expired-callback": () => {
+            if (cancelled) return;
+            setCaptchaToken("");
+            setCaptchaMsg(t("auth.errNeedCaptcha"));
+            try {
+              if (window.turnstile && captchaWidgetId.current) window.turnstile.reset(captchaWidgetId.current);
+            } catch { /* ignore */ }
+          },
+          "timeout-callback": () => {
+            if (cancelled) return;
+            setCaptchaToken("");
+            setCaptchaStatus("error");
+            setCaptchaMsg(t("auth.errNeedCaptcha"));
+          },
+          "error-callback": (err: any) => {
+            console.error("Turnstile Error:", err);
+            if (cancelled) return;
+            setCaptchaToken("");
+            setCaptchaStatus("error");
+            setCaptchaMsg(t("auth.errNeedCaptcha"));
+          },
+        });
+        setCaptchaStatus("ready");
+        return true;
+      } catch (e) {
+        console.error("Failed to render Turnstile:", e);
+        if (!cancelled) {
+          setCaptchaStatus("error");
+          setCaptchaMsg(t("auth.errNeedCaptcha"));
+        }
+        return false;
+      }
+    };
+
+    if (window.turnstile) {
+      renderWidget();
+    } else {
+      let attempts = 0;
+      pollTimer = setInterval(() => {
+        attempts += 1;
         if (window.turnstile) {
-          const container = document.querySelector('.cf-turnstile');
-          if (container && !captchaWidgetId.current) {
-            captchaWidgetId.current = window.turnstile.render(container, {
-              sitekey: TURNSTILE_SITE_KEY,
-              theme: "dark",
-              callback: (token: string) => setCaptchaToken(token),
-            });
+          if (pollTimer) clearInterval(pollTimer);
+          renderWidget();
+        } else if (attempts > 50) {
+          if (pollTimer) clearInterval(pollTimer);
+          if (!cancelled) {
+            setCaptchaStatus("error");
+            setCaptchaMsg(t("auth.errNeedCaptcha"));
           }
         }
-      };
-    } else {
-      // Script already loaded — render immediately
-      if (window.turnstile) {
-        const container = document.querySelector('.cf-turnstile');
-        if (container && !captchaWidgetId.current) {
-          captchaWidgetId.current = window.turnstile.render(container, {
-            sitekey: TURNSTILE_SITE_KEY,
-            theme: "dark",
-          });
-        }
+      }, 200);
+
+      const existing = document.querySelector<HTMLScriptElement>('script[src*="turnstile"]');
+      const onLoad = () => renderWidget();
+      existing?.addEventListener("load", onLoad);
+      if (!existing) {
+        const script = document.createElement("script");
+        script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+        script.async = true;
+        script.defer = true;
+        script.addEventListener("load", onLoad);
+        document.head.appendChild(script);
       }
     }
 
     return () => {
-      if (window.turnstile && captchaWidgetId.current) {
-        window.turnstile.remove(captchaWidgetId.current);
-        captchaWidgetId.current = null;
-      }
+      cancelled = true;
+      if (pollTimer) clearInterval(pollTimer);
+      try {
+        if (window.turnstile && captchaWidgetId.current) {
+          window.turnstile.remove(captchaWidgetId.current);
+        }
+      } catch { /* ignore */ }
+      captchaWidgetId.current = null;
     };
-  }, []);
+  }, [t]);
 
   const handleLogin = async () => {
     if (!email || !password) {
       setError(t("auth.errMissingFields"));
+      return;
+    }
+    if (captchaStatus === "loading") {
+      setError(t("auth.errNeedCaptcha"));
+      return;
+    }
+    if (!captchaToken) {
+      setError(captchaMsg || t("auth.errNeedCaptcha"));
       return;
     }
     setLoading(true);
@@ -368,12 +498,18 @@ export default function Homepage() {
           options: { captchaToken },
         });
       if (authError || !authData.user) {
-        setError(authError?.message || t("auth.errLoginFailed"));
+        const rawMessage = (authError?.message || "").toLowerCase();
+        const isCaptcha =
+          rawMessage.includes("captcha") ||
+          rawMessage.includes("turnstile") ||
+          rawMessage.includes("challenge") ||
+          rawMessage.includes("robot") ||
+          rawMessage.includes("verification");
+        setError(
+          isCaptcha ? t("auth.errNeedCaptcha") : authError?.message || t("auth.errLoginFailed")
+        );
         setLoading(false);
-        setCaptchaToken("");
-        if (window.turnstile && captchaWidgetId.current) {
-          window.turnstile.reset(captchaWidgetId.current);
-        }
+        resetCaptcha();
         return;
       }
       const { data: profile, error: profileError } = await supabase
@@ -406,10 +542,7 @@ export default function Homepage() {
     } catch (err: any) {
       setError(err.message || t("auth.errLoginFailed"));
       setLoading(false);
-      setCaptchaToken("");
-      if (window.turnstile && captchaWidgetId.current) {
-        window.turnstile.reset(captchaWidgetId.current);
-      }
+      resetCaptcha();
     }
   };
 
@@ -1426,7 +1559,35 @@ export default function Homepage() {
                   </div>
                 )}
                 {/* ── Turnstile CAPTCHA widget — required by Supabase Auth ── */}
-                <div className="cf-turnstile my-3 flex justify-center" data-sitekey="0x4AAAAAAAEeWeQHuqgMoh8cd"></div>
+                <div className="my-3 flex flex-col items-center">
+                  <div ref={turnstileContainerRef} className="flex justify-center" />
+                  {captchaStatus === "loading" && (
+                    <div style={{ fontSize: 12, color: "rgba(168,216,255,0.55)", marginTop: 8 }}>
+                      {t("auth.errNeedCaptcha")}
+                    </div>
+                  )}
+                  {captchaMsg && captchaStatus !== "loading" && (
+                    <div style={{ fontSize: 12, color: "#ffb4a6", marginTop: 8, textAlign: "center", maxWidth: 320 }}>
+                      {captchaMsg}{" "}
+                      <button
+                        type="button"
+                        onClick={retryCaptcha}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "#00c8e0",
+                          cursor: "pointer",
+                          fontWeight: 700,
+                          fontSize: 12,
+                          padding: 0,
+                          marginLeft: 4,
+                        }}
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <button
                   className="hp-auth-btn"
                   onClick={handleLogin}

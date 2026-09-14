@@ -7,6 +7,7 @@
 // CitizenDashboard's modal, which already provides the close button and
 // scroll container).
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import safetyTipsBg from "../assets/safetytips.jpg";
 import { useLanguage } from "../context/LanguageContext";
 import {
@@ -527,11 +528,15 @@ export default function CitizenSafetyTips() {
   // block), otherwise the dictionary stepsTitle shared by all 8 active codes.
   const stepsTitleText = STEPS_TITLE_BY_LANG[language] ?? t("safetyTips.stepsTitle", "Safety Steps");
 
+  // Deep-link support for #<disaster-id>. Uses React Router's location.hash
+  // (NOT window.location.hash, which under HashRouter also contains the
+  // route itself, e.g. `#/citizen/safetytips#fire`).
+  const location = useLocation();
   useEffect(() => {
-    const hash = window.location.hash.replace("#", "");
+    const hash = decodeURIComponent(location.hash.replace(/^#/, ""));
     const idx = DISASTERS.findIndex(d => d.id === hash);
     if (idx !== -1) setActiveTab(idx);
-  }, []);
+  }, [location.hash]);
 
   return (
     <>

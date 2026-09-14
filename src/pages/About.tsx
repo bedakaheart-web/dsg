@@ -431,7 +431,7 @@ export default function About() {
                 <h3>{t("about.cta.title")}</h3>
                 <p>{t("about.cta.desc")}</p>
               </div>
-              <a href="/report" className="ab-cta-btn">🚨 {t("about.cta.btn")}</a>
+              <Link to="/report" className="ab-cta-btn">🚨 {t("about.cta.btn")}</Link>
             </div>
           </div>
 
