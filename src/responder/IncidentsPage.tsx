@@ -19,6 +19,7 @@ interface Report {
   evidence_url: string | null;
   created_at: string;
   responder_id: string | null;
+  user_id: string | null;
   responder_notes: string | null;
   action_notes: string | null;
   resolution_type: string | null;
@@ -104,6 +105,7 @@ const ICONS = {
   video:        "M23 7l-7 5 7 5V7z M1 5h15a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H1a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z",
   externalLink: "M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3",
   route:        "M6 19a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 5a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM9 19h6M9 5h6",
+  chat:         "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z",
   clipboard:    "M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2",
 };
 
@@ -246,6 +248,8 @@ const INCIDENTS_STYLES = `
 .ri-btn-resolve:hover:not(:disabled) { background: rgba(11,102,35,0.15); }
 .ri-btn-nav     { background: var(--info-bg);    border-color: var(--primary);       color: var(--primary); }
 .ri-btn-nav:hover:not(:disabled) { background: rgba(0,82,204,0.15); }
+.ri-btn-chat    { background: rgba(46,204,143,0.08); border-color: #2ECC8F; color: #2ECC8F; }
+.ri-btn-chat:hover:not(:disabled) { background: rgba(46,204,143,0.15); }
 
 /* ── Lightbox ── */
 .ri-lb { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; padding: 24px; cursor: zoom-out; animation: fadeIn 0.2s ease; }
@@ -590,7 +594,9 @@ function ResolutionSummary({ report }: { report: Report }) {
 
 type TabId = "all" | "mine" | "unassigned";
 
-export default function ResponderIncidentsPage() {
+export default function ResponderIncidentsPage({ onChatCitizen }: {
+  onChatCitizen?: (target: { reportId: string; citizenId: string | null; citizenName: string }) => void;
+} = {}) {
   const [reports,       setReports]       = useState<Report[]>([]);
   const [loading,       setLoading]       = useState(true);
   const [responderId,   setResponderId]   = useState("");
@@ -616,7 +622,7 @@ export default function ResponderIncidentsPage() {
   const loadReports = async () => {
     const { data } = await supabase
       .from("reports")
-      .select("id,type,description,description_lang,description_translated,location,address,reporter_name,reporter_contact,status,evidence_url,created_at,responder_id,responder_notes,action_notes,resolution_type,resolved_at")
+      .select("id,type,description,description_lang,description_translated,location,address,reporter_name,reporter_contact,status,evidence_url,created_at,responder_id,user_id,responder_notes,action_notes,resolution_type,resolved_at")
       .order("created_at", { ascending: false });
     setReports(data ?? []);
     setLoading(false);
@@ -823,6 +829,18 @@ export default function ResponderIncidentsPage() {
                       {canResolve && (
                         <button className="ri-btn ri-btn-resolve" onClick={() => setResolveTarget(r)}>
                           <SvgIcon path={ICONS.check} size={12} /> Resolve
+                        </button>
+                      )}
+                      {isMine && r.status !== "resolved" && onChatCitizen && (
+                        <button
+                          className="ri-btn ri-btn-chat"
+                          onClick={() => onChatCitizen({
+                            reportId: String(r.id),
+                            citizenId: r.user_id ? String(r.user_id) : null,
+                            citizenName: r.reporter_name || "Citizen",
+                          })}
+                        >
+                          <SvgIcon path={ICONS.chat} size={12} /> Chat Citizen
                         </button>
                       )}
                       {r.location && (

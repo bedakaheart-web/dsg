@@ -8,12 +8,13 @@ import ResponderAlertsPage from "./ResponderAlertsPage";
 import ResponderIncidentsPage from "./IncidentsPage";
 import ResponderTeamPage from "./ResponderTeam";
 import ResponderChatDrawer from "./components/ResponderChatDrawer";
+import ResponderCitizenChatDrawer from "./components/ResponderCitizenChatDrawer";
 import { fetchUnreadCounts } from "../hooks/useRealtimeChat";
 import dsgLogo from "../assets/dsg.logo.png";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type ViewId = "overview" | "incidents" | "alerts" | "dispatch" | "team";
+type ViewId = "overview" | "incidents" | "citizenChat" | "alerts" | "dispatch" | "team";
 
 interface Report {
   id: string | number;
@@ -52,6 +53,7 @@ const NAV_ITEMS: Array<{ id: ViewId; label: string; group: "Operations" | "Team"
   { id: "overview",  label: "Overview",  group: "Operations" },
   { id: "dispatch",  label: "Dispatch",  group: "Operations" },
   { id: "incidents", label: "Incidents", group: "Operations" },
+  { id: "citizenChat", label: "Citizen Chat", group: "Operations" },
   { id: "alerts",    label: "Alerts",    group: "Operations" },
   { id: "team",      label: "Team",      group: "Team"       },
 ];
@@ -78,6 +80,7 @@ const NAV_ICON_MAP: Record<ViewId, string> = {
   overview:  ICONS.gauge,
   dispatch:  ICONS.radar,
   incidents: ICONS.clipboard,
+  citizenChat: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z",
   alerts:    ICONS.bell,
   team:      ICONS.users,
 };
@@ -668,7 +671,7 @@ function OverviewPanel({ onNavigate, responderId }: OverviewPanelProps) {
 
 const PAGE_TITLE: Record<ViewId, string> = {
   overview: "Overview", dispatch: "Dispatch",
-  incidents: "Incidents", alerts: "Alerts", team: "Team",
+  incidents: "Incidents", citizenChat: "Citizen Chat", alerts: "Alerts", team: "Team",
 };
 
 export default function RespondersDashboard() {
@@ -684,6 +687,10 @@ export default function RespondersDashboard() {
   const [authReady,     setAuthReady]     = useState(false);
   const [isChatOpen,    setIsChatOpen]    = useState(false);
   const [chatUnread,    setChatUnread]    = useState(0);
+  const [citizenChatOpen, setCitizenChatOpen] = useState(false);
+  const [citizenChatTarget, setCitizenChatTarget] = useState<{
+    reportId: string; citizenId: string | null; citizenName: string;
+  } | null>(null);
 
   // Track when the user last viewed alerts so we only badge NEW ones
   const lastSeenAlertTime = React.useRef<string>(
@@ -695,6 +702,14 @@ export default function RespondersDashboard() {
     lastSeenAlertTime.current = now;
     localStorage.setItem("dsg_alerts_last_seen", now);
     setAlertCount(0);
+  };
+
+  const openCitizenChat = (target?: {
+    reportId: string; citizenId: string | null; citizenName: string;
+  } | null) => {
+    setCitizenChatTarget(target ?? null);
+    setCitizenChatOpen(true);
+    setSidebarOpen(false);
   };
 
   const handleNavigate = (v: ViewId) => {
@@ -849,7 +864,7 @@ export default function RespondersDashboard() {
                     <button
                       key={item.id}
                       className={cls("rd-nav-btn", view === item.id && "active", item.id === "team" && "team-nav")}
-                      onClick={() => handleNavigate(item.id)}
+                      onClick={() => item.id === "citizenChat" ? openCitizenChat() : handleNavigate(item.id)}
                     >
                       <span className="rd-nav-ic">
                         <SvgIcon path={NAV_ICON_MAP[item.id]} size={16} />
@@ -938,7 +953,7 @@ export default function RespondersDashboard() {
               )}
               {view === "overview"  && authReady && <OverviewPanel onNavigate={handleNavigate} responderId={responderId} />}
               {view === "dispatch"  && <Dispatch />}
-              {view === "incidents" && <ResponderIncidentsPage />}
+              {view === "incidents" && <ResponderIncidentsPage onChatCitizen={openCitizenChat} />}
               {view === "alerts"    && <ResponderAlertsPage />}
               {view === "team"      && <ResponderTeamPage />}
             </main>
@@ -947,6 +962,17 @@ export default function RespondersDashboard() {
 
         {/* Real-time side chat with Admin HQ */}
         {responderId && <ResponderChatDrawer responderId={responderId} open={isChatOpen} onClose={() => setIsChatOpen(false)} />}
+        {/* Direct chat with assigned citizens (text + images via chat_messages) */}
+        {responderId && (
+          <ResponderCitizenChatDrawer
+            responderId={responderId}
+            open={citizenChatOpen}
+            onClose={() => setCitizenChatOpen(false)}
+            initialReportId={citizenChatTarget?.reportId ?? null}
+            initialCitizenId={citizenChatTarget?.citizenId ?? null}
+            initialCitizenName={citizenChatTarget?.citizenName ?? null}
+          />
+        )}
       </div>
     </>
   );
