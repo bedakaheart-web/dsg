@@ -21,7 +21,7 @@ import { useLanguage } from "../context/LanguageContext";
 // No domain checks or environment-variable logic — swap in the production
 // key here only when real Supabase Auth CAPTCHA verification is enabled
 // (test tokens are rejected unless its test-mode setup matches).
-const TURNSTILE_SITE_KEY = "1x00000000000000000000AA";
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY;
 
 // ── CSS-in-JS ──
 const CSS = `
@@ -698,7 +698,7 @@ export default function Login() {
   const turnstileRef = useRef<TurnstileInstance | null>(null);
 
   // The universal test key above is used in every environment.
-  const TURNSTILE_IS_DUMMY = true;
+  const TURNSTILE_IS_DUMMY = TURNSTILE_SITE_KEY === "1x00000000000000000000AA";
 
   // ── Guard against setState after unmount ──
   const mountedRef = useRef(true);
@@ -1037,7 +1037,7 @@ export default function Login() {
                   <div className="lg-turnstile-box" id="login-turnstile-widget" style={{ minHeight: "65px", width: "100%", display: "flex", justifyContent: "center" }}>
 <Turnstile
                     ref={turnstileRef as React.Ref<TurnstileInstance | undefined>}
-                    siteKey="1x00000000000000000000AA"
+                    siteKey={TURNSTILE_SITE_KEY}
                     options={{ theme: "dark" }}
                     onWidgetLoad={(widgetId) => {
                       console.log("[Turnstile] widget loaded. id:", widgetId, "| siteKey:", TURNSTILE_SITE_KEY);
