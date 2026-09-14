@@ -102,6 +102,7 @@ export default function CitizenLayout() {
 
         <div style={{ ...SECTION_LABEL, marginTop: "8px" }}>{t("history.actions", "Actions")}</div>
         <Link to="/citizen/report" style={linkStyle("/citizen/report")}><span>📝</span> {t("nav.reportIncident", "Report Incident")}</Link>
+        <Link to="/citizen/chat" style={linkStyle("/citizen/chat")}><span>💬</span> {t("nav.chat", "Chat")}</Link>
         <Link to="/citizen/history" style={linkStyle("/citizen/history")}><span>📂</span> {t("nav.myReports", "My Reports")}</Link>
         <Link to="/citizen/alerts" style={linkStyle("/citizen/alerts")}><span>🔔</span> {t("history.barangayAlerts", "Barangay Alerts")}</Link>
         <Link to="/citizen/map" style={linkStyle("/citizen/map")}><span>🗺️</span> {t("history.safetyMap", "Safety Map")}</Link>

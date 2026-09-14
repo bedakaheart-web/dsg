@@ -73,6 +73,9 @@ const ResponderAlertsPage = lazyWithRetry(() => import('./responder/ResponderAle
 const RespondersDashboard = lazyWithRetry(() => import('./responder/Respondersdashboard'));
 const ResponderTeam       = lazyWithRetry(() => import('./responder/ResponderTeam'));
 
+// ── Chat ────────────────────────────────────────────────────────────────
+const ChatPage = lazyWithRetry(() => import('./components/ChatPage'));
+
 // ── Citizen ───────────────────────────────────────────────────────────────────
 const CitizenLayout      = lazyWithRetry(() => import('./citizen/CitizenLayout'));
 const CitizenDashboard   = lazyWithRetry(() => import('./citizen/CitizenDashboard'));
@@ -85,6 +88,7 @@ const Report = lazyWithRetry(() => import("./pages/Report"));
 const CitizenDirectory   = lazyWithRetry(() => import('./citizen/CitizenDirectory'));
 const CitizenResources   = lazyWithRetry(() => import('./citizen/CitizenResources'));
 const CitizenAbout       = lazyWithRetry(() => import('./citizen/CitizenAbout'));
+const CitizenChatPage    = lazyWithRetry(() => import('./citizen/components/CitizenChatPage'));
 
 const Loader = () => (
   <div style={{
@@ -197,7 +201,11 @@ export default function App() {
             <Route path="/citizen/directory"   element={<CitizenDirectory />} />
             <Route path="/citizen/resources"   element={<CitizenResources />} />
             <Route path="/citizen/about"       element={<CitizenAbout />} />
+            <Route path="/citizen/chat"      element={<CitizenChatPage />} />
           </Route>
+
+          {/* ── Universal Chat ── */}
+          <Route path="/chat" element={<ProtectedRoute allowedRole="citizen,responder,admin"><ChatPage /></ProtectedRoute>} />
 
           {/* ── Responder — NO PublicLayout, has its own dashboard shell ── */}
           <Route path="/responder/dashboard" element={<ProtectedRoute allowedRole="responder"><RespondersDashboard /></ProtectedRoute>} />
