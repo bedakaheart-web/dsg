@@ -14,6 +14,7 @@ interface ChatMessage {
   id: string;
   sender_id: string;
   recipient_id: string | null;
+  incident_id: string | null;
   content: string;
   image_url: string | null;
   created_at: string;
@@ -49,8 +50,9 @@ function getInitials(name: string): string {
 // ── Component ────────────────────────────────────────────────────────
 export default function ChatBox({
   assignedResponderId,
+  incidentId,
   userRole,
-}: { assignedResponderId?: string | null; userRole?: string }) {
+}: { assignedResponderId?: string | null; incidentId?: string | null; userRole?: string }) {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -62,7 +64,7 @@ export default function ChatBox({
   const [participants, setParticipants] = useState<ChatParticipant[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<ChatParticipant | null>(null);
-  const [blockedRole, setBlockedRole] = useState<string | null>(null);
+  const userIdRef = useRef<string>("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -77,6 +79,7 @@ export default function ChatBox({
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user) return;
         setUser({ id: session.user.id, email: session.user.email ?? "", role: session.user.user_metadata?.role });
+        userIdRef.current = session.user.id;
       } catch {}
     })();
   }, []);
@@ -111,6 +114,28 @@ export default function ChatBox({
     })();
   }, []);
 
+  // ── Build query for chat_messages with role-based enforcement ──
+  const buildChatQuery = useCallback((u: any) => {
+    const myRole = u.user_metadata?.role;
+    let query = supabase.from("chat_messages").select("*");
+
+    if (isCitizen && recipientId && incidentId) {
+      // Citizens can only see messages for their assigned responder + incident
+      query = query
+        .or(`sender_id.eq.${u.id},recipient_id.eq.${recipientId}`)
+        .eq("incident_id", incidentId);
+    } else if (isCitizen) {
+      query = query.eq("sender_id", u.id);
+    } else if (myRole === "responder") {
+      // Responders see messages with admins and other responders
+      query = query.or(`sender_id.eq.${u.id},recipient_id.in.(select id from profiles where user_metadata->>'role' in ('admin','responder'))`);
+    } else if (myRole === "admin") {
+      // Admins see messages with responders
+      query = query.or(`sender_id.eq.${u.id},recipient_id.in.(select id from profiles where user_metadata->>'role' = 'responder')`);
+    }
+    return query.order("created_at", { ascending: true });
+  }, [isCitizen, recipientId, incidentId]);
+
   // ── Load messages & subscribe ──
   useEffect(() => {
     let cancelled = false;
@@ -120,20 +145,7 @@ export default function ChatBox({
         const { data: { user: u } } = await supabase.auth.getUser();
         if (!u) return;
 
-        let query;
-        if (recipientId) {
-          query = supabase
-            .from("messages")
-            .select("*")
-            .or(`sender_id.eq.${u.id},recipient_id.eq.${recipientId}`)
-            .order("created_at", { ascending: true });
-        } else {
-          query = supabase
-            .from("messages")
-            .select("*")
-            .eq("sender_id", u.id)
-            .order("created_at", { ascending: true });
-        }
+        const query = buildChatQuery(u);
         const { data } = await query;
         if (!cancelled) {
           const allMsgs = (data as ChatMessage[]) || [];
@@ -146,12 +158,17 @@ export default function ChatBox({
     loadMessages();
 
     const channel = supabase
-      .channel("chat-messages")
+      .channel("chat-messages-realtime")
       .on("postgres_changes",
-        { event: "INSERT", schema: "public", table: "messages" },
+        { event: "INSERT", schema: "public", table: "chat_messages" },
         (payload) => {
           const newMsg = payload.new as ChatMessage;
           if (!cancelled) {
+            // Role-based filtering for real-time messages
+            if (isCitizen && recipientId && incidentId) {
+              if (newMsg.recipient_id !== recipientId && newMsg.sender_id !== userIdRef.current) return;
+              if (newMsg.incident_id !== incidentId) return;
+            }
             setMessages(prev => {
               if (prev.some(m => m.id === newMsg.id)) return prev;
               const updated = [...prev, newMsg];
@@ -163,7 +180,7 @@ export default function ChatBox({
       .subscribe();
 
     return () => { cancelled = true; supabase.removeChannel(channel); };
-  }, [recipientId]);
+  }, [recipientId, incidentId, isCitizen, buildChatQuery]);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {

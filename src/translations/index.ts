@@ -300,7 +300,7 @@ export type TranslationDict = {
   };
   dashboard: {
     statTotalFiled: string; statPending: string; statInProgress: string; statResolved: string;
-    quickActionFileReport: string; quickActionSafetyMap: string; quickActionMyReports: string; quickActionSafetyTips: string;
+    quickActionFileReport: string; quickActionSafetyMap: string; quickActionMyReports: string; quickActionSafetyTips: string; quickActionChat: string;
     sidebarPortal: string; portalLabel: string; welcomeTitle: string; dumagueteCity: string;
     pendingReports: string; view: string; recentReportsTitle: string; noReportsYet: string;
     fileAReport: string; alertsTitle: string; noActiveAlerts: string;
@@ -833,7 +833,7 @@ export const translations: Record<LanguageCode, TranslationDict> = {
     },
     dashboard: {
       statTotalFiled: "Total Filed", statPending: "Pending", statInProgress: "In Progress", statResolved: "Resolved",
-      quickActionFileReport: "File Report", quickActionSafetyMap: "Safety Map", quickActionMyReports: "My Reports", quickActionSafetyTips: "Safety Tips",
+      quickActionFileReport: "File Report", quickActionSafetyMap: "Safety Map", quickActionMyReports: "My Reports", quickActionSafetyTips: "Safety Tips", quickActionChat: "Chat",
       sidebarPortal: "Portal", portalLabel: "Citizen Portal", welcomeTitle: "Hello, {name}", dumagueteCity: "Dumaguete City",
       pendingReports: "You have {count} report(s) awaiting review.",
       view: "View All", recentReportsTitle: "Recent Reports", noReportsYet: "No reports yet",
@@ -1368,7 +1368,7 @@ emailLabel: "Email Address",
     },
     dashboard: {
       statTotalFiled: "Kabuuang Ipinasok", statPending: "Naghihintay", statInProgress: "Sinasagawa", statResolved: "Natatapos",
-      quickActionFileReport: "Mag-report", quickActionSafetyMap: "Mapa ng Kaligtasan", quickActionMyReports: "Aking Mga Ulat", quickActionSafetyTips: "Mga Tip sa Kaligtasan",
+      quickActionFileReport: "Mag-report", quickActionSafetyMap: "Mapa ng Kaligtasan", quickActionMyReports: "Aking Mga Ulat", quickActionSafetyTips: "Mga Tip sa Kaligtasan", quickActionChat: "Chat",
       sidebarPortal: "Portal", portalLabel: "Portal ng Mamamayan", welcomeTitle: "Kamusta, {name}", dumagueteCity: "Lungsod ng Dumaguete",
       pendingReports: "May {count} ulat ang iyong inaasahan.",
       view: "Tingnan ang Lahat", recentReportsTitle: "Kamakailangang mga Ulat", noReportsYet: "Wala pang ulat",
@@ -1690,7 +1690,7 @@ emailLabel: "Email Address",
     },
     dashboard: {
       statTotalFiled: "Total nga Ipinasok", statPending: "Naghulay", statInProgress: "Gihimo", statResolved: "Natapos",
-      quickActionFileReport: "Pag-report", quickActionSafetyMap: "Mapa sa Kaluwasan", quickActionMyReports: "Akong Mga Report", quickActionSafetyTips: "Mga Tip sa Kaluwasan",
+      quickActionFileReport: "Pag-report", quickActionSafetyMap: "Mapa sa Kaluwasan", quickActionMyReports: "Akong Mga Report", quickActionSafetyTips: "Mga Tip sa Kaluwasan", quickActionChat: "Chat",
       sidebarPortal: "Portal", portalLabel: "Portal sa Lungsuranon", welcomeTitle: "Kumusta, {name}", dumagueteCity: "Dumaguete City",
       pendingReports: "Adunay ka og {count} report nga gipaabot.",
       view: "Tan-awa ang Tanan", recentReportsTitle: "Ulit-awon nga mga Report", noReportsYet: "Wala pa nga report",
@@ -2186,7 +2186,7 @@ emailLabel: "Email Address",
     },
     dashboard: {
       statTotalFiled: "총 신고", statPending: "대기 중", statInProgress: "진행 중", statResolved: "해결됨",
-      quickActionFileReport: "사건 신고", quickActionSafetyMap: "안전 지도", quickActionMyReports: "내 신고", quickActionSafetyTips: "안전 수칙",
+      quickActionFileReport: "사건 신고", quickActionSafetyMap: "안전 지도", quickActionMyReports: "내 신고", quickActionSafetyTips: "안전 수칙", quickActionChat: "채팅",
       sidebarPortal: "포털", portalLabel: "시민 포털", welcomeTitle: "안녕하세요, {name}", dumagueteCity: "두마게테시",
       pendingReports: "{count}건의 신고가 검토를 기다리고 있습니다.",
       view: "전체 보기", recentReportsTitle: "최근 신고", noReportsYet: "아직 신고 없음",
@@ -2505,7 +2505,7 @@ emailLabel: "Email Address",
     },
     dashboard: {
       statTotalFiled: "已提交总数", statPending: "待处理", statInProgress: "处理中", statResolved: "已解决",
-      quickActionFileReport: "举报事件", quickActionSafetyMap: "安全地图", quickActionMyReports: "我的举报", quickActionSafetyTips: "安全提示",
+      quickActionFileReport: "举报事件", quickActionSafetyMap: "安全地图", quickActionMyReports: "我的举报", quickActionSafetyTips: "安全提示", quickActionChat: "聊天",
       sidebarPortal: "门户", portalLabel: "市民门户", welcomeTitle: "您好，{name}", dumagueteCity: "杜马格特市",
       pendingReports: "您有 {count} 份报告正在等待审核。",
       view: "查看全部", recentReportsTitle: "最近报告", noReportsYet: "暂无报告",
@@ -2824,7 +2824,7 @@ emailLabel: "Email Address",
     },
     dashboard: {
       statTotalFiled: "提出総数", statPending: "保留中", statInProgress: "処理中", statResolved: "解決済み",
-      quickActionFileReport: "報告する", quickActionSafetyMap: "安全マップ", quickActionMyReports: "私の報告", quickActionSafetyTips: "安全のヒント",
+      quickActionFileReport: "報告する", quickActionSafetyMap: "安全マップ", quickActionMyReports: "私の報告", quickActionSafetyTips: "安全のヒント", quickActionChat: "チャット",
       sidebarPortal: "ポータル", portalLabel: "市民ポータル", welcomeTitle: "こんにちは、{name}", dumagueteCity: "ドゥマゲッティ市",
       pendingReports: "{count}件の報告が確認を待っています。",
       view: "すべて見る", recentReportsTitle: "最近の報告", noReportsYet: "報告なし",
@@ -3143,7 +3143,7 @@ emailLabel: "Email Address",
     },
     dashboard: {
       statTotalFiled: "Всего подано", statPending: "Ожидание", statInProgress: "В работе", statResolved: "Решено",
-      quickActionFileReport: "Подать отчёт", quickActionSafetyMap: "Карта безопасности", quickActionMyReports: "Мои отчёты", quickActionSafetyTips: "Советы по безопасности",
+      quickActionFileReport: "Подать отчёт", quickActionSafetyMap: "Карта безопасности", quickActionMyReports: "Мои отчёты", quickActionSafetyTips: "Советы по безопасности", quickActionChat: "Чат",
       sidebarPortal: "Портал", portalLabel: "Жительский портал", welcomeTitle: "Здравствуйте, {name}", dumagueteCity: "Думагете",
       pendingReports: "У вас {count} отчёта(-ов) на рассмотрении.",
       view: "Посмотреть всё", recentReportsTitle: "Последние отчёты", noReportsYet: "Ещё нет отчётов",
@@ -3462,7 +3462,7 @@ emailLabel: "Email Address",
     },
     dashboard: {
       statTotalFiled: "إجمالي المُقدَّم", statPending: "قيد الانتظار", statInProgress: "قيد المعالجة", statResolved: "تم الحل",
-      quickActionFileReport: "الإبلاغ عن حادثة", quickActionSafetyMap: "خريطة السلامة", quickActionMyReports: "بلاغاتي", quickActionSafetyTips: "نصائح السلامة",
+      quickActionFileReport: "الإبلاغ عن حادثة", quickActionSafetyMap: "خريطة السلامة", quickActionMyReports: "بلاغاتي", quickActionSafetyTips: "نصائح السلامة", quickActionChat: "دردشة",
       sidebarPortal: "البوابة", portalLabel: "بوابة المواطن", welcomeTitle: "مرحبًا، {name}", dumagueteCity: "دوماغيتي",
       pendingReports: "لديك {count} بلاغ بانتظار المراجعة.",
       view: "عرض الكل", recentReportsTitle: "البلاغات الأخيرة", noReportsYet: "لا توجد بلاغات بعد",
