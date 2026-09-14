@@ -15,7 +15,7 @@ import { LanguageSelectModal } from "../components/LanguageSelectModal";
 // No domain checks or environment-variable logic — swap in the production
 // key here only when real Supabase Auth CAPTCHA verification is enabled
 // (test tokens are rejected unless its test-mode setup matches).
-const TURNSTILE_SITE_KEY = "1x00000000000000000000AA";
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || "1x00000000000000000000AA";
 
 declare global {
   interface Window {
@@ -324,7 +324,7 @@ export default function Homepage() {
       }
       try {
         captchaWidgetId.current = window.turnstile.render(turnstileContainerRef.current, {
-          sitekey: "1x00000000000000000000AA",
+          sitekey: TURNSTILE_SITE_KEY,
           theme: "dark",
           callback: (token: string) => {
             setCaptchaToken(token);

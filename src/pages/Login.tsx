@@ -14,13 +14,9 @@ import directorybg from "../assets/directorybg.png";
 import { useLanguage } from "../context/LanguageContext";
 
 // ── Cloudflare Turnstile site key ──
-// Universal test key for ALL environments right now: Cloudflare's official
-// testing key "1x00000000000000000000AA" (always passes, no domain
-// restrictions), so the widget renders on localhost and live alike.
-// (see https://developers.cloudflare.com/turnstile/troubleshooting/testing/).
-// No domain checks or environment-variable logic — swap in the production
-// key here only when real Supabase Auth CAPTCHA verification is enabled
-// (test tokens are rejected unless its test-mode setup matches).
+// Production key loaded from VITE_TURNSTILE_SITE_KEY env var.
+// Must match the key configured in the Cloudflare Turnstile widget
+// and the Secret Key in Supabase Auth > CAPTCHA settings.
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY;
 const TURNSTILE_OPTIONS = { theme: "dark" as const };
 
@@ -698,8 +694,8 @@ export default function Login() {
   // Ref to the <Turnstile /> wrapper instance (reset/remove/getResponse).
   const turnstileRef = useRef<TurnstileInstance | null>(null);
 
-  // The universal test key above is used in every environment.
-  const TURNSTILE_IS_DUMMY = TURNSTILE_SITE_KEY === "1x00000000000000000000AA";
+  // The real production key is used; any test key check would be false.
+  const TURNSTILE_IS_DUMMY = false;
 
   // ── Guard against setState after unmount ──
   const mountedRef = useRef(true);
@@ -812,7 +808,7 @@ export default function Login() {
       const res = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
-        options: { captchaToken: turnstileToken },
+        options: { captchaToken: turnstileToken ?? undefined },
       });
       authData = res.data;
       authError = res.error;
@@ -1072,11 +1068,6 @@ export default function Login() {
                     }}
                   />
                   </div>
-                  {TURNSTILE_IS_DUMMY && (
-                    <div style={{ fontSize: 11, color: "rgba(255,180,166,0.75)", marginTop: 6, textAlign: "center", maxWidth: 320 }}>
-                      Dev mode: using Cloudflare dummy sitekey — Supabase CAPTCHA verification must be disabled or use matching test keys.
-                    </div>
-                  )}
                   {captchaStatus === "loading" && !turnstileToken && (
                     <div style={{ fontSize: 12, color: "rgba(168,216,255,0.55)", marginTop: 8 }}>
                       {t("login.captchaLoading", "Loading security check…")}

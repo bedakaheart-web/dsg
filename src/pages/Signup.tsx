@@ -10,9 +10,9 @@ import { useLanguage } from "../context/LanguageContext";
 
 // ── Cloudflare Turnstile site key ──
 // Supplied via VITE_TURNSTILE_SITE_KEY (must match the key configured in
-// Supabase Auth CAPTCHA settings). Fallback keeps dev working when unset.
+// Supabase Auth CAPTCHA settings).
 const TURNSTILE_SITE_KEY =
-  (import.meta as any)?.env?.VITE_TURNSTILE_SITE_KEY || "0x4AAAAAAAEeWeQHuqgMoh8cd";
+  (import.meta as any)?.env?.VITE_TURNSTILE_SITE_KEY || "0x4AAAAAAAEyFhcXnOeX5PXf";
 
 declare global {
   interface Window {
