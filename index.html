@@ -27,8 +27,18 @@
 
     <!-- ── Leaflet CSS ── -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- ── Cloudflare Turnstile (explicit render; id matches @marsidev/react-turnstile default so the wrapper reuses it instead of injecting a duplicate) ── -->
-    <script id="cf-turnstile-script" src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback&render=explicit" async defer></script>
+    <!-- NOTE: No explicit Cloudflare Turnstile <script> tag here on purpose.
+         @marsidev/react-turnstile manages script injection automatically
+         (injectScript=true): it registers window.onloadTurnstileCallback
+         BEFORE appending https://challenges.cloudflare.com/turnstile/v0/api.js
+         to <head>. A hardcoded tag races that handshake (api.js fires the
+         callback before the wrapper registers it, or the wrapper skips
+         injection because the element id already exists while api.js
+         initialized without its callback) and leaves window.turnstile
+         undefined, so the widget never renders. Pages using manual
+         window.turnstile.render() (Signup/Homepage) self-inject the script
+         as a fallback when it is absent. Do NOT re-add a Turnstile script
+         tag here. -->
   </head>
   <body>
     <div id="root"></div>

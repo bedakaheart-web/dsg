@@ -23,29 +23,35 @@ import { useLanguage } from "../context/LanguageContext";
 // will be rejected.
 const DUMMY_SITE_KEY = "1x00000000000000000000AA";
 
+// Local dev detection: "localhost" / "127.0.0.1" hostnames OR a Vite dev
+// server. (`vite dev --host` can be reached via a LAN IP where the hostname
+// is neither, but DEV is still true — the production key must not be used
+// there either, or Cloudflare renders a blank/0px frame.)
+const IS_LOCAL_DEV =
+  (typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1")) ||
+  Boolean(import.meta.env.DEV);
+
+// Hostname-only check used directly at the siteKey prop so the forcing is
+// explicit at the call site (independent of the DEV flag / env resolution).
+function isLocalhostHost(): boolean {
+  if (typeof window === "undefined") return false;
+  const h = window.location.hostname;
+  return h === "localhost" || h === "127.0.0.1";
+}
+
 function resolveTurnstileSiteKey(): { siteKey: string; isDummy: boolean; missingEnv: boolean } {
+  // Production path only: local dev never reaches this key (it is forced to
+  // the official test sitekey at the call site — see TURNSTILE_SITE_KEY).
   const envKey =
     (import.meta.env.VITE_TURNSTILE_SITE_KEY ||
       import.meta.env.REACT_APP_TURNSTILE_SITE_KEY ||
       "").trim();
   if (envKey) return { siteKey: envKey, isDummy: false, missingEnv: false };
-  const hostname =
-    typeof window !== "undefined" ? window.location.hostname : "";
-  const isLocalhost =
-    /^(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])$/.test(hostname) ||
-    hostname.endsWith(".localhost");
-  const isDev =
-    Boolean(import.meta.env.DEV) || isLocalhost;
-  if (isDev) {
-    console.warn(
-      "[Turnstile] VITE_TURNSTILE_SITE_KEY / REACT_APP_TURNSTILE_SITE_KEY is missing — using Cloudflare dummy sitekey for localhost development:",
-      DUMMY_SITE_KEY
-    );
-  } else {
-    console.error(
-      "[Turnstile] VITE_TURNSTILE_SITE_KEY / REACT_APP_TURNSTILE_SITE_KEY is missing — falling back to dummy sitekey for rendering. Login CAPTCHA verification will fail until a real site key is configured."
-    );
-  }
+  console.error(
+    "[Turnstile] VITE_TURNSTILE_SITE_KEY / REACT_APP_TURNSTILE_SITE_KEY is missing — falling back to dummy sitekey for rendering. Login CAPTCHA verification will fail until a real site key is configured."
+  );
   return { siteKey: DUMMY_SITE_KEY, isDummy: true, missingEnv: true };
 }
 
@@ -569,9 +575,46 @@ const CSS = `
     min-width: 300px;
   }
 
-  .lg-captcha-widget iframe {
+  /* Explicit-size Turnstile box: the Cloudflare "normal" widget is exactly
+     300×65px. Without reserved dimensions the container can collapse to 0px
+     (e.g. while api.js is still loading or an ad-blocker delays the iframe),
+     making the widget appear missing. The box keeps layout stable and the
+     widget visible above the submit button. */
+  .lg-turnstile-box {
+    width: 300px;
+    height: 65px;
+    min-width: 300px;
+    min-height: 65px;
+    max-width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+    position: relative;
+    z-index: 1;
+  }
+
+  .lg-turnstile-box > div {
+    width: 300px !important;
+    height: 65px !important;
+    max-width: 100%;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .lg-captcha-widget iframe,
+  .lg-turnstile-box iframe {
     display: block !important;
     visibility: visible !important;
+    width: 300px !important;
+    height: 65px !important;
+    border: 0;
+  }
+
+  @media (max-width: 360px) {
+    /* Shrink the fixed-size widget instead of clipping it on tiny screens. */
+    .lg-turnstile-box { transform: scale(0.86); transform-origin: top center; }
   }
 
   .lg-success {
@@ -685,11 +728,26 @@ export default function Login() {
   // Ref to the <Turnstile /> wrapper instance (reset/remove/getResponse).
   const turnstileRef = useRef<TurnstileInstance | null>(null);
 
-  // Resolve once per mount: env key → localhost dummy fallback (with logging).
-  const { siteKey: TURNSTILE_SITE_KEY, isDummy: TURNSTILE_IS_DUMMY } = useMemo(
+  // Resolve once per mount: env key (production path) with logging.
+  const { siteKey: ENV_TURNSTILE_SITE_KEY, isDummy: ENV_IS_DUMMY } = useMemo(
     resolveTurnstileSiteKey,
     []
   );
+
+  // Local dev FORCES the official Cloudflare test widget — never the
+  // production sitekey. A production key is domain allow-listed, so on
+  // localhost / `vite dev` Cloudflare rejects it and the widget collapses
+  // to a blank 0px frame (the exact symptom seen here).
+  const TURNSTILE_SITE_KEY = IS_LOCAL_DEV ? "1x00000000000000000000AA" : ENV_TURNSTILE_SITE_KEY;
+  const TURNSTILE_IS_DUMMY = IS_LOCAL_DEV || ENV_IS_DUMMY;
+
+  useEffect(() => {
+    if (IS_LOCAL_DEV) {
+      console.log(
+        '[Turnstile] local dev detected (localhost or Vite DEV) — siteKey forced to "1x00000000000000000000AA". Production key ignored.'
+      );
+    }
+  }, []);
 
   // ── Guard against setState after unmount ──
   const mountedRef = useRef(true);
@@ -715,9 +773,8 @@ export default function Login() {
 
   // ── Retry CAPTCHA (used by the UI when the widget errors/expires) ──
   // The <Turnstile /> component owns the widget lifecycle + the
-  // https://challenges.cloudflare.com/turnstile/v0/api.js script (preloaded
-  // in index.html <head> with id="cf-turnstile-script", reused by the wrapper
-  // instead of injecting a duplicate), so retry is just a reset.
+  // https://challenges.cloudflare.com/turnstile/v0/api.js script injection,
+  // so retry is just a reset.
   const retryCaptcha = () => {
     setCaptchaMsg("");
     setCaptchaStatus("loading");
@@ -1019,37 +1076,55 @@ export default function Login() {
 
                 <div className="lg-captcha" id="login-turnstile-wrapper">
                   {/* ── Cloudflare Turnstile — renders directly above MAG-LOGIN.
-                      Script: https://challenges.cloudflare.com/turnstile/v0/api.js
-                      preloaded in index.html <head> (id="cf-turnstile-script");
-                      the wrapper reuses it instead of injecting a duplicate. ── */}
+                      The @marsidev/react-turnstile wrapper injects
+                      https://challenges.cloudflare.com/turnstile/v0/api.js
+                      itself (there is intentionally NO <script> tag in
+                      index.html — a hardcoded tag races the wrapper's
+                      onload handshake and leaves window.turnstile
+                      undefined). The .lg-turnstile-box reserves the exact
+                      300×65px widget footprint so it never collapses. ── */}
+                  <div className="lg-turnstile-box" id="login-turnstile-widget" style={{ minHeight: "65px", width: "100%", display: "flex", justifyContent: "center" }}>
                   <Turnstile
                     ref={turnstileRef as React.Ref<TurnstileInstance | undefined>}
-                    siteKey={TURNSTILE_SITE_KEY}
+                    siteKey={isLocalhostHost() ? "1x00000000000000000000AA" : TURNSTILE_SITE_KEY}
                     options={{ theme: "dark" }}
-                    onWidgetLoad={() => {
+                    onWidgetLoad={(widgetId) => {
+                      console.log("[Turnstile] widget loaded. id:", widgetId, "| siteKey:", TURNSTILE_SITE_KEY);
                       if (!mountedRef.current) return;
                       setCaptchaStatus("ready");
                     }}
                     onSuccess={(token) => {
+                      console.log("[Turnstile] success — token received. length:", token?.length);
                       setTurnstileToken(token);
                       if (!mountedRef.current) return;
                       setCaptchaMsg("");
                       setCaptchaStatus("ready");
                     }}
                     onExpire={() => {
+                      console.log("[Turnstile] token expired — resetting widget for a fresh challenge.");
                       if (!mountedRef.current) return;
                       setTurnstileToken(null);
                       setCaptchaMsg(tr("login.errors.captchaExpired", "Security check expired. Please verify again."));
                       try { turnstileRef.current?.reset(); } catch { /* ignore */ }
                     }}
                     onTimeout={() => {
+                      console.log("[Turnstile] widget timed out waiting for interaction.");
                       if (!mountedRef.current) return;
                       setTurnstileToken(null);
                       setCaptchaStatus("error");
                       setCaptchaMsg(tr("login.errors.captchaTimeout", "Security check timed out. Please retry."));
                     }}
-                    onError={(err) => {
-                      console.error("Turnstile Error:", err);
+                    onError={(code) => {
+                      console.log("[Turnstile] onError failure code:", code);
+                      console.error(
+                        "[Turnstile] widget failed. code:",
+                        code,
+                        "| siteKey:",
+                        TURNSTILE_SITE_KEY,
+                        "| hostname:",
+                        typeof window !== "undefined" ? window.location.hostname : "unknown",
+                        "| hint: 110xxx/400xxx = sitekey-domain mismatch (use the 1x00000000000000000000AA test key on localhost); network/ad-blocker blocks also surface here."
+                      );
                       if (!mountedRef.current) return;
                       setTurnstileToken(null);
                       setCaptchaStatus("error");
@@ -1058,6 +1133,7 @@ export default function Login() {
                       );
                     }}
                   />
+                  </div>
                   {TURNSTILE_IS_DUMMY && (
                     <div style={{ fontSize: 11, color: "rgba(255,180,166,0.75)", marginTop: 6, textAlign: "center", maxWidth: 320 }}>
                       Dev mode: using Cloudflare dummy sitekey — Supabase CAPTCHA verification must be disabled or use matching test keys.

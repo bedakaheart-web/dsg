@@ -9,10 +9,32 @@ import { LanguageSelectModal } from "../components/LanguageSelectModal";
 
 
 // ── Cloudflare Turnstile site key ──
-// Supplied via VITE_TURNSTILE_SITE_KEY (must match the key configured in
-// Supabase Auth CAPTCHA settings). Fallback keeps dev working when unset.
-const TURNSTILE_SITE_KEY =
-  (import.meta as any)?.env?.VITE_TURNSTILE_SITE_KEY || "0x4AAAAAAAEeWeQHuqgMoh8cd";
+// Local dev (hostname "localhost"/"127.0.0.1" or Vite DEV) ALWAYS uses
+// Cloudflare's official dummy test key "1x00000000000000000000AA" — a
+// production key is domain allow-listed and Cloudflare rejects it on
+// localhost with error 400020, leaving the widget blank. Production keys
+// are ONLY passed on non-localhost domains. The key must match the key
+// configured in Supabase Auth CAPTCHA settings.
+const DUMMY_SITE_KEY = "1x00000000000000000000AA";
+
+const IS_LOCAL_DEV =
+  (typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1")) ||
+  Boolean((import.meta as any)?.env?.DEV);
+
+const ENV_TURNSTILE_SITE_KEY =
+  (((import.meta as any)?.env?.VITE_TURNSTILE_SITE_KEY || "") as string).trim();
+
+const TURNSTILE_SITE_KEY = IS_LOCAL_DEV
+  ? DUMMY_SITE_KEY
+  : (ENV_TURNSTILE_SITE_KEY || DUMMY_SITE_KEY);
+
+if (IS_LOCAL_DEV) {
+  console.log('[Turnstile:Homepage] local dev detected — siteKey forced to "1x00000000000000000000AA". Production key ignored.');
+} else if (!ENV_TURNSTILE_SITE_KEY) {
+  console.error("[Turnstile:Homepage] VITE_TURNSTILE_SITE_KEY is missing — falling back to dummy sitekey for rendering.");
+}
 
 declare global {
   interface Window {
@@ -280,6 +302,14 @@ export default function Homepage() {
   const captchaWidgetId = useRef<string | null>(null);
   const turnstileContainerRef = useRef<HTMLDivElement>(null);
 
+  // Stable translator ref: `t` is re-created on every render, so listing it
+  // in the widget effect's deps would tear down + re-render the widget on
+  // every keystroke — an infinite remove→render loop where each attempt
+  // fails and logs 400020 again. The effect below therefore runs once
+  // (single widget instance) and reads translations through this ref.
+  const tRef = useRef(t);
+  tRef.current = t;
+
   const resetCaptcha = () => {
     setCaptchaToken("");
     try {
@@ -325,10 +355,16 @@ export default function Homepage() {
             setCaptchaMsg(t("auth.errNeedCaptcha"));
           },
           "error-callback": (err: any) => {
-            console.error("Turnstile Error:", err);
+            console.log("[Turnstile:Homepage] onError failure code:", err);
+            console.error(
+              "[Turnstile:Homepage] widget failed. code:", err,
+              "| siteKey:", TURNSTILE_SITE_KEY,
+              "| hostname:", typeof window !== "undefined" ? window.location.hostname : "unknown",
+              "| hint: 400020/110xxx = sitekey rejected for this domain (local dev must use the 1x00000000000000000000AA test key)."
+            );
             setCaptchaToken("");
             setCaptchaStatus("error");
-            setCaptchaMsg(t("auth.errNeedCaptcha"));
+            setCaptchaMsg(tRef.current("auth.errNeedCaptcha"));
           },
         });
         setCaptchaStatus("ready");
@@ -373,9 +409,13 @@ export default function Homepage() {
     return () => observer.disconnect();
   }, []);
 
-// ── Load the Turnstile widget into our container. ──
-// index.html loads the Turnstile script globally (explicit render), so this
-// effect waits for window.turnstile instead of injecting a duplicate script.
+// ── Load the Turnstile widget into our container (single instance). ──
+// No Turnstile <script> tag lives in index.html (it would race/conflict);
+// this effect waits for window.turnstile and self-injects the api.js script
+// exactly once as a fallback. Deps are intentionally [] (NOT [t]): `t` is a
+// new function every render, and re-running here would remove + re-render
+// the widget on each keystroke — an infinite 400020 re-try loop. Messages
+// go through tRef so they still follow the active language.
   useEffect(() => {
     let cancelled = false;
     let pollTimer: ReturnType<typeof setInterval> | null = null;
@@ -401,7 +441,7 @@ export default function Homepage() {
           "expired-callback": () => {
             if (cancelled) return;
             setCaptchaToken("");
-            setCaptchaMsg(t("auth.errNeedCaptcha"));
+            setCaptchaMsg(tRef.current("auth.errNeedCaptcha"));
             try {
               if (window.turnstile && captchaWidgetId.current) window.turnstile.reset(captchaWidgetId.current);
             } catch { /* ignore */ }
@@ -410,14 +450,20 @@ export default function Homepage() {
             if (cancelled) return;
             setCaptchaToken("");
             setCaptchaStatus("error");
-            setCaptchaMsg(t("auth.errNeedCaptcha"));
+            setCaptchaMsg(tRef.current("auth.errNeedCaptcha"));
           },
           "error-callback": (err: any) => {
-            console.error("Turnstile Error:", err);
+            console.log("[Turnstile:Homepage] onError failure code:", err);
+            console.error(
+              "[Turnstile:Homepage] widget failed. code:", err,
+              "| siteKey:", TURNSTILE_SITE_KEY,
+              "| hostname:", typeof window !== "undefined" ? window.location.hostname : "unknown",
+              "| hint: 400020/110xxx = sitekey rejected for this domain (local dev must use the 1x00000000000000000000AA test key)."
+            );
             if (cancelled) return;
             setCaptchaToken("");
             setCaptchaStatus("error");
-            setCaptchaMsg(t("auth.errNeedCaptcha"));
+            setCaptchaMsg(tRef.current("auth.errNeedCaptcha"));
           },
         });
         setCaptchaStatus("ready");
@@ -426,7 +472,7 @@ export default function Homepage() {
         console.error("Failed to render Turnstile:", e);
         if (!cancelled) {
           setCaptchaStatus("error");
-          setCaptchaMsg(t("auth.errNeedCaptcha"));
+          setCaptchaMsg(tRef.current("auth.errNeedCaptcha"));
         }
         return false;
       }
@@ -445,7 +491,7 @@ export default function Homepage() {
           if (pollTimer) clearInterval(pollTimer);
           if (!cancelled) {
             setCaptchaStatus("error");
-            setCaptchaMsg(t("auth.errNeedCaptcha"));
+            setCaptchaMsg(tRef.current("auth.errNeedCaptcha"));
           }
         }
       }, 200);
@@ -473,7 +519,9 @@ export default function Homepage() {
       } catch { /* ignore */ }
       captchaWidgetId.current = null;
     };
-  }, [t]);
+  // [] = mount/unmount only: re-running on every render would destroy and
+  // re-create the widget in a loop (duplicate instances, repeated 400020s).
+  }, []);
 
   const handleLogin = async () => {
     if (!email || !password) {
