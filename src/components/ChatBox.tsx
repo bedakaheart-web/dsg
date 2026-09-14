@@ -246,10 +246,11 @@ export default function ChatBox({
       }
 
       const { error: insertError } = await supabase
-        .from("messages")
+        .from("chat_messages")
         .insert({
           sender_id: session.user.id,
           recipient_id: recipientId,
+          incident_id: isCitizen ? incidentId : null,
           content: inputText.trim(),
           image_url: imageUrl,
         });
