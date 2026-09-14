@@ -22,6 +22,7 @@ import { useLanguage } from "../context/LanguageContext";
 // key here only when real Supabase Auth CAPTCHA verification is enabled
 // (test tokens are rejected unless its test-mode setup matches).
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY;
+const TURNSTILE_OPTIONS = { theme: "dark" as const };
 
 // ── CSS-in-JS ──
 const CSS = `
@@ -1038,7 +1039,7 @@ export default function Login() {
 <Turnstile
                     ref={turnstileRef as React.Ref<TurnstileInstance | undefined>}
                     siteKey={TURNSTILE_SITE_KEY}
-                    options={{ theme: "dark" }}
+                    options={TURNSTILE_OPTIONS}
                     onWidgetLoad={(widgetId) => {
                       console.log("[Turnstile] widget loaded. id:", widgetId, "| siteKey:", TURNSTILE_SITE_KEY);
                       if (!mountedRef.current) return;
