@@ -9,32 +9,13 @@ import { LanguageSelectModal } from "../components/LanguageSelectModal";
 
 
 // ── Cloudflare Turnstile site key ──
-// Local dev (hostname "localhost"/"127.0.0.1" or Vite DEV) ALWAYS uses
-// Cloudflare's official dummy test key "1x00000000000000000000AA" — a
-// production key is domain allow-listed and Cloudflare rejects it on
-// localhost with error 400020, leaving the widget blank. Production keys
-// are ONLY passed on non-localhost domains. The key must match the key
-// configured in Supabase Auth CAPTCHA settings.
-const DUMMY_SITE_KEY = "1x00000000000000000000AA";
-
-const IS_LOCAL_DEV =
-  (typeof window !== "undefined" &&
-    (window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1")) ||
-  Boolean((import.meta as any)?.env?.DEV);
-
-const ENV_TURNSTILE_SITE_KEY =
-  (((import.meta as any)?.env?.VITE_TURNSTILE_SITE_KEY || "") as string).trim();
-
-const TURNSTILE_SITE_KEY = IS_LOCAL_DEV
-  ? DUMMY_SITE_KEY
-  : (ENV_TURNSTILE_SITE_KEY || DUMMY_SITE_KEY);
-
-if (IS_LOCAL_DEV) {
-  console.log('[Turnstile:Homepage] local dev detected — siteKey forced to "1x00000000000000000000AA". Production key ignored.');
-} else if (!ENV_TURNSTILE_SITE_KEY) {
-  console.error("[Turnstile:Homepage] VITE_TURNSTILE_SITE_KEY is missing — falling back to dummy sitekey for rendering.");
-}
+// Universal test key for ALL environments right now: Cloudflare's official
+// testing key "1x00000000000000000000AA" (always passes, no domain
+// restrictions), so the widget renders on localhost and live alike.
+// No domain checks or environment-variable logic — swap in the production
+// key here only when real Supabase Auth CAPTCHA verification is enabled
+// (test tokens are rejected unless its test-mode setup matches).
+const TURNSTILE_SITE_KEY = "1x00000000000000000000AA";
 
 declare global {
   interface Window {
@@ -343,7 +324,7 @@ export default function Homepage() {
       }
       try {
         captchaWidgetId.current = window.turnstile.render(turnstileContainerRef.current, {
-          sitekey: TURNSTILE_SITE_KEY,
+          sitekey: "1x00000000000000000000AA",
           theme: "dark",
           callback: (token: string) => {
             setCaptchaToken(token);
@@ -356,15 +337,7 @@ export default function Homepage() {
           },
           "error-callback": (err: any) => {
             console.log("[Turnstile:Homepage] onError failure code:", err);
-            console.error(
-              "[Turnstile:Homepage] widget failed. code:", err,
-              "| siteKey:", TURNSTILE_SITE_KEY,
-              "| hostname:", typeof window !== "undefined" ? window.location.hostname : "unknown",
-              "| hint: 400020/110xxx = sitekey rejected for this domain (local dev must use the 1x00000000000000000000AA test key)."
-            );
-            setCaptchaToken("");
             setCaptchaStatus("error");
-            setCaptchaMsg(tRef.current("auth.errNeedCaptcha"));
           },
         });
         setCaptchaStatus("ready");

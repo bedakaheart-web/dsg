@@ -4,7 +4,7 @@ declare global {
   }
 }
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import { supabase } from "../js/supabase";
@@ -14,46 +14,14 @@ import directorybg from "../assets/directorybg.png";
 import { useLanguage } from "../context/LanguageContext";
 
 // ── Cloudflare Turnstile site key ──
-// Priority: VITE_TURNSTILE_SITE_KEY → REACT_APP_TURNSTILE_SITE_KEY → dev dummy.
-// Cloudflare's official dummy sitekey for localhost/dev (always passes):
-//   1x00000000000000000000AA
+// Universal test key for ALL environments right now: Cloudflare's official
+// testing key "1x00000000000000000000AA" (always passes, no domain
+// restrictions), so the widget renders on localhost and live alike.
 // (see https://developers.cloudflare.com/turnstile/troubleshooting/testing/).
-// The key MUST match the key configured in Supabase Auth > CAPTCHA settings,
-// otherwise signInWithPassword() calls sending `options: { captchaToken }`
-// will be rejected.
-const DUMMY_SITE_KEY = "1x00000000000000000000AA";
-
-// Local dev detection: "localhost" / "127.0.0.1" hostnames OR a Vite dev
-// server. (`vite dev --host` can be reached via a LAN IP where the hostname
-// is neither, but DEV is still true — the production key must not be used
-// there either, or Cloudflare renders a blank/0px frame.)
-const IS_LOCAL_DEV =
-  (typeof window !== "undefined" &&
-    (window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1")) ||
-  Boolean(import.meta.env.DEV);
-
-// Hostname-only check used directly at the siteKey prop so the forcing is
-// explicit at the call site (independent of the DEV flag / env resolution).
-function isLocalhostHost(): boolean {
-  if (typeof window === "undefined") return false;
-  const h = window.location.hostname;
-  return h === "localhost" || h === "127.0.0.1";
-}
-
-function resolveTurnstileSiteKey(): { siteKey: string; isDummy: boolean; missingEnv: boolean } {
-  // Production path only: local dev never reaches this key (it is forced to
-  // the official test sitekey at the call site — see TURNSTILE_SITE_KEY).
-  const envKey =
-    (import.meta.env.VITE_TURNSTILE_SITE_KEY ||
-      import.meta.env.REACT_APP_TURNSTILE_SITE_KEY ||
-      "").trim();
-  if (envKey) return { siteKey: envKey, isDummy: false, missingEnv: false };
-  console.error(
-    "[Turnstile] VITE_TURNSTILE_SITE_KEY / REACT_APP_TURNSTILE_SITE_KEY is missing — falling back to dummy sitekey for rendering. Login CAPTCHA verification will fail until a real site key is configured."
-  );
-  return { siteKey: DUMMY_SITE_KEY, isDummy: true, missingEnv: true };
-}
+// No domain checks or environment-variable logic — swap in the production
+// key here only when real Supabase Auth CAPTCHA verification is enabled
+// (test tokens are rejected unless its test-mode setup matches).
+const TURNSTILE_SITE_KEY = "1x00000000000000000000AA";
 
 // ── CSS-in-JS ──
 const CSS = `
@@ -728,26 +696,8 @@ export default function Login() {
   // Ref to the <Turnstile /> wrapper instance (reset/remove/getResponse).
   const turnstileRef = useRef<TurnstileInstance | null>(null);
 
-  // Resolve once per mount: env key (production path) with logging.
-  const { siteKey: ENV_TURNSTILE_SITE_KEY, isDummy: ENV_IS_DUMMY } = useMemo(
-    resolveTurnstileSiteKey,
-    []
-  );
-
-  // Local dev FORCES the official Cloudflare test widget — never the
-  // production sitekey. A production key is domain allow-listed, so on
-  // localhost / `vite dev` Cloudflare rejects it and the widget collapses
-  // to a blank 0px frame (the exact symptom seen here).
-  const TURNSTILE_SITE_KEY = IS_LOCAL_DEV ? "1x00000000000000000000AA" : ENV_TURNSTILE_SITE_KEY;
-  const TURNSTILE_IS_DUMMY = IS_LOCAL_DEV || ENV_IS_DUMMY;
-
-  useEffect(() => {
-    if (IS_LOCAL_DEV) {
-      console.log(
-        '[Turnstile] local dev detected (localhost or Vite DEV) — siteKey forced to "1x00000000000000000000AA". Production key ignored.'
-      );
-    }
-  }, []);
+  // The universal test key above is used in every environment.
+  const TURNSTILE_IS_DUMMY = true;
 
   // ── Guard against setState after unmount ──
   const mountedRef = useRef(true);
@@ -1084,9 +1034,9 @@ export default function Login() {
                       undefined). The .lg-turnstile-box reserves the exact
                       300×65px widget footprint so it never collapses. ── */}
                   <div className="lg-turnstile-box" id="login-turnstile-widget" style={{ minHeight: "65px", width: "100%", display: "flex", justifyContent: "center" }}>
-                  <Turnstile
+<Turnstile
                     ref={turnstileRef as React.Ref<TurnstileInstance | undefined>}
-                    siteKey={isLocalhostHost() ? "1x00000000000000000000AA" : TURNSTILE_SITE_KEY}
+                    siteKey="1x00000000000000000000AA"
                     options={{ theme: "dark" }}
                     onWidgetLoad={(widgetId) => {
                       console.log("[Turnstile] widget loaded. id:", widgetId, "| siteKey:", TURNSTILE_SITE_KEY);
@@ -1116,21 +1066,6 @@ export default function Login() {
                     }}
                     onError={(code) => {
                       console.log("[Turnstile] onError failure code:", code);
-                      console.error(
-                        "[Turnstile] widget failed. code:",
-                        code,
-                        "| siteKey:",
-                        TURNSTILE_SITE_KEY,
-                        "| hostname:",
-                        typeof window !== "undefined" ? window.location.hostname : "unknown",
-                        "| hint: 110xxx/400xxx = sitekey-domain mismatch (use the 1x00000000000000000000AA test key on localhost); network/ad-blocker blocks also surface here."
-                      );
-                      if (!mountedRef.current) return;
-                      setTurnstileToken(null);
-                      setCaptchaStatus("error");
-                      setCaptchaMsg(
-                        tr("login.errors.captchaLoadFailed", "Security check failed to load. Check your connection / ad-blocker and retry.")
-                      );
                     }}
                   />
                   </div>
