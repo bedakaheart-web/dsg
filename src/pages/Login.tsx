@@ -691,6 +691,7 @@ export default function Login() {
   const [error, setError]           = useState("");
   const [checking, setChecking]     = useState(true);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaStatus, setCaptchaStatus] = useState<"loading" | "ready" | "error">("loading");
   const [captchaMsg, setCaptchaMsg] = useState("");
   // Ref to the <Turnstile /> wrapper instance (reset/remove/getResponse).
@@ -795,7 +796,7 @@ export default function Login() {
       setError(t("login.errors.captchaLoading", "Security check is still loading. Please wait a moment and try again."));
       return;
     }
-    if (!turnstileToken) {
+    if (!captchaToken) {
       setError(
         captchaMsg ||
           t("login.errors.needCaptcha", "Please complete the CAPTCHA to verify you're human.")
@@ -1046,6 +1047,7 @@ export default function Login() {
                     onSuccess={(token) => {
                       console.log("[Turnstile] success — token received. length:", token?.length);
                       setTurnstileToken(token);
+                      setCaptchaToken(token);
                       if (!mountedRef.current) return;
                       setCaptchaMsg("");
                       setCaptchaStatus("ready");
