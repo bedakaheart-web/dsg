@@ -6,7 +6,6 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useLanguage } from "../context/LanguageContext";
 import { supabase } from "../js/supabase";
-import { useNavigate } from "react-router-dom";
 import { FaPaperPlane, FaImage, FaTimes, FaSpinner } from "react-icons/fa";
 
 // ── Types ────────────────────────────────────────────────────────────
@@ -54,7 +53,6 @@ export default function ChatBox({
   userRole,
 }: { assignedResponderId?: string | null; incidentId?: string | null; userRole?: string }) {
   const { t } = useLanguage();
-  const navigate = useNavigate();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState("");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -72,66 +70,82 @@ export default function ChatBox({
   const isCitizen = role === "citizen";
   const recipientId = assignedResponderId ?? null;
 
-  // ── Fetch user info ──
+  // ── Fetch user info (flat profiles schema: role column) ──
   useEffect(() => {
     (async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user) return;
-        setUser({ id: session.user.id, email: session.user.email ?? "", role: session.user.user_metadata?.role });
         userIdRef.current = session.user.id;
+        let r: string | undefined = session.user.user_metadata?.role;
+        try {
+          const { data: prof } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", session.user.id)
+            .single();
+          if (prof?.role) r = prof.role as string;
+        } catch {}
+        setUser({ id: session.user.id, email: session.user.email ?? "", role: r });
       } catch {}
     })();
   }, []);
 
-  // ── Load participants (for direct chat selection) ──
+  // ── Load participants (flat profiles schema; strict role lists) ──
+  // Citizen → responders only (never admins). Responder → admins only.
+  // Admin → responders only.
   useEffect(() => {
     (async () => {
       try {
         const { data: { user: u } } = await supabase.auth.getUser();
         if (!u) return;
-        const myRole = u.user_metadata?.role;
+        let myRole: string | undefined = u.user_metadata?.role;
+        try {
+          const { data: me } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", u.id)
+            .single();
+          if (me?.role) myRole = me.role as string;
+        } catch {}
         const { data: profiles } = await supabase
           .from("profiles")
-          .select("id, email, user_metadata")
+          .select("id, email, full_name, role")
           .order("created_at", { ascending: true });
         if (!profiles) return;
-        // Citizens see only responders; responders/admins see only admins and responders
-        const filtered = profiles.filter(p => {
-          const role = p.user_metadata?.role;
-          if (myRole === "citizen") return role === "responder";
-          if (myRole === "responder") return role === "admin" || role === "responder";
-          if (myRole === "admin") return role === "responder";
+        const filtered = (profiles as ChatParticipant[]).filter(p => {
+          const r = (p.role ?? "").toLowerCase();
+          if (myRole === "citizen") return r === "responder";
+          if (myRole === "responder") return r === "admin";
+          if (myRole === "admin") return r === "responder";
           return false;
         });
-        setParticipants(filtered.map(p => ({
-          id: p.id,
-          email: p.email,
-          full_name: p.user_metadata?.full_name,
-          role: p.user_metadata?.role,
-        })));
+        setParticipants(filtered);
       } catch {}
     })();
   }, []);
 
   // ── Build query for chat_messages with role-based enforcement ──
-  const buildChatQuery = useCallback((u: any) => {
-    const myRole = u.user_metadata?.role;
+  // Citizen: strict 1-on-1 pair (me ↔ assigned responder) + active incident_id.
+  // Responder/Admin: own threads only (sender or recipient = me); RLS enforces.
+  const buildChatQuery = useCallback((userId: string) => {
     let query = supabase.from("chat_messages").select("*");
-
     if (isCitizen && recipientId && incidentId) {
-      // Citizens can only see messages for their assigned responder + incident
       query = query
-        .or(`sender_id.eq.${u.id},recipient_id.eq.${recipientId}`)
+        .or(
+          `and(sender_id.eq.${userId},recipient_id.eq.${recipientId}),` +
+          `and(sender_id.eq.${recipientId},recipient_id.eq.${userId})`
+        )
         .eq("incident_id", incidentId);
+    } else if (isCitizen && recipientId) {
+      query = query.or(
+        `and(sender_id.eq.${userId},recipient_id.eq.${recipientId}),` +
+        `and(sender_id.eq.${recipientId},recipient_id.eq.${userId})`
+      );
     } else if (isCitizen) {
-      query = query.eq("sender_id", u.id);
-    } else if (myRole === "responder") {
-      // Responders see messages with admins and other responders
-      query = query.or(`sender_id.eq.${u.id},recipient_id.in.(select id from profiles where user_metadata->>'role' in ('admin','responder'))`);
-    } else if (myRole === "admin") {
-      // Admins see messages with responders
-      query = query.or(`sender_id.eq.${u.id},recipient_id.in.(select id from profiles where user_metadata->>'role' = 'responder')`);
+      query = query.eq("sender_id", userId);
+    } else {
+      query = query.or(`sender_id.eq.${userId},recipient_id.eq.${userId}`);
     }
     return query.order("created_at", { ascending: true });
   }, [isCitizen, recipientId, incidentId]);
@@ -143,17 +157,29 @@ export default function ChatBox({
     const loadMessages = async () => {
       try {
         const { data: { user: u } } = await supabase.auth.getUser();
-        if (!u) return;
+        if (!u) { setLoading(false); return; }
+        userIdRef.current = u.id;
 
-        const query = buildChatQuery(u);
-        const { data } = await query;
+        const query = buildChatQuery(u.id);
+        const { data, error } = await query;
         if (!cancelled) {
+          if (error) {
+            const missing =
+              (error as { code?: string }).code === "PGRST205" ||
+              /does not exist|not found|404|chat_messages/i.test(error.message ?? "");
+            if (missing) {
+              console.warn("[ChatBox] `chat_messages` table unavailable — create it via supabase migration (see supabase/migrations/*_create_chat_messages.sql).");
+            }
+            setMessages([]);
+            setLoading(false);
+            return;
+          }
           const allMsgs = (data as ChatMessage[]) || [];
           const deduped = Array.from(new Map(allMsgs.map(m => [m.id, m])).values());
           setMessages(deduped.slice(-MAX_VISIBLE_MESSAGES));
           setLoading(false);
         }
-      } catch {}
+      } catch { if (!cancelled) setLoading(false); }
     };
     loadMessages();
 
@@ -164,10 +190,16 @@ export default function ChatBox({
         (payload) => {
           const newMsg = payload.new as ChatMessage;
           if (!cancelled) {
-            // Role-based filtering for real-time messages
-            if (isCitizen && recipientId && incidentId) {
-              if (newMsg.recipient_id !== recipientId && newMsg.sender_id !== userIdRef.current) return;
-              if (newMsg.incident_id !== incidentId) return;
+            // Role-based filtering for real-time messages (mirror the query).
+            const me = userIdRef.current;
+            if (isCitizen && recipientId) {
+              const inPair =
+                (newMsg.sender_id === me && newMsg.recipient_id === recipientId) ||
+                (newMsg.sender_id === recipientId && newMsg.recipient_id === me);
+              if (!inPair) return;
+              if (incidentId && newMsg.incident_id !== incidentId) return;
+            } else if (newMsg.sender_id !== me && newMsg.recipient_id !== me) {
+              return;
             }
             setMessages(prev => {
               if (prev.some(m => m.id === newMsg.id)) return prev;
@@ -216,28 +248,59 @@ export default function ChatBox({
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) return;
 
-      // Permission enforcement: citizens can only message responders
+      // Strict role-based enforcement at query level (flat profiles schema).
+      // Citizen → responder only (never admin). Responder → admin only.
+      // Admin → responder only.
+      const { data: { user: me } } = await supabase.auth.getUser();
+      let myRole: string | undefined = session.user.user_metadata?.role ?? me?.user_metadata?.role;
+      try {
+        const { data: meProf } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", session.user.id)
+          .single();
+        if (meProf?.role) myRole = (meProf.role as string).toLowerCase();
+      } catch {}
       if (recipientId) {
         const { data: recipientProfile } = await supabase
           .from("profiles")
           .select("role")
           .eq("id", recipientId)
           .single();
-        if (recipientProfile?.role !== "responder") {
+        const rRole = ((recipientProfile?.role as string) ?? "").toLowerCase();
+        const mRole = (myRole ?? "").toLowerCase();
+        const allowed =
+          (mRole === "citizen" && rRole === "responder") ||
+          (mRole === "responder" && rRole === "admin") ||
+          (mRole === "admin" && rRole === "responder");
+        if (!allowed) {
           alert("You cannot send messages to this user.");
           setSending(false);
           return;
         }
+      } else if ((myRole ?? "").toLowerCase() === "citizen") {
+        alert("No assigned responder found.");
+        setSending(false);
+        return;
       }
 
       let imageUrl: string | null = null;
       if (imageFile) {
         setUploading(true);
-        const fileName = `${Date.now()}-${imageFile.name}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const safeName = imageFile.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+        const fileName = `${session.user.id}/${Date.now()}-${safeName}`;
+        const { error: uploadError } = await supabase.storage
           .from("chat-images")
-          .upload(fileName, imageFile, { cacheControl: "3600", upsert: false });
-        if (uploadError) throw uploadError;
+          .upload(fileName, imageFile, { cacheControl: "3600", upsert: false, contentType: imageFile.type });
+        if (uploadError) {
+          setUploading(false);
+          setSending(false);
+          const missingBucket = /not found|404|bucket|chat-images/i.test(uploadError.message ?? "");
+          alert(missingBucket
+            ? "Image storage is not set up yet (missing `chat-images` bucket). Your text was not sent — ask an admin to create the bucket."
+            : `Image upload failed: ${uploadError.message}`);
+          return;
+        }
         const { data: publicUrlData } = supabase.storage
           .from("chat-images")
           .getPublicUrl(fileName);
@@ -254,7 +317,15 @@ export default function ChatBox({
           content: inputText.trim(),
           image_url: imageUrl,
         });
-      if (insertError) throw insertError;
+      if (insertError) {
+        const missing =
+          (insertError as { code?: string }).code === "PGRST205" ||
+          /does not exist|not found|404|chat_messages/i.test(insertError.message ?? "");
+        alert(missing
+          ? "Chat is not set up yet (missing `chat_messages` table). Ask an admin to run the migration."
+          : `Send failed: ${insertError.message}`);
+        throw insertError;
+      }
 
       setInputText("");
       setImageFile(null);
@@ -264,7 +335,7 @@ export default function ChatBox({
       setSending(false);
       setUploading(false);
     }
-  }, [inputText, imageFile, recipientId, sending]);
+  }, [inputText, imageFile, recipientId, incidentId, isCitizen, sending]);
 
   // ── Role-based warning ──
   const recipientName = useMemo(() => {
@@ -371,7 +442,7 @@ export default function ChatBox({
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: "11px", fontWeight: "600" }}>{imageFile?.name}</div>
             <div style={{ fontSize: "9px", color: "rgba(238,240,247,0.35)" }}>
-              {(imageFile?.size ?? 0 / 1024).toFixed(0)} KB
+              {((imageFile?.size ?? 0) / 1024).toFixed(0)} KB
             </div>
           </div>
           <button onClick={() => { setImagePreview(null); setImageFile(null); }} style={{

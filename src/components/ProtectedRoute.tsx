@@ -8,9 +8,21 @@ const ROLE_HOME: Record<string, string> = {
   admin:     "/admin/dashboard",
 };
 
+type Role = "citizen" | "responder" | "admin";
+
 interface Props {
   children: React.ReactElement;
-  allowedRole?: "citizen" | "responder" | "admin";
+  // Single role ("citizen"), a list (["responder", "admin"]), or a
+  // comma-separated string ("citizen,responder,admin" as used by /chat).
+  allowedRole?: Role | Role[] | string;
+}
+
+function normalizeRoles(allowedRole: Props["allowedRole"]): Role[] | null {
+  if (!allowedRole) return null;
+  const list = (Array.isArray(allowedRole) ? allowedRole : String(allowedRole).split(","))
+    .map(r => r.trim().toLowerCase())
+    .filter(Boolean) as Role[];
+  return list.length ? list : null;
 }
 
 type AuthState =
@@ -50,7 +62,8 @@ export default function ProtectedRoute({ children, allowedRole }: Props) {
       }
 
       // No role restriction — just confirm they're logged in.
-      if (!allowedRole) {
+      const allowed = normalizeRoles(allowedRole);
+      if (!allowed) {
         setAuthState({ status: "authorized" });
         return;
       }
@@ -64,7 +77,7 @@ export default function ProtectedRoute({ children, allowedRole }: Props) {
         return;
       }
 
-      if (role === allowedRole) {
+      if (allowed.includes(role as Role)) {
         setAuthState({ status: "authorized" });
       } else {
         setAuthState({ status: "wrong_role", actualRole: role });

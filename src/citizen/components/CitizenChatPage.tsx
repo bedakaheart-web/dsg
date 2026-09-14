@@ -12,6 +12,7 @@ export default function CitizenChatPage() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [assignedResponderId, setAssignedResponderId] = useState<string | null>(null);
+  const [incidentId, setIncidentId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [noResponder, setNoResponder] = useState(false);
 
@@ -21,26 +22,42 @@ export default function CitizenChatPage() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { navigate("/login"); return; }
 
+        // Role check uses the flat profiles.role column.
         const { data: profile } = await supabase
           .from("profiles")
-          .select("assigned_responder_id, role")
+          .select("role")
           .eq("id", user.id)
           .single();
 
-        if (profile?.role !== "citizen") {
+        if ((profile?.role as string)?.toLowerCase() !== "citizen") {
           navigate("/citizen/dashboard");
           return;
         }
 
-        if (profile?.assigned_responder_id) {
+        // Source of truth for assignment: the citizen's active report
+        // (reports.user_id = me, reports.responder_id set, status active).
+        // incident_id for chat filtering = reports.id.
+        const { data: reports } = await supabase
+          .from("reports")
+          .select("id, responder_id, status")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(10);
+
+        const active = (reports ?? []).find(r =>
+          r.responder_id && (r.status === "pending" || r.status === "in-progress")
+        );
+
+        if (active?.responder_id) {
           const { data: responder } = await supabase
             .from("profiles")
             .select("id, role")
-            .eq("id", profile.assigned_responder_id)
+            .eq("id", active.responder_id)
             .single();
 
-          if (responder?.role === "responder") {
-            setAssignedResponderId(profile.assigned_responder_id);
+          if ((responder?.role as string)?.toLowerCase() === "responder") {
+            setAssignedResponderId(active.responder_id as string);
+            setIncidentId(active.id as string);
           } else {
             setNoResponder(true);
           }
@@ -83,7 +100,7 @@ export default function CitizenChatPage() {
             {t("chat.noResponder", "No Responder")}
           </div>
           <div style={{ fontSize: "13px", color: "rgba(238,240,247,0.65)" }}>
-            {t("chat.errorTooLarge", "No assigned responder found. Please contact your barangay to be assigned a responder.")}
+            {t("chat.noResponder", "No assigned responder found. File a report and wait for a responder to claim it to start chatting.")}
           </div>
         </div>
       </div>
@@ -107,7 +124,7 @@ export default function CitizenChatPage() {
         </div>
       </div>
 
-      <ChatBox assignedResponderId={assignedResponderId} userRole="citizen" />
+      <ChatBox assignedResponderId={assignedResponderId} incidentId={incidentId} userRole="citizen" />
     </div>
   );
 }

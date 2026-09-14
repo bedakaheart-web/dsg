@@ -16,6 +16,7 @@ export default function ChatPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [recipientId, setRecipientId] = useState<string | null>(null);
+  const [incidentId, setIncidentId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [participants, setParticipants] = useState<{ id: string; name: string; email: string }[]>([]);
 
@@ -24,49 +25,86 @@ export default function ChatPage() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { navigate("/login"); return; }
+        let r: string | null = (user.user_metadata?.role as string) ?? null;
+        try {
+          const { data: prof } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", user.id)
+            .single();
+          if (prof?.role) r = (prof.role as string).toLowerCase();
+        } catch {}
         setUserId(user.id);
-        setUserRole(user.user_metadata?.role);
+        setUserRole(r);
       } catch { navigate("/login"); }
     })();
   }, [navigate]);
 
-  // Load participants based on role
+  // Load participants based on role (flat profiles schema).
+  // Citizen → assigned responder only (via active report; never admins).
+  // Responder → admins only. Admin → responders only.
   useEffect(() => {
     if (!userId) return;
     (async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
-        const myRole = user.user_metadata?.role;
+        let myRole: string | null = (user.user_metadata?.role as string) ?? null;
+        try {
+          const { data: me } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", user.id)
+            .single();
+          if (me?.role) myRole = (me.role as string).toLowerCase();
+        } catch {}
         const { data: profiles } = await supabase
           .from("profiles")
-          .select("id, email, user_metadata")
+          .select("id, email, full_name, role")
           .order("created_at", { ascending: true });
-        if (!profiles) return;
+        if (!profiles) { setLoading(false); return; }
+        const rows = profiles as { id: string; email: string; full_name?: string; role?: string }[];
         let filtered: { id: string; name: string; email: string }[] = [];
         if (myRole === "citizen") {
-          const responders = profiles.filter(p => p.user_metadata?.role === "responder");
-          // Citizens chat with their assigned responder
-          const assigned = user.user_metadata?.assigned_responder_id;
-          const targetResponder = assigned
-            ? profiles.find(p => p.id === assigned)
-            : responders[0];
-          if (targetResponder) {
-            setRecipientId(targetResponder.id);
-            filtered = [targetResponder];
+          // Active incident drives both recipient and incident filter.
+          const { data: reports } = await supabase
+            .from("reports")
+            .select("id, responder_id, status")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false })
+            .limit(10);
+          const active = (reports ?? []).find(r =>
+            r.responder_id && (r.status === "pending" || r.status === "in-progress")
+          );
+          const target = active
+            ? rows.find(p => p.id === active.responder_id && (p.role ?? "").toLowerCase() === "responder")
+            : undefined;
+          if (target && active) {
+            setRecipientId(target.id);
+            setIncidentId(active.id as string);
+            filtered = [{ id: target.id, name: target.full_name ?? target.email, email: target.email }];
+          } else {
+            setRecipientId(null);
+            setIncidentId(null);
+            filtered = [];
           }
         } else if (myRole === "responder") {
-          filtered = profiles
-            .filter(p => p.user_metadata?.role === "admin")
-            .map(p => ({ id: p.id, name: p.user_metadata?.full_name ?? p.email, email: p.email }));
+          filtered = rows
+            .filter(p => (p.role ?? "").toLowerCase() === "admin")
+            .map(p => ({ id: p.id, name: p.full_name ?? p.email, email: p.email }));
+          if (filtered[0] && !recipientId) setRecipientId(filtered[0].id);
         } else if (myRole === "admin") {
-          filtered = profiles
-            .filter(p => p.user_metadata?.role === "responder")
-            .map(p => ({ id: p.id, name: p.user_metadata?.full_name ?? p.email, email: p.email }));
+          filtered = rows
+            .filter(p => (p.role ?? "").toLowerCase() === "responder")
+            .map(p => ({ id: p.id, name: p.full_name ?? p.email, email: p.email }));
+          if (filtered[0] && !recipientId) setRecipientId(filtered[0].id);
         }
         setParticipants(filtered);
-      } catch {}
+      } catch {} finally {
+        setLoading(false);
+      }
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   // If citizen without a specific recipient, redirect to dashboard
@@ -113,7 +151,7 @@ export default function ChatPage() {
         </div>
       </div>
 
-      <ChatBox assignedResponderId={recipientId} userRole={userRole ?? undefined} />
+      <ChatBox assignedResponderId={recipientId} incidentId={incidentId} userRole={userRole ?? undefined} />
     </div>
   );
 }
