@@ -523,3 +523,41 @@ html[dir="rtl"] .pa-role {
   border-radius: 6px 0 0 6px;
 }
 html[dir="rtl"] .ri-srch-ic { left: auto; right: 12px; }
+
+/* ── Call Overlay Styles ──────────────────────────────────────── */
+@keyframes ringPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(46,204,143,0.4); }
+  50% { box-shadow: 0 0 0 12px rgba(46,204,143,0); }
+}
+
+.call-overlay-avatar {
+  animation: ringPulse 1.5s infinite;
+}
+
+.call-control-btn {
+  transition: all 0.2s ease;
+}
+.call-control-btn:hover {
+  transform: scale(1.1);
+}
+.call-control-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Offline queue indicator */
+.offline-queue-badge {
+  animation: pulse 1.5s infinite;
+}
+
+/* Pending message spinner */
+.pending-spinner {
+  display: inline-block;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
