@@ -10,6 +10,7 @@ import ResponderTeamPage from "./ResponderTeam";
 import ResponderChatDrawer from "./components/ResponderChatDrawer";
 import ResponderCitizenChatDrawer from "./components/ResponderCitizenChatDrawer";
 import { fetchUnreadCounts } from "../hooks/useRealtimeChat";
+import { useDepartmentNotifications } from "../hooks/useDepartmentNotifications";
 import dsgLogo from "../assets/dsg.logo.png";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -430,9 +431,10 @@ function cls(...args: (string | false | null | undefined)[]): string {
 interface OverviewPanelProps {
   onNavigate: (v: ViewId) => void;
   responderId: string;
+  responderDepartment: string | null;
 }
 
-function OverviewPanel({ onNavigate, responderId }: OverviewPanelProps) {
+function OverviewPanel({ onNavigate, responderId, responderDepartment }: OverviewPanelProps) {
   const [stats, setStats] = useState({ assigned: 0, pending: 0, inProgress: 0, resolved: 0 });
   const [myReports, setMyReports] = useState<Report[]>([]);
   const [inProgressReports, setInProgressReports] = useState<Report[]>([]);
@@ -460,19 +462,23 @@ function OverviewPanel({ onNavigate, responderId }: OverviewPanelProps) {
     try {
       const { data, error } = await supabase
         .from("reports")
-        .select("id,type,description,description_lang,description_translated,location,address,reporter_name,reporter_contact,status,evidence_url,created_at,responder_id")
+        .select("id,type,description,description_lang,description_translated,location,address,reporter_name,reporter_contact,status,evidence_url,created_at,responder_id,department_id,department")
         .order("created_at", { ascending: false });
 
       if (error) { console.error("Overview loadData error:", error.message); return; }
 
       const rows: Report[] = data ?? [];
-      const mine = rows.filter((r) => r.responder_id === responderId);
+      // Filter by responder's department if set
+      const deptFiltered = responderDepartment
+        ? rows.filter((r) => r.department === responderDepartment || !r.department)
+        : rows;
+      const mine = deptFiltered.filter((r) => r.responder_id === responderId);
       const counts: Record<string, number> = {};
-      mine.forEach((r) => { counts[r.type] = (counts[r.type] ?? 0) + 1; });
+      mine.forEach((r) => { counts[r.type] = (counts[r.type] ?? 0) + 1 });
 
       setStats({
         assigned:   mine.length,
-        pending:    rows.filter((r) => r.status === "pending" && !r.responder_id).length,
+        pending:    deptFiltered.filter((r) => r.status === "pending" && !r.responder_id).length,
         inProgress: mine.filter((r) => r.status === "in-progress").length,
         resolved:   mine.filter((r) => r.status === "resolved").length,
       });
@@ -482,7 +488,7 @@ function OverviewPanel({ onNavigate, responderId }: OverviewPanelProps) {
     } finally {
       setLoading(false);
     }
-  }, [responderId]);
+  }, [responderId, responderDepartment]);
 
   useEffect(() => {
     loadData();
@@ -685,6 +691,8 @@ export default function RespondersDashboard() {
   const [alertCount,    setAlertCount]    = useState(0);
   const [responderName, setResponderName] = useState("Responder");
   const [responderId,   setResponderId]   = useState("");
+  const [responderDepartment, setResponderDepartment] = useState<string | null>(null);
+  const { notifications, unreadCount: deptUnreadCount, markAsRead: markDeptRead, clearNotifications: clearDeptNotifications } = useDepartmentNotifications(responderDepartment, responderId || null);
   const [sidebarOpen,   setSidebarOpen]   = useState(false);
   const [authReady,     setAuthReady]     = useState(false);
   const [isChatOpen,    setIsChatOpen]    = useState(false);
@@ -747,11 +755,12 @@ export default function RespondersDashboard() {
 
           const { data: profile } = await supabase
             .from("profiles")
-            .select("full_name")
+            .select("full_name, department")
             .eq("id", user.id)
             .single();
 
           if (profile?.full_name) setResponderName(profile.full_name);
+          if (profile?.department) setResponderDepartment(profile.department);
         }
 
         const { data: rptData } = await supabase
@@ -953,7 +962,7 @@ export default function RespondersDashboard() {
                   <div className="rd-spinner" style={{ margin: "0 auto" }} />
                 </div>
               )}
-              {view === "overview"  && authReady && <OverviewPanel onNavigate={handleNavigate} responderId={responderId} />}
+              {view === "overview"  && authReady && <OverviewPanel onNavigate={handleNavigate} responderId={responderId} responderDepartment={responderDepartment} />}
               {view === "dispatch"  && <Dispatch />}
               {view === "incidents" && <ResponderIncidentsPage onChatCitizen={openCitizenChat} />}
               {view === "alerts"    && <ResponderAlertsPage />}

@@ -10,6 +10,7 @@
 //     the "Online" / "Offline" status in the header.
 //   - Typing indicator broadcasts on per-conversation channels.
 
+import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useLanguage } from "../context/LanguageContext";
 import { supabase } from "../js/supabase";
 import { FaPaperPlane, FaImage, FaTimes, FaSpinner, FaPhone, FaVideo, FaPhoneSlash, FaVideoSlash } from "react-icons/fa";

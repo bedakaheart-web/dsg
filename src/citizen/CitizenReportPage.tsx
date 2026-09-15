@@ -686,7 +686,6 @@ export default function CitizenReport() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!agreed || !selectedType) return;
     setSubmitting(true);
     setSubmitError(null);
 
@@ -699,28 +698,50 @@ export default function CitizenReport() {
       evidenceUrl = url;
     }
 
-    const { data: inserted, error } = await supabase
-      .from("reports")
-      .insert({
-        type:             selectedType,
-        description:      description.trim() || null,
-        location:         location || null,
-        address:          address || null,
-        reporter_name:    reporterName.trim() || null,
-        reporter_contact: reporterContact.trim() || null,
-        status:           "pending",
-        user_id:          user?.id ?? null,
-        responder_id:     null,
-        evidence_url:     evidenceUrl,
-      })
-      .select("id")
-      .single();
+    const formData = {
+      selectedType,
+      incident_type: selectedType,
+      reporterName: reporterName.trim() || null,
+      reporterContact: reporterContact.trim() || null,
+      description: description.trim() || null,
+      location: location || null,
+      address: address || null,
+      status: 'pending',
+      user_id: user?.id ?? null,
+      responder_id: null,
+      evidence_url: evidenceUrl,
+      type: selectedType,
+      reporter_name: reporterName.trim() || null,
+      reporter_contact: reporterContact.trim() || null,
+      isAgreed: agreed,
+      agreed,
+      isSubmitting: submitting,
+      step: currentStep,
+      currentStep,
+    };
+    if (!formData.agreed || !formData.selectedType) {
+      setSubmitting(false);
+      return;
+    }
+    // const { isAgreed, agreed, isSubmitting, step, currentStep, ...submissionPayload } = formData;
+    const { isAgreed, agreed: _agreed, isSubmitting, step, currentStep: _currentStep, ...submissionPayload } = formData;
+
+    const { data, error } = await supabase
+      .from('incident_reports')
+      .insert([{
+        ...submissionPayload,
+        status: 'pending'
+      }])
+      .select();
 
     if (error) {
+      console.error("Supabase Error Details:", error);
+      alert(`Submission error: ${error.message}`);
       setSubmitError(t("report.form.submitFailed", "Failed to submit report. Please try again."));
       setSubmitting(false);
       return;
     }
+    const inserted = (data as any)?.[0] ?? null;
 
     setSubmitting(false);
     setSubmittedId(inserted?.id ?? null);

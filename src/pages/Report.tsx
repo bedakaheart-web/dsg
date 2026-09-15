@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import reportBg from "../assets/report.bg.png";
 import { supabase } from "../js/supabase";
 import { useLanguage } from "../context/LanguageContext";
+import { getDepartmentCodeForType } from "../js/departments";
 
 // Translates the user's description to English server-side via the
 // translate-report edge function (free MyMemory API — no key required).
@@ -67,6 +68,9 @@ export default function Report() {
   const [locationStatus, setLocationStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [selectedType, setSelectedType]     = useState<string | null>(null);
   const [agreed, setAgreed]                 = useState(false);
+  const isAgreed = agreed;
+  const setIsAgreed = setAgreed;
+  void isAgreed; void setIsAgreed;
   const [submitted, setSubmitted]           = useState(false);
   const [fileName, setFileName]             = useState<string | null>(null);
   const [fileObject, setFileObject]         = useState<File | null>(null);
@@ -200,7 +204,11 @@ export default function Report() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!agreed || !selectedType) return;
+    console.log("Submit button clicked", { isAgreed: agreed, selectedType, location, fileName });
+    if (!agreed || !selectedType) {
+      console.log("Submit blocked: validation failed", { agreed, selectedType });
+      return;
+    }
     setSubmitting(true);
     setSubmitError(null);
     const { data: { user } } = await supabase.auth.getUser();
@@ -217,22 +225,34 @@ export default function Report() {
     if (rawDescription) {
       translated = await translateDescription(rawDescription, language);
     }
-    const payload = {
-      type: selectedType,
+    const validTypes = new Set(["fire", "medical", "crime", "flood", "disaster", "other", "accident"]);
+    const normalizedType = validTypes.has(selectedType as string) ? selectedType : "other";
+    const payload: Record<string, unknown> = {
+      incident_type: normalizedType,
+      type: normalizedType,
+      reporter_name: reporterName.trim() || null,
+      reporter_contact: reporterContact.trim() || null,
       description: rawDescription,
       description_lang: rawDescription ? language : null,
       description_translated: translated,
       location: location || null,
       address: address || null,
-      reporter_name: reporterName.trim() || null,
-      reporter_contact: reporterContact.trim() || null,
       status: "pending",
       user_id: user?.id ?? null,
       responder_id: null,
       evidence_url: evidenceUrl,
+      department: getDepartmentCodeForType(normalizedType as string),
+      department_id: null,
+      assigned_department_id: null,
     };
     const { error } = await supabase.from("reports").insert(payload);
-    if (error) { setSubmitError("Failed to submit report. Please try again."); setSubmitting(false); return; }
+    if (error) {
+      console.error("Supabase error code:", (error as any).code, "message:", (error as any).message, "details:", (error as any).details);
+      console.error("Supabase Error Details:", error);
+      console.error("Payload was:", payload);
+      console.error("Details - code:", (error as any).code, "message:", (error as any).message, "details:", (error as any).details, "hint:", (error as any).hint);
+      setSubmitError("Failed to submit report. Please try again."); setSubmitting(false); return;
+    }
     setSubmitting(false);
     setSubmitted(true);
   }
@@ -513,8 +533,8 @@ export default function Report() {
                   </div>
                   <p className="rp-disclaimer-summary">{t("report.form.legalSummary")}</p>
                   <label className="rp-check-label">
-                    <input type="checkbox" className="rp-checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} required />
-                    <span className="rp-check-box" aria-hidden="true">{agreed ? "✓" : ""}</span>
+                    <input type="checkbox" className="rp-checkbox" checked={isAgreed} onChange={(e) => { const v=e.target.checked; setIsAgreed(v); console.log("Legal checkbox toggled", v); }} required />
+                    <span className="rp-check-box" aria-hidden="true">{isAgreed ? "✓" : ""}</span>
                     <span
                       className="rp-check-text"
                       dangerouslySetInnerHTML={{ __html: t("report.form.legalCheckText") }}
@@ -533,7 +553,7 @@ export default function Report() {
                   </div>
                 )}
 
-                <button type="submit" className="rp-submit" disabled={!agreed || !selectedType || submitting}>
+                <button type="submit" className="rp-submit" disabled={!isAgreed || submitting} onClick={() => console.log("Submit button clicked", { isAgreed, selectedType, location, fileName })}>
                   {submitting ? (
                     <>
                       <span className="rp-loader"></span>
@@ -991,10 +1011,11 @@ const styles = `
     border: none; border-radius: 10px; cursor: pointer;
     transition: opacity 0.2s, transform 0.2s, background 0.2s;
     animation: rpFadeUp 0.55s ease 0.42s both;
+    position: relative; z-index: 20; pointer-events: auto;
   }
   .rp-submit:hover:not(:disabled) { background: #38e09e; transform: translateY(-2px); }
   .rp-submit:active:not(:disabled) { transform: translateY(0px); background: #27b885; }
-  .rp-submit:disabled { opacity: 0.3; cursor: not-allowed; background: var(--surface2); color: var(--text3); }
+  .rp-submit:disabled { opacity: 0.3; cursor: not-allowed; background: var(--surface2); color: var(--text3); pointer-events: auto; }
   .rp-submit-arrow { font-size: 18px; transition: transform 0.2s; }
   .rp-submit:hover:not(:disabled) .rp-submit-arrow { transform: translateX(4px); }
   .rp-loader {

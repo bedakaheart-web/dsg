@@ -22,6 +22,8 @@ type Incident = {
   action_notes: string | null;
   resolution_type: string | null;
   resolved_at: string | null;
+  department_id: string | null;
+  department: string | null;
 };
 
 type Responder = {
@@ -668,16 +670,16 @@ export default function IncidentsPage() {
   const [reassignTarget, setReassignTarget] = useState<Incident | null>(null);
   const [resolveTarget,  setResolveTarget]  = useState<Incident | null>(null);
 
-  const fetchIncidents = async (status: string) => {
-    setLoading(true);
-    const { data } = await supabase
-      .from("reports")
-      .select("id,type,description,description_lang,description_translated,location,address,reporter_name,reporter_contact,status,evidence_url,created_at,responder_id,responder_notes,action_notes,resolution_type,resolved_at")
-      .eq("status", status)
-      .order("created_at", { ascending: false });
-    setIncidents(data ?? []);
-    setLoading(false);
-  };
+const fetchIncidents = async (status: string) => {
+     setLoading(true);
+     const { data } = await supabase
+       .from("reports")
+       .select("id,type,description,description_lang,description_translated,location,address,reporter_name,reporter_contact,status,evidence_url,created_at,responder_id,responder_notes,action_notes,resolution_type,resolved_at,department_id,department")
+       .eq("status", status)
+       .order("created_at", { ascending: false });
+     setIncidents(data ?? []);
+     setLoading(false);
+   };
 
   const fetchCounts = async () => {
     const statuses = ["pending", "in-progress", "resolved"] as const;

@@ -56,6 +56,12 @@ export const TYPE_TO_DEPARTMENT: Record<string, DepartmentRouting> = {
     departmentCode: "other",
     notificationChannel: "department-other",
   },
+  disaster: {
+    departmentId: "flood",
+    departmentName: "Disaster Risk Reduction Management (DRRM)",
+    departmentCode: "flood",
+    notificationChannel: "department-flood",
+  },
 };
 
 export function getDepartmentForType(type: string): DepartmentRouting {

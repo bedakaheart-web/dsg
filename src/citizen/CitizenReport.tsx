@@ -4,7 +4,7 @@ import CameraCaptureModal from "../components/CameraCaptureModal";
 import { useNavigate } from "react-router-dom";
 import pagesBackground from "../assets/pagesbackground.png";
 import { supabase } from "../js/supabase";
-import { getDepartmentCodeForType } from "../js/departments";
+import { getDepartmentForType, getDepartmentCodeForType } from "../js/departments";
 
 const INCIDENT_TYPES = [
   { value: "fire",     label: "Fire Incident",    icon: "🔥", accent: "#FF6B6B", rgb: "255,107,107" },
@@ -41,8 +41,10 @@ const CSS = `
     background-size: cover; background-position: center; background-repeat: no-repeat;
   }
   .cr-bg::after {
-    message: ''; position: absolute; inset: 0;
-    background: linear-gradient(160deg, rgba(8,12,20,.92) 0%, rgba(8,12,20,.80) 50%, rgba(8,12,20,.94) 100%);
+    content: ''; position: absolute; inset: 0;
+    /* bg-slate-950/85 + gradient to match Directory page theme seamlessly */
+    background: linear-gradient(180deg, rgba(2,6,23,0.88) 0%, rgba(2,6,23,0.80) 40%, rgba(2,6,23,0.92) 80%, rgba(2,6,23,0.98) 100%);
+    backdrop-filter: blur(1px); -webkit-backdrop-filter: blur(1px);
   }
   .cr-glow { position: fixed; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
   .cr-glow-a { position: absolute; width: 600px; height: 600px; border-radius: 50%; background: radial-gradient(circle, rgba(255,107,107,.06) 0%, transparent 70%); top: -180px; left: -80px; }
@@ -73,48 +75,49 @@ const CSS = `
     font-family: 'Cabinet Grotesk', sans-serif;
     font-size: clamp(30px, 5vw, 58px);
     font-weight: 900; line-height: 1.0;
-    letter-spacing: -.035em; color: #eef0f7; margin-bottom: 12px;
+    letter-spacing: -.035em; color: #FFFFFF; margin-bottom: 12px;
   }
   .cr-hero-heading em { font-style: normal; color: #FF6B6B; }
   .cr-hero-sub {
     font-size: 14px; font-weight: 400;
-    color: rgba(238,240,247,.35);
+    color: #D1D5DB;
     max-width: 480px; line-height: 1.7;
   }
 
   .cr-banner {
     display: flex; align-items: center; gap: 14px;
-    background: rgba(46,204,143,.06);
-    border: 1px solid rgba(46,204,143,.18);
+    background: rgba(46,204,143,.08);
+    border: 1px solid rgba(46,204,143,.30);
     border-radius: 14px; padding: 14px 18px;
     margin-bottom: 24px;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   }
   .cr-banner-icon { font-size: 22px; flex-shrink: 0; }
   .cr-banner-body { flex: 1; }
   .cr-banner-title {
     font-family: 'Cabinet Grotesk', sans-serif;
     font-size: 13px; font-weight: 800; letter-spacing: -.01em;
-    color: #2ECC8F; margin-bottom: 3px;
+    color: #34D399; margin-bottom: 3px;
   }
   .cr-banner-text {
     font-size: 12px; font-weight: 400;
-    color: rgba(238,240,247,.32); line-height: 1.5;
+    color: #D1D5DB; line-height: 1.5;
   }
-  .cr-banner-text strong { color: rgba(46,204,143,.72); font-weight: 600; }
+  .cr-banner-text strong { color: #6EE7B7; font-weight: 600; }
   .cr-banner-btn {
     flex-shrink: 0; display: inline-flex; align-items: center;
     font-size: 12px; font-weight: 600;
-    color: #2ECC8F; background: rgba(46,204,143,.10);
-    border: 1px solid rgba(46,204,143,.22); border-radius: 8px;
+    color: #34D399; background: rgba(46,204,143,.15);
+    border: 1px solid rgba(46,204,143,.35); border-radius: 8px;
     padding: 8px 14px; white-space: nowrap; cursor: pointer;
     transition: background .18s, transform .18s;
   }
-  .cr-banner-btn:hover { background: rgba(46,204,143,.18); transform: translateY(-1px); }
+  .cr-banner-btn:hover { background: rgba(46,204,143,.25); transform: translateY(-1px); }
 
   .cr-steps {
     display: flex; align-items: center;
-    background: rgba(15,21,33,.82); backdrop-filter: blur(16px);
-    border: 1px solid rgba(255,255,255,.07); border-radius: 14px;
+    background: rgba(15,21,33,.90); backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,.10); border-radius: 14px;
     padding: 14px 18px; margin-bottom: 28px;
     overflow-x: auto; scrollbar-width: none; flex-wrap: nowrap;
     -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
@@ -124,24 +127,24 @@ const CSS = `
   .cr-step { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
   .cr-step-dot {
     width: 24px; height: 24px; border-radius: 50%;
-    border: 1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.06);
     display: flex; align-items: center; justify-message: center;
-    font-size: 10px; font-weight: 600; color: rgba(238,240,247,.22);
+    font-size: 10px; font-weight: 600; color: #FFFFFF;
     transition: all .3s; flex-shrink: 0;
   }
-  .cr-step--done .cr-step-dot   { background: rgba(46,204,143,.15); border-color: #2ECC8F; color: #2ECC8F; }
-  .cr-step--active .cr-step-dot { background: rgba(255,107,107,.15); border-color: #FF6B6B; color: #FF6B6B; box-shadow: 0 0 8px rgba(255,107,107,.28); }
+  .cr-step--done .cr-step-dot   { background: rgba(46,204,143,.20); border-color: #34D399; color: #34D399; }
+  .cr-step--active .cr-step-dot { background: rgba(255,107,107,.20); border-color: #FF6B6B; color: #FF6B6B; box-shadow: 0 0 8px rgba(255,107,107,.28); }
   .cr-step-label {
-    font-size: 11px; font-weight: 500; color: rgba(238,240,247,.22);
+    font-size: 11px; font-weight: 600; color: #D1D5DB;
     white-space: nowrap; transition: color .3s;
   }
-  .cr-step--done .cr-step-label   { color: rgba(46,204,143,.55); }
-  .cr-step--active .cr-step-label { color: rgba(255,107,107,.80); }
-  .cr-step-line { width: 18px; height: 1px; background: rgba(255,255,255,.07); margin: 0 6px; flex-shrink: 0; }
+  .cr-step--done .cr-step-label   { color: #34D399; }
+  .cr-step--active .cr-step-label { color: #FF6B6B; }
+  .cr-step-line { width: 18px; height: 1px; background: rgba(255,255,255,.10); margin: 0 6px; flex-shrink: 0; }
 
-  .cr-layout { display: grid; grid-template-columns: 1fr 290px; gap: 22px; align-items: start; }
-
-  .cr-form { display: flex; flex-direction: column; gap: 14px; }
+  .cr-layout { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; align-items: start; }
+  /* lg:grid-cols-3 with main lg:col-span-2 + sidebar lg:col-span-1 — matches Directory 2-col aesthetic */
+  .cr-form { grid-column: span 2 / span 2; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
   .cr-card {
     background: rgba(15,21,33,.82); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
     border: 1px solid rgba(255,255,255,.07); border-radius: 18px;
@@ -158,15 +161,15 @@ const CSS = `
   .cr-card-label {
     font-family: 'Cabinet Grotesk', sans-serif;
     font-size: 14px; font-weight: 800; letter-spacing: -.02em;
-    color: #eef0f7; display: flex; align-items: center; gap: 10px;
+    color: #FFFFFF; display: flex; align-items: center; gap: 10px;
   }
   .cr-step-badge {
     font-size: 9.5px; font-weight: 700; letter-spacing: .12em;
-    color: rgba(238,240,247,.28);
-    border: 1px solid rgba(255,255,255,.10);
+    color: #D1D5DB;
+    border: 1px solid rgba(255,255,255,.15);
     border-radius: 4px; padding: 2px 7px;
   }
-  .cr-optional { font-size: 11px; font-weight: 400; color: rgba(238,240,247,.22); margin-left: 4px; }
+  .cr-optional { font-size: 11px; font-weight: 400; color: #9CA3AF; margin-left: 4px; }
 
   .cr-type-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
   .cr-type-btn {
@@ -178,12 +181,12 @@ const CSS = `
   .cr-type-btn:hover { transform: translateY(-2px); border-color: var(--ta); background: var(--td); }
   .cr-type-btn.active { border-color: var(--ta) !important; background: var(--td) !important; transform: translateY(-2px); box-shadow: 0 0 20px rgba(var(--tr),.18); }
   .cr-type-icon { font-size: 20px; }
-  .cr-type-label { font-size: 11px; font-weight: 500; color: rgba(238,240,247,.45); text-align: center; line-height: 1.3; }
+  .cr-type-label { font-size: 11px; font-weight: 500; color: #D1D5DB; text-align: center; line-height: 1.3; }
   .cr-type-confirm {
     display: flex; align-items: center; gap: 8px;
     font-size: 12px; font-weight: 600;
-    color: var(--ta); background: var(--td);
-    border: 1px solid var(--ta); border-radius: 8px; padding: 8px 14px;
+    color: #34D399; background: rgba(46,204,143,.15);
+    border: 1px solid rgba(46,204,143,.30); border-radius: 8px; padding: 8px 14px;
     animation: cr-up .28s ease both;
   }
 
@@ -191,29 +194,29 @@ const CSS = `
   .cr-field { display: flex; flex-direction: column; gap: 7px; }
   .cr-label {
     font-size: 10px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase;
-    color: rgba(238,240,247,.28);
+    color: #9CA3AF;
   }
   .cr-input {
-    background: rgba(8,12,20,.80); border: 1px solid rgba(255,255,255,.08);
+    background: rgba(8,12,20,.85); border: 1px solid rgba(255,255,255,.12);
     border-radius: 9px; padding: 11px 13px;
     font-family: 'Instrument Sans', sans-serif;
-    font-size: 13px; font-weight: 400; color: #eef0f7;
+    font-size: 13px; font-weight: 400; color: #FFFFFF;
     outline: none; width: 100%; transition: border-color .18s, background .18s;
     caret-color: #2ECC8F;
   }
-  .cr-input::placeholder { color: rgba(238,240,247,.20); }
-  .cr-input:focus { border-color: rgba(46,204,143,.40); background: rgba(46,204,143,.03); box-shadow: 0 0 12px rgba(46,204,143,.10); }
-  .cr-input--readonly:focus { border-color: rgba(255,255,255,.10); background: rgba(8,12,20,.80); box-shadow: none; }
+  .cr-input::placeholder { color: #6B7280; }
+  .cr-input:focus { border-color: rgba(46,204,143,.50); background: rgba(46,204,143,.06); box-shadow: 0 0 12px rgba(46,204,143,.15); }
+  .cr-input--readonly:focus { border-color: rgba(255,255,255,.15); background: rgba(8,12,20,.85); box-shadow: none; }
   .cr-textarea {
-    background: rgba(8,12,20,.80); border: 1px solid rgba(255,255,255,.08);
+    background: rgba(8,12,20,.85); border: 1px solid rgba(255,255,255,.12);
     border-radius: 9px; padding: 11px 13px;
     font-family: 'Instrument Sans', sans-serif;
-    font-size: 13px; font-weight: 400; color: #eef0f7;
+    font-size: 13px; font-weight: 400; color: #FFFFFF;
     outline: none; width: 100%; resize: vertical; line-height: 1.65;
     transition: border-color .18s; caret-color: #2ECC8F;
   }
-  .cr-textarea::placeholder { color: rgba(238,240,247,.20); }
-  .cr-textarea:focus { border-color: rgba(46,204,143,.40); background: rgba(46,204,143,.03); box-shadow: 0 0 12px rgba(46,204,143,.10); }
+  .cr-textarea::placeholder { color: #6B7280; }
+  .cr-textarea:focus { border-color: rgba(46,204,143,.50); background: rgba(46,204,143,.06); box-shadow: 0 0 12px rgba(46,204,143,.15); }
 
   .cr-loc-row { display: flex; align-items: stretch; gap: 8px; }
   .cr-loc-wrap { position: relative; flex: 1; min-width: 0; display: flex; align-items: center; }
@@ -241,15 +244,15 @@ const CSS = `
     background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.07);
     border-radius: 8px; padding: 7px 12px;
   }
-  .cr-coords-text { font-size: 11px; color: rgba(238,240,247,.28); font-variant-numeric: tabular-nums; flex: 1; }
+  .cr-coords-text { font-size: 11px; color: #9CA3AF; font-variant-numeric: tabular-nums; flex: 1; }
   .cr-maps-link {
-    font-size: 11px; font-weight: 600; color: #2ECC8F;
+    font-size: 11px; font-weight: 600; color: #34D399;
     text-decoration: none; white-space: nowrap; transition: opacity .18s;
   }
   .cr-maps-link:hover { opacity: .7; }
   .cr-gps-acquiring {
     display: flex; align-items: center; gap: 9px;
-    font-size: 12px; color: rgba(255,209,102,.60); line-height: 1.5;
+    font-size: 12px; color: #FBBF24; line-height: 1.5;
   }
   .cr-gps-pulse {
     width: 9px; height: 9px; border-radius: 50%; background: #FFD166; flex-shrink: 0;
@@ -263,27 +266,27 @@ const CSS = `
   .acc-ok    { background: rgba(255,209,102,.10); color: #FFD166; border: 1px solid rgba(255,209,102,.22); }
   .acc-poor  { background: rgba(255,107,107,.10); color: #FF6B6B; border: 1px solid rgba(255,107,107,.22); }
   .acc-ip    { background: rgba(123,158,255,.10); color: #7B9EFF; border: 1px solid rgba(123,158,255,.22); }
-  .cr-acc-tip { font-size: 11px; color: rgba(255,107,107,.55); }
-  .cr-hint { font-size: 12px; color: rgba(238,240,247,.25); line-height: 1.5; }
-  .cr-hint--warn { font-size: 11px; color: rgba(255,209,102,.55); }
+  .cr-acc-tip { font-size: 11px; color: #F87171; }
+  .cr-hint { font-size: 12px; color: #9CA3AF; line-height: 1.5; }
+  .cr-hint--warn { font-size: 11px; color: #FBBF24; }
 
   .cr-dropzone {
-    border: 1px dashed rgba(255,255,255,.12); border-radius: 12px;
+    border: 1px dashed rgba(255,255,255,.15); border-radius: 12px;
     padding: 28px 20px; display: flex; flex-direction: column; align-items: center; gap: 6px;
     cursor: pointer; transition: border-color .2s, background .2s; text-align: center;
   }
-  .cr-dropzone:hover { border-color: rgba(46,204,143,.30); background: rgba(46,204,143,.03); }
+  .cr-dropzone:hover { border-color: rgba(46,204,143,.40); background: rgba(46,204,143,.05); }
   .cr-dropzone-icon { font-size: 24px; }
-  .cr-dropzone-text { font-size: 13px; font-weight: 400; color: rgba(238,240,247,.40); }
-  .cr-dropzone-name { font-size: 13px; font-weight: 600; color: #2ECC8F; }
-  .cr-dropzone-hint, .cr-dropzone-change { font-size: 11px; color: rgba(238,240,247,.22); }
+  .cr-dropzone-text { font-size: 13px; font-weight: 400; color: #D1D5DB; }
+  .cr-dropzone-name { font-size: 13px; font-weight: 600; color: #34D399; }
+  .cr-dropzone-hint, .cr-dropzone-change { font-size: 11px; color: #9CA3AF; }
   .cr-upload-status { font-size: 12px; font-weight: 500; padding: 8px 12px; border-radius: 8px; }
   .cr-upload--uploading { background: rgba(255,209,102,.08); color: #FFD166; border: 1px solid rgba(255,209,102,.20); }
   .cr-upload--done      { background: rgba(46,204,143,.08);  color: #2ECC8F; border: 1px solid rgba(46,204,143,.20); }
   .cr-upload--error     { background: rgba(255,107,107,.08); color: #FF6B6B; border: 1px solid rgba(255,107,107,.20); }
 
   .cr-disclaimer {
-    background: rgba(255,209,102,.04); border: 1px solid rgba(255,209,102,.12);
+    background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.40); /* border-amber-500/40 */
     border-radius: 14px; padding: 16px 18px;
     display: flex; flex-direction: column; gap: 12px;
     animation: cr-up .5s ease .24s both;
@@ -292,23 +295,38 @@ const CSS = `
   .cr-disclaimer-title {
     font-family: 'Cabinet Grotesk', sans-serif;
     font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
-    color: rgba(255,209,102,.75);
+    color: #FBBF24; /* text-amber-400 */
   }
-  .cr-disclaimer-summary { font-size: 12px; color: rgba(238,240,247,.28); line-height: 1.55; }
+  .cr-disclaimer-summary { font-size: 12px; color: #D1D5DB; line-height: 1.55; }
+  .cr-legal-notice {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: rgba(245,158,11,0.08);
+    border: 1px solid rgba(245,158,11,0.40); /* border-amber-500/40 */
+    border-radius: 10px; padding: 10px 12px;
+  }
+  .cr-legal-notice-badge {
+    flex-shrink: 0; font-size: 10px; font-weight: 800; letter-spacing: .08em;
+    color: #FBBF24; /* text-amber-400 */
+    background: rgba(245,158,11,0.15);
+    border: 1px solid rgba(245,158,11,0.35); border-radius: 6px;
+    padding: 3px 7px; text-transform: uppercase; line-height: 1;
+  }
+  .cr-legal-notice-text { font-size: 11px; color: #FDE68A; line-height: 1.6; }
+  .cr-legal-notice-text strong { color: #FBBF24; font-weight: 700; }
   .cr-check-row { display: flex; align-items: flex-start; gap: 12px; cursor: pointer; }
   .cr-checkbox-hidden { display: none; }
   .cr-checkbox-box {
     width: 18px; height: 18px; flex-shrink: 0;
-    border: 1px solid rgba(255,209,102,.30); border-radius: 5px;
-    background: rgba(255,209,102,.05);
+    border: 1px solid rgba(245,158,11,0.40); border-radius: 5px;
+    background: rgba(245,158,11,0.08);
     display: flex; align-items: center; justify-message: center;
-    font-size: 11px; font-weight: 700; color: #FFD166; margin-top: 1px;
+    font-size: 11px; font-weight: 700; color: #FBBF24; margin-top: 1px;
     transition: all .2s;
   }
   .cr-check-text {
-    font-size: 12px; font-weight: 400; color: rgba(238,240,247,.28); line-height: 1.65;
+    font-size: 12px; font-weight: 400; color: #D1D5DB; line-height: 1.65;
   }
-  .cr-check-text strong { font-weight: 600; color: rgba(255,209,102,.65); }
+  .cr-check-text strong { font-weight: 600; color: #FBBF24; }
 
   .cr-error {
     background: rgba(255,107,107,.08); border: 1px solid rgba(255,107,107,.22);
@@ -332,10 +350,11 @@ const CSS = `
     border: none; border-radius: 12px; cursor: pointer;
     transition: opacity .2s, transform .2s, background .2s;
     animation: cr-up .5s ease .28s both;
+    position: relative; z-index: 20; pointer-events: auto;
   }
   .cr-submit:hover:not(:disabled) { background: #38e09e; transform: translateY(-2px); }
   .cr-submit:active:not(:disabled) { transform: translateY(0); background: #27b885; }
-  .cr-submit:disabled { opacity: .28; cursor: not-allowed; background: rgba(255,255,255,.06); color: rgba(238,240,247,.28); }
+  .cr-submit:disabled { opacity: .28; cursor: not-allowed; background: rgba(255,255,255,.04); color: #9CA3AF; pointer-events: auto; }
   .cr-submit-arrow { font-size: 17px; transition: transform .2s; }
   .cr-submit:hover:not(:disabled) .cr-submit-arrow { transform: translateX(4px); }
   .cr-spinner {
@@ -345,30 +364,33 @@ const CSS = `
   }
   @keyframes cr-spin { to { transform: rotate(360deg); } }
 
-  .cr-sidebar { display: flex; flex-direction: column; gap: 12px; position: sticky; top: 72px; animation: cr-up .5s ease .08s both; }
+  .cr-sidebar { grid-column: span 1 / span 1; display: flex; flex-direction: column; gap: 12px; position: sticky; top: 72px; animation: cr-up .5s ease .08s both; min-width: 0; }
   .cr-sidebar-card {
-    background: rgba(15,21,33,.82); backdrop-filter: blur(16px);
-    border: 1px solid rgba(255,255,255,.07); border-radius: 18px;
-    padding: 18px 16px; display: flex; flex-direction: column; gap: 10px;
+    background: rgba(15,23,42,0.92); /* bg-slate-900/90 */
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(30,41,59,0.9); /* border-slate-800 */
+    border-radius: 16px; /* rounded-xl */
+    padding: 16px; display: flex; flex-direction: column; gap: 10px;
+    overflow: hidden; /* contain children */
   }
-  .cr-sidebar-card--warn  { background: rgba(255,209,102,.04); border-color: rgba(255,209,102,.12); }
-  .cr-sidebar-card--info  { background: rgba(123,158,255,.04); border-color: rgba(123,158,255,.12); }
-  .cr-sidebar-card--track { background: rgba(46,204,143,.04);  border-color: rgba(46,204,143,.12);  }
+  .cr-sidebar-card--warn  { background: rgba(15,23,42,0.92); border-color: rgba(251,191,36,0.22); }
+  .cr-sidebar-card--info  { background: rgba(15,23,42,0.92); border-color: rgba(96,165,250,0.20); }
+  .cr-sidebar-card--track { background: rgba(2,44,34,0.55); border-color: rgba(52,211,153,0.28); }
   .cr-sidebar-title {
     font-family: 'Cabinet Grotesk', sans-serif;
     font-size: 12px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase;
-    color: #eef0f7;
+    color: #FFFFFF;
   }
-  .cr-sidebar-text { font-size: 12px; font-weight: 400; color: rgba(238,240,247,.28); line-height: 1.65; }
+  .cr-sidebar-text { font-size: 12px; font-weight: 400; color: #D1D5DB; line-height: 1.65; }
   .cr-track-btn {
     display: inline-flex; align-items: center;
     font-size: 12px; font-weight: 600;
-    color: #2ECC8F; background: rgba(46,204,143,.08);
-    border: 1px solid rgba(46,204,143,.18); border-radius: 8px;
+    color: #34D399; background: rgba(46,204,143,.12);
+    border: 1px solid rgba(46,204,143,.25); border-radius: 8px;
     padding: 8px 12px; cursor: pointer; width: fit-content;
     transition: background .18s, border-color .18s;
   }
-  .cr-track-btn:hover { background: rgba(46,204,143,.15); border-color: rgba(46,204,143,.32); }
+  .cr-track-btn:hover { background: rgba(46,204,143,.22); border-color: rgba(46,204,143,.40); }
 
   .cr-hotlines { display: flex; flex-direction: column; gap: 8px; }
   .cr-hotline {
@@ -380,9 +402,9 @@ const CSS = `
   .cr-hotline:hover { background: rgba(255,255,255,.06); border-color: var(--hc); }
   .cr-hotline-icon { font-size: 15px; }
   .cr-hotline-info { display: flex; flex-direction: column; flex: 1; }
-  .cr-hotline-label { font-size: 9.5px; font-weight: 600; letter-spacing: .10em; text-transform: uppercase; color: rgba(238,240,247,.28); }
-  .cr-hotline-number { font-family: 'Cabinet Grotesk', sans-serif; font-size: 14px; font-weight: 800; color: #eef0f7; }
-  .cr-hotline-call { font-size: 11px; font-weight: 600; color: var(--hc); opacity: .70; }
+  .cr-hotline-label { font-size: 9.5px; font-weight: 600; letter-spacing: .10em; text-transform: uppercase; color: #9CA3AF; }
+  .cr-hotline-number { font-family: 'Cabinet Grotesk', sans-serif; font-size: 14px; font-weight: 800; color: #FFFFFF; }
+  .cr-hotline-call { font-size: 11px; font-weight: 600; color: #34D399; opacity: .85; }
 
   .cr-success {
     display: flex; flex-direction: column; align-items: center; text-align: center;
@@ -396,10 +418,10 @@ const CSS = `
   }
   .cr-success-title {
     font-family: 'Cabinet Grotesk', sans-serif;
-    font-size: 32px; font-weight: 900; letter-spacing: -.03em; color: #eef0f7; margin-bottom: 12px;
+    font-size: 32px; font-weight: 900; letter-spacing: -.03em; color: #FFFFFF; margin-bottom: 12px;
   }
   .cr-success-sub {
-    font-size: 14px; font-weight: 400; color: rgba(238,240,247,.35);
+    font-size: 14px; font-weight: 400; color: #D1D5DB;
     max-width: 460px; line-height: 1.68; margin-bottom: 28px;
   }
   .cr-success-cards {
@@ -419,8 +441,8 @@ const CSS = `
     animation-delay: .18s;
   }
   .cr-success-card-icon { font-size: 30px; }
-  .cr-success-card-title { font-family: 'Cabinet Grotesk', sans-serif; font-size: 15px; font-weight: 800; color: #eef0f7; }
-  .cr-success-card-text { font-size: 12px; color: rgba(238,240,247,.30); line-height: 1.55; }
+  .cr-success-card-title { font-family: 'Cabinet Grotesk', sans-serif; font-size: 15px; font-weight: 800; color: #FFFFFF; }
+  .cr-success-card-text { font-size: 12px; color: #D1D5DB; line-height: 1.55; }
   .cr-success-btn {
     margin-top: 4px; display: inline-flex; align-items: center;
     font-size: 13px; font-weight: 600;
@@ -438,6 +460,7 @@ const CSS = `
 
   @media (max-width: 860px) {
     .cr-layout { grid-template-columns: 1fr; }
+    .cr-form, .cr-sidebar { grid-column: span 1 / span 1; }
     .cr-sidebar { position: static; }
     .cr-hotlines { flex-direction: row; flex-wrap: wrap; }
     .cr-hotline { flex: 1 1 calc(50% - 4px); }
@@ -559,6 +582,10 @@ export default function CitizenReport({ onBack, onViewHistory, onViewReport }: C
   const [locationSource,  setLocationSource]  = useState<"gps"|"ip"|null>(null);
   const [selectedType,    setSelectedType]    = useState<string | null>(null);
   const [agreed,          setAgreed]          = useState(false);
+  // Compliance alias: isAgreed / setIsAgreed bound to Legal Acknowledgment checkbox
+  const isAgreed = agreed;
+  const setIsAgreed = setAgreed;
+  void isAgreed; void setIsAgreed;
   const [submitted,       setSubmitted]       = useState(false);
   const [submittedId,     setSubmittedId]     = useState<string | null>(null);
   // Multi-file evidence attachments (uploads + camera captures).
@@ -728,7 +755,20 @@ export default function CitizenReport({ onBack, onViewHistory, onViewReport }: C
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!agreed || !selectedType) return;
+    // Debug verification per task: log submit attempt and formData to browser console (F12)
+    console.log("Submit button clicked", {
+      isAgreed: agreed,
+      selectedType,
+      reporterName,
+      reporterContact,
+      location,
+      description: description.slice(0, 80),
+      evidenceCount: evidenceFiles.length,
+    });
+    if (!agreed || !selectedType) {
+      console.log("Submit blocked: validation failed", { agreed, selectedType });
+      return;
+    }
     setSubmitting(true);
     setSubmitError(null);
 
@@ -757,20 +797,33 @@ export default function CitizenReport({ onBack, onViewHistory, onViewReport }: C
       setUploadState(null);
     }
 
-    const basePayload = {
-      type:             selectedType,
+    // Ensure incident_type is valid string — normalize to expected enum values
+    const validTypes = new Set(["fire", "medical", "crime", "flood", "disaster", "other", "accident"]);
+    const normalizedType = validTypes.has(selectedType as string) ? selectedType : "other";
+    // Department routing: let DB trigger handle department_id (uuid). Frontend must NOT send invalid uuid string.
+    // Send department as text code, and explicitly set department_id to null so trigger assigns correct uuid.
+    const basePayload: Record<string, unknown> = {
+      // Payload Name Normalization: map UI state to DB columns (incident_reports)
+      incident_type:    normalizedType,
+      type:             normalizedType,
+      reporter_name:    reporterName.trim() || null,
+      reporter_contact: reporterContact.trim() || null,
       description:      description.trim() || null,
       location:         location || null,
       address:          address || null,
-      reporter_name:    reporterName.trim() || null,
-      reporter_contact: reporterContact.trim() || null,
       status:           "pending",
       user_id:          user?.id ?? null,
       responder_id:     null,
       evidence_url:     evidenceUrls[0] ?? null,
-      department:       getDepartmentCodeForType(selectedType),
-      department_id:    getDepartmentCodeForType(selectedType),
+      department:       getDepartmentCodeForType(normalizedType as string),
+      department_id:    null,
+      assigned_department_id: null,
     };
+    // Exclude UI-only flags (isAgreed/agreed) — never sent
+    // Ensure we never send empty string for FK fields that would override trigger with invalid uuid
+    if (!basePayload.department) basePayload.department = getDepartmentCodeForType(normalizedType as string);
+    if (basePayload.department_id === "") basePayload.department_id = null;
+    if ((basePayload as any).assigned_department_id === "") (basePayload as any).assigned_department_id = null;
     let inserted: { id: string } | null = null;
     let error: any = null;
     {
@@ -781,15 +834,65 @@ export default function CitizenReport({ onBack, onViewHistory, onViewReport }: C
         .single();
       inserted = res.data;
       error = res.error;
+      if (error) {
+        console.error("Supabase error code:", (error as any).code, "message:", (error as any).message, "details:", (error as any).details);
+        console.error("Supabase Error Details:", error);
+        console.error("Payload was:", { ...basePayload, evidence_urls: evidenceUrls });
+        console.error("Details - code:", (error as any).code, "message:", (error as any).message, "details:", (error as any).details, "hint:", (error as any).hint);
+      }
+      // Fallback if DB uses 'type' not 'incident_type' (or vice versa)
+      if (error && /incident_type/i.test(error.message ?? "")) {
+        console.error("Supabase error code:", (error as any).code, "message:", (error as any).message, "details:", (error as any).details);
+        const fallback: Record<string, unknown> = { ...basePayload };
+        delete (fallback as any).incident_type;
+        const r2 = await supabase.from("reports").insert({ ...fallback, evidence_urls: evidenceUrls }).select("id").single();
+        inserted = r2.data; error = r2.error;
+        if (error) console.error("Supabase error code:", (error as any).code, "message:", (error as any).message, "details:", (error as any).details);
+        if (error && /evidence_urls/i.test(error.message ?? "")) {
+          const r3 = await supabase.from("reports").insert(fallback).select("id").single();
+          inserted = r3.data; error = r3.error;
+        }
+      }
       // Legacy fallback: older DBs without the evidence_urls column.
       if (error && /evidence_urls/i.test(error.message ?? "")) {
+        console.error("Supabase error code:", (error as any).code, "message:", (error as any).message, "details:", (error as any).details);
+        console.error("Supabase Error Details (retry without evidence_urls):", error);
         const retry = await supabase.from("reports").insert(basePayload).select("id").single();
         inserted = retry.data;
         error = retry.error;
+        if (error) {
+          console.error("Supabase error code:", (error as any).code, "message:", (error as any).message, "details:", (error as any).details);
+          console.error("Supabase Error Details (retry):", error);
+        }
+      }
+      // Fallback if department columns don't exist (older DB)
+      if (error && /department/i.test(error.message ?? "")) {
+        console.error("Supabase error code:", (error as any).code, "message:", (error as any).message, "details:", (error as any).details);
+        const minimal: Record<string, unknown> = {
+          type: basePayload.type,
+          description: basePayload.description,
+          location: basePayload.location,
+          address: basePayload.address,
+          reporter_name: basePayload.reporter_name,
+          reporter_contact: basePayload.reporter_contact,
+          status: basePayload.status,
+          user_id: basePayload.user_id,
+          responder_id: basePayload.responder_id,
+          evidence_url: basePayload.evidence_url,
+        };
+        const rDept = await supabase.from("reports").insert({ ...minimal, evidence_urls: evidenceUrls }).select("id").single();
+        inserted = rDept.data; error = rDept.error;
+        if (error && /evidence_urls/i.test(error.message ?? "")) {
+          const rDept2 = await supabase.from("reports").insert(minimal).select("id").single();
+          inserted = rDept2.data; error = rDept2.error;
+        }
+        if (error) console.error("Supabase error code:", (error as any).code, "message:", (error as any).message, "details:", (error as any).details);
       }
     }
 
     if (error) {
+      console.error("Supabase error code:", (error as any).code, "message:", (error as any).message, "details:", (error as any).details);
+      console.error("Supabase Error Details:", error);
       setSubmitError(t("report.form.submitFailed", "Failed to submit report. Please try again."));
       setSubmitting(false);
       return;
@@ -839,6 +942,7 @@ export default function CitizenReport({ onBack, onViewHistory, onViewReport }: C
   }
 
   if (submitted) {
+    const deptInfo = getDepartmentForType(selectedType ?? "other");
     return (
       <>
         <style>{CSS}</style>
@@ -877,6 +981,11 @@ export default function CitizenReport({ onBack, onViewHistory, onViewReport }: C
                   </button>
                 </div>
               </div>
+              {deptInfo && (
+                <div style={{ marginTop: "16px", padding: "12px 20px", background: "rgba(46,204,143,0.1)", border: "1px solid rgba(46,204,143,0.25)", borderRadius: "10px", fontSize: "13px", color: "#2ECC8F" }}>
+                  <strong>Assigned Department:</strong> {deptInfo.departmentName}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1199,22 +1308,33 @@ export default function CitizenReport({ onBack, onViewHistory, onViewReport }: C
               <div className="cr-disclaimer">
                 <div className="cr-disclaimer-header">
                   <span style={{ fontSize: 16 }}>⚖️</span>
-                  <span className="cr-disclaimer-title">{t("report.form.legalTitle")}</span>
+                  <span className="cr-disclaimer-title">{t("report.form.legalTitle", "LEGAL ACKNOWLEDGMENT & WARNING")}</span>
                 </div>
                 <p className="cr-disclaimer-summary">
-                  {t("report.form.legalSummary")}
+                  {t("report.form.legalSummary", "By submitting this report, you confirm that the information provided is true and accurate to the best of your knowledge.")}
                 </p>
+                <div className="cr-legal-notice">
+                  <span className="cr-legal-notice-badge">NOTICE</span>
+                  <span className="cr-legal-notice-text">
+                    Submission of false, fraudulent, or malicious emergency reports is punishable by law under <strong>Republic Act No. 10175 (Cybercrime Prevention Act of 2012)</strong> and relevant provisions of the <strong>Revised Penal Code</strong>. Misuse of emergency response channels may lead to civil liability and criminal prosecution.
+                  </span>
+                </div>
                 <label className="cr-check-row">
                   <input
                     type="checkbox"
                     className="cr-checkbox-hidden"
-                    checked={agreed}
-                    onChange={e => setAgreed(e.target.checked)}
+                    checked={isAgreed}
+                    onChange={e => {
+                      const v = e.target.checked;
+                      setIsAgreed(v);
+                      // setAgreed is alias; ensure state updates to true
+                      console.log("Legal checkbox toggled", v);
+                    }}
                     required
                   />
                   <div className="cr-checkbox-box">{agreed && "✓"}</div>
                   <span className="cr-check-text">
-                    {t("report.form.legalCheckText")}
+                    {t("report.form.legalCheckText", "I confirm that the information provided is truthful, and I acknowledge the legal consequences of submitting false emergency reports under RA 10175.")}
                   </span>
                 </label>
               </div>
@@ -1245,7 +1365,19 @@ export default function CitizenReport({ onBack, onViewHistory, onViewReport }: C
               <button
                 type="submit"
                 className="cr-submit"
-                disabled={!agreed || !selectedType || submitting}
+                disabled={!isAgreed || submitting}
+                onClick={(e) => {
+                  // Debug verification: ensure click reaches handler even before form submit
+                  console.log("Submit button clicked", {
+                    isAgreed,
+                    agreed,
+                    selectedType,
+                    location,
+                    description: description.slice(0, 80),
+                    evidenceCount: evidenceFiles.length,
+                  });
+                  // allow form onSubmit to handle actual submission; no extra prevent here
+                }}
               >
                 {submitting ? (
                   <><span className="cr-spinner" /><span>{t("report.form.submitting")}</span></>

@@ -24,6 +24,8 @@ interface Report {
   action_notes: string | null;
   resolution_type: string | null;
   resolved_at: string | null;
+  department_id: string | null;
+  department: string | null;
 }
 
 // ─── Meta ─────────────────────────────────────────────────────────────────────
@@ -622,7 +624,7 @@ export default function ResponderIncidentsPage({ onChatCitizen }: {
   const loadReports = async () => {
     const { data } = await supabase
       .from("reports")
-      .select("id,type,description,description_lang,description_translated,location,address,reporter_name,reporter_contact,status,evidence_url,created_at,responder_id,user_id,responder_notes,action_notes,resolution_type,resolved_at")
+      .select("id,type,description,description_lang,description_translated,location,address,reporter_name,reporter_contact,status,evidence_url,created_at,responder_id,user_id,responder_notes,action_notes,resolution_type,resolved_at,department_id,department")
       .order("created_at", { ascending: false });
     setReports(data ?? []);
     setLoading(false);
