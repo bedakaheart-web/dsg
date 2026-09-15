@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { useLanguage } from "../../context/LanguageContext";
 import { supabase } from "../../js/supabase";
 import { useNavigate } from "react-router-dom";
-import ChatBox from "../../components/ChatBox";
+import ChatBox from "../../components/Chatbox";
 
 export default function CitizenChatPage() {
   const { t } = useLanguage();

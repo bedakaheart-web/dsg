@@ -76,7 +76,7 @@ const CSS = `
 
   /* Layer 1 — background photo at reduced opacity */
   .su-root::after {
-    content: '';
+    message: '';
     position: fixed; inset: 0; z-index: 0;
     background-image: var(--bg-image);
     background-size: cover;
@@ -88,7 +88,7 @@ const CSS = `
 
   /* Layer 2 — dark gradient overlay that dims the whole page */
   .su-root::before {
-    content: '';
+    message: '';
     position: fixed; inset: 0; z-index: 0;
     background:
       linear-gradient(180deg, rgba(7,16,29,0.78) 0%, rgba(7,16,29,0.68) 50%, rgba(7,16,29,0.82) 100%),
@@ -110,7 +110,7 @@ const CSS = `
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-message: space-between;
     padding: 48px 52px;
     overflow: hidden;
     flex-shrink: 0;
@@ -126,7 +126,7 @@ const CSS = `
   }
 
   .su-left-bg::after {
-    content: '';
+    message: '';
     position: absolute; inset: 0;
     background: linear-gradient(160deg, rgba(7,16,29,0.72) 0%, rgba(7,16,29,0.58) 50%, rgba(7,16,29,0.70) 100%);
   }
@@ -160,7 +160,7 @@ const CSS = `
   }
 
   .su-left::after {
-    content: '';
+    message: '';
     position: absolute; top: 0; right: 0; bottom: 0; width: 1px;
     background: linear-gradient(180deg, transparent 0%, rgba(0,200,224,0.25) 20%, rgba(0,200,224,0.40) 50%, rgba(0,200,224,0.25) 80%, transparent 100%);
     z-index: 3;
@@ -183,7 +183,7 @@ const CSS = `
     width: 44px; height: 44px; border-radius: 12px;
     background: transparent;
     border: none;
-    display: flex; align-items: center; justify-content: center;
+    display: flex; align-items: center; justify-message: center;
     flex-shrink: 0;
     transition: transform .3s ease;
     overflow: hidden;
@@ -272,7 +272,7 @@ const CSS = `
     width: 26px; height: 26px; border-radius: 8px; flex-shrink: 0;
     background: rgba(0,200,224,0.12);
     border: 1px solid rgba(0,200,224,0.30);
-    display: flex; align-items: center; justify-content: center;
+    display: flex; align-items: center; justify-message: center;
     font-family: 'Poppins', sans-serif; font-size: 11px; font-weight: 700; color: #00c8e0;
     margin-top: 1px;
   }
@@ -326,7 +326,7 @@ const CSS = `
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-message: center;
     padding: 48px 40px;
     /* FIXED: unified surface opacity to match About page */
     background: rgba(13, 27, 46, 0.72);
@@ -337,7 +337,7 @@ const CSS = `
   }
 
   .su-right::before {
-    content: ''; position: absolute; top: -200px; right: -200px;
+    message: ''; position: absolute; top: -200px; right: -200px;
     width: 500px; height: 500px; border-radius: 50%;
     background: radial-gradient(circle, rgba(0,200,224,0.05) 0%, transparent 65%);
     pointer-events: none;
@@ -491,7 +491,7 @@ const CSS = `
   .su-captcha-wrap {
     margin: 18px 0 6px;
     display: flex;
-    justify-content: center;
+    justify-message: center;
     min-height: 65px;
   }
 
@@ -502,7 +502,7 @@ const CSS = `
     border-radius: 11px; border: none;
     background: linear-gradient(135deg, #e8372a 0%, #f04438 100%);
     color: #fff; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; gap: 8px;
+    display: flex; align-items: center; justify-message: center; gap: 8px;
     transition: all .25s ease;
     margin-top: 10px; margin-bottom: 20px;
     position: relative; overflow: hidden;
@@ -511,7 +511,7 @@ const CSS = `
   }
 
   .su-btn::before {
-    content: ''; position: absolute; top: 0; left: -100%;
+    message: ''; position: absolute; top: 0; left: -100%;
     width: 60%; height: 100%;
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.20), transparent);
     transform: skewX(-20deg); transition: left .45s ease;
@@ -559,7 +559,7 @@ const CSS = `
     width: 72px; height: 72px; border-radius: 50%;
     background: rgba(0,200,224,0.18);
     border: 2px solid rgba(0,200,224,0.40);
-    display: flex; align-items: center; justify-content: center;
+    display: flex; align-items: center; justify-message: center;
     font-size: 32px; margin-bottom: 18px;
     box-shadow: 0 0 32px rgba(0,200,224,0.25);
     animation: successPop .5s .1s cubic-bezier(.22,1,.36,1) both;
@@ -586,7 +586,7 @@ const CSS = `
   .su-success-div   { width: 100%; height: 1px; background: rgba(0,200,224,0.12); margin-bottom: 24px; }
 
   .su-success-btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+    display: inline-flex; align-items: center; justify-message: center; gap: 9px;
     width: 100%; padding: 15px;
     font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 700;
     letter-spacing: .10em; text-transform: uppercase;
@@ -600,7 +600,7 @@ const CSS = `
   }
 
   .su-success-btn::before {
-    content: ''; position: absolute; top: 0; left: -100%;
+    message: ''; position: absolute; top: 0; left: -100%;
     width: 60%; height: 100%;
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.20), transparent);
     transform: skewX(-20deg); transition: left .45s ease;
@@ -644,7 +644,7 @@ const CSS = `
       min-height: auto;
       flex: 1;
       padding: 32px 28px 56px;
-      justify-content: flex-start;
+      justify-message: flex-start;
     }
 
     .su-form-wrap { max-width: 100%; }
@@ -666,7 +666,7 @@ const CSS = `
     .su-mobile-header {
       display: flex !important;
       align-items: center;
-      justify-content: space-between;
+      justify-message: space-between;
       padding: 14px 16px;
       /* FIXED: unified mobile header opacity */
       background: rgba(13, 27, 46, 0.95);
@@ -690,7 +690,7 @@ const CSS = `
       flex: 1;
       min-height: auto;
       padding: 24px 16px 48px;
-      justify-content: flex-start;
+      justify-message: flex-start;
       background: transparent;
     }
 

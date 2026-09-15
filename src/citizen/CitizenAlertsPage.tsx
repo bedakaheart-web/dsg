@@ -109,7 +109,7 @@ const CSS = `
     background-size: cover; background-position: center; background-repeat: no-repeat;
   }
   .ca-bg::after {
-    content: ''; position: absolute; inset: 0;
+    message: ''; position: absolute; inset: 0;
     background: linear-gradient(160deg, rgba(8,12,20,.92) 0%, rgba(8,12,20,.82) 50%, rgba(8,12,20,.92) 100%);
   }
   .ca-glow { position: fixed; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
@@ -171,7 +171,7 @@ const CSS = `
 
   .ca-card-body { padding: 18px 20px; }
   .ca-card-top { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 12px; }
-  .ca-card-icon { width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+  .ca-card-icon { width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0; display: flex; align-items: center; justify-message: center; font-size: 15px; }
   .ca-card-info { flex: 1; min-width: 0; }
   .ca-card-title { font-family: 'Cabinet Grotesk', sans-serif; font-size: 15px; font-weight: 800; color: #eef0f7; letter-spacing: -.01em; margin-bottom: 6px; }
   .ca-card-msg { font-size: 13px; color: rgba(238,240,247,.55); line-height: 1.6; }
@@ -193,12 +193,12 @@ const CSS = `
     background: rgba(15,21,33,.82); border: 1px dashed rgba(255,255,255,.07);
     border-radius: 20px; backdrop-filter: blur(16px);
   }
-  .ca-empty-icon { width: 52px; height: 52px; border-radius: 14px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.07); display: flex; align-items: center; justify-content: center; font-size: 20px; color: rgba(238,240,247,.2); }
+  .ca-empty-icon { width: 52px; height: 52px; border-radius: 14px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.07); display: flex; align-items: center; justify-message: center; font-size: 20px; color: rgba(238,240,247,.2); }
   .ca-empty-title { font-family: 'Cabinet Grotesk', sans-serif; font-size: 16px; font-weight: 700; color: rgba(238,240,247,.35); }
   .ca-empty-sub { font-size: 13px; color: rgba(238,240,247,.2); max-width: 290px; line-height: 1.6; }
 
   /* Loading */
-  .ca-loading { display: flex; align-items: center; gap: 10px; padding: 64px; justify-content: center; font-size: 13px; color: rgba(238,240,247,.3); background: rgba(15,21,33,.82); border: 1px solid rgba(255,255,255,.07); border-radius: 20px; backdrop-filter: blur(16px); }
+  .ca-loading { display: flex; align-items: center; gap: 10px; padding: 64px; justify-message: center; font-size: 13px; color: rgba(238,240,247,.3); background: rgba(15,21,33,.82); border: 1px solid rgba(255,255,255,.07); border-radius: 20px; backdrop-filter: blur(16px); }
   .ca-spin { width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(255,255,255,.1); border-top-color: #2ECC8F; animation: caSpin .75s linear infinite; display: inline-block; flex-shrink: 0; }
   @keyframes caSpin { to{transform:rotate(360deg);} }
 `;

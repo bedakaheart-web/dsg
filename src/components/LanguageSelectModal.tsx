@@ -32,7 +32,7 @@ export function LanguageSelectModal() {
           background: rgba(4, 10, 20, 0.92);
           backdrop-filter: blur(10px);
           -webkit-backdrop-filter: blur(10px);
-          display: flex; align-items: center; justify-content: center;
+          display: flex; align-items: center; justify-message: center;
           padding: 20px;
           animation: lsmFadeIn 0.35s ease both;
         }
@@ -56,7 +56,7 @@ export function LanguageSelectModal() {
           border-radius: 50%;
           background: rgba(0, 200, 224, 0.12);
           border: 1.5px solid rgba(0, 200, 224, 0.35);
-          display: flex; align-items: center; justify-content: center;
+          display: flex; align-items: center; justify-message: center;
           color: #00c8e0; font-size: 22px;
         }
         .lsm-heading {
@@ -77,7 +77,7 @@ export function LanguageSelectModal() {
         .lsm-options::-webkit-scrollbar { width: 6px; }
         .lsm-options::-webkit-scrollbar-thumb { background: rgba(0,200,224,0.25); border-radius: 3px; }
         .lsm-option {
-          display: flex; align-items: center; justify-content: space-between;
+          display: flex; align-items: center; justify-message: space-between;
           width: 100%; padding: 14px 18px;
           background: rgba(6, 15, 28, 0.85);
           border: 1.5px solid rgba(0, 200, 224, 0.16);
@@ -154,7 +154,7 @@ export function LanguageSwitcherBadge() {
         .lsb-menu.align-right { right: 0; }
         .lsb-menu.align-left { left: 0; }
         .lsb-item {
-          display: flex; align-items: center; justify-content: space-between; gap: 10px;
+          display: flex; align-items: center; justify-message: space-between; gap: 10px;
           width: 100%; text-align: left;
           padding: 8px 10px; border-radius: 6px; border: none;
           background: transparent; color: #ddeef8; font-size: 13px;

@@ -75,7 +75,7 @@ function createIcon(category: string, isSelected = false) {
     html: `<div style="
         width:${size}px;height:${size}px;border-radius:9999px;
         background:${cfg.color};
-        display:flex;align-items:center;justify-content:center;
+        display:flex;align-items:center;justify-message:center;
         font-size:${isSelected ? 18 : 15}px;
         border:${isSelected ? "3px" : "2px"} solid #0d1b2e;
         box-shadow:0 2px 16px rgba(0,0,0,0.50),0 0 0 ${isSelected ? "5px" : "3px"} ${cfg.color}55;
@@ -336,7 +336,7 @@ export default function CitizenMap() {
         .fl-list::-webkit-scrollbar-thumb:hover { background: rgba(0,200,224,0.72); }
 
         .fl-sidebar::after {
-          content: '';
+          message: '';
           position: absolute; bottom: 0; left: 0; right: 0; height: 48px;
           background: linear-gradient(to top, rgba(8,18,32,0.92) 0%, transparent 100%);
           pointer-events: none; z-index: 6;
@@ -400,7 +400,7 @@ export default function CitizenMap() {
           position: relative; overflow: hidden;
         }
         .fl-card::before {
-          content: ''; position: absolute; inset: 0;
+          message: ''; position: absolute; inset: 0;
           background: radial-gradient(ellipse 80% 60% at 5% 0%, var(--cat-glow), transparent 70%);
           opacity: 0; transition: opacity 0.25s ease;
         }
@@ -422,7 +422,7 @@ export default function CitizenMap() {
           margin-bottom: 7px; line-height: 1.4; position: relative; z-index: 1;
         }
         .fl-card-footer {
-          display: flex; align-items: center; justify-content: space-between;
+          display: flex; align-items: center; justify-message: space-between;
           position: relative; z-index: 1;
         }
         .fl-card-phone {
@@ -498,7 +498,7 @@ export default function CitizenMap() {
           font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600;
           letter-spacing: 0.08em; text-transform: uppercase;
           border-radius: 8px; padding: 10px; cursor: pointer; border: none; color: #fff;
-          display: flex; align-items: center; justify-content: center; gap: 6px;
+          display: flex; align-items: center; justify-message: center; gap: 6px;
           transition: opacity 0.18s, transform 0.18s;
         }
         .fl-popup-btn:hover { opacity: 0.88; transform: translateY(-1px); }
@@ -555,7 +555,7 @@ export default function CitizenMap() {
           position: absolute; bottom: 72px; left: 14px; z-index: 600;
           background: #0d1b2e; border: 1px solid rgba(0,200,224,0.28);
           border-radius: 50%; width: 46px; height: 46px;
-          align-items: center; justify-content: center;
+          align-items: center; justify-message: center;
           cursor: pointer; font-size: 18px;
           box-shadow: 0 4px 16px rgba(0,0,0,0.40); color: #00c8e0;
           transition: transform 0.2s, box-shadow 0.2s;

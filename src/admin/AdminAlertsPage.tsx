@@ -212,7 +212,7 @@ const AL_STYLE = `
 /* ── Page header ── */
 .al-header {
   display: flex; align-items: flex-end;
-  justify-content: space-between; flex-wrap: wrap;
+  justify-message: space-between; flex-wrap: wrap;
   gap: 14px; margin-bottom: 24px;
 }
 .al-eyebrow {
@@ -220,7 +220,7 @@ const AL_STYLE = `
   text-transform: uppercase; color: var(--primary); margin-bottom: 6px;
   display: flex; align-items: center; gap: 8px;
 }
-.al-eyebrow::before { content:''; display:block; width:20px; height:2px; background:var(--primary); }
+.al-eyebrow::before { message:''; display:block; width:20px; height:2px; background:var(--primary); }
 .al-title { font-size: 28px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; margin:0 0 4px; }
 .al-subtitle { font-size: 13px; color: var(--text-secondary); margin:0; }
 
@@ -255,7 +255,7 @@ const AL_STYLE = `
 .al-compose-title-icon {
   width: 28px; height: 28px; border-radius: 7px;
   background: rgba(255,59,48,.08); border: 1px solid rgba(255,59,48,.2);
-  display: flex; align-items: center; justify-content: center; color: var(--danger); flex-shrink: 0;
+  display: flex; align-items: center; justify-message: center; color: var(--danger); flex-shrink: 0;
 }
 
 /* ── Field ── */
@@ -316,7 +316,7 @@ const AL_STYLE = `
 
 /* ── Send button ── */
 .al-send-btn {
-  display: flex; align-items: center; justify-content: center; gap: 8px;
+  display: flex; align-items: center; justify-message: center; gap: 8px;
   width: 100%; padding: 12px;
   background: linear-gradient(135deg, var(--danger) 0%, #cc2e24 100%);
   border: none; border-radius: 9px;
@@ -409,7 +409,7 @@ const AL_STYLE = `
 }
 .al-templates-header {
   padding: 14px 16px 12px; border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex; align-items: center; justify-message: space-between;
   cursor: default; user-select: none;
 }
 .al-templates-header-left { display: flex; align-items: center; gap: 8px; }
@@ -420,7 +420,7 @@ const AL_STYLE = `
 .al-templates-title-icon {
   width: 24px; height: 24px; border-radius: 6px;
   background: rgba(255,149,0,.08); border: 1px solid rgba(255,149,0,.2);
-  display: flex; align-items: center; justify-content: center;
+  display: flex; align-items: center; justify-message: center;
   color: var(--warning); flex-shrink: 0;
 }
 .al-templates-sub { font-size: 11px; color: var(--text-tertiary); }
@@ -467,7 +467,7 @@ const AL_STYLE = `
 }
 .al-tpl-icon {
   width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center; font-size: 11px;
+  display: flex; align-items: center; justify-message: center; font-size: 11px;
   border: 1px solid;
 }
 .al-tpl-icon--responder { background: rgba(0,102,255,.08); color: var(--primary); border-color: rgba(0,102,255,.2); }

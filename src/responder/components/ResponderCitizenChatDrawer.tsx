@@ -10,7 +10,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../../js/supabase";
-import ChatBox from "../../components/ChatBox";
+import ChatBox from "../../components/Chatbox";
 
 interface Conversation {
   reportId: string;

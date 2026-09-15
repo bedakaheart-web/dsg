@@ -95,7 +95,7 @@ export default function About() {
         }
 
         .ab-nav {
-          display: flex; align-items: center; justify-content: space-between;
+          display: flex; align-items: center; justify-message: space-between;
           padding: 28px 0 0;
           animation: fadeUp .5s ease both;
         }
@@ -140,7 +140,7 @@ export default function About() {
           display: flex; align-items: center; gap: 10px;
         }
         .ab-hero-eyebrow::after {
-          content: ''; display: block;
+          message: ''; display: block;
           width: 40px; height: 1px;
           background: var(--red); opacity: 0.5;
         }
@@ -185,7 +185,7 @@ export default function About() {
           position: relative; overflow: hidden;
         }
         .ab-intro::before {
-          content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+          message: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
           background: linear-gradient(90deg, var(--red), var(--cyan), transparent);
         }
         .ab-intro-label {
@@ -222,7 +222,7 @@ export default function About() {
           backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
         }
         .ab-pillar::before {
-          content: ''; position: absolute; inset: 0;
+          message: ''; position: absolute; inset: 0;
           background: radial-gradient(ellipse 80% 60% at 0% 0%, var(--p-dim), transparent 70%);
           pointer-events: none;
         }
@@ -234,7 +234,7 @@ export default function About() {
 
         .ab-pillar-top {
           display: flex; align-items: flex-start;
-          justify-content: space-between; margin-bottom: 16px;
+          justify-message: space-between; margin-bottom: 16px;
           position: relative; z-index: 1;
         }
         .ab-pillar-icon { font-size: 26px; line-height: 1; }
@@ -266,7 +266,7 @@ export default function About() {
           position: relative;
         }
         .ab-features::before {
-          content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+          message: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
           background: linear-gradient(90deg, var(--cyan), transparent);
         }
         .ab-feature {
@@ -294,12 +294,12 @@ export default function About() {
           border: 1px solid rgba(232,55,42,0.20);
           border-radius: var(--radius); padding: 32px 36px;
           display: flex; align-items: center;
-          justify-content: space-between; gap: 24px;
+          justify-message: space-between; gap: 24px;
           backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
           position: relative; overflow: hidden;
         }
         .ab-cta::before {
-          content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+          message: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
           background: linear-gradient(90deg, var(--red), rgba(232,55,42,0.3), transparent);
         }
         .ab-cta-text h3 {

@@ -2,6 +2,13 @@
 // Role-based chat component with image attachment support.
 // Citizens see their assigned Responder chat; Responders and Admins
 // see direct chat with each other.
+//
+// CHANGES IN THIS VERSION:
+//  - Real presence tracking (Supabase Realtime Presence) drives the
+//    "Online" / "Offline" status in the header instead of a hardcoded label.
+//  - Typing indicator: broadcasts "typing" events on a per-conversation
+//    channel and shows an animated "typing..." state in the header when
+//    the other participant is composing a message.
 
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useLanguage } from "../context/LanguageContext";
@@ -13,6 +20,8 @@ interface ChatMessage {
   id: string;
   sender_id: string;
   recipient_id: string | null;
+  sender_role?: string | null;
+  recipient_role?: string | null;
   incident_id: string | null;
   content: string;
   image_url: string | null;
@@ -30,6 +39,8 @@ interface ChatParticipant {
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
 const MAX_VISIBLE_MESSAGES = 100;
+const TYPING_IDLE_MS = 1500; // stop broadcasting "typing" after this much silence
+const TYPING_EXPIRE_MS = 3000; // clear the other person's "typing" state if no update arrives
 
 // ── Helpers ──────────────────────────────────────────────────────────
 function formatTime(ts: string): string {
@@ -63,9 +74,14 @@ export default function ChatBox({
   const [participants, setParticipants] = useState<ChatParticipant[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<ChatParticipant | null>(null);
+  const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set());
+  const [otherTyping, setOtherTyping] = useState(false);
   const userIdRef = useRef<string>("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const typingChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const otherTypingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const myTypingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const role = userRole ?? user?.role ?? "citizen";
   const isCitizen = role === "citizen";
@@ -91,6 +107,83 @@ export default function ChatBox({
       } catch {}
     })();
   }, []);
+
+  // ── Presence: track who is actually online right now ──
+  // Every open ChatBox joins a shared presence channel keyed by user id.
+  // The combined presence state tells us, in real time, exactly which
+  // registered users (citizens, responders, admins) are currently active.
+  useEffect(() => {
+    if (!user?.id) return;
+    const presenceChannel = supabase.channel("presence:online-users", {
+      config: { presence: { key: user.id } },
+    });
+
+    presenceChannel
+      .on("presence", { event: "sync" }, () => {
+        const state = presenceChannel.presenceState();
+        setOnlineUserIds(new Set(Object.keys(state)));
+      })
+      .subscribe(async (status) => {
+        if (status === "SUBSCRIBED") {
+          await presenceChannel.track({ online_at: new Date().toISOString() });
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(presenceChannel);
+    };
+  }, [user?.id]);
+
+  const isRecipientOnline = recipientId ? onlineUserIds.has(recipientId) : false;
+
+  // ── Typing indicator: per-conversation broadcast channel ──
+  // Channel name is derived from the sorted pair of participant ids (plus
+  // incident id, if any) so both sides of a 1-on-1 thread land on the same
+  // channel regardless of who opened the chat first.
+  useEffect(() => {
+    if (!user?.id || !recipientId) {
+      typingChannelRef.current = null;
+      return;
+    }
+    const pairKey = [user.id, recipientId].sort().join("_");
+    const channelName = `typing_${pairKey}${incidentId ? `_${incidentId}` : ""}`;
+    const channel = supabase.channel(channelName);
+
+    channel
+      .on("broadcast", { event: "typing" }, (payload) => {
+        const from = (payload.payload as { from?: string; typing?: boolean })?.from;
+        const isTyping = (payload.payload as { from?: string; typing?: boolean })?.typing;
+        if (from !== recipientId) return;
+        if (otherTypingTimeoutRef.current) clearTimeout(otherTypingTimeoutRef.current);
+        setOtherTyping(!!isTyping);
+        if (isTyping) {
+          otherTypingTimeoutRef.current = setTimeout(() => setOtherTyping(false), TYPING_EXPIRE_MS);
+        }
+      })
+      .subscribe();
+
+    typingChannelRef.current = channel;
+
+    return () => {
+      supabase.removeChannel(channel);
+      typingChannelRef.current = null;
+      if (otherTypingTimeoutRef.current) clearTimeout(otherTypingTimeoutRef.current);
+      setOtherTyping(false);
+    };
+  }, [user?.id, recipientId, incidentId]);
+
+  const broadcastTyping = useCallback((typing: boolean) => {
+    const channel = typingChannelRef.current;
+    if (!channel || !user?.id) return;
+    channel.send({ type: "broadcast", event: "typing", payload: { from: user.id, typing } });
+  }, [user?.id]);
+
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputText(e.target.value);
+    broadcastTyping(true);
+    if (myTypingTimeoutRef.current) clearTimeout(myTypingTimeoutRef.current);
+    myTypingTimeoutRef.current = setTimeout(() => broadcastTyping(false), TYPING_IDLE_MS);
+  }, [broadcastTyping]);
 
   // ── Load participants (flat profiles schema; strict role lists) ──
   // Citizen → responders only (never admins). Responder → admins only.
@@ -167,11 +260,13 @@ export default function ChatBox({
         const { data, error } = await query;
         if (!cancelled) {
           if (error) {
-            const missing =
-              (error as { code?: string }).code === "PGRST205" ||
-              /does not exist|not found|404|chat_messages/i.test(error.message ?? "");
+            const missing = (error as { code?: string }).code === "PGRST205";
             if (missing) {
               console.warn("[ChatBox] `chat_messages` table unavailable — create it via supabase migration (see supabase/migrations/*_create_chat_messages.sql).");
+            } else {
+              // Any other error (bad column, RLS denial, etc.) should be loud,
+              // not silently treated as "table missing".
+              console.error("[ChatBox] Failed to load chat_messages:", error);
             }
             setMessages([]);
             setLoading(false);
@@ -209,6 +304,12 @@ export default function ChatBox({
               const updated = [...prev, newMsg];
               return updated.slice(-MAX_VISIBLE_MESSAGES);
             });
+            // A message just arrived from the other party — their "typing"
+            // state is definitely over now.
+            if (newMsg.sender_id === recipientId) {
+              if (otherTypingTimeoutRef.current) clearTimeout(otherTypingTimeoutRef.current);
+              setOtherTyping(false);
+            }
           }
         }
       )
@@ -220,7 +321,7 @@ export default function ChatBox({
   // Auto-scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, otherTyping]);
 
   // ── Image upload handler ──
   const handleImageSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -264,14 +365,15 @@ export default function ChatBox({
           .single();
         if (meProf?.role) myRole = (meProf.role as string).toLowerCase();
       } catch {}
+      const mRole = (myRole ?? "").toLowerCase();
+      let rRole = "";
       if (recipientId) {
         const { data: recipientProfile } = await supabase
           .from("profiles")
           .select("role")
           .eq("id", recipientId)
           .single();
-        const rRole = ((recipientProfile?.role as string) ?? "").toLowerCase();
-        const mRole = (myRole ?? "").toLowerCase();
+        rRole = ((recipientProfile?.role as string) ?? "").toLowerCase();
         // Allowed pairs: citizen ↔ responder, responder ↔ admin,
         // admin ↔ responder. Citizen ↔ admin is strictly blocked.
         const allowed =
@@ -283,7 +385,7 @@ export default function ChatBox({
           setSending(false);
           return;
         }
-      } else if ((myRole ?? "").toLowerCase() === "citizen") {
+      } else if (mRole === "citizen") {
         alert("No assigned responder found.");
         setSending(false);
         return;
@@ -318,29 +420,60 @@ export default function ChatBox({
         .insert({
           sender_id: session.user.id,
           recipient_id: recipientId,
-          incident_id: isCitizen ? incidentId : null,
+          sender_role: mRole || null,
+          recipient_role: rRole || null,
+          incident_id: incidentId,
           content: inputText.trim(),
           image_url: imageUrl,
         });
-      if (insertError) {
-        const missing =
-          (insertError as { code?: string }).code === "PGRST205" ||
-          /does not exist|not found|404|chat_messages/i.test(insertError.message ?? "");
-        alert(missing
-          ? "Chat is not set up yet (missing `chat_messages` table). Ask an admin to run the migration."
-          : `Send failed: ${insertError.message}`);
-        throw insertError;
-      }
 
-      setInputText("");
-      setImageFile(null);
-      setImagePreview(null);
-      setSending(false);
+      // Sending ends the "I am typing" state immediately, for me.
+      broadcastTyping(false);
+      if (myTypingTimeoutRef.current) clearTimeout(myTypingTimeoutRef.current);
+
+      if (insertError) {
+        // Only treat this as "the table itself is missing" when Postgrest's
+        // schema-cache code says so explicitly. A generic "does not exist"
+        // message (e.g. a bad column name) must NOT be swallowed here —
+        // that previously hid real send failures from the user entirely.
+        const isTableMissing = (insertError as { code?: string }).code === "PGRST205";
+        const isPermissionError =
+          /permission|unauthorized|no row|rate limit/i.test(insertError.message ?? "");
+
+        console.error("[ChatBox] chat_messages insert failed:", insertError);
+
+        if (isTableMissing) {
+          // Table doesn't exist yet — log and proceed gracefully; the UI will
+          // keep working if the table gets created later (e.g. after migration).
+          console.warn(
+            "[ChatBox] `chat_messages` table not found in database. " +
+            "Messages will not persist until the migration is applied. " +
+            "See supabase/migrations/20260915000000_create_chat_messages.sql"
+          );
+          alert("Chat isn't set up yet (missing chat_messages table). Your message was not sent.");
+          setSending(false);
+        } else if (isPermissionError) {
+          alert(
+            "Chat permission error. Please ensure you're logged in and have chat access."
+          );
+          setSending(false);
+        } else {
+          alert(`Send failed: ${insertError.message}`);
+          setSending(false);
+        }
+        // Do NOT clear the input/image on failure — let the user retry
+        // without retyping their message.
+      } else {
+        setInputText("");
+        setImageFile(null);
+        setImagePreview(null);
+        setSending(false);
+      }
     } catch {
       setSending(false);
       setUploading(false);
     }
-  }, [inputText, imageFile, recipientId, incidentId, isCitizen, sending]);
+  }, [inputText, imageFile, recipientId, incidentId, isCitizen, sending, broadcastTyping]);
 
   // ── Role-based warning ──
   const recipientName = useMemo(() => {
@@ -362,27 +495,65 @@ export default function ChatBox({
       fontFamily: "'Inter', sans-serif",
       color: "#eef0f7",
     }}>
+      <style>{`
+        @keyframes chatTypingBounce {
+          0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+          30% { transform: translateY(-3px); opacity: 1; }
+        }
+        .chat-typing-dot {
+          width: 5px; height: 5px; border-radius: 50%;
+          background-color: currentColor;
+          display: inline-block;
+          animation: chatTypingBounce 1.2s infinite ease-in-out;
+        }
+        .chat-typing-dot:nth-child(2) { animation-delay: 0.15s; }
+        .chat-typing-dot:nth-child(3) { animation-delay: 0.3s; }
+      `}</style>
+
       {/* Header */}
       <div style={{
         display: "flex", alignItems: "center", gap: "10px",
         padding: "14px 16px", borderBottom: "1px solid rgba(255,255,255,0.07)",
         backgroundColor: "rgba(8,12,20,0.6)", flexShrink: 0,
       }}>
-        <div style={{
-          width: "36px", height: "36px", minWidth: "36px",
-          borderRadius: "50%", display: "flex", alignItems: "center",
-          justifyContent: "center", fontSize: "12px", fontWeight: "700",
-          backgroundColor: "rgba(46,204,143,0.15)", color: "#2ECC8F",
-          border: "1px solid rgba(46,204,143,0.3)",
-        }}>
-          {recipientName ? getInitials(recipientName) : "?"}
+        <div style={{ position: "relative" }}>
+          <div style={{
+            width: "36px", height: "36px", minWidth: "36px",
+            borderRadius: "50%", display: "flex", alignItems: "center",
+            justifyContent: "center", fontSize: "12px", fontWeight: "700",
+            backgroundColor: "rgba(46,204,143,0.15)", color: "#2ECC8F",
+            border: "1px solid rgba(46,204,143,0.3)",
+          }}>
+            {recipientName ? getInitials(recipientName) : "?"}
+          </div>
+          {isRecipientOnline && (
+            <span style={{
+              position: "absolute", bottom: "-1px", right: "-1px",
+              width: "10px", height: "10px", borderRadius: "50%",
+              backgroundColor: "#2ECC8F", border: "2px solid rgba(8,12,20,0.9)",
+            }} />
+          )}
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: "13px", fontWeight: "700" }}>
             {recipientName || t("chat.chatWith", "Chat")}
           </div>
-          <div style={{ fontSize: "10px", color: "rgba(238,240,247,0.35)" }}>
-            {t("chat.online", "Online")}
+          <div style={{
+            fontSize: "10px", display: "flex", alignItems: "center", gap: "5px",
+            color: otherTyping ? "#2ECC8F" : (isRecipientOnline ? "rgba(46,204,143,0.8)" : "rgba(238,240,247,0.35)"),
+          }}>
+            {otherTyping ? (
+              <>
+                <span style={{ display: "inline-flex", gap: "2px" }}>
+                  <span className="chat-typing-dot" />
+                  <span className="chat-typing-dot" />
+                  <span className="chat-typing-dot" />
+                </span>
+                {t("chat.typing", "typing...")}
+              </>
+            ) : (
+              isRecipientOnline ? t("chat.online", "Online") : t("chat.offline", "Offline")
+            )}
           </div>
         </div>
       </div>
@@ -431,6 +602,21 @@ export default function ChatBox({
               </div>
             );
           })
+        )}
+        {otherTyping && (
+          <div style={{ display: "flex", justifyContent: "flex-start" }}>
+            <div style={{
+              padding: "10px 14px", borderRadius: "14px",
+              backgroundColor: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(255,255,255,0.07)",
+              display: "inline-flex", alignItems: "center", gap: "4px",
+              color: "rgba(238,240,247,0.5)",
+            }}>
+              <span className="chat-typing-dot" />
+              <span className="chat-typing-dot" />
+              <span className="chat-typing-dot" />
+            </div>
+          </div>
         )}
         <div ref={messagesEndRef} />
       </div>
@@ -491,7 +677,7 @@ export default function ChatBox({
         <input
           type="text"
           value={inputText}
-          onChange={e => setInputText(e.target.value)}
+          onChange={handleInputChange}
           placeholder={t("chat.typeMessage", "Type a message...")}
           style={{
             flex: 1, backgroundColor: "rgba(255,255,255,0.05)",

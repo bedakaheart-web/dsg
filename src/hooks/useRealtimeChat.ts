@@ -65,7 +65,7 @@ export function useRealtimeChat(
     const t = threadRef.current;
     if (!t.currentUserId || t.broadcast || !t.targetUserId) return;
     await supabase
-      .from("messages")
+      .from("chat_messages")
       .update({ is_read: true })
       .eq("receiver_id", t.currentUserId)
       .eq("sender_id", t.targetUserId)
@@ -83,7 +83,7 @@ export function useRealtimeChat(
       }
       setLoading(true);
       setError(null);
-      let query = supabase.from("messages").select("*").order("created_at", { ascending: true }).limit(200);
+      let query = supabase.from("chat_messages").select("*").order("created_at", { ascending: true }).limit(200);
       if (broadcast) {
         query = query.is("receiver_id", null);
       } else {
@@ -174,7 +174,7 @@ export function useRealtimeChat(
     };
     setMessages(prev => [...prev, optimistic]);
     const { data, error: err } = await supabase
-      .from("messages")
+      .from("chat_messages")
       .insert({
         sender_id: optimistic.sender_id,
         receiver_id: optimistic.receiver_id,
@@ -224,7 +224,7 @@ export async function fetchUnreadCounts(
 ): Promise<{ bySender: Record<string, number>; broadcast: number }> {
   const bySender: Record<string, number> = {};
   const { data } = await supabase
-    .from("messages")
+    .from("chat_messages")
     .select("sender_id,receiver_id")
     .eq("receiver_id", currentUserId)
     .eq("is_read", false)
@@ -233,7 +233,7 @@ export async function fetchUnreadCounts(
     bySender[row.sender_id] = (bySender[row.sender_id] ?? 0) + 1;
   }
   const { count } = await supabase
-    .from("messages")
+    .from("chat_messages")
     .select("id", { count: "exact", head: true })
     .is("receiver_id", null)
     .neq("sender_id", currentUserId)

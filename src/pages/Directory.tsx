@@ -339,7 +339,7 @@ export default function Directory() {
 
         .dr-wrap { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; padding: 0 28px 120px; }
 
-        .dr-nav { display: flex; align-items: center; justify-content: space-between; padding: 28px 0 0; animation: fadeUp .5s ease both; }
+        .dr-nav { display: flex; align-items: center; justify-message: space-between; padding: 28px 0 0; animation: fadeUp .5s ease both; }
         .dr-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; font-family: 'Poppins', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text); }
         .dr-logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); box-shadow: 0 0 12px var(--red), 0 0 24px rgba(232,55,42,0.4); animation: breathe 2.4s ease infinite; }
         @keyframes breathe { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:.55; transform:scale(.78); } }
@@ -348,7 +348,7 @@ export default function Directory() {
 
         .dr-hero { margin-top: 72px; margin-bottom: 52px; animation: fadeUp 0.7s 0.1s ease both; }
         .dr-hero-eyebrow { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 0.20em; text-transform: uppercase; color: var(--red); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
-        .dr-hero-eyebrow::after { content: ''; display: block; width: 40px; height: 1px; background: var(--red); opacity: 0.5; }
+        .dr-hero-eyebrow::after { message: ''; display: block; width: 40px; height: 1px; background: var(--red); opacity: 0.5; }
         .dr-hero h1 { font-family: 'Poppins', sans-serif; font-size: clamp(42px, 6vw, 78px); font-weight: 700; line-height: 0.95; letter-spacing: -0.03em; color: #F8FAFC; margin-bottom: 24px; }
         .dr-hero h1 .accent { color: #A8D8FF; }
         .dr-hero-sub { font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 400; color: rgba(168,216,255,0.70); max-width: 520px; line-height: 1.68; }
@@ -400,14 +400,14 @@ export default function Directory() {
         .dr-grid-emergency { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 
         .dr-emerg-card { background: var(--surface); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border: 1px solid var(--border); border-top: 2px solid var(--accent); border-radius: var(--radius); padding: 20px 16px 16px; position: relative; overflow: hidden; transition: transform .22s, border-color .22s, box-shadow .22s; display: flex; flex-direction: column; }
-        .dr-emerg-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 100% 80% at 0% 0%, var(--accent-dim), transparent 70%); opacity: 0; transition: opacity .35s; pointer-events: none; }
+        .dr-emerg-card::before { message: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 100% 80% at 0% 0%, var(--accent-dim), transparent 70%); opacity: 0; transition: opacity .35s; pointer-events: none; }
         .dr-emerg-card:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 0 20px var(--accent-dim), 0 8px 28px rgba(0,0,0,0.4); }
         .dr-emerg-card:hover::before { opacity: 1; }
         .dr-emerg-icon { font-size: 26px; margin-bottom: 10px; position: relative; z-index: 1; }
         .dr-emerg-agency { font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 700; letter-spacing: -0.02em; color: var(--accent); line-height: 1; position: relative; z-index: 1; }
         .dr-emerg-label { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text3); margin-top: 3px; margin-bottom: 14px; position: relative; z-index: 1; }
         .dr-phone-list { display: flex; flex-direction: column; gap: 5px; position: relative; z-index: 1; flex: 1; }
-        .dr-phone-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap; }
+        .dr-phone-row { display: flex; align-items: center; justify-message: space-between; gap: 6px; flex-wrap: wrap; }
         .dr-phone-lbl { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text3); min-width: 80px; flex-shrink: 0; }
         .dr-phone-num { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; color: var(--text2); text-decoration: none; transition: color .15s; display: inline-block; padding: 4px 2px; }
         .dr-phone-num:hover { color: var(--accent); }
@@ -425,10 +425,10 @@ export default function Directory() {
 
         .dr-grid-hospital { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
         .dr-hosp-card { background: var(--surface); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; transition: transform .22s, border-color .22s, box-shadow .22s; position: relative; overflow: hidden; display: flex; flex-direction: column; }
-        .dr-hosp-card::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #A8D8FF, transparent); opacity: 0; transition: opacity .28s; }
+        .dr-hosp-card::after { message: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #A8D8FF, transparent); opacity: 0; transition: opacity .28s; }
         .dr-hosp-card:hover { transform: translateY(-3px); border-color: rgba(168,216,255,0.28); box-shadow: 0 0 18px rgba(168,216,255,0.08), 0 8px 28px rgba(0,0,0,0.4); }
         .dr-hosp-card:hover::after { opacity: 1; }
-        .dr-hosp-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+        .dr-hosp-top { display: flex; align-items: flex-start; justify-message: space-between; gap: 10px; margin-bottom: 12px; }
         .dr-hosp-tags { display: flex; gap: 5px; flex-wrap: wrap; }
         .dr-hosp-tag { font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: #A8D8FF; border: 1px solid rgba(168,216,255,0.25); border-radius: 4px; padding: 3px 7px; }
         .dr-hosp-tag.gov { color: var(--blue); border-color: rgba(74,144,217,0.25); }

@@ -30,7 +30,7 @@ const CSS = `
     min-height: 100vh;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-message: center;
     font-family: 'Inter', sans-serif;
     padding: 24px;
     position: relative;
@@ -38,7 +38,7 @@ const CSS = `
   }
 
   .lg-root::after {
-    content: '';
+    message: '';
     position: fixed; inset: 0; z-index: 0;
     background-image: var(--bg-image);
     background-size: cover;
@@ -49,7 +49,7 @@ const CSS = `
   }
 
   .lg-root::before {
-    content: '';
+    message: '';
     position: fixed; inset: 0; z-index: 0;
     background-image:
       radial-gradient(circle at 20% 20%, rgba(0,200,224,0.10) 0%, transparent 50%),
@@ -115,7 +115,7 @@ const CSS = `
     position: relative;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-message: space-between;
     padding: 60px 56px;
     background: linear-gradient(135deg, rgba(10,37,64,0.88) 0%, rgba(13,27,46,0.82) 50%, rgba(5,26,36,0.88) 100%);
     overflow: hidden;
@@ -128,7 +128,7 @@ const CSS = `
   }
 
   .lg-brand-panel::after {
-    content: '';
+    message: '';
     position: absolute; inset: 0; z-index: 0;
     background: radial-gradient(ellipse 90% 110% at 50% -10%, rgba(0,200,224,0.10) 0%, transparent 60%);
   }
@@ -174,7 +174,7 @@ const CSS = `
     background: linear-gradient(135deg, rgba(0,200,224,0.18), rgba(232,55,42,0.12));
     border: 1.5px solid rgba(0, 200, 224, 0.25);
     border-radius: 14px; padding: 10px;
-    display: flex; align-items: center; justify-content: center;
+    display: flex; align-items: center; justify-message: center;
     box-shadow: 0 0 24px rgba(0, 200, 224, 0.12);
     transition: all .3s ease;
   }
@@ -265,7 +265,7 @@ const CSS = `
   .lg-form-panel {
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-message: center;
     padding: 56px 48px;
     background: rgba(13, 27, 46, 0.72);
     border-left: 1px solid rgba(0, 200, 224, 0.12);
@@ -273,7 +273,7 @@ const CSS = `
   }
 
   .lg-form-panel::before {
-    content: '';
+    message: '';
     position: absolute; top: -150px; right: -150px;
     width: 400px; height: 400px;
     background: radial-gradient(circle, rgba(0, 200, 224, 0.06), transparent 70%);
@@ -297,7 +297,7 @@ const CSS = `
   }
 
   .lg-form-eyebrow::before {
-    content: '';
+    message: '';
     width: 6px; height: 6px; border-radius: 50%;
     background: #00c8e0; opacity: 0.7;
     animation: lg-pulse 2.2s ease-in-out infinite;
@@ -412,7 +412,7 @@ const CSS = `
   .lg-eye:hover { color: rgba(0, 200, 224, 0.70); }
 
   .lg-helper-row {
-    display: flex; align-items: center; justify-content: space-between;
+    display: flex; align-items: center; justify-message: space-between;
     margin-bottom: 28px; margin-top: 8px;
     position: relative; z-index: 1;
     animation: slideUp .5s .3s cubic-bezier(.22,1,.36,1) both;
@@ -461,7 +461,7 @@ const CSS = `
     background: linear-gradient(135deg, #e8372a 0%, #f04438 100%);
     color: #fff;
     cursor: pointer;
-    display: flex; align-items: center; justify-content: center; gap: 8px;
+    display: flex; align-items: center; justify-message: center; gap: 8px;
     transition: all .25s ease;
     margin-bottom: 24px;
     box-shadow: 0 0 32px rgba(232, 55, 42, 0.32), 0 0 0 1px rgba(232, 55, 42, 0.22);
@@ -471,7 +471,7 @@ const CSS = `
   }
 
   .lg-btn::before {
-    content: '';
+    message: '';
     position: absolute; top: 0; left: -100%;
     width: 60%; height: 100%;
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.20), transparent);
@@ -524,7 +524,7 @@ const CSS = `
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-message: center;
     width: 100%;
     min-height: 78px;
     margin: 4px 0 22px;
@@ -534,7 +534,7 @@ const CSS = `
 
   .lg-captcha-widget {
     display: flex;
-    justify-content: center;
+    justify-message: center;
     align-items: center;
     min-height: 65px;
     min-width: 300px;
@@ -553,7 +553,7 @@ const CSS = `
     max-width: 100%;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-message: center;
     overflow: visible;
     position: relative;
     z-index: 1;
@@ -565,7 +565,7 @@ const CSS = `
     max-width: 100%;
     display: flex !important;
     align-items: center;
-    justify-content: center;
+    justify-message: center;
   }
 
   .lg-captcha-widget iframe,
@@ -593,7 +593,7 @@ const CSS = `
     width: 72px; height: 72px; border-radius: 50%;
     background: rgba(0, 200, 224, 0.18);
     border: 2px solid rgba(0, 200, 224, 0.40);
-    display: flex; align-items: center; justify-content: center;
+    display: flex; align-items: center; justify-message: center;
     font-size: 32px; margin-bottom: 18px;
     box-shadow: 0 0 32px rgba(0, 200, 224, 0.25);
     animation: successPop .5s .1s cubic-bezier(.22,1,.36,1) both;
@@ -617,7 +617,7 @@ const CSS = `
   }
 
   .lg-checking {
-    display: flex; align-items: center; justify-content: center;
+    display: flex; align-items: center; justify-message: center;
     gap: 12px; padding: 60px 0;
     font-family: 'Inter', sans-serif;
     font-size: 13.5px; color: rgba(168, 216, 255, 0.55);

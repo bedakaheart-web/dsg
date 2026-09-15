@@ -629,14 +629,14 @@ export default function CitizenSafetyTips() {
           position: relative; overflow: hidden;
         }
         .cst-panel-header-card::before {
-          content: ''; position: absolute; inset: 0;
+          message: ''; position: absolute; inset: 0;
           background: radial-gradient(ellipse 60% 100% at 0% 50%, rgba(var(--d-rgb),0.06) 0%, transparent 70%);
           pointer-events: none;
         }
         .cst-panel-title-group { display: flex; align-items: center; gap: 16px; }
         .cst-panel-icon {
           width: 50px; height: 50px; border-radius: 14px; flex-shrink: 0;
-          display: flex; align-items: center; justify-content: center; font-size: 24px;
+          display: flex; align-items: center; justify-message: center; font-size: 24px;
           background: var(--d-dim); border: 1px solid var(--d-border);
         }
         .cst-panel-name {
@@ -664,7 +664,7 @@ export default function CitizenSafetyTips() {
 
         .cst-phases { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 22px; }
         .cst-phase-btn {
-          display: flex; align-items: center; justify-content: center; gap: 8px;
+          display: flex; align-items: center; justify-message: center; gap: 8px;
           flex-direction: column;
           font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500;
           letter-spacing: .04em; padding: 14px 12px; border-radius: 13px;
@@ -703,7 +703,7 @@ export default function CitizenSafetyTips() {
 
         .cst-gobag { animation: fadeUp .38s ease both; }
         .cst-gobag-header-card {
-          display: flex; align-items: flex-start; justify-content: space-between;
+          display: flex; align-items: flex-start; justify-message: space-between;
           gap: 20px; flex-wrap: wrap;
           background: rgba(13,27,46,0.72); border: 1px solid rgba(0,200,224,0.08);
           border-top: 2px solid #e8372a; border-radius: 13px;
@@ -717,7 +717,7 @@ export default function CitizenSafetyTips() {
           background: rgba(13,27,46,0.72); border: 1px solid rgba(0,200,224,0.08);
           border-radius: 13px; padding: 18px 22px; margin-bottom: 18px;
         }
-        .cst-progress-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .cst-progress-row { display: flex; align-items: center; justify-message: space-between; margin-bottom: 12px; }
         .cst-progress-label { font-family: 'Inter', sans-serif; font-size: 13px; color: rgba(160,200,224,0.65); }
         .cst-progress-pct {
           font-family: 'Poppins', sans-serif; font-size: 24px; font-weight: 700;
@@ -751,7 +751,7 @@ export default function CitizenSafetyTips() {
         .cst-checkbox {
           width: 22px; height: 22px; border-radius: 7px; flex-shrink: 0;
           border: 1.5px solid rgba(0,200,224,0.18); background: transparent;
-          display: flex; align-items: center; justify-content: center;
+          display: flex; align-items: center; justify-message: center;
           font-size: 12px; color: #fff; font-weight: 800;
         }
         .cst-check-item.checked .cst-checkbox { background: linear-gradient(135deg, #e8372a, #00c8e0); border-color: transparent; }
@@ -776,7 +776,7 @@ export default function CitizenSafetyTips() {
           .cst-tabs-wrap { margin: 0 -16px 24px; padding: 0 16px; }
           .cst-panel-header-card { grid-template-columns: 1fr; gap: 14px; padding: 16px; }
           .cst-hotlines { width: 100%; }
-          .cst-hotline-btn { flex: 1 1 calc(50% - 4px); justify-content: center; font-size: 12px; }
+          .cst-hotline-btn { flex: 1 1 calc(50% - 4px); justify-message: center; font-size: 12px; }
           .cst-phase-desc { display: none; }
           .cst-checklist { grid-template-columns: 1fr; }
           .cst-gobag-header-card { padding: 16px; }

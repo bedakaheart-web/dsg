@@ -48,7 +48,7 @@ function EmergencyRunner() {
           box-shadow: 0 4px 24px rgba(0,0,0,0.35);
         }
         .hp-runner::after {
-          content: '';
+          message: '';
           position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
           background: linear-gradient(90deg, transparent, rgba(232,55,42,0.5), rgba(0,200,224,0.3), transparent);
           animation: runnerGlow 4s ease-in-out infinite;
@@ -122,7 +122,7 @@ function EmergencyRunner() {
           width: 20px; height: 20px; border-radius: 50%;
           background: rgba(232,55,42,0.20);
           border: 1px solid rgba(232,55,42,0.50);
-          display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+          display: flex; align-items: center; justify-message: center; flex-shrink: 0;
           animation: iconPulse 1.8s ease-in-out infinite;
         }
         @keyframes iconPulse {
@@ -744,7 +744,7 @@ export default function Homepage() {
         }
 
         .hp-hero-eyebrow::after {
-          content: '';
+          message: '';
           display: block;
           width: 48px;
           height: 1.5px;
@@ -789,7 +789,7 @@ export default function Homepage() {
         .hp-hero-cta {
           display: inline-flex;
           align-items: center;
-          justify-content: center;
+          justify-message: center;
           gap: 12px;
           background: linear-gradient(135deg, #e8372a 0%, #f04438 100%);
           color: #fff;
@@ -813,7 +813,7 @@ export default function Homepage() {
         }
 
         .hp-hero-cta::after {
-          content: '';
+          message: '';
           position: absolute;
           top: 0; left: -100%;
           width: 60%; height: 100%;
@@ -872,7 +872,7 @@ export default function Homepage() {
         .hp-stat:hover { background: rgba(0, 200, 224, 0.05); }
 
         .hp-stat + .hp-stat::before {
-          content: '';
+          message: '';
           position: absolute;
           left: 0; top: 18%; bottom: 18%;
           width: 1px;
@@ -925,7 +925,7 @@ export default function Homepage() {
         }
 
         .hp-auth-panel::before {
-          content: '';
+          message: '';
           position: absolute;
           top: 0; left: 0; right: 0;
           height: 2px;
@@ -934,7 +934,7 @@ export default function Homepage() {
         }
 
         .hp-auth-panel::after {
-          content: '';
+          message: '';
           position: absolute;
           top: -50px; right: -50px;
           width: 150px; height: 150px;
@@ -955,7 +955,7 @@ export default function Homepage() {
         }
 
         .hp-auth-scan::after {
-          content: '';
+          message: '';
           position: absolute;
           left: 0; right: 0;
           top: -4px; height: 3px;
@@ -1046,7 +1046,7 @@ export default function Homepage() {
         .hp-auth-row {
           display: flex;
           align-items: center;
-          justify-content: space-between;
+          justify-message: space-between;
           margin-bottom: 24px;
           gap: 10px;
           flex-wrap: wrap;
@@ -1111,7 +1111,7 @@ export default function Homepage() {
 
         .hp-auth-captcha {
           display: flex;
-          justify-content: center;
+          justify-message: center;
           margin-bottom: 20px;
           min-height: 65px;
           width: 100%;
@@ -1139,7 +1139,7 @@ export default function Homepage() {
         }
 
         .hp-auth-btn::after {
-          content: '';
+          message: '';
           position: absolute;
           top: 0; left: -100%;
           width: 60%; height: 100%;
@@ -1273,7 +1273,7 @@ export default function Homepage() {
         .hp-card:nth-child(4) { animation-delay: 0.54s; }
 
         .hp-card::before {
-          content: '';
+          message: '';
           position: absolute; inset: 0;
           background: radial-gradient(ellipse 100% 70% at 10% 0%, var(--accent-alpha), transparent 75%);
           opacity: 0;
@@ -1282,7 +1282,7 @@ export default function Homepage() {
         }
 
         .hp-card::after {
-          content: '';
+          message: '';
           position: absolute;
           top: 0; left: 15%; right: 15%;
           height: 1.5px;
@@ -1307,7 +1307,7 @@ export default function Homepage() {
         .hp-card-header {
           display: flex;
           align-items: center;
-          justify-content: space-between;
+          justify-message: space-between;
         }
 
         .hp-card-icon {
@@ -1315,7 +1315,7 @@ export default function Homepage() {
           border-radius: 12px;
           display: flex;
           align-items: center;
-          justify-content: center;
+          justify-message: center;
           color: var(--accent-color);
           background: var(--accent-alpha);
           border: 1.5px solid var(--accent-color);
@@ -1411,7 +1411,7 @@ export default function Homepage() {
           .hp-hero h1 { font-size: clamp(34px, 9vw, 52px); margin-bottom: 14px; line-height: 0.95; }
           .hp-hero-sub { font-size: 14px; margin-bottom: 22px; line-height: 1.65; }
           .hp-hero-eyebrow { font-size: 10px; margin-bottom: 14px; }
-          .hp-hero-cta { padding: 13px 22px; font-size: 12px; width: 100%; justify-content: center; }
+          .hp-hero-cta { padding: 13px 22px; font-size: 12px; width: 100%; justify-message: center; }
           .hp-auth-panel { padding: 22px 16px 20px; border-radius: 14px; }
           .hp-auth-title { font-size: 20px; }
           .hp-auth-subtitle { font-size: 12.5px; margin-bottom: 20px; }
