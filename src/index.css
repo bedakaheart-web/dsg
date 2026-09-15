@@ -561,3 +561,21 @@ html[dir="rtl"] .ri-srch-ic { left: auto; right: 12px; }
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+/* ── Call Button Click Fix ──────────────────────────────── */
+.chat-header-actions {
+  pointer-events: auto;
+  z-index: 10;
+  position: relative;
+}
+.chat-header-actions button {
+  pointer-events: auto;
+  z-index: 10;
+  position: relative;
+}
+.chat-header-actions button:hover {
+  opacity: 0.8;
+}
+.chat-header-actions button:active {
+  transform: scale(0.95);
+}

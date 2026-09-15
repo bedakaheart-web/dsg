@@ -110,12 +110,13 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
     return stream;
   }, [updateState]);
 
-  const startCall = useCallback(async (callType: CallType): Promise<boolean> => {
-    if (!localUserId || !remoteUserId) return false;
+const startCall = useCallback(async (callType: CallType): Promise<boolean> => {
+    if (!localIdRef.current || !remoteIdRef.current) return false;
+    console.log("[useWebRTC] startCall:", callType, "from:", localIdRef.current, "to:", remoteIdRef.current);
 
     callTypeRef.current = callType;
-    remoteIdRef.current = remoteUserId;
-    updateState({ callType, callState: "ringing", remoteParticipantId: remoteUserId });
+    remoteIdRef.current = remoteIdRef.current;
+    updateState({ callType, callState: "ringing", remoteParticipantId: remoteIdRef.current });
 
     try {
       const stream = await getLocalStream(callType);
@@ -124,17 +125,17 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      channelRef.current = supabase.channel(`call-${[localUserId, remoteUserId].sort().join("_")}`);
+      channelRef.current = supabase.channel(`call-${[localIdRef.current, remoteIdRef.current].sort().join("_")}`);
 
       channelRef.current
         .on("broadcast", { event: "webrtc-signal" }, async (payload) => {
           const p = payload.payload as { type: string; from: string; sdp?: RTCSessionDescriptionInit; candidate?: RTCIceCandidateInit };
-          if (p.from !== remoteUserId) return;
+          if (p.from !== remoteIdRef.current) return;
           if (p.type === "offer") {
             await pc.setRemoteDescription(new RTCSessionDescription(p.sdp!));
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
-            channelRef.current?.send({ type: "broadcast", event: "webrtc-signal", payload: { type: "answer", sdp: answer, from: localUserId, to: remoteUserId } });
+            channelRef.current?.send({ type: "broadcast", event: "webrtc-signal", payload: { type: "answer", sdp: answer, from: localIdRef.current, to: remoteIdRef.current } });
           } else if (p.type === "answer") {
             await pc.setRemoteDescription(new RTCSessionDescription(p.sdp!));
           } else if (p.type === "ice-candidate") {
@@ -146,7 +147,7 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
       channelRef.current.send({
         type: "broadcast",
         event: "webrtc-signal",
-        payload: { type: "offer", sdp: pc.localDescription, from: localIdRef.current, to: remoteUserId, callType },
+        payload: { type: "offer", sdp: pc.localDescription, from: localIdRef.current, to: remoteIdRef.current, callType },
       });
 
       updateState({});
@@ -156,7 +157,7 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
       updateState({ callState: "idle" });
       return false;
     }
-  }, [remoteUserId, getLocalStream, createPeerConnection, updateState]);
+  }, [getLocalStream, createPeerConnection, updateState]);
 
   const receiveCall = useCallback(async (callType: CallType, fromId: string) => {
     if (!localIdRef.current) return false;
