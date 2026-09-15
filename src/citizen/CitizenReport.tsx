@@ -4,6 +4,7 @@ import CameraCaptureModal from "../components/CameraCaptureModal";
 import { useNavigate } from "react-router-dom";
 import pagesBackground from "../assets/pagesbackground.png";
 import { supabase } from "../js/supabase";
+import { getDepartmentCodeForType } from "../js/departments";
 
 const INCIDENT_TYPES = [
   { value: "fire",     label: "Fire Incident",    icon: "🔥", accent: "#FF6B6B", rgb: "255,107,107" },
@@ -767,6 +768,8 @@ export default function CitizenReport({ onBack, onViewHistory, onViewReport }: C
       user_id:          user?.id ?? null,
       responder_id:     null,
       evidence_url:     evidenceUrls[0] ?? null,
+      department:       getDepartmentCodeForType(selectedType),
+      department_id:    getDepartmentCodeForType(selectedType),
     };
     let inserted: { id: string } | null = null;
     let error: any = null;

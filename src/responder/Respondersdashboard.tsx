@@ -30,6 +30,8 @@ interface Report {
   evidence_url: string | null;
   created_at: string;
   responder_id: string | null;
+  department_id: string | null;
+  department: string | null;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
