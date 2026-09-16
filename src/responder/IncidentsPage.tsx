@@ -91,7 +91,9 @@ const RESOLUTION_TYPES = [
 // ─── SVG Icons ────────────────────────────────────────────────────────────────
 
 const SvgIcon = ({ path, size = 16 }: { path: string; size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{ __html: path }} />
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d={path} />
+  </svg>
 );
 
 const ICONS = {

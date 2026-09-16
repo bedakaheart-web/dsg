@@ -116,15 +116,15 @@ const DASH_STYLE = `
 
 /* ── Portal / shell ── */
 .hud-portal {
-  position: fixed; inset: 0; z-index: 9000; overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  color: var(--text); background: var(--bg);
-  background-image: url('${footerBg}');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-  background-repeat: no-repeat;
-}
+   position: fixed; inset: 0; z-index: 9000; overflow-y: auto; overflow-x: hidden;
+   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+   color: var(--text); background: var(--bg);
+   background-image: url('${footerBg}');
+   background-size: cover;
+   background-position: center;
+   background-attachment: fixed;
+   background-repeat: no-repeat;
+ }
 
 .hud-portal::before {
   content: '';
@@ -266,20 +266,23 @@ const DASH_STYLE = `
 .hud-topbar::after { display: none; }
 
 .hud-hamburger {
-  display: none; background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
-  width: 32px; height: 32px; align-items: center; justify-content: center;
-  color: var(--text-secondary); cursor: pointer; transition: all 0.2s; flex-shrink: 0; font-size: 14px;
-}
-.hud-hamburger:hover { background: var(--surface); border-color: var(--text-secondary); color: var(--text); }
+   display: none; background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+   width: 32px; height: 32px; align-items: center; justify-content: center;
+   color: var(--text-secondary); cursor: pointer; transition: all 0.2s; flex-shrink: 0; font-size: 14px;
+ }
+ .hud-hamburger:hover { background: var(--surface); border-color: var(--text-secondary); color: var(--text); }
 
-.hud-crumb-trail {
-  display: flex; align-items: center; gap: 7px;
-  font-size: 12px; color: var(--text-tertiary);
-  font-family: inherit; letter-spacing: normal; overflow: hidden; min-width: 0;
-}
-.hud-crumb-active { color: var(--text); font-weight: 600; white-space: nowrap; }
-.hud-crumb-sep { color: var(--text-tertiary); flex-shrink: 0; }
-.hud-crumb-hide-mobile {}
+.hud-topbar { height: 56px; display: flex; align-items: center; padding: 0 24px; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; gap: 12px; flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+ .hud-topbar::after { display: none; }
+
+ .hud-crumb-trail {
+   display: flex; align-items: center; gap: 7px;
+   font-size: 12px; color: var(--text-tertiary);
+   font-family: inherit; letter-spacing: normal; overflow: hidden; min-width: 0;
+ }
+ .hud-crumb-active { color: var(--text); font-weight: 600; white-space: nowrap; }
+ .hud-crumb-sep { color: var(--text-tertiary); flex-shrink: 0; }
+ .hud-crumb-hide-mobile {}
 
 .hud-topbar-right { margin-left: auto; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
 .hud-topbar-time {
@@ -428,21 +431,21 @@ const DASH_STYLE = `
 }
 
 @media (max-width: 768px) {
-  .hud-sidebar { transform: translateX(-100%); width: min(260px, 90vw); box-shadow: 4px 0 12px rgba(0,0,0,0.1); }
-  .hud-sidebar.open { transform: translateX(0); }
-  .hud-sidebar-close { display: flex; }
-  .hud-hamburger { display: flex; }
-  .hud-main { margin-left: 0; }
-  .hud-topbar { padding: 0 16px; }
-  .hud-crumb-hide-mobile { display: none; }
-  .hud-topbar-time { font-size: 11px; padding: 4px 8px; }
-  .hud-page { padding: 16px; }
-  .hud-title { font-size: 26px; }
-  .hud-stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .hud-stat-num { font-size: 24px; }
-  .hud-inc-full-grid { grid-template-columns: 1fr; }
-  .hud-qnav { grid-template-columns: 1fr 1fr; }
-}
+   .hud-sidebar { transform: translateX(-100%); width: min(260px, 90vw); box-shadow: 4px 0 12px rgba(0,0,0,0.1); }
+   .hud-sidebar.open { transform: translateX(0); }
+   .hud-sidebar-close { display: flex; }
+   .hud-hamburger { display: flex; min-width: 44px; min-height: 44px; align-items: center; justify-content: center; }
+   .hud-main { margin-left: 0; }
+   .hud-topbar { padding: 0 16px; }
+   .hud-crumb-hide-mobile { display: none; }
+   .hud-topbar-time { font-size: 11px; padding: 4px 8px; }
+   .hud-page { padding: 16px; }
+   .hud-title { font-size: 26px; }
+   .hud-stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+   .hud-stat-num { font-size: 24px; }
+   .hud-inc-full-grid { grid-template-columns: 1fr; }
+   .hud-qnav { grid-template-columns: 1fr 1fr; }
+ }
 
 @media (max-width: 420px) {
   .hud-qnav { grid-template-columns: 1fr; }
@@ -813,6 +816,13 @@ export default function AdminDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatUnread, setChatUnread] = useState(0);
+  console.log("[AdminDashboard] window.innerWidth:", window.innerWidth);
+
+  useEffect(() => {
+    const handler = () => console.log("[AdminDashboard] resize:", window.innerWidth);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
 
   const handleNavigate = (v: ViewId) => {
     setView(v);

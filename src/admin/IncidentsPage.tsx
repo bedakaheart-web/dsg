@@ -98,7 +98,9 @@ function getInitials(name: string | null) {
 const SvgIcon = ({ path, size = 16 }: { path: string; size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
     strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-    dangerouslySetInnerHTML={{ __html: path }} />
+  >
+    <path d={path} />
+  </svg>
 );
 const ICONS = {
   mapPin:  "M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0zM12 10a3 3 0 1 1-6 0 3 3 0 0 1 6 0z",

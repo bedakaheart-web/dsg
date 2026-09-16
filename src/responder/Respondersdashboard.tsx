@@ -94,8 +94,9 @@ const SvgIcon = ({ path, size = 16 }: { path: string; size?: number }) => (
     viewBox="0 0 24 24" fill="none"
     stroke="currentColor" strokeWidth="2"
     strokeLinecap="round" strokeLinejoin="round"
-    dangerouslySetInnerHTML={{ __html: path }}
-  />
+  >
+    <path d={path} />
+  </svg>
 );
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
@@ -122,10 +123,10 @@ const STYLES = `
 @keyframes spin    { to { transform: rotate(360deg); } }
 
 .rd-portal {
-  position: fixed; inset: 0; z-index: 9000; overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  color: var(--text); background: var(--bg);
-}
+   position: fixed; inset: 0; z-index: 9000; overflow-y: auto; overflow-x: hidden;
+   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+   color: var(--text); background: var(--bg);
+ }
 
 .rd-bg {
   position: absolute; inset: 0; z-index: 0;
@@ -382,19 +383,19 @@ const STYLES = `
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-  .rd-sidebar { transform: translateX(-100%); width: min(260px, 90vw); box-shadow: 4px 0 12px rgba(0,0,0,0.1); }
-  .rd-sidebar.open { transform: translateX(0); }
-  .rd-sidebar-close { display: flex; }
-  .rd-hamburger { display: flex; }
-  .rd-main { margin-left: 0; background: var(--bg); }
-  .rd-topbar { padding: 0 16px; }
-  .rd-crumb-hide, .rd-clock { display: none; }
-  .rd-page { padding: 16px; }
-  .rd-title { font-size: 26px; }
-  .rd-stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .rd-stat-num { font-size: 24px; }
-  .rd-qgrid { grid-template-columns: 1fr; }
-}
+   .rd-sidebar { transform: translateX(-100%); width: min(260px, 90vw); box-shadow: 4px 0 12px rgba(0,0,0,0.1); }
+   .rd-sidebar.open { transform: translateX(0); }
+   .rd-sidebar-close { display: flex; }
+   .rd-hamburger { display: flex; min-width: 44px; min-height: 44px; align-items: center; justify-content: center; }
+   .rd-main { margin-left: 0; background: var(--bg); }
+   .rd-topbar { padding: 0 16px; }
+   .rd-crumb-hide, .rd-clock { display: none; }
+   .rd-page { padding: 16px; }
+   .rd-title { font-size: 26px; }
+   .rd-stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+   .rd-stat-num { font-size: 24px; }
+   .rd-qgrid { grid-template-columns: 1fr; }
+ }
 `;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -685,6 +686,13 @@ const PAGE_TITLE: Record<ViewId, string> = {
 export default function RespondersDashboard() {
   const navigate = useNavigate();
   const clock    = usePHTClock();
+  console.log("[RespondersDashboard] window.innerWidth:", window.innerWidth);
+
+  useEffect(() => {
+    const handler = () => console.log("[RespondersDashboard] resize:", window.innerWidth);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
 
   const [view,          setView]          = useState<ViewId>("overview");
   const [pendingCount,  setPendingCount]  = useState(0);

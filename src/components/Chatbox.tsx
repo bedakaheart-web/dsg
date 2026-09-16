@@ -471,6 +471,10 @@ export default function ChatBox({
         .chat-typing-dot:nth-child(2) { animation-delay: 0.15s; }
         .chat-typing-dot:nth-child(3) { animation-delay: 0.3s; }
         @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+        @media (max-width: 480px) {
+          .chat-header-actions button { min-width: 40px; min-height: 40px; padding: 8px !important; font-size: 16px !important; }
+          .chat-header-actions { gap: 4px !important; }
+        }
       `}</style>
 
       {/* Header */}
@@ -499,10 +503,10 @@ export default function ChatBox({
         </div>
         {/* Call buttons */}
         <div className="chat-header-actions" style={{ display: "flex", gap: "6px", pointerEvents: "auto", zIndex: 10, position: "relative" }}>
-          <button onClick={() => { console.log("Audio call clicked"); handleStartAudioCall(); }} disabled={!effectiveOnline} title="Audio Call" style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "6px 8px", cursor: effectiveOnline ? "pointer" : "not-allowed", color: effectiveOnline ? "#2ECC8F" : "rgba(238,240,247,0.2)", fontSize: "14px", opacity: effectiveOnline ? 1 : 0.4, pointerEvents: effectiveOnline ? "auto" : "none", position: "relative", zIndex: 10 }}>
+          <button onClick={() => { console.log("Audio call clicked"); handleStartAudioCall(); }} disabled={!effectiveOnline} title="Audio Call" style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "8px 10px", cursor: effectiveOnline ? "pointer" : "not-allowed", color: effectiveOnline ? "#2ECC8F" : "rgba(238,240,247,0.2)", fontSize: "16px", opacity: effectiveOnline ? 1 : 0.4, pointerEvents: effectiveOnline ? "auto" : "none", position: "relative", zIndex: 10, minWidth: "40px", minHeight: "40px", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
             <FaPhone />
           </button>
-          <button onClick={() => { console.log("Video call clicked"); handleStartVideoCall(); }} disabled={!effectiveOnline} title="Video Call" style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "6px 8px", cursor: effectiveOnline ? "pointer" : "not-allowed", color: effectiveOnline ? "#2ECC8F" : "rgba(238,240,247,0.2)", fontSize: "14px", opacity: effectiveOnline ? 1 : 0.4, pointerEvents: effectiveOnline ? "auto" : "none", position: "relative", zIndex: 10 }}>
+          <button onClick={() => { console.log("Video call clicked"); handleStartVideoCall(); }} disabled={!effectiveOnline} title="Video Call" style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "8px 10px", cursor: effectiveOnline ? "pointer" : "not-allowed", color: effectiveOnline ? "#2ECC8F" : "rgba(238,240,247,0.2)", fontSize: "16px", opacity: effectiveOnline ? 1 : 0.4, pointerEvents: effectiveOnline ? "auto" : "none", position: "relative", zIndex: 10, minWidth: "40px", minHeight: "40px", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
             <FaVideo />
           </button>
           {queueSize > 0 && (

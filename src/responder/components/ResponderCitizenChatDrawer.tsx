@@ -48,9 +48,10 @@ export default function ResponderCitizenChatDrawer({
   const narrow = useIsNarrow();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeReportId, setActiveReportId] = useState<string | null>(null);
+  const [showThread, setShowThread] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // ── Load assigned conversations ──────────────────────────────────────
+  // ── Load assigned conversations ──────────────────────────────
   useEffect(() => {
     if (!open || !responderId) return;
     let cancelled = false;
@@ -93,6 +94,8 @@ export default function ResponderCitizenChatDrawer({
           if (prev && rows.some(r => String(r.id) === prev)) return prev;
           return rows.length ? String(rows[0].id) : null;
         });
+        // On narrow, start on conversation list
+        if (narrow) setShowThread(false);
       } catch {
         if (!cancelled) setConversations([]);
       } finally {
@@ -101,12 +104,13 @@ export default function ResponderCitizenChatDrawer({
     };
     void load();
     return () => { cancelled = true; };
-  }, [open, responderId, initialReportId]);
+  }, [open, responderId, initialReportId, narrow]);
 
   // Deep-link a specific incident (e.g. "Chat Citizen" card button).
   useEffect(() => {
     if (open && initialReportId) setActiveReportId(initialReportId);
-  }, [open, initialReportId]);
+    if (open && initialReportId && narrow) setShowThread(true);
+  }, [open, initialReportId, narrow]);
 
   // Escape closes the drawer.
   useEffect(() => {
@@ -123,6 +127,11 @@ export default function ResponderCitizenChatDrawer({
   const citizenId = active?.citizenId ?? initialCitizenId;
   const citizenName = active?.citizenName ?? initialCitizenName ?? "Citizen";
   const incidentId = active?.reportId ?? initialReportId;
+
+  const handleSelectConversation = (c: Conversation) => {
+    setActiveReportId(c.reportId);
+    if (narrow) setShowThread(true);
+  };
 
   return (
     <>
@@ -147,15 +156,22 @@ export default function ResponderCitizenChatDrawer({
       >
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", borderBottom: "1px solid rgba(255,255,255,0.08)", flexShrink: 0 }}>
+          {narrow && showThread && (
+            <button onClick={() => setShowThread(false)} aria-label="Back to conversations" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "#eef0f7", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              ◀
+            </button>
+          )}
           <span style={{ fontSize: 18 }}>💬</span>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 14, fontWeight: 800 }}>Citizen Chat</div>
+            <div style={{ fontSize: 14, fontWeight: 800 }}>
+              {narrow && showThread ? (citizenName || "Citizen") : "Citizen Chat"}
+            </div>
             <div style={{ fontSize: 10, color: "rgba(238,240,247,0.4)" }}>
               {active ? `${TYPE_ICON[active.type] ?? "⚠️"} ${active.type} · ${active.status}` : "Assigned citizens"}
             </div>
           </div>
           <button onClick={onClose} aria-label="Close citizen chat"
-            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "#eef0f7", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 14 }}>
+            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "#eef0f7", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 14, flexShrink: 0 }}>
             ✕
           </button>
         </div>
@@ -163,7 +179,14 @@ export default function ResponderCitizenChatDrawer({
         {/* Body */}
         <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
           {/* Conversation list */}
-          <div style={{ width: narrow ? 120 : 220, minWidth: narrow ? 120 : 220, borderRight: "1px solid rgba(255,255,255,0.08)", overflowY: "auto", flexShrink: 0 }}>
+          <div style={{
+            width: narrow ? (showThread ? 0 : "100%") : 220,
+            minWidth: narrow ? (showThread ? 0 : "100%") : 220,
+            borderRight: narrow ? "none" : "1px solid rgba(255,255,255,0.08)",
+            overflowY: "auto", flexShrink: 0,
+            display: narrow ? (showThread ? "none" : "flex") : "flex",
+            flexDirection: "column",
+          }}>
             {loading ? (
               <div style={{ padding: 16, fontSize: 11, color: "rgba(238,240,247,0.35)" }}>Loading…</div>
             ) : conversations.length === 0 ? (
@@ -174,7 +197,7 @@ export default function ResponderCitizenChatDrawer({
               conversations.map(c => (
                 <button
                   key={c.reportId}
-                  onClick={() => setActiveReportId(c.reportId)}
+                  onClick={() => handleSelectConversation(c)}
                   style={{
                     display: "block", width: "100%", textAlign: "left", cursor: "pointer",
                     padding: "10px 12px", background: c.reportId === activeReportId ? "rgba(46,204,143,0.10)" : "transparent",
@@ -193,9 +216,12 @@ export default function ResponderCitizenChatDrawer({
             )}
           </div>
 
-          {/* Thread */}
-          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", padding: narrow ? 8 : 12 }}>
-            {!active && !initialReportId ? (
+          {/* Thread — on narrow, full-width when showThread is true */}
+          <div style={{
+            flex: 1, minWidth: 0, display: "flex", flexDirection: "column",
+            padding: narrow ? 12 : 12,
+          }}>
+            {!active && !initialReportId && !showThread ? (
               <div style={{ margin: "auto", fontSize: 12, color: "rgba(238,240,247,0.35)", textAlign: "center", padding: 24 }}>
                 Select a conversation to start messaging.
               </div>
