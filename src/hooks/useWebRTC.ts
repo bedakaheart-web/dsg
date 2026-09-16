@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { supabase } from "../js/supabase";
+import { getIceServers } from "../lib/webrtc";
 
 export type CallState = "idle" | "ringing" | "active" | "declined" | "ended";
 export type CallType = "audio" | "video";
@@ -14,16 +15,6 @@ export interface WebRTCState {
   isCameraOff: boolean;
   isUpgradedToVideo: boolean;
 }
-
-const ICE_CONFIG: RTCConfiguration = {
-  iceServers: [
-    { urls: "stun:stun.l.google.com:19302" },
-    { urls: "stun:stun1.l.google.com:19302" },
-    { urls: "stun:stun2.l.google.com:19302" },
-    { urls: "stun:stun3.l.google.com:19302" },
-    { urls: "stun:stun4.l.google.com:19302" },
-  ],
-};
 
 export function useWebRTC(localUserId: string | null, remoteUserId: string | null) {
   const [state, setState] = useState<WebRTCState>({
@@ -69,7 +60,8 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
   }, []);
 
   const createPeerConnection = useCallback(async (): Promise<RTCPeerConnection> => {
-    const pc = new RTCPeerConnection(ICE_CONFIG);
+    const iceServers = await getIceServers();
+    const pc = new RTCPeerConnection({ iceServers });
     pcRef.current = pc;
 
     if (localStreamRef.current) {
