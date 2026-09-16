@@ -39,7 +39,7 @@ const CSS = `
     background-size: cover; background-position: center; background-repeat: no-repeat;
   }
   .cr-bg::after {
-    message: ''; position: absolute; inset: 0;
+    content: ''; position: absolute; inset: 0;
     background: linear-gradient(160deg, rgba(8,12,20,.92) 0%, rgba(8,12,20,.80) 50%, rgba(8,12,20,.94) 100%);
   }
   .cr-glow { position: fixed; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
@@ -52,7 +52,7 @@ const CSS = `
     padding: 0 24px 100px;
   }
   .cr-inner--center {
-    display: flex; align-items: center; justify-message: center; min-height: 80vh;
+    display: flex; align-items: center; justify-content: center; min-height: 80vh;
   }
 
   /* ── Hero ── */
@@ -126,7 +126,7 @@ const CSS = `
   .cr-step-dot {
     width: 24px; height: 24px; border-radius: 50%;
     border: 1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.03);
-    display: flex; align-items: center; justify-message: center;
+    display: flex; align-items: center; justify-content: center;
     font-size: 10px; font-weight: 600; color: rgba(238,240,247,.22);
     transition: all .3s; flex-shrink: 0;
   }
@@ -309,7 +309,7 @@ const CSS = `
     width: 18px; height: 18px; flex-shrink: 0;
     border: 1px solid rgba(255,209,102,.30); border-radius: 5px;
     background: rgba(255,209,102,.05);
-    display: flex; align-items: center; justify-message: center;
+    display: flex; align-items: center; justify-content: center;
     font-size: 11px; font-weight: 700; color: #FFD166; margin-top: 1px;
     transition: all .2s;
   }
@@ -334,7 +334,7 @@ const CSS = `
 
   /* Submit */
   .cr-submit {
-    display: flex; align-items: center; justify-message: center; gap: 10px;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
     width: 100%; padding: 15px 24px;
     font-family: 'Cabinet Grotesk', sans-serif;
     font-size: 14px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase;
@@ -403,7 +403,7 @@ const CSS = `
   .cr-success-icon {
     width: 64px; height: 64px; border-radius: 50%;
     background: rgba(46,204,143,.12); border: 1px solid rgba(46,204,143,.28);
-    display: flex; align-items: center; justify-message: center;
+    display: flex; align-items: center; justify-content: center;
     font-size: 26px; color: #2ECC8F; margin-bottom: 22px;
   }
   .cr-success-title {
@@ -415,7 +415,7 @@ const CSS = `
     max-width: 460px; line-height: 1.68; margin-bottom: 28px;
   }
   .cr-success-cards {
-    display: flex; gap: 16px; justify-message: center; flex-wrap: wrap;
+    display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
     width: 100%; max-width: 780px;
   }
   .cr-success-card {
@@ -458,7 +458,7 @@ const CSS = `
     .cr-steps { -webkit-mask-image: none; mask-image: none; }
     .cr-success-cards { flex-direction: column; align-items: center; }
     .cr-banner { flex-direction: column; align-items: flex-start; gap: 12px; }
-    .cr-banner-btn { width: 100%; justify-message: center; }
+    .cr-banner-btn { width: 100%; justify-content: center; }
   }
   @media (max-width: 560px) {
     .cr-fields { grid-template-columns: 1fr; }
@@ -467,7 +467,7 @@ const CSS = `
   }
   @media (max-width: 480px) {
     .cr-loc-row { flex-direction: column; }
-    .cr-gps-btn { width: 100%; justify-message: center; }
+    .cr-gps-btn { width: 100%; justify-content: center; }
     .cr-step-label { width: 0; font-size: 0; overflow: hidden; padding: 0; margin: 0; }
     .cr-step-line { width: 10px; margin: 0 2px; }
     .cr-step-dot { width: 28px; height: 28px; font-size: 11px; }
@@ -699,10 +699,10 @@ export default function CitizenReport() {
     }
 
     const formData = {
-      selectedType,
       incident_type: selectedType,
-      reporterName: reporterName.trim() || null,
-      reporterContact: reporterContact.trim() || null,
+      type: selectedType,
+      reporter_name: reporterName.trim() || null,
+      reporter_contact: reporterContact.trim() || null,
       description: description.trim() || null,
       location: location || null,
       address: address || null,
@@ -710,21 +710,15 @@ export default function CitizenReport() {
       user_id: user?.id ?? null,
       responder_id: null,
       evidence_url: evidenceUrl,
-      type: selectedType,
-      reporter_name: reporterName.trim() || null,
-      reporter_contact: reporterContact.trim() || null,
-      isAgreed: agreed,
       agreed,
       isSubmitting: submitting,
-      step: currentStep,
       currentStep,
     };
-    if (!formData.agreed || !formData.selectedType) {
+    if (!formData.agreed || !selectedType) {
       setSubmitting(false);
       return;
     }
-    // const { isAgreed, agreed, isSubmitting, step, currentStep, ...submissionPayload } = formData;
-    const { isAgreed, agreed: _agreed, isSubmitting, step, currentStep: _currentStep, ...submissionPayload } = formData;
+    const { agreed: _agreed, isSubmitting, currentStep: _currentStep, ...submissionPayload } = formData;
 
     const { data, error } = await supabase
       .from('incident_reports')

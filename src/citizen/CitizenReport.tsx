@@ -56,7 +56,7 @@ const CSS = `
     padding: 0 24px 100px;
   }
   .cr-inner--center {
-    display: flex; align-items: center; justify-message: center; min-height: 80vh;
+    display: flex; align-items: center; justify-content: center; min-height: 80vh;
   }
 
   .cr-hero { margin-top: 12px; margin-bottom: 28px; }
@@ -128,7 +128,7 @@ const CSS = `
   .cr-step-dot {
     width: 24px; height: 24px; border-radius: 50%;
     border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.06);
-    display: flex; align-items: center; justify-message: center;
+    display: flex; align-items: center; justify-content: center;
     font-size: 10px; font-weight: 600; color: #FFFFFF;
     transition: all .3s; flex-shrink: 0;
   }
@@ -319,7 +319,7 @@ const CSS = `
     width: 18px; height: 18px; flex-shrink: 0;
     border: 1px solid rgba(245,158,11,0.40); border-radius: 5px;
     background: rgba(245,158,11,0.08);
-    display: flex; align-items: center; justify-message: center;
+    display: flex; align-items: center; justify-content: center;
     font-size: 11px; font-weight: 700; color: #FBBF24; margin-top: 1px;
     transition: all .2s;
   }
@@ -342,7 +342,7 @@ const CSS = `
   .cr-skip-btn:hover { background: rgba(255,107,107,.20); }
 
   .cr-submit {
-    display: flex; align-items: center; justify-message: center; gap: 10px;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
     width: 100%; padding: 15px 24px;
     font-family: 'Cabinet Grotesk', sans-serif;
     font-size: 14px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase;
@@ -413,7 +413,7 @@ const CSS = `
   .cr-success-icon {
     width: 64px; height: 64px; border-radius: 50%;
     background: rgba(46,204,143,.12); border: 1px solid rgba(46,204,143,.28);
-    display: flex; align-items: center; justify-message: center;
+    display: flex; align-items: center; justify-content: center;
     font-size: 26px; color: #2ECC8F; margin-bottom: 22px;
   }
   .cr-success-title {
@@ -425,7 +425,7 @@ const CSS = `
     max-width: 460px; line-height: 1.68; margin-bottom: 28px;
   }
   .cr-success-cards {
-    display: flex; gap: 16px; justify-message: center; flex-wrap: wrap;
+    display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
     width: 100%; max-width: 780px;
   }
   .cr-success-card {
@@ -468,7 +468,7 @@ const CSS = `
     .cr-steps { -webkit-mask-image: none; mask-image: none; }
     .cr-success-cards { flex-direction: column; align-items: center; }
     .cr-banner { flex-direction: column; align-items: flex-start; gap: 12px; }
-    .cr-banner-btn { width: 100%; justify-message: center; }
+    .cr-banner-btn { width: 100%; justify-content: center; }
   }
   @media (max-width: 560px) {
     .cr-fields { grid-template-columns: 1fr; }
@@ -477,7 +477,7 @@ const CSS = `
   }
   @media (max-width: 480px) {
     .cr-loc-row { flex-direction: column; }
-    .cr-gps-btn { width: 100%; justify-message: center; }
+    .cr-gps-btn { width: 100%; justify-content: center; }
     .cr-step-label { width: 0; font-size: 0; overflow: hidden; padding: 0; margin: 0; }
     .cr-step-line { width: 10px; margin: 0 2px; }
     .cr-step-dot { width: 28px; height: 28px; font-size: 11px; }
