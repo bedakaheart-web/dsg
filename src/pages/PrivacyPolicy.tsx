@@ -122,7 +122,7 @@ export default function PrivacyPolicy() {
 
         /* ── Nav ── */
         .pp-nav {
-          display: flex; align-items: center; justify-message: space-between;
+          display: flex; align-items: center; justify-content: space-between;
           padding: 28px 0 0;
           animation: fadeUp .5s ease both;
         }
@@ -158,7 +158,7 @@ export default function PrivacyPolicy() {
           display: flex; align-items: center; gap: 10px;
         }
         .pp-hero-eyebrow::after {
-          message: ''; display: block;
+          content: ''; display: block;
           width: 40px; height: 1px;
           background: var(--red); opacity: 0.5;
         }
@@ -210,7 +210,7 @@ export default function PrivacyPolicy() {
           position: relative; overflow: hidden;
         }
         .pp-intro::before {
-          message: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+          content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
           background: linear-gradient(90deg, var(--red), var(--cyan), transparent);
         }
         .pp-intro strong { color: var(--text); font-weight: 500; }
@@ -230,7 +230,7 @@ export default function PrivacyPolicy() {
         .pp-section:nth-child(2) { animation-delay: .16s; }
         .pp-section:nth-child(3) { animation-delay: .22s; }
         .pp-section::before {
-          message: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+          content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
           background: linear-gradient(90deg, var(--cyan), transparent);
         }
 
@@ -288,7 +288,7 @@ export default function PrivacyPolicy() {
           backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
         }
         .pp-notice::before {
-          message: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+          content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
           background: linear-gradient(90deg, var(--green), transparent);
         }
         .pp-notice strong { color: var(--text); font-weight: 500; }
@@ -301,13 +301,13 @@ export default function PrivacyPolicy() {
           border-radius: var(--radius);
           padding: 32px 36px;
           display: flex; align-items: center;
-          justify-message: space-between; gap: 24px;
+          justify-content: space-between; gap: 24px;
           animation: fadeUp .55s .32s ease both;
           backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
           position: relative; overflow: hidden;
         }
         .pp-cta::before {
-          message: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+          content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
           background: linear-gradient(90deg, var(--red), rgba(232,55,42,0.3), transparent);
         }
         .pp-cta-text h3 {

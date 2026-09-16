@@ -360,7 +360,7 @@ export default function SafetyTips() {
         }
 
         .st-nav {
-          display: flex; align-items: center; justify-message: space-between;
+          display: flex; align-items: center; justify-content: space-between;
           padding: 28px 0 0;
           animation: fadeUp .5s ease both;
         }
@@ -397,7 +397,7 @@ export default function SafetyTips() {
           color: var(--red); margin-bottom: 20px;
           display: flex; align-items: center; gap: 10px;
         }
-        .st-hero-eyebrow::after { message: ''; display: block; width: 40px; height: 1px; background: var(--red); opacity: 0.5; }
+        .st-hero-eyebrow::after { content: ''; display: block; width: 40px; height: 1px; background: var(--red); opacity: 0.5; }
         .st-hero h1 {
           font-family: 'Poppins', sans-serif; font-size: clamp(42px, 6vw, 78px);
           font-weight: 700; line-height: 0.95; letter-spacing: -0.03em; color: #F8FAFC; margin-bottom: 24px;
@@ -448,14 +448,14 @@ export default function SafetyTips() {
           position: relative; overflow: hidden;
         }
         .st-panel-header-card::before {
-          message: ''; position: absolute; inset: 0;
+          content: ''; position: absolute; inset: 0;
           background: radial-gradient(ellipse 60% 100% at 0% 50%, rgba(var(--d-rgb),0.06) 0%, transparent 70%);
           pointer-events: none;
         }
         .st-panel-title-group { display: flex; align-items: center; gap: 16px; }
         .st-panel-icon {
           width: 54px; height: 54px; border-radius: 14px; flex-shrink: 0;
-          display: flex; align-items: center; justify-message: center; font-size: 26px;
+          display: flex; align-items: center; justify-content: center; font-size: 26px;
           background: var(--d-dim); border: 1px solid var(--d-border);
         }
         .st-panel-name {
@@ -498,7 +498,7 @@ export default function SafetyTips() {
           margin-bottom: 24px;
         }
         .st-phase-btn {
-          display: flex; align-items: center; justify-message: center; gap: 8px;
+          display: flex; align-items: center; justify-content: center; gap: 8px;
           flex-direction: column;
           font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500;
           letter-spacing: .04em; padding: 14px 12px; border-radius: var(--radius);
@@ -516,7 +516,7 @@ export default function SafetyTips() {
         .st-phase-label { font-size: 12px; }
         .st-phase-desc { font-size: 10px; font-weight: 300; opacity: .55; }
         .st-phase-btn.active::after {
-          message: ''; position: absolute; bottom: 0; left: 10%; right: 10%;
+          content: ''; position: absolute; bottom: 0; left: 10%; right: 10%;
           height: 2px; border-radius: 2px; background: var(--d-color); opacity: .55;
         }
 
@@ -546,7 +546,7 @@ export default function SafetyTips() {
         /* ── Go Bag ── */
         .st-gobag { animation: fadeUp .38s ease both; }
         .st-gobag-header-card {
-          display: flex; align-items: flex-start; justify-message: space-between;
+          display: flex; align-items: flex-start; justify-content: space-between;
           gap: 20px; flex-wrap: wrap;
           background: var(--surface); border: 1px solid rgba(0,200,224,0.08);
           border-top: 2px solid var(--red); border-radius: var(--radius);
@@ -554,7 +554,7 @@ export default function SafetyTips() {
           position: relative; overflow: hidden;
         }
         .st-gobag-header-card::before {
-          message: ''; position: absolute; inset: 0;
+          content: ''; position: absolute; inset: 0;
           background: radial-gradient(ellipse 60% 120% at 0% 50%, rgba(232,55,42,0.06) 0%, transparent 70%);
           pointer-events: none;
         }
@@ -573,7 +573,7 @@ export default function SafetyTips() {
           border-radius: var(--radius); padding: 20px 24px; margin-bottom: 20px;
           backdrop-filter: blur(18px);
         }
-        .st-progress-row { display: flex; align-items: center; justify-message: space-between; margin-bottom: 14px; }
+        .st-progress-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
         .st-progress-label {
           font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 400; color: var(--text2);
         }
@@ -614,7 +614,7 @@ export default function SafetyTips() {
         .st-checkbox {
           width: 22px; height: 22px; border-radius: 7px; flex-shrink: 0;
           border: 1.5px solid rgba(0,200,224,0.18); background: transparent;
-          display: flex; align-items: center; justify-message: center;
+          display: flex; align-items: center; justify-content: center;
           transition: all .2s; font-size: 12px; color: #fff; font-weight: 800;
         }
         .st-check-item.checked .st-checkbox {
@@ -660,7 +660,7 @@ export default function SafetyTips() {
             padding: 18px 16px;
           }
           .st-hotlines { width: 100%; }
-          .st-hotline-btn { flex: 1 1 calc(50% - 4px); justify-message: center; font-size: 12px; }
+          .st-hotline-btn { flex: 1 1 calc(50% - 4px); justify-content: center; font-size: 12px; }
 
           .st-phases { grid-template-columns: repeat(3,1fr); gap: 8px; }
           .st-phase-btn { padding: 12px 8px; }

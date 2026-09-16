@@ -325,7 +325,7 @@ const CITIZEN_NAV_CSS = `
   .cn-bar {
     position: fixed; top: 0; left: 0; right: 0; z-index: 99999;
     height: 58px;
-    display: flex; align-items: center; justify-message: space-between;
+    display: flex; align-items: center; justify-content: space-between;
     padding: 0 28px;
     background: rgba(8,12,20,0.88);
     border-bottom: 1px solid rgba(255,255,255,0.07);
@@ -373,7 +373,7 @@ const CITIZEN_NAV_CSS = `
   .cn-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
   .cn-bell {
-    position: relative; display: flex; align-items: center; justify-message: center;
+    position: relative; display: flex; align-items: center; justify-content: center;
     width: 34px; height: 34px; border-radius: 8px;
     background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
     color: rgba(238,240,247,0.4); text-decoration: none; cursor: pointer;
@@ -385,7 +385,7 @@ const CITIZEN_NAV_CSS = `
     min-width: 15px; height: 15px; border-radius: 50%;
     background: #EF5B5B; color: #fff; font-size: 8px; font-weight: 800;
     font-family: 'Inter', sans-serif;
-    display: flex; align-items: center; justify-message: center;
+    display: flex; align-items: center; justify-content: center;
     padding: 0 3px; border: 2px solid #080c14;
     animation: cn-pop 0.22s cubic-bezier(.34,1.56,.64,1) both;
   }
@@ -400,7 +400,7 @@ const CITIZEN_NAV_CSS = `
   .cn-user:hover { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.11); }
   .cn-avatar {
     width: 24px; height: 24px; border-radius: 6px; background: #1a9e6a;
-    display: flex; align-items: center; justify-message: center;
+    display: flex; align-items: center; justify-content: center;
     font-size: 9px; font-weight: 700; color: #060a10;
     font-family: 'Poppins', sans-serif; flex-shrink: 0;
   }
@@ -443,11 +443,11 @@ const CITIZEN_NAV_CSS = `
   }
   .cn-drawer.open { transform: translateX(0); }
 
-  .cn-drawer-header { display: flex; align-items: center; justify-message: space-between; padding: 16px 18px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .cn-drawer-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid rgba(255,255,255,0.06); }
   .cn-drawer-close {
     background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
     color: rgba(238,240,247,0.4); border-radius: 7px; width: 28px; height: 28px;
-    display: flex; align-items: center; justify-message: center;
+    display: flex; align-items: center; justify-content: center;
     cursor: pointer; font-size: 12px; transition: all 0.15s;
   }
   .cn-drawer-close:hover { background: rgba(255,107,107,0.08); color: #FF6B6B; border-color: rgba(255,107,107,0.22); }
@@ -455,7 +455,7 @@ const CITIZEN_NAV_CSS = `
   .cn-drawer-user { display: flex; align-items: center; gap: 11px; padding: 14px 18px; border-bottom: 1px solid rgba(255,255,255,0.06); }
   .cn-drawer-avatar {
     width: 36px; height: 36px; border-radius: 9px; background: #1a9e6a;
-    display: flex; align-items: center; justify-message: center;
+    display: flex; align-items: center; justify-content: center;
     font-size: 12px; font-weight: 700; color: #060a10;
     font-family: 'Poppins', sans-serif; flex-shrink: 0;
   }

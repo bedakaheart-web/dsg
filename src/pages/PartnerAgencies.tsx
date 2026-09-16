@@ -285,7 +285,7 @@ export default function PartnerAgencies() {
 
         /* ── Nav ── */
         .pa-nav {
-          display: flex; align-items: center; justify-message: space-between;
+          display: flex; align-items: center; justify-content: space-between;
           padding: 28px 0 0;
           animation: fadeUp .5s ease both;
         }
@@ -331,7 +331,7 @@ export default function PartnerAgencies() {
           display: flex; align-items: center; gap: 10px;
         }
         .pa-hero-eyebrow::after {
-          message: ''; display: block;
+          content: ''; display: block;
           width: 40px; height: 1px;
           background: #2ECC8F; opacity: 0.5;
         }
@@ -414,7 +414,7 @@ export default function PartnerAgencies() {
         .pa-card:nth-child(8) { animation-delay: .34s; }
 
         .pa-card::before {
-          message: ''; position: absolute; inset: 0;
+          content: ''; position: absolute; inset: 0;
           background: radial-gradient(ellipse 80% 60% at 0% 0%, rgba(var(--d-rgb),0.08) 0%, transparent 70%);
           pointer-events: none;
         }
@@ -427,7 +427,7 @@ export default function PartnerAgencies() {
 
         .pa-card-top {
           display: flex; align-items: flex-start;
-          justify-message: space-between;
+          justify-content: space-between;
           margin-bottom: 14px; position: relative; z-index: 1;
         }
         .pa-icon { font-size: 28px; line-height: 1; }
@@ -520,7 +520,7 @@ export default function PartnerAgencies() {
 
         .pa-links { display: flex; flex-direction: column; position: relative; z-index: 1; }
         .pa-link {
-          display: flex; align-items: center; justify-message: space-between;
+          display: flex; align-items: center; justify-content: space-between;
           font-family: 'DM Sans', sans-serif;
           font-size: 13px; font-weight: 400;
           color: var(--text3); text-decoration: none;
@@ -544,13 +544,13 @@ export default function PartnerAgencies() {
           border: 1px solid var(--border); border-radius: var(--radius);
           padding: 32px 36px;
           display: flex; align-items: center;
-          justify-message: space-between; gap: 24px;
+          justify-content: space-between; gap: 24px;
           animation: fadeUp .55s .38s ease both;
           backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
           position: relative; overflow: hidden;
         }
         .pa-cta::before {
-          message: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+          content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
           background: linear-gradient(90deg, var(--red), transparent);
         }
         .pa-cta-text h3 {

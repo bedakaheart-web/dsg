@@ -217,7 +217,7 @@ export default function IncidentAlerts() {
           background-size: cover; background-position: center; background-repeat: no-repeat;
         }
         .ia-bg::after {
-          message: ''; position: absolute; inset: 0;
+          content: ''; position: absolute; inset: 0;
           background: rgba(8,12,20,0.72);
         }
 
@@ -230,7 +230,7 @@ export default function IncidentAlerts() {
 
         /* ── Nav ── */
         .ia-nav {
-          display: flex; align-items: center; justify-message: space-between;
+          display: flex; align-items: center; justify-content: space-between;
           padding: 20px 0;
           animation: fadeDown 0.5s ease both;
         }
@@ -285,7 +285,7 @@ export default function IncidentAlerts() {
         .ia-back-arrow {
           display: inline-flex;
           align-items: center;
-          justify-message: center;
+          justify-content: center;
           width: 36px;
           height: 36px;
           border-radius: 50%;
@@ -410,7 +410,7 @@ export default function IncidentAlerts() {
 
         .ia-card-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
         .ia-card-top { display: flex; align-items: flex-start; gap: 12px; }
-        .ia-card-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-message: center; font-size: 15px; flex-shrink: 0; }
+        .ia-card-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
         .ia-card-info { flex: 1; min-width: 0; }
         .ia-card-desc { font-family: var(--font-d); font-size: 15px; font-weight: 700; color: var(--text); line-height: 1.3; letter-spacing: -0.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .ia-card-id   { font-size: 11px; color: var(--text-3); margin-top: 2px; }
@@ -418,19 +418,19 @@ export default function IncidentAlerts() {
         .ia-card-meta-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-3); }
         .ia-card-meta-item svg { opacity: 0.6; }
 
-        .ia-card-right { padding: 16px 18px 16px 0; display: flex; flex-direction: column; align-items: flex-end; justify-message: space-between; gap: 10px; }
+        .ia-card-right { padding: 16px 18px 16px 0; display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; gap: 10px; }
         .ia-status-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; border-radius: 20px; padding: 4px 11px; white-space: nowrap; }
         .ia-type-pill   { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; font-weight: 600; border-radius: 6px; padding: 3px 9px; text-transform: capitalize; }
         .ia-new-badge { font-size: 9.5px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--green); background: rgba(46,204,143,0.12); border: 1px solid rgba(46,204,143,0.25); border-radius: 4px; padding: 2px 7px; }
 
         /* ── Empty ── */
-        .ia-empty { display: flex; flex-direction: column; align-items: center; justify-message: center; gap: 14px; padding: 80px 24px; background: transparent; border: 1px solid var(--border); border-radius: var(--r-lg); backdrop-filter: blur(6px); }
-        .ia-empty-icon { width: 52px; height: 52px; border-radius: 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); display: flex; align-items: center; justify-message: center; font-size: 20px; color: var(--text-3); }
+        .ia-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 80px 24px; background: transparent; border: 1px solid var(--border); border-radius: var(--r-lg); backdrop-filter: blur(6px); }
+        .ia-empty-icon { width: 52px; height: 52px; border-radius: 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 20px; color: var(--text-3); }
         .ia-empty-title { font-family: var(--font-d); font-size: 16px; font-weight: 700; color: var(--text); }
         .ia-empty-sub   { font-size: 13px; color: var(--text-3); text-align: center; max-width: 300px; }
 
         /* ── Loading ── */
-        .ia-loading { display: flex; align-items: center; justify-message: center; gap: 10px; min-height: 100vh; color: var(--text-3); font-size: 13px; position: relative; z-index: 2; }
+        .ia-loading { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 100vh; color: var(--text-3); font-size: 13px; position: relative; z-index: 2; }
         .ia-spin { width: 16px; height: 16px; border: 2px solid rgba(46,204,143,0.2); border-top-color: var(--green); border-radius: 50%; animation: spin 0.75s linear infinite; }
         @keyframes spin    { to { transform: rotate(360deg); } }
         @keyframes fadeDown { from { opacity:0; transform:translateY(-12px); } to { opacity:1; transform:translateY(0); } }

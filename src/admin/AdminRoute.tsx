@@ -8,7 +8,7 @@ const AR_STYLE = `
 
   .ar-checking {
     min-height: 100vh;
-    display: flex; align-items: center; justify-message: center;
+    display: flex; align-items: center; justify-content: center;
     font-family: 'Instrument Sans', sans-serif;
     background: #0b0f1a;
   }
@@ -20,7 +20,7 @@ const AR_STYLE = `
     width: 52px; height: 52px; border-radius: 14px;
     background: rgba(46,204,143,.1);
     border: 1px solid rgba(46,204,143,.25);
-    display: flex; align-items: center; justify-message: center;
+    display: flex; align-items: center; justify-content: center;
     color: #2ECC8F; font-size: 20px;
     animation: arPulse 1.8s ease infinite;
   }

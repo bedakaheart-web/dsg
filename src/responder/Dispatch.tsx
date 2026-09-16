@@ -103,7 +103,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Ne
 /* ── Header ── */
 .dp-header {
   display: flex;
-  justify-message: space-between;
+  justify-content: space-between;
   align-items: flex-start;
   flex-wrap: wrap;
   gap: 14px;
@@ -123,7 +123,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Ne
 }
 
 .dp-eyebrow::before {
-  message: '';
+  content: '';
   display: block;
   width: 18px;
   height: 2px;
@@ -273,7 +273,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Ne
 }
 
 .dp-panel::before {
-  message: '';
+  content: '';
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 2px;
@@ -284,7 +284,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Ne
 
 .dp-panel-header {
   display: flex;
-  justify-message: space-between;
+  justify-content: space-between;
   align-items: center;
   padding: 14px 16px;
   border-bottom: 1px solid var(--border-light);
@@ -318,7 +318,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Ne
 .dp-map-wrap .leaflet-container { width: 100%; height: 100%; background: #0d1117; touch-action: pan-x pan-y; }
 
 /* ── Telemetry HUD (overlay shell ignores pointer; controls re-enable it) ── */
-.dp-hud { position: absolute; top: 12px; left: 12px; right: 12px; z-index: 600; display: flex; justify-message: flex-start; pointer-events: none; }
+.dp-hud { position: absolute; top: 12px; left: 12px; right: 12px; z-index: 600; display: flex; justify-content: flex-start; pointer-events: none; }
 .dp-hud-card {
   pointer-events: none; max-width: 420px;
   background: rgba(13,17,23,0.88); border: 1px solid var(--border-med);
@@ -379,7 +379,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Ne
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-message: center;
+  justify-content: center;
   height: 540px;
   gap: 10px;
   font-size: 12px;
@@ -415,7 +415,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Ne
 }
 
 .dp-card::after {
-  message: '';
+  content: '';
   position: absolute;
   left: 0; top: 8px; bottom: 8px;
   width: 2px;
@@ -441,7 +441,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Ne
 
 .dp-card-top {
   display: flex;
-  justify-message: space-between;
+  justify-content: space-between;
   align-items: center;
   margin-bottom: 6px;
   gap: 8px;
@@ -463,7 +463,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Ne
   border-radius: 8px;
   display: flex;
   align-items: center;
-  justify-message: center;
+  justify-content: center;
   font-size: 16px;
   flex-shrink: 0;
   border: 1px solid var(--border-light);
@@ -665,7 +665,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Ne
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-message: center;
+  justify-content: center;
   padding: 48px 24px;
   gap: 12px;
   font-size: 12px;

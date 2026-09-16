@@ -25,7 +25,7 @@ const CSS = `
     background-size: cover; background-position: center; background-repeat: no-repeat;
   }
   .ca-bg::after {
-    message: ''; position: absolute; inset: 0;
+    content: ''; position: absolute; inset: 0;
     background: linear-gradient(160deg, rgba(8,12,20,.92) 0%, rgba(8,12,20,.80) 50%, rgba(8,12,20,.93) 100%);
   }
   .ca-glow { position: fixed; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
@@ -117,7 +117,7 @@ const CSS = `
     margin-bottom: 14px;
   }
   .ca-intro::before {
-    message: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
     background: linear-gradient(90deg, #2ECC8F, rgba(46,204,143,.3), transparent);
   }
   .ca-intro-eyebrow {
@@ -144,7 +144,7 @@ const CSS = `
     backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
   }
   .ca-pillar::before {
-    message: ''; position: absolute; inset: 0;
+    content: ''; position: absolute; inset: 0;
     background: radial-gradient(ellipse 80% 60% at 0% 0%, var(--pd), transparent 70%);
     pointer-events: none;
   }
@@ -155,13 +155,13 @@ const CSS = `
   }
   .ca-pillar-top {
     display: flex; align-items: flex-start;
-    justify-message: space-between; margin-bottom: 16px;
+    justify-content: space-between; margin-bottom: 16px;
     position: relative; z-index: 1;
   }
   .ca-pillar-icon-wrap {
     width: 42px; height: 42px; border-radius: 11px;
     background: var(--pd); border: 1px solid var(--pa);
-    display: flex; align-items: center; justify-message: center;
+    display: flex; align-items: center; justify-content: center;
     color: var(--pa); font-size: 17px;
     transition: transform .2s;
   }
@@ -193,11 +193,11 @@ const CSS = `
     position: relative; margin-bottom: 14px;
   }
   .ca-features::before {
-    message: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
     background: linear-gradient(90deg, #7B9EFF, rgba(123,158,255,.3), transparent);
   }
   .ca-features-header {
-    display: flex; align-items: center; justify-message: space-between;
+    display: flex; align-items: center; justify-content: space-between;
     padding: 18px 24px; border-bottom: 1px solid rgba(255,255,255,.06);
   }
   .ca-features-title {
@@ -222,7 +222,7 @@ const CSS = `
   .ca-feat-icon {
     width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
     background: var(--fi); border: 1px solid var(--fb);
-    display: flex; align-items: center; justify-message: center;
+    display: flex; align-items: center; justify-content: center;
     color: var(--fc); font-size: 15px; margin-top: 1px;
     transition: transform .2s;
   }
@@ -245,7 +245,7 @@ const CSS = `
     position: relative; overflow: hidden; margin-bottom: 14px;
   }
   .ca-partners::before {
-    message: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
     background: linear-gradient(90deg, #FFD166, rgba(255,209,102,.3), transparent);
   }
   .ca-partners-eyebrow {
@@ -270,12 +270,12 @@ const CSS = `
     background: rgba(15,21,33,.82);
     border: 1px solid rgba(255,107,107,.18);
     border-radius: 18px; padding: 30px 32px;
-    display: flex; align-items: center; justify-message: space-between; gap: 20px;
+    display: flex; align-items: center; justify-content: space-between; gap: 20px;
     backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
     position: relative; overflow: hidden;
   }
   .ca-cta::before {
-    message: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
     background: linear-gradient(90deg, #FF6B6B, rgba(255,107,107,.3), transparent);
   }
   .ca-cta-text h3 {

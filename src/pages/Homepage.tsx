@@ -9,13 +9,10 @@ import { LanguageSelectModal } from "../components/LanguageSelectModal";
 
 
 // ── Cloudflare Turnstile site key ──
-// Universal test key for ALL environments right now: Cloudflare's official
-// testing key "1x00000000000000000000AA" (always passes, no domain
-// restrictions), so the widget renders on localhost and live alike.
-// No domain checks or environment-variable logic — swap in the production
-// key here only when real Supabase Auth CAPTCHA verification is enabled
-// (test tokens are rejected unless its test-mode setup matches).
-const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || "1x00000000000000000000AA";
+// Production site key (public by design). Loaded from VITE_TURNSTILE_SITE_KEY
+// env var when available, falling back to the hardcoded production key.
+// The previous 1x0000... test key caused the “For testing only” badge.
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || "0x4AAAAAAEyz-wD6yQmn6txp";
 
 declare global {
   interface Window {
@@ -48,7 +45,7 @@ function EmergencyRunner() {
           box-shadow: 0 4px 24px rgba(0,0,0,0.35);
         }
         .hp-runner::after {
-          message: '';
+          content: '';
           position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
           background: linear-gradient(90deg, transparent, rgba(232,55,42,0.5), rgba(0,200,224,0.3), transparent);
           animation: runnerGlow 4s ease-in-out infinite;
@@ -122,7 +119,7 @@ function EmergencyRunner() {
           width: 20px; height: 20px; border-radius: 50%;
           background: rgba(232,55,42,0.20);
           border: 1px solid rgba(232,55,42,0.50);
-          display: flex; align-items: center; justify-message: center; flex-shrink: 0;
+          display: flex; align-items: center; justify-content: center; flex-shrink: 0;
           animation: iconPulse 1.8s ease-in-out infinite;
         }
         @keyframes iconPulse {
@@ -744,7 +741,7 @@ export default function Homepage() {
         }
 
         .hp-hero-eyebrow::after {
-          message: '';
+          content: '';
           display: block;
           width: 48px;
           height: 1.5px;
@@ -789,7 +786,7 @@ export default function Homepage() {
         .hp-hero-cta {
           display: inline-flex;
           align-items: center;
-          justify-message: center;
+          justify-content: center;
           gap: 12px;
           background: linear-gradient(135deg, #e8372a 0%, #f04438 100%);
           color: #fff;
@@ -813,7 +810,7 @@ export default function Homepage() {
         }
 
         .hp-hero-cta::after {
-          message: '';
+          content: '';
           position: absolute;
           top: 0; left: -100%;
           width: 60%; height: 100%;
@@ -872,7 +869,7 @@ export default function Homepage() {
         .hp-stat:hover { background: rgba(0, 200, 224, 0.05); }
 
         .hp-stat + .hp-stat::before {
-          message: '';
+          content: '';
           position: absolute;
           left: 0; top: 18%; bottom: 18%;
           width: 1px;
@@ -925,7 +922,7 @@ export default function Homepage() {
         }
 
         .hp-auth-panel::before {
-          message: '';
+          content: '';
           position: absolute;
           top: 0; left: 0; right: 0;
           height: 2px;
@@ -934,7 +931,7 @@ export default function Homepage() {
         }
 
         .hp-auth-panel::after {
-          message: '';
+          content: '';
           position: absolute;
           top: -50px; right: -50px;
           width: 150px; height: 150px;
@@ -955,7 +952,7 @@ export default function Homepage() {
         }
 
         .hp-auth-scan::after {
-          message: '';
+          content: '';
           position: absolute;
           left: 0; right: 0;
           top: -4px; height: 3px;
@@ -1046,7 +1043,7 @@ export default function Homepage() {
         .hp-auth-row {
           display: flex;
           align-items: center;
-          justify-message: space-between;
+          justify-content: space-between;
           margin-bottom: 24px;
           gap: 10px;
           flex-wrap: wrap;
@@ -1111,7 +1108,7 @@ export default function Homepage() {
 
         .hp-auth-captcha {
           display: flex;
-          justify-message: center;
+          justify-content: center;
           margin-bottom: 20px;
           min-height: 65px;
           width: 100%;
@@ -1139,7 +1136,7 @@ export default function Homepage() {
         }
 
         .hp-auth-btn::after {
-          message: '';
+          content: '';
           position: absolute;
           top: 0; left: -100%;
           width: 60%; height: 100%;
@@ -1273,7 +1270,7 @@ export default function Homepage() {
         .hp-card:nth-child(4) { animation-delay: 0.54s; }
 
         .hp-card::before {
-          message: '';
+          content: '';
           position: absolute; inset: 0;
           background: radial-gradient(ellipse 100% 70% at 10% 0%, var(--accent-alpha), transparent 75%);
           opacity: 0;
@@ -1282,7 +1279,7 @@ export default function Homepage() {
         }
 
         .hp-card::after {
-          message: '';
+          content: '';
           position: absolute;
           top: 0; left: 15%; right: 15%;
           height: 1.5px;
@@ -1307,7 +1304,7 @@ export default function Homepage() {
         .hp-card-header {
           display: flex;
           align-items: center;
-          justify-message: space-between;
+          justify-content: space-between;
         }
 
         .hp-card-icon {
@@ -1315,7 +1312,7 @@ export default function Homepage() {
           border-radius: 12px;
           display: flex;
           align-items: center;
-          justify-message: center;
+          justify-content: center;
           color: var(--accent-color);
           background: var(--accent-alpha);
           border: 1.5px solid var(--accent-color);
@@ -1411,7 +1408,7 @@ export default function Homepage() {
           .hp-hero h1 { font-size: clamp(34px, 9vw, 52px); margin-bottom: 14px; line-height: 0.95; }
           .hp-hero-sub { font-size: 14px; margin-bottom: 22px; line-height: 1.65; }
           .hp-hero-eyebrow { font-size: 10px; margin-bottom: 14px; }
-          .hp-hero-cta { padding: 13px 22px; font-size: 12px; width: 100%; justify-message: center; }
+          .hp-hero-cta { padding: 13px 22px; font-size: 12px; width: 100%; justify-content: center; }
           .hp-auth-panel { padding: 22px 16px 20px; border-radius: 14px; }
           .hp-auth-title { font-size: 20px; }
           .hp-auth-subtitle { font-size: 12.5px; margin-bottom: 20px; }

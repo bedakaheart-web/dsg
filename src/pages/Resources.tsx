@@ -156,7 +156,7 @@ export default function Resources() {
           display: flex; align-items: center; gap: 10px;
         }
         .rs-hero-eyebrow::after {
-          message: ''; display: block;
+          content: ''; display: block;
           width: 40px; height: 1px;
           background: var(--red); opacity: 0.5;
         }
@@ -203,7 +203,7 @@ export default function Resources() {
         .rs-card:nth-child(4) { animation-delay: .26s; }
 
         .rs-card::before {
-          message: ''; position: absolute; inset: 0;
+          content: ''; position: absolute; inset: 0;
           background: radial-gradient(ellipse 90% 70% at 0% 0%, var(--rs-alpha), transparent 70%);
           opacity: 0; transition: opacity .35s; pointer-events: none;
         }
@@ -216,7 +216,7 @@ export default function Resources() {
 
         .rs-card-top {
           display: flex; align-items: flex-start;
-          justify-message: space-between;
+          justify-content: space-between;
           margin-bottom: 18px; position: relative; z-index: 1;
         }
         .rs-icon { font-size: 30px; line-height: 1; }
@@ -254,7 +254,7 @@ export default function Resources() {
         }
         .rs-link {
           display: flex; align-items: center;
-          justify-message: space-between;
+          justify-content: space-between;
           font-family: 'Inter', sans-serif;
           font-size: 13px; font-weight: 400;
           color: var(--text3); text-decoration: none;
@@ -278,13 +278,13 @@ export default function Resources() {
           border: 1px solid rgba(232,55,42,0.20); border-radius: var(--radius);
           padding: 32px 36px;
           display: flex; align-items: center;
-          justify-message: space-between; gap: 24px;
+          justify-content: space-between; gap: 24px;
           animation: fadeUp .55s .32s ease both;
           backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
           position: relative; overflow: hidden;
         }
         .rs-cta::before {
-          message: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+          content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
           background: linear-gradient(90deg, var(--red), rgba(232,55,42,0.3), transparent);
         }
         .rs-cta-text h3 {

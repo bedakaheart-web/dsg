@@ -22,7 +22,7 @@ const RP_STYLE = `
   }
   .rp-header {
     display: flex; align-items: flex-end;
-    justify-message: space-between; flex-wrap: wrap;
+    justify-content: space-between; flex-wrap: wrap;
     gap: 14px; margin-bottom: 24px;
   }
   .rp-eyebrow {
@@ -31,7 +31,7 @@ const RP_STYLE = `
     display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
   }
   .rp-eyebrow::before {
-    message: ''; display: block; width: 20px; height: 2px;
+    content: ''; display: block; width: 20px; height: 2px;
     background: var(--primary, #0066FF);
   }
   .rp-title {
@@ -77,7 +77,7 @@ const RP_STYLE = `
     box-shadow: 0 6px 16px rgba(0,0,0,.06);
   }
   .rp-stat::before {
-    message: ''; position: absolute;
+    content: ''; position: absolute;
     top: 0; left: 0; right: 0; height: 2px;
     background: var(--s-accent);
   }
@@ -234,7 +234,7 @@ const RP_STYLE = `
   /* Avatar */
   .rp-avatar {
     width: 34px; height: 34px; border-radius: 8px;
-    display: flex; align-items: center; justify-message: center;
+    display: flex; align-items: center; justify-content: center;
     font-weight: 700; font-size: 11px; flex-shrink: 0;
     font-family: inherit;
   }
@@ -370,7 +370,7 @@ const RP_STYLE = `
     background: rgba(0,0,0,.35);
     backdrop-filter: blur(4px);
     z-index: 1000;
-    display: flex; align-items: center; justify-message: center;
+    display: flex; align-items: center; justify-content: center;
     padding: 20px;
   }
   .rp-modal {
@@ -396,7 +396,7 @@ const RP_STYLE = `
 
   /* Auth account toggle */
   .rp-auth-toggle {
-    display: flex; align-items: center; justify-message: space-between;
+    display: flex; align-items: center; justify-content: space-between;
     padding: 12px 14px;
     background: rgba(0,102,255,.04);
     border: 1px solid rgba(0,102,255,.14);
@@ -415,7 +415,7 @@ const RP_STYLE = `
   }
   .rp-auth-switch.on { background: var(--primary, #0066FF); border-color: var(--primary, #0066FF); }
   .rp-auth-switch::after {
-    message: ''; position: absolute;
+    content: ''; position: absolute;
     top: 2px; left: 2px;
     width: 14px; height: 14px; border-radius: 50%;
     background: #fff; transition: transform .2s;
@@ -502,7 +502,7 @@ const RP_STYLE = `
   }
 
   /* Modal actions */
-  .rp-modal-actions { display: flex; gap: 10px; margin-top: 20px; justify-message: flex-end; }
+  .rp-modal-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
   .rp-modal-save {
     padding: 10px 20px;
     background: linear-gradient(135deg, #0066FF 0%, #0052cc 100%);

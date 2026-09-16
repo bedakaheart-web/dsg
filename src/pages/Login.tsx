@@ -2,11 +2,17 @@ declare global {
   interface ImportMeta {
     readonly env: Record<string, string | undefined>;
   }
+  interface Window {
+    turnstile?: {
+      render: (container: string | HTMLElement, options: Record<string, any>) => string;
+      reset: (widgetId?: string) => void;
+      remove: (widgetId?: string) => void;
+    };
+  }
 }
 
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import { supabase } from "../js/supabase";
 import { FaEye, FaEyeSlash, FaCheck, FaArrowRight } from "react-icons/fa";
 import logoImage from "../assets/dsg.logo.png";
@@ -14,11 +20,12 @@ import directorybg from "../assets/directorybg.png";
 import { useLanguage } from "../context/LanguageContext";
 
 // ── Cloudflare Turnstile site key ──
-// Production key loaded from VITE_TURNSTILE_SITE_KEY env var.
-// Must match the key configured in the Cloudflare Turnstile widget
-// and the Secret Key in Supabase Auth > CAPTCHA settings.
-const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY;
-const TURNSTILE_OPTIONS = { theme: "dark" as const };
+// Production key (public by design). Loaded from VITE_TURNSTILE_SITE_KEY env
+// var when available, falling back to the hardcoded production key. Must match
+// the key configured in the Cloudflare Turnstile widget and the Secret Key in
+// Supabase Auth > CAPTCHA settings. Uses the SAME custom window.turnstile.render()
+// pattern as Homepage.tsx and Signup.tsx for consistency.
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || "0x4AAAAAAEyz-wD6yQmn6txp";
 
 // ── CSS-in-JS ──
 const CSS = `
@@ -30,7 +37,7 @@ const CSS = `
     min-height: 100vh;
     display: flex;
     align-items: center;
-    justify-message: center;
+    justify-content: center;
     font-family: 'Inter', sans-serif;
     padding: 24px;
     position: relative;
@@ -38,7 +45,7 @@ const CSS = `
   }
 
   .lg-root::after {
-    message: '';
+    content: '';
     position: fixed; inset: 0; z-index: 0;
     background-image: var(--bg-image);
     background-size: cover;
@@ -49,7 +56,7 @@ const CSS = `
   }
 
   .lg-root::before {
-    message: '';
+    content: '';
     position: fixed; inset: 0; z-index: 0;
     background-image:
       radial-gradient(circle at 20% 20%, rgba(0,200,224,0.10) 0%, transparent 50%),
@@ -115,7 +122,7 @@ const CSS = `
     position: relative;
     display: flex;
     flex-direction: column;
-    justify-message: space-between;
+    justify-content: space-between;
     padding: 60px 56px;
     background: linear-gradient(135deg, rgba(10,37,64,0.88) 0%, rgba(13,27,46,0.82) 50%, rgba(5,26,36,0.88) 100%);
     overflow: hidden;
@@ -128,7 +135,7 @@ const CSS = `
   }
 
   .lg-brand-panel::after {
-    message: '';
+    content: '';
     position: absolute; inset: 0; z-index: 0;
     background: radial-gradient(ellipse 90% 110% at 50% -10%, rgba(0,200,224,0.10) 0%, transparent 60%);
   }
@@ -174,7 +181,7 @@ const CSS = `
     background: linear-gradient(135deg, rgba(0,200,224,0.18), rgba(232,55,42,0.12));
     border: 1.5px solid rgba(0, 200, 224, 0.25);
     border-radius: 14px; padding: 10px;
-    display: flex; align-items: center; justify-message: center;
+    display: flex; align-items: center; justify-content: center;
     box-shadow: 0 0 24px rgba(0, 200, 224, 0.12);
     transition: all .3s ease;
   }
@@ -265,7 +272,7 @@ const CSS = `
   .lg-form-panel {
     display: flex;
     flex-direction: column;
-    justify-message: center;
+    justify-content: center;
     padding: 56px 48px;
     background: rgba(13, 27, 46, 0.72);
     border-left: 1px solid rgba(0, 200, 224, 0.12);
@@ -273,7 +280,7 @@ const CSS = `
   }
 
   .lg-form-panel::before {
-    message: '';
+    content: '';
     position: absolute; top: -150px; right: -150px;
     width: 400px; height: 400px;
     background: radial-gradient(circle, rgba(0, 200, 224, 0.06), transparent 70%);
@@ -297,7 +304,7 @@ const CSS = `
   }
 
   .lg-form-eyebrow::before {
-    message: '';
+    content: '';
     width: 6px; height: 6px; border-radius: 50%;
     background: #00c8e0; opacity: 0.7;
     animation: lg-pulse 2.2s ease-in-out infinite;
@@ -412,7 +419,7 @@ const CSS = `
   .lg-eye:hover { color: rgba(0, 200, 224, 0.70); }
 
   .lg-helper-row {
-    display: flex; align-items: center; justify-message: space-between;
+    display: flex; align-items: center; justify-content: space-between;
     margin-bottom: 28px; margin-top: 8px;
     position: relative; z-index: 1;
     animation: slideUp .5s .3s cubic-bezier(.22,1,.36,1) both;
@@ -461,7 +468,7 @@ const CSS = `
     background: linear-gradient(135deg, #e8372a 0%, #f04438 100%);
     color: #fff;
     cursor: pointer;
-    display: flex; align-items: center; justify-message: center; gap: 8px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
     transition: all .25s ease;
     margin-bottom: 24px;
     box-shadow: 0 0 32px rgba(232, 55, 42, 0.32), 0 0 0 1px rgba(232, 55, 42, 0.22);
@@ -471,7 +478,7 @@ const CSS = `
   }
 
   .lg-btn::before {
-    message: '';
+    content: '';
     position: absolute; top: 0; left: -100%;
     width: 60%; height: 100%;
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.20), transparent);
@@ -524,7 +531,7 @@ const CSS = `
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-message: center;
+    justify-content: center;
     width: 100%;
     min-height: 78px;
     margin: 4px 0 22px;
@@ -534,7 +541,7 @@ const CSS = `
 
   .lg-captcha-widget {
     display: flex;
-    justify-message: center;
+    justify-content: center;
     align-items: center;
     min-height: 65px;
     min-width: 300px;
@@ -553,7 +560,7 @@ const CSS = `
     max-width: 100%;
     display: flex;
     align-items: center;
-    justify-message: center;
+    justify-content: center;
     overflow: visible;
     position: relative;
     z-index: 1;
@@ -565,7 +572,7 @@ const CSS = `
     max-width: 100%;
     display: flex !important;
     align-items: center;
-    justify-message: center;
+    justify-content: center;
   }
 
   .lg-captcha-widget iframe,
@@ -593,7 +600,7 @@ const CSS = `
     width: 72px; height: 72px; border-radius: 50%;
     background: rgba(0, 200, 224, 0.18);
     border: 2px solid rgba(0, 200, 224, 0.40);
-    display: flex; align-items: center; justify-message: center;
+    display: flex; align-items: center; justify-content: center;
     font-size: 32px; margin-bottom: 18px;
     box-shadow: 0 0 32px rgba(0, 200, 224, 0.25);
     animation: successPop .5s .1s cubic-bezier(.22,1,.36,1) both;
@@ -617,7 +624,7 @@ const CSS = `
   }
 
   .lg-checking {
-    display: flex; align-items: center; justify-message: center;
+    display: flex; align-items: center; justify-content: center;
     gap: 12px; padding: 60px 0;
     font-family: 'Inter', sans-serif;
     font-size: 13.5px; color: rgba(168, 216, 255, 0.55);
@@ -691,24 +698,21 @@ export default function Login() {
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaStatus, setCaptchaStatus] = useState<"loading" | "ready" | "error">("loading");
   const [captchaMsg, setCaptchaMsg] = useState("");
-  // Ref to the <Turnstile /> wrapper instance (reset/remove/getResponse).
-  const turnstileRef = useRef<TurnstileInstance | null>(null);
 
-  // The real production key is used; any test key check would be false.
-  const TURNSTILE_IS_DUMMY = false;
-
-  // ── Guard against setState after unmount ──
+  // Manual Turnstile widget refs — SAME pattern as Homepage.tsx / Signup.tsx
+  const captchaWidgetId = useRef<string | null>(null);
+  const turnstileContainerRef = useRef<HTMLDivElement>(null);
   const mountedRef = useRef(true);
   useEffect(() => {
     mountedRef.current = true;
     return () => { mountedRef.current = false; };
   }, []);
 
-  // Keep latest translator without re-rendering the widget on every
-  // keystroke (`t` is re-created each render and is NOT referentially stable).
-  // The <Turnstile /> wrapper uses stable callbacks by default
-  // (rerenderOnCallbackChange=false), so translation updates flow through
-  // this ref instead of tearing down the widget.
+  // Keep latest translator without re-rendering the widget on every keystroke
+  // (`t` is re-created each render and is NOT referentially stable). The custom
+  // window.turnstile.render() pattern reads translations through this ref so the
+  // effect can run once (empty deps) without tearing down the widget on each
+  // keystroke — matching Homepage.tsx's approach.
   const tRef = useRef(t);
   tRef.current = t;
   const tr = (path: string, fallback: string) => {
@@ -719,17 +723,57 @@ export default function Login() {
     }
   };
 
-  // ── Retry CAPTCHA (used by the UI when the widget errors/expires) ──
-  // The <Turnstile /> component owns the widget lifecycle + the
-  // https://challenges.cloudflare.com/turnstile/v0/api.js script injection,
-  // so retry is just a reset.
+  // ── Retry CAPTCHA — manual window.turnstile pattern ──
   const retryCaptcha = () => {
     setCaptchaMsg("");
     setCaptchaStatus("loading");
     setTurnstileToken(null);
+    setCaptchaToken(null);
     try {
-      turnstileRef.current?.reset();
-    } catch { /* ignore — widget will re-render on its own */ }
+      if (window.turnstile && captchaWidgetId.current) {
+        window.turnstile.reset(captchaWidgetId.current);
+        setCaptchaStatus("ready");
+        return;
+      }
+    } catch { /* fall through to re-render */ }
+    captchaWidgetId.current = null;
+    if (turnstileContainerRef.current) turnstileContainerRef.current.innerHTML = "";
+    setTimeout(() => {
+      if (!window.turnstile || !turnstileContainerRef.current || captchaWidgetId.current) {
+        setCaptchaStatus("error");
+        setCaptchaMsg(tr("login.errors.captchaLoadFailed", "Security check failed to load. Check your connection / ad-blocker and retry."));
+        return;
+      }
+      try {
+        captchaWidgetId.current = window.turnstile.render(turnstileContainerRef.current, {
+          sitekey: TURNSTILE_SITE_KEY,
+          theme: "dark",
+          callback: (token: string) => {
+            setTurnstileToken(token);
+            setCaptchaToken(token);
+            setCaptchaMsg("");
+            setCaptchaStatus("ready");
+          },
+          "expired-callback": () => {
+            setTurnstileToken(null);
+            setCaptchaToken(null);
+            setCaptchaMsg(tr("login.errors.captchaExpired", "Security check expired. Please verify again."));
+            try { if (window.turnstile && captchaWidgetId.current) window.turnstile.reset(captchaWidgetId.current); } catch { /* ignore */ }
+          },
+          "error-callback": (err: any) => {
+            console.error("[Turnstile:Login] onError failure code:", err);
+            setTurnstileToken(null);
+            setCaptchaToken(null);
+            setCaptchaStatus("error");
+            setCaptchaMsg(tr("login.errors.captchaLoadFailed", "Security check failed to load. Check your connection / ad-blocker and retry."));
+          },
+        });
+        setCaptchaStatus("ready");
+      } catch (e) {
+        console.error("Failed to re-render Turnstile:", e);
+        setCaptchaStatus("error");
+      }
+    }, 50);
   };
 
   // ── Supabase session check ───────────────────────────────────────────────
@@ -769,14 +813,123 @@ export default function Login() {
     return () => { cancelled = true; };
   }, [navigate]);
 
-  // ── Reset CAPTCHA ──
-  // The <Turnstile /> wrapper owns the widget; reset via its instance ref.
+  // ── Cloudflare Turnstile lifecycle — SAME custom pattern as Homepage/Signup ──
+  // No <Turnstile> component; we inject api.js ourselves and call
+  // window.turnstile.render(). This avoids the @marsidev wrapper race and
+  // guarantees captchaStatus transitions out of "loading" via the callback
+  // and immediately after render (matching Signup/Homepage behavior).
+  useEffect(() => {
+    let cancelled = false;
+    let pollTimer: ReturnType<typeof setInterval> | null = null;
+
+    const renderWidget = () => {
+      if (cancelled) return false;
+      if (!window.turnstile || !turnstileContainerRef.current || captchaWidgetId.current) {
+        return !!captchaWidgetId.current;
+      }
+      if (turnstileContainerRef.current.childElementCount > 0) {
+        turnstileContainerRef.current.innerHTML = "";
+      }
+      try {
+        captchaWidgetId.current = window.turnstile.render(turnstileContainerRef.current, {
+          sitekey: TURNSTILE_SITE_KEY,
+          theme: "dark",
+          callback: (token: string) => {
+            if (cancelled || !mountedRef.current) return;
+            setTurnstileToken(token);
+            setCaptchaToken(token);
+            setCaptchaMsg("");
+            setCaptchaStatus("ready");
+          },
+          "expired-callback": () => {
+            if (cancelled || !mountedRef.current) return;
+            setTurnstileToken(null);
+            setCaptchaToken(null);
+            setCaptchaMsg(tr("login.errors.captchaExpired", "Security check expired. Please verify again."));
+            try { if (window.turnstile && captchaWidgetId.current) window.turnstile.reset(captchaWidgetId.current); } catch { /* ignore */ }
+          },
+          "timeout-callback": () => {
+            if (cancelled || !mountedRef.current) return;
+            setTurnstileToken(null);
+            setCaptchaToken(null);
+            setCaptchaStatus("error");
+            setCaptchaMsg(tr("login.errors.captchaTimeout", "Security check timed out. Please retry."));
+          },
+          "error-callback": (err: any) => {
+            console.error("[Turnstile:Login] onError failure code:", err);
+            if (cancelled || !mountedRef.current) return;
+            setTurnstileToken(null);
+            setCaptchaToken(null);
+            setCaptchaStatus("error");
+            setCaptchaMsg(tr("login.errors.captchaLoadFailed", "Security check failed to load. Check your connection / ad-blocker and retry."));
+          },
+        });
+        if (mountedRef.current && !cancelled) setCaptchaStatus("ready");
+        return true;
+      } catch (e) {
+        console.error("Failed to render Turnstile:", e);
+        if (mountedRef.current && !cancelled) {
+          setCaptchaStatus("error");
+          setCaptchaMsg(tr("login.errors.captchaLoadFailed", "Security check failed to load. Check your connection / ad-blocker and retry."));
+        }
+        return false;
+      }
+    };
+
+    if (window.turnstile) {
+      renderWidget();
+    } else {
+      let attempts = 0;
+      pollTimer = setInterval(() => {
+        attempts += 1;
+        if (window.turnstile) {
+          if (pollTimer) clearInterval(pollTimer);
+          renderWidget();
+        } else if (attempts > 50) {
+          if (pollTimer) clearInterval(pollTimer);
+          if (!cancelled && mountedRef.current) {
+            setCaptchaStatus("error");
+            setCaptchaMsg(tr("login.errors.captchaLoadFailed", "Security check failed to load. Check your connection / ad-blocker and retry."));
+          }
+        }
+      }, 200);
+
+      const existing = document.querySelector<HTMLScriptElement>('script[src*="turnstile"]');
+      const onLoad = () => renderWidget();
+      existing?.addEventListener("load", onLoad);
+      if (!existing) {
+        const script = document.createElement("script");
+        script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+        script.async = true;
+        script.defer = true;
+        script.addEventListener("load", onLoad);
+        document.head.appendChild(script);
+      }
+    }
+
+    return () => {
+      cancelled = true;
+      if (pollTimer) clearInterval(pollTimer);
+      try {
+        if (captchaWidgetId.current && window.turnstile) {
+          window.turnstile.remove(captchaWidgetId.current);
+        }
+      } catch { /* ignore */ }
+      captchaWidgetId.current = null;
+    };
+  }, []);
+
+  // ── Reset CAPTCHA — manual window.turnstile pattern ──
   const resetCaptcha = () => {
     setTurnstileToken(null);
+    setCaptchaToken(null);
     try {
-      turnstileRef.current?.reset();
+      if (window.turnstile) {
+        if (captchaWidgetId.current) window.turnstile.reset(captchaWidgetId.current);
+        else window.turnstile.reset();
+      }
     } catch {
-      // If reset fails (e.g. widget removed), the wrapper re-renders on its own.
+      captchaWidgetId.current = null;
     }
   };
 
@@ -1023,51 +1176,11 @@ export default function Login() {
                 </div>
 
                 <div className="lg-captcha" id="login-turnstile-wrapper">
-                  {/* ── Cloudflare Turnstile — renders directly above MAG-LOGIN.
-                      The @marsidev/react-turnstile wrapper injects
-                      https://challenges.cloudflare.com/turnstile/v0/api.js
-                      itself (there is intentionally NO <script> tag in
-                      index.html — a hardcoded tag races the wrapper's
-                      onload handshake and leaves window.turnstile
-                      undefined). The .lg-turnstile-box reserves the exact
-                      300×65px widget footprint so it never collapses. ── */}
-                  <div className="lg-turnstile-box" id="login-turnstile-widget" style={{ minHeight: "65px", width: "100%", display: "flex", justifyContent: "center" }}>
-<Turnstile
-                    ref={turnstileRef as React.Ref<TurnstileInstance | undefined>}
-                    siteKey={TURNSTILE_SITE_KEY}
-                    options={TURNSTILE_OPTIONS}
-                    onWidgetLoad={(widgetId) => {
-                      console.log("[Turnstile] widget loaded. id:", widgetId, "| siteKey:", TURNSTILE_SITE_KEY);
-                      if (!mountedRef.current) return;
-                      setCaptchaStatus("ready");
-                    }}
-                    onSuccess={(token) => {
-                      console.log("[Turnstile] success — token received. length:", token?.length);
-                      setTurnstileToken(token);
-                      setCaptchaToken(token);
-                      if (!mountedRef.current) return;
-                      setCaptchaMsg("");
-                      setCaptchaStatus("ready");
-                    }}
-                    onExpire={() => {
-                      console.log("[Turnstile] token expired — resetting widget for a fresh challenge.");
-                      if (!mountedRef.current) return;
-                      setTurnstileToken(null);
-                      setCaptchaMsg(tr("login.errors.captchaExpired", "Security check expired. Please verify again."));
-                      try { turnstileRef.current?.reset(); } catch { /* ignore */ }
-                    }}
-                    onTimeout={() => {
-                      console.log("[Turnstile] widget timed out waiting for interaction.");
-                      if (!mountedRef.current) return;
-                      setTurnstileToken(null);
-                      setCaptchaStatus("error");
-                      setCaptchaMsg(tr("login.errors.captchaTimeout", "Security check timed out. Please retry."));
-                    }}
-                    onError={(code) => {
-                      console.log("[Turnstile] onError failure code:", code);
-                    }}
-                  />
-                  </div>
+                  {/* ── Cloudflare Turnstile — manual window.turnstile.render() pattern,
+                      SAME as Homepage.tsx and Signup.tsx for consistency. The widget
+                      is injected into .lg-turnstile-box which reserves the exact
+                      300×65px footprint so it never collapses. No @marsidev wrapper. ── */}
+                  <div ref={turnstileContainerRef} className="lg-turnstile-box" id="login-turnstile-widget" style={{ minHeight: "65px", width: "100%", display: "flex", justifyContent: "center" }} />
                   {captchaStatus === "loading" && !turnstileToken && (
                     <div style={{ fontSize: 12, color: "rgba(168,216,255,0.55)", marginTop: 8 }}>
                       {t("login.captchaLoading", "Loading security check…")}

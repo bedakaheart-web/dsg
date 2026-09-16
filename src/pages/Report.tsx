@@ -687,7 +687,7 @@ const styles = `
     max-width: 1140px; margin: 0 auto;
     padding: 0 32px 96px;
   }
-  .rp-body--center { display: flex; align-items: center; justify-message: center; min-height: 80vh; }
+  .rp-body--center { display: flex; align-items: center; justify-content: center; min-height: 80vh; }
 
   .rp-hero {
     padding: 40px 0 40px;
@@ -700,7 +700,7 @@ const styles = `
     color: var(--red); margin-bottom: 16px;
     display: flex; align-items: center; gap: 10px;
   }
-  .rp-eyebrow::after { message: ''; display: block; width: 40px; height: 1px; background: var(--red); opacity: 0.5; }
+  .rp-eyebrow::after { content: ''; display: block; width: 40px; height: 1px; background: var(--red); opacity: 0.5; }
 
   .rp-title {
     font-family: 'Poppins', sans-serif;
@@ -774,7 +774,7 @@ const styles = `
   .rp-step-dot {
     width: 24px; height: 24px; border-radius: 50%;
     border: 1px solid var(--border2); background: rgba(13,27,46,0.60);
-    display: flex; align-items: center; justify-message: center;
+    display: flex; align-items: center; justify-content: center;
     font-family: 'Inter', sans-serif;
     font-size: 10px; font-weight: 500; color: var(--text3);
     transition: all 0.3s ease; flex-shrink: 0;
@@ -981,7 +981,7 @@ const styles = `
     width: 18px; height: 18px; flex-shrink: 0;
     border: 1px solid rgba(245,200,66,0.35); border-radius: 4px;
     background: rgba(245,200,66,0.06);
-    display: flex; align-items: center; justify-message: center;
+    display: flex; align-items: center; justify-content: center;
     font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500; color: var(--yellow);
     margin-top: 1px; transition: background 0.2s, border-color 0.2s;
   }
@@ -1003,7 +1003,7 @@ const styles = `
   .rp-skip-evidence-btn:hover { background: rgba(232,55,42,0.22); }
 
   .rp-submit {
-    display: flex; align-items: center; justify-message: center; gap: 12px;
+    display: flex; align-items: center; justify-content: center; gap: 12px;
     width: 100%; padding: 15px 24px;
     font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 700;
     letter-spacing: 0.06em; text-transform: uppercase;
@@ -1079,7 +1079,7 @@ const styles = `
   .rp-success-icon {
     width: 64px; height: 64px; border-radius: 50%;
     background: rgba(46,204,143,0.12); border: 1px solid rgba(46,204,143,0.30);
-    display: flex; align-items: center; justify-message: center;
+    display: flex; align-items: center; justify-content: center;
     font-size: 26px; color: var(--green); margin-bottom: 24px;
   }
   .rp-success-title { font-family: 'Poppins', sans-serif; font-size: 32px; font-weight: 700; color: var(--text); margin-bottom: 12px; }
@@ -1121,7 +1121,7 @@ const styles = `
     .rp-body { padding: 0 20px 80px; }
     .rp-hero { padding: 28px 0 32px; }
     .rp-tracking-banner { flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 24px; }
-    .rp-banner-cta { width: 100%; justify-message: center; }
+    .rp-banner-cta { width: 100%; justify-content: center; }
     .rp-title { font-size: clamp(28px, 7.5vw, 52px); }
     .rp-layout { grid-template-columns: 1fr; gap: 20px; }
     .rp-left  { order: 0; }
@@ -1141,8 +1141,8 @@ const styles = `
 
   @media (max-width: 500px) {
     .rp-location-row { flex-direction: column; align-items: stretch; }
-    .rp-gps-btn { width: 100%; justify-message: center; }
-    .rp-steps { -webkit-mask-image: none; mask-image: none; justify-message: space-between; padding: 10px 14px; }
+    .rp-gps-btn { width: 100%; justify-content: center; }
+    .rp-steps { -webkit-mask-image: none; mask-image: none; justify-content: space-between; padding: 10px 14px; }
     .rp-step-label { width: 0; font-size: 0; overflow: hidden; padding: 0; margin: 0; }
     .rp-step-line { width: 10px; margin: 0 2px; }
     .rp-step-dot { width: 28px; height: 28px; font-size: 11px; }

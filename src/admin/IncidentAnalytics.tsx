@@ -29,7 +29,7 @@ const IA_STYLE = `
 
 /* ── Header ── */
 .ia-header {
-  display: flex; align-items: flex-start; justify-message: space-between;
+  display: flex; align-items: flex-start; justify-content: space-between;
   flex-wrap: wrap; gap: 16px; margin-bottom: 24px;
   animation: ia-fadeIn 0.4s ease both;
 }
@@ -41,7 +41,7 @@ const IA_STYLE = `
 }
 
 .ia-eyebrow::before {
-  message: ''; display: block; width: 20px; height: 2px;
+  content: ''; display: block; width: 20px; height: 2px;
   background: var(--primary);
 }
 
@@ -77,7 +77,7 @@ const IA_STYLE = `
 }
 
 .ia-stat::before {
-  message: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
   background: var(--is-color);
 }
 
@@ -155,7 +155,7 @@ const IA_STYLE = `
 
 .ia-vbar-col {
   flex: 1; display: flex; flex-direction: column; align-items: center;
-  gap: 6px; height: 100%; justify-message: flex-end;
+  gap: 6px; height: 100%; justify-content: flex-end;
 }
 
 .ia-vbar-bar {
@@ -165,7 +165,7 @@ const IA_STYLE = `
 }
 
 .ia-vbar-bar:hover::after {
-  message: attr(data-val);
+  content: attr(data-val);
   position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
   background: rgba(15,21,33,0.95); border: 1px solid rgba(255,255,255,0.12);
   border-radius: 6px; padding: 4px 8px;

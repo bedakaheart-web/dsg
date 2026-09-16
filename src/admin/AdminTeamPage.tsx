@@ -128,7 +128,7 @@ const STYLES = `
 /* ── Header ── */
 .atp-hd {
   display: flex;
-  justify-message: space-between;
+  justify-content: space-between;
   align-items: flex-start;
   flex-wrap: wrap;
   gap: 12px;
@@ -149,7 +149,7 @@ const STYLES = `
 }
 
 .atp-eyebrow::before {
-  message: '';
+  content: '';
   display: block;
   width: 20px;
   height: 2px;
@@ -224,7 +224,7 @@ const STYLES = `
 }
 
 .atp-stat::before {
-  message: '';
+  content: '';
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 2px;
@@ -358,7 +358,7 @@ const STYLES = `
 .atp-filter-count {
   display: inline-flex;
   align-items: center;
-  justify-message: center;
+  justify-content: center;
   min-width: 18px;
   height: 18px;
   border-radius: 9px;
@@ -393,7 +393,7 @@ const STYLES = `
 }
 
 .atp-card::before {
-  message: '';
+  content: '';
   position: absolute;
   top: 0; left: 0; bottom: 0;
   width: 3px;
@@ -420,7 +420,7 @@ const STYLES = `
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  justify-message: center;
+  justify-content: center;
   font-size: 15px;
   font-weight: 700;
   color: #fff;
@@ -547,7 +547,7 @@ const STYLES = `
   width: 100%;
   display: flex;
   align-items: center;
-  justify-message: center;
+  justify-content: center;
   gap: 6px;
   padding: 8px;
   background: rgba(8,12,20,0.93);
@@ -579,7 +579,7 @@ const STYLES = `
 
 .atp-detail-row {
   display: flex;
-  justify-message: space-between;
+  justify-content: space-between;
   align-items: center;
   gap: 8px;
   padding: 6px 0;
@@ -608,7 +608,7 @@ const STYLES = `
 .atp-card-foot {
   display: flex;
   align-items: center;
-  justify-message: space-between;
+  justify-content: space-between;
   flex-wrap: wrap;
   gap: 6px;
   border-top: 1px solid var(--border);
@@ -632,7 +632,7 @@ const STYLES = `
 .atp-action-btn {
   display: flex;
   align-items: center;
-  justify-message: center;
+  justify-content: center;
   width: 24px;
   height: 24px;
   border-radius: 6px;

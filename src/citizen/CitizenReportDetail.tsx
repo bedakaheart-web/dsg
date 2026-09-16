@@ -101,14 +101,14 @@ export default function CitizenReportDetail({ reportId, onBack, onViewHistory }:
 
         .rd { min-height: 100vh; font-family: var(--font-body); color: var(--text); position: relative; overflow-x: hidden; }
         .rd-bg { position: fixed; inset: 0; z-index: 0; background-image: url('${pageBg}'); background-size: cover; background-position: center; }
-        .rd-bg::after { message: ''; position: absolute; inset: 0; background: linear-gradient(160deg, rgba(8,12,20,.92) 0%, rgba(8,12,20,.80) 50%, rgba(8,12,20,.94) 100%); }
+        .rd-bg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(160deg, rgba(8,12,20,.92) 0%, rgba(8,12,20,.80) 50%, rgba(8,12,20,.94) 100%); }
         .rd-glow { position: fixed; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
         .rd-glow-1 { position: absolute; width: 600px; height: 600px; border-radius: 50%; background: radial-gradient(circle, rgba(46,204,143,0.07) 0%, transparent 70%); top: -200px; left: -100px; }
         .rd-glow-2 { position: absolute; width: 500px; height: 500px; border-radius: 50%; background: radial-gradient(circle, rgba(123,158,255,0.06) 0%, transparent 70%); bottom: -150px; right: -50px; }
         .rd-noise { position: fixed; inset: 0; opacity: 0.025; pointer-events: none; z-index: 1; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 200px; }
         .rd-inner { position: relative; z-index: 2; max-width: 860px; margin: 0 auto; padding: 0 24px 80px; }
 
-        .rd-nav { display: flex; align-items: center; justify-message: space-between; padding: 24px 0 0; animation: fadeDown .5s ease both; }
+        .rd-nav { display: flex; align-items: center; justify-content: space-between; padding: 24px 0 0; animation: fadeDown .5s ease both; }
         .rd-logo { display: flex; align-items: center; gap: 9px; text-decoration: none; }
         .rd-logo-text { font-family: var(--font-display); font-size: 16px; font-weight: 800; letter-spacing: -.01em; color: var(--text); }
         .rd-logo-text span { color: var(--green); }
@@ -127,9 +127,9 @@ export default function CitizenReportDetail({ reportId, onBack, onViewHistory }:
         .rd-section-line { flex: 1; height: 1px; background: linear-gradient(90deg, var(--border-2), transparent); }
 
         .rd-card { background: rgba(15,21,33,.82); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 20px; animation: fadeUp .6s .1s ease both; backdrop-filter: blur(16px); }
-        .rd-card-top { padding: 22px 24px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-message: space-between; gap: 16px; }
+        .rd-card-top { padding: 22px 24px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
         .rd-card-top-left { display: flex; align-items: flex-start; gap: 14px; }
-        .rd-card-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-message: center; flex-shrink: 0; font-size: 16px; }
+        .rd-card-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 16px; }
         .rd-desc { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--text); line-height: 1.3; letter-spacing: -.015em; }
         .rd-desc-sub { font-size: 12px; color: var(--text-3); margin-top: 4px; }
         .rd-status { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; border-radius: 20px; padding: 5px 12px; flex-shrink: 0; }
@@ -147,24 +147,24 @@ export default function CitizenReportDetail({ reportId, onBack, onViewHistory }:
           .rd-meta-item:nth-last-child(-n+2) { border-bottom: 1px solid var(--border); }
           .rd-meta-item:last-child { border-bottom: none; }
         }
-        .rd-meta-icon { width: 30px; height: 30px; border-radius: 8px; background: rgba(255,255,255,.04); border: 1px solid var(--border); display: flex; align-items: center; justify-message: center; color: var(--text-3); font-size: 12px; flex-shrink: 0; margin-top: 1px; }
+        .rd-meta-icon { width: 30px; height: 30px; border-radius: 8px; background: rgba(255,255,255,.04); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-3); font-size: 12px; flex-shrink: 0; margin-top: 1px; }
         .rd-meta-label { font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--text-3); margin-bottom: 4px; }
         .rd-meta-value { font-size: 13px; font-weight: 500; color: var(--text-2); line-height: 1.4; }
         .rd-type-tag { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: capitalize; border-radius: 6px; padding: 3px 9px; display: inline-block; }
 
         .rd-evidence-card { background: rgba(15,21,33,.82); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 20px; animation: fadeUp .6s .15s ease both; backdrop-filter: blur(16px); }
-        .rd-evidence-head { padding: 16px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-message: space-between; }
+        .rd-evidence-head { padding: 16px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
         .rd-evidence-title { font-family: var(--font-display); font-size: 14px; font-weight: 700; color: var(--text); }
         .rd-evidence-body { padding: 20px 22px; display: flex; flex-direction: column; gap: 12px; }
         .rd-evidence-img { width: 100%; max-height: 340px; object-fit: cover; border-radius: 10px; border: 1px solid var(--border); }
         .rd-evidence-link { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--blue); text-decoration: none; padding: 7px 12px; background: rgba(123,158,255,.08); border: 1px solid rgba(123,158,255,.18); border-radius: 7px; width: fit-content; transition: background .18s; }
         .rd-evidence-link:hover { background: rgba(123,158,255,.15); }
         .rd-evidence-empty { padding: 32px 22px; text-align: center; }
-        .rd-evidence-empty-icon { width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,.03); border: 1px solid var(--border); display: flex; align-items: center; justify-message: center; font-size: 16px; color: var(--text-3); margin: 0 auto 10px; }
+        .rd-evidence-empty-icon { width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,.03); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--text-3); margin: 0 auto 10px; }
         .rd-evidence-empty-text { font-size: 13px; color: var(--text-3); }
 
         .rd-note-card { background: rgba(15,21,33,.82); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; animation: fadeUp .6s .2s ease both; backdrop-filter: blur(16px); margin-bottom: 20px; }
-        .rd-note-head { padding: 16px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-message: space-between; }
+        .rd-note-head { padding: 16px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
         .rd-note-title { font-family: var(--font-display); font-size: 14px; font-weight: 700; color: var(--text); }
         .rd-note-badge { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #2ECC8F; background: rgba(46,204,143,.1); border: 1px solid rgba(46,204,143,.22); border-radius: 20px; padding: 3px 9px; }
         .rd-note-body { padding: 20px 22px; display: flex; gap: 14px; }
@@ -174,7 +174,7 @@ export default function CitizenReportDetail({ reportId, onBack, onViewHistory }:
         .rd-note-time { font-size: 10.5px; font-weight: 600; letter-spacing: .06em; color: var(--text-3); margin-bottom: 7px; text-transform: uppercase; }
         .rd-note-msg { font-size: 14px; color: var(--text-2); line-height: 1.6; }
         .rd-note-empty { padding: 36px 22px; text-align: center; }
-        .rd-note-empty-icon { width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,.03); border: 1px solid var(--border); display: flex; align-items: center; justify-message: center; font-size: 16px; color: var(--text-3); margin: 0 auto 10px; }
+        .rd-note-empty-icon { width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,.03); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--text-3); margin: 0 auto 10px; }
         .rd-note-empty-title { font-size: 13px; font-weight: 600; color: var(--text-3); margin-bottom: 4px; }
         .rd-note-empty-sub { font-size: 12px; color: var(--text-3); opacity: .7; }
 
@@ -184,14 +184,14 @@ export default function CitizenReportDetail({ reportId, onBack, onViewHistory }:
         .rd-timeline-body { padding: 20px 22px; display: flex; flex-direction: column; gap: 0; }
         .rd-tl-step { display: flex; gap: 14px; padding-bottom: 20px; position: relative; }
         .rd-tl-step:last-child { padding-bottom: 0; }
-        .rd-tl-step:not(:last-child)::before { message: ''; position: absolute; left: 11px; top: 22px; bottom: 0; width: 1px; background: linear-gradient(to bottom, rgba(255,255,255,.08), transparent); }
-        .rd-tl-dot { width: 22px; height: 22px; border-radius: 50%; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.04); display: flex; align-items: center; justify-message: center; font-size: 9px; flex-shrink: 0; margin-top: 1px; }
+        .rd-tl-step:not(:last-child)::before { content: ''; position: absolute; left: 11px; top: 22px; bottom: 0; width: 1px; background: linear-gradient(to bottom, rgba(255,255,255,.08), transparent); }
+        .rd-tl-dot { width: 22px; height: 22px; border-radius: 50%; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.04); display: flex; align-items: center; justify-content: center; font-size: 9px; flex-shrink: 0; margin-top: 1px; }
         .rd-tl-dot--done   { background: rgba(46,204,143,.15); border-color: #2ECC8F; color: #2ECC8F; }
         .rd-tl-dot--active { background: rgba(123,158,255,.15); border-color: #7B9EFF; color: #7B9EFF; }
         .rd-tl-label { font-size: 13px; font-weight: 600; color: var(--text-2); margin-bottom: 2px; }
         .rd-tl-sub { font-size: 11.5px; color: var(--text-3); }
 
-        .rd-loading { display: flex; align-items: center; justify-message: center; gap: 10px; min-height: 100vh; color: var(--text-3); font-size: 13px; position: relative; z-index: 2; }
+        .rd-loading { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 100vh; color: var(--text-3); font-size: 13px; position: relative; z-index: 2; }
         .rd-spin { width: 16px; height: 16px; border: 2px solid rgba(46,204,143,.2); border-top-color: var(--green); border-radius: 50%; animation: spin .75s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes fadeDown { from{opacity:0;transform:translateY(-12px);}to{opacity:1;transform:translateY(0);} }
