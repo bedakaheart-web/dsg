@@ -102,7 +102,7 @@ export default function ChatBox({
     toggleMute,
     toggleCamera,
     upgradeToVideo,
-  } = useWebRTC(userIdRef.current || null, recipientId);
+  } = useWebRTC(user?.id ?? userIdRef.current ?? null, recipientId);
 
   const isRecipientOnline = recipientId ? onlineUserIds.has(recipientId) : false;
   const effectiveOnline = queueOnline;
@@ -424,10 +424,33 @@ export default function ChatBox({
   }, [effectiveOnline, startCall]);
 
   const handleEndCall = useCallback(() => {
+    console.log("[ChatBox] End Call clicked");
     endCall();
     setShowCallOverlay(false);
     setCallType(null);
   }, [endCall]);
+
+  // Sync overlay with remote signaling (incoming call, remote hangup)
+  useEffect(() => {
+    console.log("[ChatBox] callState changed:", callState.callState, "callType:", callState.callType, "remote:", callState.remoteParticipantId);
+    if (callState.callState === "ringing" || callState.callState === "active") {
+      setShowCallOverlay(true);
+      if (callState.callType) setCallType(callState.callType);
+    } else if (callState.callState === "ended" || callState.callState === "declined") {
+      // Show ended state briefly then hide
+      const t = setTimeout(() => {
+        setShowCallOverlay(false);
+        setCallType(null);
+      }, 1200);
+      return () => clearTimeout(t);
+    } else if (callState.callState === "idle" && showCallOverlay) {
+      // Fallback: ensure overlay hides when hook resets to idle after cleanup
+      if (!callState.localStream && !callState.remoteStream) {
+        setShowCallOverlay(false);
+        setCallType(null);
+      }
+    }
+  }, [callState.callState, callState.callType, callState.remoteParticipantId, callState.localStream, callState.remoteStream, showCallOverlay]);
 
   // ── Role-based warning ──
   const recipientName = useMemo(() => {

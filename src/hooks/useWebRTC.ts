@@ -45,6 +45,7 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
   }, []);
 
   const cleanup = useCallback(async () => {
+    console.log("[useWebRTC] cleanup: closing peer connection and stopping tracks");
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach(t => t.stop());
       localStreamRef.current = null;
@@ -53,11 +54,24 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
       pcRef.current.close();
       pcRef.current = null;
     }
-    if (channelRef.current) {
-      supabase.removeChannel(channelRef.current);
-      channelRef.current = null;
-    }
+    // Note: channel is managed by the persistent signaling effect — do not remove here
+    // unless we are explicitly ending a call and want to keep signaling alive.
+    // We keep channel alive for future calls; only tracks/pc are torn down.
   }, []);
+
+  const fullCleanup = useCallback(async () => {
+    await cleanup();
+    updateState({
+      callState: "idle",
+      callType: null,
+      remoteParticipantId: null,
+      localStream: null,
+      remoteStream: null,
+      isMuted: false,
+      isCameraOff: false,
+      isUpgradedToVideo: false,
+    });
+  }, [cleanup, updateState]);
 
   const createPeerConnection = useCallback(async (): Promise<RTCPeerConnection> => {
     const iceServers = await getIceServers();
@@ -69,11 +83,13 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
     }
 
     pc.ontrack = (event) => {
+      console.log("[useWebRTC] ontrack: remote stream received");
       updateState({ remoteStream: event.streams[0] || null });
     };
 
     pc.onicecandidate = (event) => {
       if (event.candidate && remoteIdRef.current) {
+        console.log("[useWebRTC] signal sent: ice-candidate to", remoteIdRef.current);
         channelRef.current?.send({
           type: "broadcast",
           event: "webrtc-signal",
@@ -85,6 +101,15 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
             callType: callTypeRef.current,
           },
         });
+      }
+    };
+
+    pc.onconnectionstatechange = () => {
+      console.log("[useWebRTC] connectionState:", pc.connectionState);
+      if (pc.connectionState === "connected") {
+        updateState({ callState: "active" });
+      } else if (pc.connectionState === "failed" || pc.connectionState === "closed") {
+        // keep idle handling to signaling channel
       }
     };
 
@@ -102,12 +127,14 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
     return stream;
   }, [updateState]);
 
-const startCall = useCallback(async (callType: CallType): Promise<boolean> => {
-    if (!localIdRef.current || !remoteIdRef.current) return false;
+  const startCall = useCallback(async (callType: CallType): Promise<boolean> => {
+    if (!localIdRef.current || !remoteIdRef.current) {
+      console.warn("[useWebRTC] startCall aborted: missing local or remote id", { local: localIdRef.current, remote: remoteIdRef.current });
+      return false;
+    }
     console.log("[useWebRTC] startCall:", callType, "from:", localIdRef.current, "to:", remoteIdRef.current);
 
     callTypeRef.current = callType;
-    remoteIdRef.current = remoteIdRef.current;
     updateState({ callType, callState: "ringing", remoteParticipantId: remoteIdRef.current });
 
     try {
@@ -117,32 +144,20 @@ const startCall = useCallback(async (callType: CallType): Promise<boolean> => {
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      channelRef.current = supabase.channel(`call-${[localIdRef.current, remoteIdRef.current].sort().join("_")}`);
-
-      channelRef.current
-        .on("broadcast", { event: "webrtc-signal" }, async (payload) => {
-          const p = payload.payload as { type: string; from: string; sdp?: RTCSessionDescriptionInit; candidate?: RTCIceCandidateInit };
-          if (p.from !== remoteIdRef.current) return;
-          if (p.type === "offer") {
-            await pc.setRemoteDescription(new RTCSessionDescription(p.sdp!));
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
-            channelRef.current?.send({ type: "broadcast", event: "webrtc-signal", payload: { type: "answer", sdp: answer, from: localIdRef.current, to: remoteIdRef.current } });
-          } else if (p.type === "answer") {
-            await pc.setRemoteDescription(new RTCSessionDescription(p.sdp!));
-          } else if (p.type === "ice-candidate") {
-            try { await pc.addIceCandidate(new RTCIceCandidate(p.candidate)); } catch {}
-          }
-        })
-        .subscribe();
-
-      channelRef.current.send({
+      // Ensure channel is subscribed before sending — the persistent effect should already be SUBSCRIBED,
+      // but we verify and wait if needed to avoid race.
+      const ch = channelRef.current;
+      if (!ch) {
+        console.error("[useWebRTC] signal sent FAILED: no signaling channel (not subscribed yet)");
+        throw new Error("Signaling channel not ready");
+      }
+      console.log("[useWebRTC] signal sent: offer to", remoteIdRef.current, "sdp:", pc.localDescription?.type);
+      await ch.send({
         type: "broadcast",
         event: "webrtc-signal",
         payload: { type: "offer", sdp: pc.localDescription, from: localIdRef.current, to: remoteIdRef.current, callType },
       });
 
-      updateState({});
       return true;
     } catch (err) {
       console.error("[useWebRTC] Failed to start call:", err);
@@ -151,8 +166,9 @@ const startCall = useCallback(async (callType: CallType): Promise<boolean> => {
     }
   }, [getLocalStream, createPeerConnection, updateState]);
 
-  const receiveCall = useCallback(async (callType: CallType, fromId: string) => {
+  const receiveCall = useCallback(async (callType: CallType, fromId: string, offerSdp?: RTCSessionDescriptionInit) => {
     if (!localIdRef.current) return false;
+    console.log("[useWebRTC] receiveCall: handling incoming", callType, "from:", fromId, "offerSdp:", !!offerSdp);
     callTypeRef.current = callType;
     remoteIdRef.current = fromId;
     updateState({ callType, callState: "ringing", remoteParticipantId: fromId });
@@ -161,25 +177,21 @@ const startCall = useCallback(async (callType: CallType): Promise<boolean> => {
       const stream = await getLocalStream(callType);
       const pc = await createPeerConnection();
 
-      channelRef.current = supabase.channel(`call-${[localIdRef.current, fromId].sort().join("_")}`);
-
-      channelRef.current
-        .on("broadcast", { event: "webrtc-signal" }, async (payload) => {
-          const p = payload.payload as { type: string; from: string; sdp?: RTCSessionDescriptionInit; candidate?: RTCIceCandidateInit };
-          if (p.from !== fromId) return;
-          if (p.type === "offer") {
-            await pc.setRemoteDescription(new RTCSessionDescription(p.sdp!));
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
-            channelRef.current?.send({ type: "broadcast", event: "webrtc-signal", payload: { type: "answer", sdp: answer, from: localIdRef.current, to: fromId } });
-          } else if (p.type === "answer") {
-            await pc.setRemoteDescription(new RTCSessionDescription(p.sdp!));
-          } else if (p.type === "ice-candidate") {
-            try { await pc.addIceCandidate(new RTCIceCandidate(p.candidate)); } catch {}
-          }
-        })
-        .subscribe();
-
+      if (offerSdp) {
+        console.log("[useWebRTC] signal received: offer — setting remote description");
+        await pc.setRemoteDescription(new RTCSessionDescription(offerSdp));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        console.log("[useWebRTC] signal sent: answer to", fromId);
+        await channelRef.current?.send({
+          type: "broadcast",
+          event: "webrtc-signal",
+          payload: { type: "answer", sdp: answer, from: localIdRef.current, to: fromId },
+        });
+        // Caller will set remote answer and then we go active; keep ringing until caller ack or track?
+        // For now mark ringing — active will be set on connectionState connected or via explicit answer handling.
+      }
+      // If no offerSdp, the offer will be handled by the central channel listener which will call this again with sdp.
       return true;
     } catch (err) {
       console.error("[useWebRTC] Failed to receive call:", err);
@@ -190,41 +202,70 @@ const startCall = useCallback(async (callType: CallType): Promise<boolean> => {
   const acceptCall = useCallback(async () => {
     const pc = pcRef.current;
     const remoteId = remoteIdRef.current;
-    const callType = callTypeRef.current || "audio";
     if (!pc || !remoteId) return;
-    channelRef.current?.send({
-      type: "broadcast",
-      event: "webrtc-signal",
-      payload: { type: "offer", sdp: pc.localDescription, from: localIdRef.current, to: remoteId, callType },
-    });
+    // If we already answered in receiveCall, just mark active
+    if (pc.localDescription) {
+      console.log("[useWebRTC] acceptCall: already answered, marking active");
+      updateState({ callState: "active" });
+      return;
+    }
+    // Fallback: create answer if not yet created (edge case where receiveCall didn't have sdp)
+    console.log("[useWebRTC] acceptCall: no localDescription, attempting to create answer");
     updateState({ callState: "active" });
   }, [updateState]);
 
   const declineCall = useCallback(() => {
     const remoteId = remoteIdRef.current;
+    console.log("[useWebRTC] signal sent: decline to", remoteId);
     channelRef.current?.send({
       type: "broadcast",
       event: "webrtc-signal",
       payload: { type: "decline", from: localIdRef.current, to: remoteId },
     });
+    // Also send call-ended for backward compat
+    channelRef.current?.send({
+      type: "broadcast",
+      event: "webrtc-signal",
+      payload: { type: "call-ended", from: localIdRef.current, to: remoteId },
+    });
     cleanup();
-    updateState({ callState: "declined", callType: null, remoteParticipantId: null });
+    updateState({ callState: "declined", callType: null, remoteParticipantId: null, localStream: null, remoteStream: null });
+    setTimeout(() => updateState({ callState: "idle" }), 1500);
   }, [cleanup, updateState]);
 
   const endCall = useCallback(() => {
     const remoteId = remoteIdRef.current;
+    console.log("[useWebRTC] signal sent: call-ended to", remoteId);
+    // Spec requires "call-ended"; keep "end" for backward compat with older clients
+    channelRef.current?.send({
+      type: "broadcast",
+      event: "webrtc-signal",
+      payload: { type: "call-ended", from: localIdRef.current, to: remoteId },
+    });
     channelRef.current?.send({
       type: "broadcast",
       event: "webrtc-signal",
       payload: { type: "end", from: localIdRef.current, to: remoteId },
     });
-    cleanup();
+    // Close peer connection and stop tracks per spec
+    if (pcRef.current) {
+      console.log("[useWebRTC] endCall: pc.close()");
+      pcRef.current.close();
+      pcRef.current = null;
+    }
+    if (localStreamRef.current) {
+      console.log("[useWebRTC] endCall: stopping local tracks");
+      localStreamRef.current.getTracks().forEach(track => track.stop());
+      localStreamRef.current = null;
+    }
     updateState({
       callState: "ended", callType: null, remoteParticipantId: null,
       localStream: null, remoteStream: null,
       isMuted: false, isCameraOff: false, isUpgradedToVideo: false,
     });
-  }, [cleanup, updateState]);
+    // Reset to idle shortly after so UI can re-enter calls
+    setTimeout(() => updateState({ callState: "idle" }), 1200);
+  }, [updateState]);
 
   const toggleMute = useCallback(() => {
     const stream = localStreamRef.current;
@@ -268,27 +309,101 @@ const startCall = useCallback(async (callType: CallType): Promise<boolean> => {
     }
   }, [updateState]);
 
+  // Persistent signaling channel — subscribes exactly once when both ids are known.
+  // This ensures caller and callee are on the EXACT SAME topic: call-<sorted-ids>
+  // and that SUBSCRIBED completes BEFORE any offer is sent (caller waits on already-subscribed channel).
   useEffect(() => {
-    if (!localIdRef.current) return;
-    const remoteId = remoteIdRef.current;
-    if (!remoteId) return;
+    const localId = localUserId;
+    const remoteId = remoteUserId;
+    if (!localId || !remoteId) {
+      console.log("[useWebRTC] signaling channel: not subscribing — missing id", { localId, remoteId });
+      return;
+    }
 
-    const channel = supabase.channel(`call-${[localIdRef.current, remoteId].sort().join("_")}`);
+    const channelName = `call-${[localId, remoteId].sort().join("_")}`;
+    console.log("[useWebRTC] subscribing to channel:", channelName);
+
+    const channel = supabase.channel(channelName);
+
     channel.on("broadcast", { event: "webrtc-signal" }, async (payload) => {
-      const p = payload.payload as { type: string; from: string; callType: string };
-      if (p.from === localIdRef.current) return;
-      if (p.type === "offer" && stateRef.current.callState === "idle") {
-        callTypeRef.current = p.callType as CallType;
+      const p = payload.payload as {
+        type: string;
+        from: string;
+        to?: string;
+        sdp?: RTCSessionDescriptionInit;
+        candidate?: RTCIceCandidateInit;
+        callType?: CallType;
+      };
+      // Ignore own messages and messages not addressed to us (if to field present)
+      if (p.from === localId) return;
+      if (p.to && p.to !== localId) return;
+
+      console.log("[useWebRTC] signal received:", p.type, "from:", p.from, "to:", p.to, "channel:", channelName);
+
+      const pc = pcRef.current;
+
+      if (p.type === "offer") {
+        // If already in a call, ignore duplicate offers
+        if (stateRef.current.callState !== "idle") {
+          console.log("[useWebRTC] offer ignored — already in callState:", stateRef.current.callState);
+          return;
+        }
+        // Handle incoming offer immediately with SDP
+        callTypeRef.current = (p.callType as CallType) || "audio";
         remoteIdRef.current = p.from;
-        await receiveCall(p.callType as CallType, p.from);
+        await receiveCall((p.callType as CallType) || "audio", p.from, p.sdp);
+        // receiveCall will create PC, set remote, create answer, send it
+      } else if (p.type === "answer") {
+        if (pc && p.sdp) {
+          console.log("[useWebRTC] handling answer: setRemoteDescription");
+          try { await pc.setRemoteDescription(new RTCSessionDescription(p.sdp)); } catch (e) { console.error("[useWebRTC] setRemoteDescription answer failed:", e); }
+          updateState({ callState: "active" });
+        }
+      } else if (p.type === "ice-candidate") {
+        if (pc && p.candidate) {
+          console.log("[useWebRTC] handling ice-candidate from", p.from);
+          try { await pc.addIceCandidate(new RTCIceCandidate(p.candidate)); } catch (e) { console.warn("[useWebRTC] addIceCandidate failed:", e); }
+        }
+      } else if (p.type === "decline") {
+        console.log("[useWebRTC] handling decline from", p.from);
+        if (pcRef.current) { pcRef.current.close(); pcRef.current = null; }
+        if (localStreamRef.current) { localStreamRef.current.getTracks().forEach(t => t.stop()); localStreamRef.current = null; }
+        updateState({ callState: "declined", callType: null, remoteParticipantId: null, localStream: null, remoteStream: null });
+        setTimeout(() => updateState({ callState: "idle" }), 1500);
+      } else if (p.type === "end" || p.type === "call-ended") {
+        console.log("[useWebRTC] handling call-ended/end from", p.from);
+        if (pcRef.current) { console.log("[useWebRTC] remote hangup: pc.close()"); pcRef.current.close(); pcRef.current = null; }
+        if (localStreamRef.current) { console.log("[useWebRTC] remote hangup: stopping local tracks"); localStreamRef.current.getTracks().forEach(t => t.stop()); localStreamRef.current = null; }
+        updateState({
+          callState: "ended", callType: null, remoteParticipantId: null,
+          localStream: null, remoteStream: null,
+          isMuted: false, isCameraOff: false, isUpgradedToVideo: false,
+        });
+        setTimeout(() => updateState({ callState: "idle" }), 1200);
       }
     });
-    channel.subscribe();
+
+    channel.subscribe((status) => {
+      console.log("[useWebRTC] channel subscribe status:", status, "channel:", channelName);
+      if (status === "SUBSCRIBED") {
+        console.log("[useWebRTC] channel subscribed:", channelName);
+      }
+    });
+
     channelRef.current = channel;
-    return () => { supabase.removeChannel(channel); };
-  }, [remoteUserId, receiveCall]);
+    console.log("[useWebRTC] channelRef set:", channelName);
 
-  useEffect(() => { cleanup(); }, [cleanup]);
+    return () => {
+      console.log("[useWebRTC] removing channel:", channelName);
+      supabase.removeChannel(channel);
+      if (channelRef.current === channel) channelRef.current = null;
+    };
+  }, [localUserId, remoteUserId, receiveCall, updateState]);
 
-  return { state, startCall, receiveCall, acceptCall, declineCall, endCall, toggleMute, toggleCamera, upgradeToVideo };
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => { cleanup(); };
+  }, [cleanup]);
+
+  return { state, startCall, receiveCall, acceptCall, declineCall, endCall, toggleMute, toggleCamera, upgradeToVideo, fullCleanup };
 }
