@@ -20,6 +20,8 @@ export interface ChatMessage {
   id: string;
   sender_id: string;
   receiver_id: string | null;
+  sender_role?: string | null;
+  recipient_role?: string | null;
   incident_id: string | null;
   message: string;
   created_at: string;
@@ -156,17 +158,57 @@ export function useRealtimeChat(
   }, [currentUserId, markRead]);
 
   // ── Send (optimistic) ────────────────────────────────────────────────────
+  // Inserts into chat_messages must populate sender_role/recipient_role
+  // (NOT NULL constraint). Roles are derived from the same source of truth
+  // used elsewhere in the app: the `profiles.role` column (fallback to auth
+  // metadata), matching the pattern in src/components/Chatbox.tsx.
   const send = useCallback(async (text: string): Promise<boolean> => {
     const t = threadRef.current;
     const body = text.trim();
     if (!t.currentUserId || !body || (!t.broadcast && !t.targetUserId)) return false;
     setSending(true);
     setError(null);
+
+    // ── Resolve roles from profiles (source of truth) ─────────────────────
+    let myRole: string | null = null;
+    let theirRole: string | null = null;
+    try {
+      const { data: meProf } = await supabase.from("profiles").select("role").eq("id", t.currentUserId).single();
+      if (meProf?.role) myRole = (meProf.role as string).toLowerCase();
+    } catch {}
+    if (!myRole) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        const metaRole = (user?.user_metadata as any)?.role;
+        if (metaRole) myRole = String(metaRole).toLowerCase();
+      } catch {}
+    }
+    // Fallback to 'citizen' to avoid NOT NULL violation if profiles lookup fails
+    // (should never happen in normal operation — profiles always has a role).
+    if (!myRole) myRole = "citizen";
+
+    if (!t.broadcast && t.targetUserId) {
+      try {
+        const { data: themProf } = await supabase.from("profiles").select("role").eq("id", t.targetUserId).single();
+        if (themProf?.role) theirRole = (themProf.role as string).toLowerCase();
+      } catch {}
+      // If recipient profile not found (e.g. deleted user), fall back to null
+      // only to be coerced below; for NOT NULL we keep a generic value.
+      if (!theirRole) theirRole = "citizen";
+    } else if (t.broadcast) {
+      // Broadcast has no single recipient — use 'all' to satisfy NOT NULL.
+      // The column is text, so this avoids violating the constraint while
+      // remaining semantically clear. Mirrors the intent of a team-wide message.
+      theirRole = "all";
+    }
+
     const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const optimistic: ChatMessage = {
       id: tempId,
       sender_id: t.currentUserId,
       receiver_id: t.broadcast ? null : t.targetUserId,
+      sender_role: myRole,
+      recipient_role: theirRole,
       incident_id: t.incidentId ?? null,
       message: body,
       created_at: new Date().toISOString(),
@@ -178,6 +220,8 @@ export function useRealtimeChat(
       .insert({
         sender_id: optimistic.sender_id,
         receiver_id: optimistic.receiver_id,
+        sender_role: myRole,
+        recipient_role: theirRole,
         incident_id: optimistic.incident_id,
         message: body,
       })

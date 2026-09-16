@@ -323,9 +323,12 @@ export default function ChatBox({
         const allowed = (mRole === "citizen" && rRole === "responder") || (mRole === "responder" && (rRole === "admin" || rRole === "citizen")) || (mRole === "admin" && rRole === "responder");
         if (!allowed) return;
       } else if (mRole === "citizen") { return; }
+      // Ensure NOT NULL roles — fallback to derived role or generic to avoid constraint violation
+      const safeSenderRole = mRole || role || user?.role || "citizen";
+      const safeRecipientRole = rRole || (mRole === "citizen" ? "responder" : mRole === "admin" ? "responder" : "citizen");
       await supabase.from("chat_messages").insert({
         sender_id: session.user.id, recipient_id: recipientId,
-        sender_role: mRole || null, recipient_role: rRole || null,
+        sender_role: safeSenderRole, recipient_role: safeRecipientRole,
         incident_id: incidentId ?? null, content: queuedMsg.content, image_url: queuedMsg.imageUrl,
       });
     } catch {}
@@ -370,18 +373,20 @@ export default function ChatBox({
         setUploading(false);
       }
 
-      const msgData = { sender_id: session.user.id, recipient_id: recipientId, sender_role: mRole || null, recipient_role: rRole || null, incident_id: incidentId ?? null, content: inputText.trim(), image_url: imageUrl };
+      const safeSenderRole = mRole || role || user?.role || "citizen";
+      const safeRecipientRole = rRole || (mRole === "citizen" ? "responder" : mRole === "admin" ? "responder" : "citizen");
+      const msgData = { sender_id: session.user.id, recipient_id: recipientId, sender_role: safeSenderRole, recipient_role: safeRecipientRole, incident_id: incidentId ?? null, content: inputText.trim(), image_url: imageUrl };
 
       if (!effectiveOnline) {
         // Queue offline
         const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
         await addToQueue({
           content: inputText.trim(), timestamp: new Date().toISOString(),
-          senderId: session.user.id, senderRole: mRole || null, recipientId, incidentId: incidentId ?? null,
+          senderId: session.user.id, senderRole: safeSenderRole, recipientId, incidentId: incidentId ?? null,
           imageUrl, status: "pending", tempId,
         });
         // Optimistic UI
-        const optimisticMsg: ChatMessage = { id: tempId, sender_id: session.user.id, recipient_id: recipientId, sender_role: mRole || null, recipient_role: rRole || null, incident_id: incidentId ?? null, content: inputText.trim(), image_url: imageUrl, created_at: new Date().toISOString() };
+        const optimisticMsg: ChatMessage = { id: tempId, sender_id: session.user.id, recipient_id: recipientId, sender_role: safeSenderRole, recipient_role: safeRecipientRole, incident_id: incidentId ?? null, content: inputText.trim(), image_url: imageUrl, created_at: new Date().toISOString() };
         setMessages(prev => [...prev, optimisticMsg]);
         setInputText(""); setImageFile(null); setImagePreview(null);
         setSending(false);
