@@ -7,14 +7,62 @@ import { useLanguage } from "../../context/LanguageContext";
 import { supabase } from "../../js/supabase";
 import { useNavigate } from "react-router-dom";
 import ChatBox from "../../components/Chatbox";
+import { useWebRTC } from "../../hooks/useWebRTC";
+import CallOverlay from "../../components/CallOverlay";
+import { FaPhone, FaVideo } from "react-icons/fa";
 
 export default function CitizenChatPage() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [assignedResponderId, setAssignedResponderId] = useState<string | null>(null);
   const [incidentId, setIncidentId] = useState<string | null>(null);
+  const [citizenId, setCitizenId] = useState<string | null>(null);
+  const [responderName, setResponderName] = useState<string>("Responder");
   const [loading, setLoading] = useState(true);
   const [noResponder, setNoResponder] = useState(false);
+  // Calling — citizen ↔ responder, same useWebRTC hook as responder side
+  const [showCallOverlay, setShowCallOverlay] = useState(false);
+  const [callType, setCallType] = useState<"audio" | "video" | null>(null);
+  const {
+    state: callState,
+    startCall,
+    endCall,
+    toggleMute,
+    toggleCamera,
+    upgradeToVideo,
+  } = useWebRTC(citizenId, assignedResponderId);
+  const handleStartAudioCall = async () => {
+    setCallType("audio");
+    setShowCallOverlay(true);
+    await startCall("audio");
+  };
+  const handleStartVideoCall = async () => {
+    setCallType("video");
+    setShowCallOverlay(true);
+    await startCall("video");
+  };
+  const handleEndCall = () => {
+    endCall();
+    setShowCallOverlay(false);
+    setCallType(null);
+  };
+  useEffect(() => {
+    if (callState.callState === "ringing" || callState.callState === "active") {
+      setShowCallOverlay(true);
+      if (callState.callType) setCallType(callState.callType);
+    } else if (callState.callState === "ended" || callState.callState === "declined") {
+      const tid = setTimeout(() => {
+        setShowCallOverlay(false);
+        setCallType(null);
+      }, 1200);
+      return () => clearTimeout(tid);
+    } else if (callState.callState === "idle" && showCallOverlay) {
+      if (!callState.localStream && !callState.remoteStream) {
+        setShowCallOverlay(false);
+        setCallType(null);
+      }
+    }
+  }, [callState.callState, callState.callType, callState.localStream, callState.remoteStream, showCallOverlay]);
 
   useEffect(() => {
     (async () => {
@@ -48,16 +96,18 @@ export default function CitizenChatPage() {
           r.responder_id && (r.status === "pending" || r.status === "in-progress")
         );
 
+        setCitizenId(user.id);
         if (active?.responder_id) {
           const { data: responder } = await supabase
             .from("profiles")
-            .select("id, role")
+            .select("id, role, full_name, email")
             .eq("id", active.responder_id)
             .single();
 
           if ((responder?.role as string)?.toLowerCase() === "responder") {
             setAssignedResponderId(active.responder_id as string);
             setIncidentId(active.id as string);
+            setResponderName((responder as any)?.full_name || (responder as any)?.email || "Responder");
           } else {
             setNoResponder(true);
           }
@@ -109,22 +159,49 @@ export default function CitizenChatPage() {
 
   return (
     <div style={{ padding: "20px", maxWidth: "700px", margin: "0 auto" }}>
-      {/* Role-based header */}
+      {/* Role-based header — citizen visual style (green, matches CitizenDashboard) */}
       <div style={{
         marginBottom: "16px", padding: "14px 18px",
         backgroundColor: "rgba(15,21,33,0.82)",
         border: "1px solid rgba(46,204,143,0.15)",
         borderRadius: "12px", borderLeft: "3px solid #2ECC8F",
+        display: "flex", alignItems: "center", gap: "12px",
       }}>
-        <div style={{ fontSize: "10px", color: "#2ECC8F", letterSpacing: "0.14em", textTransform: "uppercase", fontWeight: "700", marginBottom: "4px" }}>
-          {t("chat.secureChannel", "Secure Channel")}
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: "10px", color: "#2ECC8F", letterSpacing: "0.14em", textTransform: "uppercase", fontWeight: "700", marginBottom: "4px" }}>
+            {t("chat.secureChannel", "Secure Channel")}
+          </div>
+          <div style={{ fontSize: "13px", color: "rgba(238,240,247,0.65)", fontWeight: "500" }}>
+            {t("chat.citizenNote", "Your messages are encrypted and shared only with your assigned responder.")}
+          </div>
         </div>
-        <div style={{ fontSize: "13px", color: "rgba(238,240,247,0.65)", fontWeight: "500" }}>
-          {t("chat.citizenNote", "Your messages are encrypted and shared only with your assigned responder.")}
-        </div>
+        {assignedResponderId && (
+          <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
+            <button onClick={handleStartAudioCall} title="Audio Call" style={{ background: "rgba(46,204,143,0.12)", border: "1px solid rgba(46,204,143,0.3)", borderRadius: "8px", padding: "8px 10px", cursor: "pointer", color: "#2ECC8F", fontSize: "14px", display: "flex", alignItems: "center" }}>
+              <FaPhone size={14} />
+            </button>
+            <button onClick={handleStartVideoCall} title="Video Call" style={{ background: "rgba(46,204,143,0.12)", border: "1px solid rgba(46,204,143,0.3)", borderRadius: "8px", padding: "8px 10px", cursor: "pointer", color: "#2ECC8F", fontSize: "14px", display: "flex", alignItems: "center" }}>
+              <FaVideo size={14} />
+            </button>
+          </div>
+        )}
       </div>
 
       <ChatBox assignedResponderId={assignedResponderId} incidentId={incidentId} userRole="citizen" />
+
+      {/* Call Overlay — citizen ↔ responder (same useWebRTC infrastructure) */}
+      {showCallOverlay && callType && (
+        <CallOverlay
+          state={callState}
+          callType={callType}
+          remoteName={responderName}
+          onMute={toggleMute}
+          onCamera={toggleCamera}
+          onUpgrade={upgradeToVideo}
+          onEnd={handleEndCall}
+          isOnline={true}
+        />
+      )}
     </div>
   );
 }

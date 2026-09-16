@@ -22,11 +22,11 @@ import CallOverlay from "./CallOverlay";
 interface ChatMessage {
   id: string;
   sender_id: string;
-  recipient_id: string | null;
+  receiver_id: string | null;
   sender_role?: string | null;
   recipient_role?: string | null;
   incident_id: string | null;
-  content: string;
+  message: string;
   image_url: string | null;
   created_at: string;
 }
@@ -217,13 +217,13 @@ export default function ChatBox({
   const buildChatQuery = useCallback((userId: string) => {
     let query = supabase.from("chat_messages").select("*");
     if (recipientId && incidentId) {
-      query = query.or(`and(sender_id.eq.${userId},recipient_id.eq.${recipientId}),and(sender_id.eq.${recipientId},recipient_id.eq.${userId})`).eq("incident_id", incidentId);
+      query = query.or(`and(sender_id.eq.${userId},receiver_id.eq.${recipientId}),and(sender_id.eq.${recipientId},receiver_id.eq.${userId})`).eq("incident_id", incidentId);
     } else if (recipientId) {
-      query = query.or(`and(sender_id.eq.${userId},recipient_id.eq.${recipientId}),and(sender_id.eq.${recipientId},recipient_id.eq.${userId})`);
+      query = query.or(`and(sender_id.eq.${userId},receiver_id.eq.${recipientId}),and(sender_id.eq.${recipientId},receiver_id.eq.${userId})`);
     } else if (isCitizen) {
       query = query.eq("sender_id", userId);
     } else {
-      query = query.or(`sender_id.eq.${userId},recipient_id.eq.${userId}`);
+      query = query.or(`sender_id.eq.${userId},receiver_id.eq.${userId}`);
       if (incidentId) query = query.eq("incident_id", incidentId);
     }
     return query.order("created_at", { ascending: true });
@@ -265,10 +265,10 @@ export default function ChatBox({
         if (!cancelled) {
           const me = userIdRef.current;
           if (recipientId) {
-            const inPair = (newMsg.sender_id === me && newMsg.recipient_id === recipientId) || (newMsg.sender_id === recipientId && newMsg.recipient_id === me);
+            const inPair = (newMsg.sender_id === me && newMsg.receiver_id === recipientId) || (newMsg.sender_id === recipientId && newMsg.receiver_id === me);
             if (!inPair) return;
             if (incidentId && newMsg.incident_id !== incidentId) return;
-          } else if (newMsg.sender_id !== me && newMsg.recipient_id !== me) {
+          } else if (newMsg.sender_id !== me && newMsg.receiver_id !== me) {
             return;
           }
           setMessages(prev => {
@@ -327,9 +327,9 @@ export default function ChatBox({
       const safeSenderRole = mRole || role || user?.role || "citizen";
       const safeRecipientRole = rRole || (mRole === "citizen" ? "responder" : mRole === "admin" ? "responder" : "citizen");
       await supabase.from("chat_messages").insert({
-        sender_id: session.user.id, recipient_id: recipientId,
+        sender_id: session.user.id, receiver_id: recipientId,
         sender_role: safeSenderRole, recipient_role: safeRecipientRole,
-        incident_id: incidentId ?? null, content: queuedMsg.content, image_url: queuedMsg.imageUrl,
+        incident_id: incidentId ?? null, message: queuedMsg.content, image_url: queuedMsg.imageUrl,
       });
     } catch {}
   }, [recipientId, incidentId]);
@@ -375,18 +375,17 @@ export default function ChatBox({
 
       const safeSenderRole = mRole || role || user?.role || "citizen";
       const safeRecipientRole = rRole || (mRole === "citizen" ? "responder" : mRole === "admin" ? "responder" : "citizen");
-      const msgData = { sender_id: session.user.id, recipient_id: recipientId, sender_role: safeSenderRole, recipient_role: safeRecipientRole, incident_id: incidentId ?? null, content: inputText.trim(), image_url: imageUrl };
+      const msgData = { sender_id: session.user.id, receiver_id: recipientId, sender_role: safeSenderRole, recipient_role: safeRecipientRole, incident_id: incidentId ?? null, message: inputText.trim(), image_url: imageUrl };
 
       if (!effectiveOnline) {
         // Queue offline
         const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-        await addToQueue({
-          content: inputText.trim(), timestamp: new Date().toISOString(),
+        await addToQueue({ content: inputText.trim(), timestamp: new Date().toISOString(),
           senderId: session.user.id, senderRole: safeSenderRole, recipientId, incidentId: incidentId ?? null,
           imageUrl, status: "pending", tempId,
         });
         // Optimistic UI
-        const optimisticMsg: ChatMessage = { id: tempId, sender_id: session.user.id, recipient_id: recipientId, sender_role: safeSenderRole, recipient_role: safeRecipientRole, incident_id: incidentId ?? null, content: inputText.trim(), image_url: imageUrl, created_at: new Date().toISOString() };
+        const optimisticMsg: ChatMessage = { id: tempId, sender_id: session.user.id, receiver_id: recipientId, sender_role: safeSenderRole, recipient_role: safeRecipientRole, incident_id: incidentId ?? null, message: inputText.trim(), image_url: imageUrl, created_at: new Date().toISOString() };
         setMessages(prev => [...prev, optimisticMsg]);
         setInputText(""); setImageFile(null); setImagePreview(null);
         setSending(false);
@@ -542,7 +541,7 @@ export default function ChatBox({
                       <img src={msg.image_url} alt="attachment" style={{ maxWidth: "100%", maxHeight: "200px", borderRadius: "8px", objectFit: "cover", display: "block" }} loading="lazy" />
                     </a>
                   )}
-                  {msg.content && <div>{msg.content}</div>}
+                  {msg.message && <div>{msg.message}</div>}
                   <div style={{ fontSize: "9px", color: isPending ? "#FB923C" : "rgba(238,240,247,0.3)", marginTop: "4px", textAlign: "right", display: "flex", alignItems: "center", gap: "4px", justifyContent: "flex-end" }}>
                     {formatTime(msg.created_at)}
                     {isPending && <span title="Pending (offline)">&#9679;</span>}

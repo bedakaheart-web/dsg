@@ -13,6 +13,9 @@ import {
   useRealtimeChat,
   type ChatMessage,
 } from "../../hooks/useRealtimeChat";
+import { useWebRTC } from "../../hooks/useWebRTC";
+import CallOverlay from "../../components/CallOverlay";
+import { FaPhone, FaVideo } from "react-icons/fa";
 
 // Full-screen drawer on phones so chat controls stay usable <480px.
 function useIsNarrow(breakpoint = 480) {
@@ -80,6 +83,52 @@ export default function AdminChatDrawer({ open, onClose, targetId = null }: {
   const { messages, loading, send, markRead } = useRealtimeChat(
     me || null, broadcastMode ? null : activeId, { broadcast: broadcastMode }
   );
+
+  // ── Calling (admin ↔ responder) — same useWebRTC/TURN as citizen↔responder ──
+  const [showCallOverlay, setShowCallOverlay] = useState(false);
+  const [callType, setCallType] = useState<"audio" | "video" | null>(null);
+  const {
+    state: callState,
+    startCall,
+    endCall,
+    toggleMute,
+    toggleCamera,
+    upgradeToVideo,
+  } = useWebRTC(me || null, broadcastMode ? null : activeId);
+
+  const handleStartAudioCall = async () => {
+    setCallType("audio");
+    setShowCallOverlay(true);
+    await startCall("audio");
+  };
+  const handleStartVideoCall = async () => {
+    setCallType("video");
+    setShowCallOverlay(true);
+    await startCall("video");
+  };
+  const handleEndCall = () => {
+    endCall();
+    setShowCallOverlay(false);
+    setCallType(null);
+  };
+  // Sync overlay with remote signaling (incoming call, remote hangup)
+  useEffect(() => {
+    if (callState.callState === "ringing" || callState.callState === "active") {
+      setShowCallOverlay(true);
+      if (callState.callType) setCallType(callState.callType);
+    } else if (callState.callState === "ended" || callState.callState === "declined") {
+      const t = setTimeout(() => {
+        setShowCallOverlay(false);
+        setCallType(null);
+      }, 1200);
+      return () => clearTimeout(t);
+    } else if (callState.callState === "idle" && showCallOverlay) {
+      if (!callState.localStream && !callState.remoteStream) {
+        setShowCallOverlay(false);
+        setCallType(null);
+      }
+    }
+  }, [callState.callState, callState.callType, callState.localStream, callState.remoteStream, showCallOverlay]);
 
   // ── Identity + contacts ──────────────────────────────────────────────────
   useEffect(() => {
@@ -266,9 +315,19 @@ export default function AdminChatDrawer({ open, onClose, targetId = null }: {
               <div style={{ padding: "8px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 8 }}>
                 <button onClick={() => (broadcastMode ? onClose() : setActiveId(null))}
                   style={{ background: "none", border: "none", color: "#4A90D9", cursor: "pointer", fontSize: 14 }}>←</button>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "#eef0f7" }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#eef0f7", flex: 1 }}>
                   {broadcastMode ? "📢 Team Broadcast" : (activeContact?.full_name || "Responder")}
                 </span>
+                {!broadcastMode && activeId && (
+                  <div style={{ display: "flex", gap: 6, marginLeft: "auto" }}>
+                    <button onClick={handleStartAudioCall} title="Audio Call" style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "6px 8px", cursor: "pointer", color: "#4A90D9", fontSize: 12, display: "flex", alignItems: "center" }}>
+                      <FaPhone size={12} />
+                    </button>
+                    <button onClick={handleStartVideoCall} title="Video Call" style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "6px 8px", cursor: "pointer", color: "#4A90D9", fontSize: 12, display: "flex", alignItems: "center" }}>
+                      <FaVideo size={12} />
+                    </button>
+                  </div>
+                )}
               </div>
               {/* Messages */}
               <div style={{ flex: 1, overflowY: "auto", padding: "12px" }}>
@@ -300,6 +359,19 @@ export default function AdminChatDrawer({ open, onClose, targetId = null }: {
               </div>
             </>
           )}
+        {/* Call Overlay — admin↔responder (same infra as citizen↔responder) */}
+        {showCallOverlay && callType && (
+          <CallOverlay
+            state={callState}
+            callType={callType}
+            remoteName={activeContact?.full_name || "Responder"}
+            onMute={toggleMute}
+            onCamera={toggleCamera}
+            onUpgrade={upgradeToVideo}
+            onEnd={handleEndCall}
+            isOnline={true}
+          />
+        )}
       </aside>
     </>
   );
