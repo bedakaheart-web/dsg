@@ -3,5 +3,6 @@
      publish = "dist"
      functions = "netlify/functions"
 
-   [functions]
-     node_bundler = "esbuild"
+[functions.environment]
+  METERED_SECRET_KEY = ""
+  VITE_METERED_DOMAIN = "dumasafeguide.metered.live"

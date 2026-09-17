@@ -13,8 +13,8 @@ import {
   useRealtimeChat,
   type ChatMessage,
 } from "../../hooks/useRealtimeChat";
-import { useWebRTC } from "../../hooks/useWebRTC";
-import CallOverlay from "../../components/CallOverlay";
+import { useMeteredCall } from "../../hooks/useMeteredCall";
+import MeteredCallOverlay from "../../components/MeteredCallOverlay";
 import { FaPhone, FaVideo } from "react-icons/fa";
 
 // Full-screen drawer on phones so chat controls stay usable <480px.
@@ -102,27 +102,29 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
     me || null, broadcastMode ? null : activeId, { broadcast: broadcastMode }
   );
 
-  // ── Calling (responder ↔ admin HQ) — same useWebRTC/TURN as citizen↔responder ──
+  // ── Calling (responder ↔ admin HQ) — Metered SDK ──
   const [showCallOverlay, setShowCallOverlay] = useState(false);
   const [callType, setCallType] = useState<"audio" | "video" | null>(null);
   const {
     state: callState,
-    startCall,
-    endCall,
+    joinRoom,
     toggleMute,
     toggleCamera,
-    upgradeToVideo,
-  } = useWebRTC(me || null, broadcastMode ? null : activeId);
+    endCall,
+  } = useMeteredCall(
+    broadcastMode ? null : activeId,
+    responderName
+  );
 
   const handleStartAudioCall = async () => {
     setCallType("audio");
     setShowCallOverlay(true);
-    await startCall("audio");
+    await joinRoom("audio");
   };
   const handleStartVideoCall = async () => {
     setCallType("video");
     setShowCallOverlay(true);
-    await startCall("video");
+    await joinRoom("video");
   };
   const handleEndCall = () => {
     endCall();
@@ -140,12 +142,10 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
       }, 1200);
       return () => clearTimeout(t);
     } else if (callState.callState === "idle" && showCallOverlay) {
-      if (!callState.localStream && !callState.remoteStream) {
-        setShowCallOverlay(false);
-        setCallType(null);
-      }
+      setShowCallOverlay(false);
+      setCallType(null);
     }
-  }, [callState.callState, callState.callType, callState.localStream, callState.remoteStream, showCallOverlay]);
+  }, [callState.callState, callState.callType, showCallOverlay]);
 
   // ── HQ admin list ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -384,15 +384,14 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
               )}
             </>
           )}
-        {/* Call Overlay — responder↔admin (same infra as citizen↔responder) */}
+        {/* Call Overlay — responder↔admin via Metered SDK */}
         {showCallOverlay && callType && (
-          <CallOverlay
+          <MeteredCallOverlay
             state={callState}
             callType={callType}
             remoteName={admins.find(a => a.id === activeId)?.full_name || targetName || "HQ Admin"}
             onMute={toggleMute}
             onCamera={toggleCamera}
-            onUpgrade={upgradeToVideo}
             onEnd={handleEndCall}
             isOnline={true}
           />

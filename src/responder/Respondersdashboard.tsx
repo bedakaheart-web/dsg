@@ -134,19 +134,19 @@ const STYLES = `
 }
 .rd-bg::after { content: ''; position: absolute; inset: 0; background: rgba(8,12,20,0.93); }
 
-.rd-shell { display: flex; height: 100%; width: 100%; position: relative; z-index: 1; }
+.rd-shell { display: flex; height: 100%; width: 100%; position: relative; z-index: 0; }
 
-.rd-overlay { display: none; position: fixed; inset: 0; z-index: 190; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+.rd-overlay { display: none; position: fixed; inset: 0; z-index: 1; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
 .rd-overlay.open { display: block; }
 
 /* ── Sidebar ── */
 .rd-sidebar {
-  width: 260px; flex-shrink: 0;
-  background: var(--surface); border-right: 1px solid var(--border);
-  display: flex; flex-direction: column; height: 100%; overflow: hidden;
-  transition: transform 0.3s ease; box-shadow: 0 4px 16px rgba(0,0,0,0.04);
-  position: absolute; left: 0; top: 0; z-index: 200;
-}
+   width: 260px; flex-shrink: 0;
+   background: var(--surface); border-right: 1px solid var(--border);
+   display: flex; flex-direction: column; height: 100%; overflow: hidden;
+   transition: transform 0.3s ease; box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+   position: fixed; left: 0; top: 0; z-index: 2;
+ }
 
 .rd-logo {
   padding: 20px 16px; display: flex; align-items: center; gap: 12px;
@@ -861,61 +861,60 @@ export default function RespondersDashboard() {
         <div className="rd-bg" style={{ backgroundImage: `url(${dsgLogo})` }} />
         <div className={cls("rd-overlay", sidebarOpen && "open")} onClick={() => setSidebarOpen(false)} />
 
+        {/* Sidebar */}
+        <aside className={cls("rd-sidebar", sidebarOpen && "open")} aria-label="Navigation">
+          <div className="rd-logo">
+            <img src={dsgLogo} alt="DumaSafeGuide" className="rd-logo-img" />
+            <div>
+              <div className="rd-logo-name">DumaSafeGuide</div>
+              <div className="rd-logo-sub"><span className="rd-pip" />RESPONDER</div>
+            </div>
+            <button className="rd-sidebar-close" onClick={() => setSidebarOpen(false)} aria-label="Close sidebar">
+              <SvgIcon path={ICONS.x} />
+            </button>
+          </div>
+
+          <nav className="rd-nav-scroll">
+            {navGroups.map((g) => (
+              <div key={g.label}>
+                <div className="rd-nav-group">{g.label}</div>
+                {g.items.map((item) => (
+                  <button
+                    key={item.id}
+                    className={cls("rd-nav-btn", view === item.id && "active", item.id === "team" && "team-nav")}
+                    onClick={() => item.id === "citizenChat" ? openCitizenChat() : handleNavigate(item.id)}
+                  >
+                    <span className="rd-nav-ic">
+                      <SvgIcon path={NAV_ICON_MAP[item.id]} size={16} />
+                    </span>
+                    <span>{item.label}</span>
+                    {item.id === "incidents" && pendingCount > 0 && (
+                      <span className="rd-badge">{pendingCount}</span>
+                    )}
+                    {item.id === "alerts" && alertCount > 0 && view !== "alerts" && (
+                      <span className="rd-badge-blue">{alertCount}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            ))}
+          </nav>
+
+          <div className="rd-sidebar-foot">
+            <div className="rd-user-card">
+              <div className="rd-avatar">{initials}</div>
+              <div style={{ minWidth: 0 }}>
+                <div className="rd-user-name">{responderName}</div>
+                <div className="rd-user-role"><span className="rd-pip" />ON DUTY</div>
+              </div>
+            </div>
+            <button className="rd-logout-btn" onClick={handleLogout}>
+              <SvgIcon path={ICONS.signOut} /> Sign Out
+            </button>
+          </div>
+        </aside>
+
         <div className="rd-shell">
-          {/* Sidebar */}
-          <aside className={cls("rd-sidebar", sidebarOpen && "open")} aria-label="Navigation">
-            <div className="rd-logo">
-              <img src={dsgLogo} alt="DumaSafeGuide" className="rd-logo-img" />
-              <div>
-                <div className="rd-logo-name">DumaSafeGuide</div>
-                <div className="rd-logo-sub"><span className="rd-pip" />RESPONDER</div>
-              </div>
-              <button className="rd-sidebar-close" onClick={() => setSidebarOpen(false)} aria-label="Close sidebar">
-                <SvgIcon path={ICONS.x} />
-              </button>
-            </div>
-
-            <nav className="rd-nav-scroll">
-              {navGroups.map((g) => (
-                <div key={g.label}>
-                  <div className="rd-nav-group">{g.label}</div>
-                  {g.items.map((item) => (
-                    <button
-                      key={item.id}
-                      className={cls("rd-nav-btn", view === item.id && "active", item.id === "team" && "team-nav")}
-                      onClick={() => item.id === "citizenChat" ? openCitizenChat() : handleNavigate(item.id)}
-                    >
-                      <span className="rd-nav-ic">
-                        <SvgIcon path={NAV_ICON_MAP[item.id]} size={16} />
-                      </span>
-                      <span>{item.label}</span>
-                      {item.id === "incidents" && pendingCount > 0 && (
-                        <span className="rd-badge">{pendingCount}</span>
-                      )}
-                      {item.id === "alerts" && alertCount > 0 && view !== "alerts" && (
-                        <span className="rd-badge-blue">{alertCount}</span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              ))}
-            </nav>
-
-            <div className="rd-sidebar-foot">
-              <div className="rd-user-card">
-                <div className="rd-avatar">{initials}</div>
-                <div style={{ minWidth: 0 }}>
-                  <div className="rd-user-name">{responderName}</div>
-                  <div className="rd-user-role"><span className="rd-pip" />ON DUTY</div>
-                </div>
-              </div>
-              <button className="rd-logout-btn" onClick={handleLogout}>
-                <SvgIcon path={ICONS.signOut} /> Sign Out
-              </button>
-            </div>
-          </aside>
-
-          {/* Main content */}
           <div className="rd-main">
             <header className="rd-topbar">
               <button className="rd-hamburger" onClick={() => setSidebarOpen(true)} aria-label="Open navigation">
