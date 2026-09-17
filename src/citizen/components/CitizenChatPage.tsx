@@ -33,6 +33,7 @@ export default function CitizenChatPage() {
   const [citizenId, setCitizenId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [noResponder, setNoResponder] = useState(false);
+  const [allReports, setAllReports] = useState<any[]>([]);
 
   // On-duty responders list (reused query pattern from AdminChatDrawer.tsx)
   const [responders, setResponders] = useState<ResponderContact[]>([]);
@@ -118,6 +119,7 @@ export default function CitizenChatPage() {
           .order("created_at", { ascending: false })
           .limit(10);
 
+        setAllReports(reports ?? []);
         const active = (reports ?? []).find(r =>
           r.responder_id && (r.status === "pending" || r.status === "in-progress")
         );
@@ -161,7 +163,8 @@ export default function CitizenChatPage() {
           // Default selection: assigned responder first, else first on-duty
           const initialId = assignedId ?? (onDuty[0]?.id ?? null);
           const initialName = assignedId ? assignedName : (onDuty[0]?.full_name || onDuty[0]?.email || "Responder");
-          const initialInc = assignedId ? assignedInc : null;
+          const linkedForInitial = (reports ?? []).find(rep => String(rep.responder_id) === String(initialId));
+          const initialInc = linkedForInitial ? String(linkedForInitial.id) : (assignedId ? assignedInc : null);
           setSelectedResponderId(initialId);
           setSelectedResponderName(initialName);
           setSelectedIncidentId(initialInc);
@@ -193,11 +196,18 @@ export default function CitizenChatPage() {
   }, []);
 
   // Selecting a responder updates chat thread (incident scoping)
+  // Use the most recent report linking this citizen to this responder so both sides share the same incident_id.
   const handleSelectResponder = (r: ResponderContact) => {
-    const isAssigned = r.id === assignedResponderId;
     setSelectedResponderId(r.id);
     setSelectedResponderName(r.full_name || r.email || "Responder");
-    setSelectedIncidentId(isAssigned ? assignedIncidentId : null);
+    const linked = allReports.find(rep => String(rep.responder_id) === String(r.id));
+    if (linked) {
+      setSelectedIncidentId(String(linked.id));
+    } else if (r.id === assignedResponderId) {
+      setSelectedIncidentId(assignedIncidentId);
+    } else {
+      setSelectedIncidentId(null);
+    }
   };
 
   if (loading) {

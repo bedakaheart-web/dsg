@@ -40,7 +40,7 @@ function sameThread(
   broadcast: boolean,
   incidentId: string | null | undefined,
 ): boolean {
-  if ((incidentId ?? null) !== (m.incident_id ?? null)) return false;
+  if (String(incidentId ?? "") !== String(m.incident_id ?? "")) return false;
   if (broadcast) return m.receiver_id === null;
   if (!target) return false;
   const pair =
@@ -114,7 +114,7 @@ export function useRealtimeChat(
         }
       } else {
         setMessages(
-          ((data ?? []) as ChatMessage[]).filter(m => (m.incident_id ?? null) === (incidentId ?? null))
+          ((data ?? []) as ChatMessage[]).filter(m => String(m.incident_id ?? "") === String(incidentId ?? ""))
         );
       }
       setLoading(false);

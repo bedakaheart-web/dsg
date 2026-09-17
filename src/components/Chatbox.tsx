@@ -283,7 +283,7 @@ export default function ChatBox({
           if (recipientId) {
             const inPair = (newMsg.sender_id === me && newMsg.receiver_id === recipientId) || (newMsg.sender_id === recipientId && newMsg.receiver_id === me);
             if (!inPair) return;
-            if (incidentId && newMsg.incident_id !== incidentId) return;
+            if (incidentId && String(newMsg.incident_id) !== String(incidentId)) return;
           } else if (newMsg.sender_id !== me && newMsg.receiver_id !== me) {
             return;
           }
