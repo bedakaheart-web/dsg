@@ -104,7 +104,6 @@ export default function ChatBox({
     upgradeToVideo,
   } = useWebRTC(user?.id ?? userIdRef.current ?? null, recipientId);
 
-  const isRecipientOnline = recipientId ? onlineUserIds.has(recipientId) : false;
   const effectiveOnline = queueOnline;
 
   // ── Network status ──
@@ -212,6 +211,23 @@ export default function ChatBox({
       } catch {}
     })();
   }, []);
+
+  // Recipient online status from profiles (matches sidebar "on_duty" logic)
+  const [isRecipientOnline, setIsRecipientOnline] = useState(false);
+  useEffect(() => {
+    if (!recipientId || !user?.id) return;
+    const fetch = async () => {
+      try {
+        const { data: prof } = await supabase.from("profiles").select("status").eq("id", recipientId).single();
+        setIsRecipientOnline((prof?.status ?? "").toLowerCase() === "on_duty");
+      } catch {
+        setIsRecipientOnline(false);
+      }
+    };
+    void fetch();
+    const interval = setInterval(() => void fetch(), 30000);
+    return () => clearInterval(interval);
+  }, [recipientId, user?.id]);
 
   // ── Build query ──
   const buildChatQuery = useCallback((userId: string) => {

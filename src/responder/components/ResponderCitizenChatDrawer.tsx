@@ -79,8 +79,19 @@ export default function ResponderCitizenChatDrawer({
             if (p.full_name) nameMap[p.id] = p.full_name;
           }
         }
+        // Deduplicate by citizen user_id — keep only the most recent report per citizen
+        const citizenReportMap: Record<string, typeof rows[0]> = {};
+        for (const r of rows) {
+          const uid = r.user_id;
+          if (!uid) continue;
+          if (!citizenReportMap[uid] || new Date(r.created_at) > new Date(citizenReportMap[uid].created_at)) {
+            citizenReportMap[uid] = r;
+          }
+        }
+        const uniqueRows = Object.values(citizenReportMap);
+
         if (cancelled) return;
-        setConversations(rows.map(r => ({
+        setConversations(uniqueRows.map(r => ({
           reportId: String(r.id),
           citizenId: r.user_id ? String(r.user_id) : null,
           citizenName: (r.user_id && nameMap[String(r.user_id)]) || r.reporter_name || "Citizen",
