@@ -979,7 +979,7 @@ export default function RespondersDashboard() {
         </div>
 
         {/* Real-time side chat with Admin HQ */}
-        {responderId && <ResponderChatDrawer responderId={responderId} open={isChatOpen} onClose={() => setIsChatOpen(false)} />}
+        {responderId && <ResponderChatDrawer responderId={responderId} open={isChatOpen} onClose={() => setIsChatOpen(false)} responderName={responderName} />}
         {/* Direct chat with assigned citizens (text + images via chat_messages) */}
         {responderId && (
           <ResponderCitizenChatDrawer

@@ -84,8 +84,8 @@ function Bubble({ m, mine }: { m: ChatMessage; mine: boolean }) {
   );
 }
 
-export default function ResponderChatDrawer({ responderId, open, onClose, targetId = null, targetName = null }: {
-  responderId: string; open: boolean; onClose: () => void; targetId?: string | null; targetName?: string | null;
+export default function ResponderChatDrawer({ responderId, open, onClose, targetId = null, targetName = null, responderName = "Responder" }: {
+    responderId: string; open: boolean; onClose: () => void; targetId?: string | null; targetName?: string | null; responderName?: string;
 }) {
   const me = responderId;
   const fullScreen = useIsNarrow();
