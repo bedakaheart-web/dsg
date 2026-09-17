@@ -312,6 +312,8 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
   // Persistent signaling channel — subscribes exactly once when both ids are known.
   // This ensures caller and callee are on the EXACT SAME topic: call-<sorted-ids>
   // and that SUBSCRIBED completes BEFORE any offer is sent (caller waits on already-subscribed channel).
+  const hasSubscribedRef = useRef(false);
+
   useEffect(() => {
     const localId = localUserId;
     const remoteId = remoteUserId;
@@ -319,7 +321,8 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
       console.log("[useWebRTC] signaling channel: not subscribing — missing id", { localId, remoteId });
       return;
     }
-
+    if (hasSubscribedRef.current) return;
+    hasSubscribedRef.current = true;
     const channelName = `call-${[localId, remoteId].sort().join("_")}`;
     console.log("[useWebRTC] subscribing to channel:", channelName);
 
@@ -393,11 +396,12 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
     channelRef.current = channel;
     console.log("[useWebRTC] channelRef set:", channelName);
 
-    return () => {
-      console.log("[useWebRTC] removing channel:", channelName);
-      supabase.removeChannel(channel);
-      if (channelRef.current === channel) channelRef.current = null;
-    };
+return () => {
+       console.log("[useWebRTC] removing channel:", channelName);
+       hasSubscribedRef.current = false;
+       supabase.removeChannel(channel);
+       if (channelRef.current === channel) channelRef.current = null;
+     };
   }, [localUserId, remoteUserId, receiveCall, updateState]);
 
   // Cleanup on unmount

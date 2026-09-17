@@ -542,7 +542,7 @@ export default function ChatBox({
                 }}>
                   {msg.image_url && (
                     <a href={msg.image_url} target="_blank" rel="noopener noreferrer" style={{ display: "block", marginBottom: "6px", borderRadius: "8px", overflow: "hidden" }}>
-                      <img src={msg.image_url} alt="attachment" style={{ maxWidth: "100%", maxHeight: "200px", borderRadius: "8px", objectFit: "cover", display: "block" }} loading="lazy" />
+                      <img src={msg.image_url} alt="attachment" style={{ maxWidth: "100%", maxHeight: "200px", borderRadius: "8px", objectFit: "cover", display: "block" }} />
                     </a>
                   )}
                   {msg.message && <div>{msg.message}</div>}
@@ -586,7 +586,7 @@ export default function ChatBox({
       <form onSubmit={sendMessage} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "12px 16px", borderTop: "1px solid rgba(255,255,255,0.07)", backgroundColor: "rgba(8,12,20,0.6)", flexShrink: 0 }}>
         <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading} style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "8px", cursor: uploading ? "not-allowed" : "pointer", color: uploading ? "rgba(238,240,247,0.2)" : "#2ECC8F", fontSize: "14px", display: "flex", alignItems: "center", justifyContent: "center", opacity: uploading ? 0.5 : 1 }} title={t("chat.attachImage", "Attach Image")}><FaImage /></button>
         <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImageSelect} style={{ display: "none" }} disabled={uploading} />
-        <input type="text" value={inputText} onChange={handleInputChange} placeholder={t("chat.typeMessage", "Type a message...")} style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "8px 14px", fontSize: "13px", color: "#eef0f7", outline: "none", fontFamily: "inherit" }} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) e.preventDefault(); }} />
+        <input id="chat-message-input" name="message" type="text" value={inputText} onChange={handleInputChange} placeholder={t("chat.typeMessage", "Type a message...")} style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "8px 14px", fontSize: "13px", color: "#eef0f7", outline: "none", fontFamily: "inherit" }} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) e.preventDefault(); }} />
         <button type="submit" disabled={sending || uploading || (!inputText.trim() && !imageFile)} style={{ background: sending || uploading ? "rgba(238,240,247,0.05)" : "rgba(46,204,143,0.15)", border: `1px solid ${sending || uploading ? "rgba(238,240,247,0.1)" : "rgba(46,204,143,0.3)"}`, borderRadius: "8px", padding: "8px 12px", cursor: sending || uploading ? "not-allowed" : "pointer", color: sending || uploading ? "rgba(238,240,247,0.3)" : "#2ECC8F", fontSize: "14px", display: "flex", alignItems: "center", justifyContent: "center", opacity: sending || uploading ? 0.5 : 1 }}>
           {sending ? <FaSpinner style={{ animation: "spin 1s linear infinite" }} /> : <FaPaperPlane />}
         </button>
