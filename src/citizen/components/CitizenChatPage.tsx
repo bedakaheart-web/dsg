@@ -16,9 +16,13 @@ interface ResponderContact {
   full_name: string | null;
   email: string;
   status?: string | null;
+  is_online?: boolean | null;
 }
 
-const isOnDuty = (c: ResponderContact) => c.status === "on_duty" || c.status === "responding";
+const isOnDuty = (c: ResponderContact) => {
+  const s = (c.status ?? "").toLowerCase().trim().replace(/\s+/g, "_");
+  return s === "on_duty" || s === "responding" || c.is_online === true;
+};
 
 export default function CitizenChatPage() {
   const { t } = useLanguage();
@@ -142,7 +146,7 @@ export default function CitizenChatPage() {
         // Status field on profiles: status = 'on_duty' or 'responding' (same query as admin/responder drawers)
         const { data: onDutyData } = await supabase
           .from("profiles")
-          .select("id, full_name, email, status, role")
+          .select("id, full_name, email, status, role, is_online")
           .eq("role", "responder")
           .order("full_name", { ascending: true });
 
@@ -177,7 +181,7 @@ export default function CitizenChatPage() {
       .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, async () => {
         const { data } = await supabase
           .from("profiles")
-          .select("id, full_name, email, status, role")
+          .select("id, full_name, email, status, role, is_online")
           .eq("role", "responder")
           .order("full_name", { ascending: true });
         const onDuty = ((data ?? []) as ResponderContact[]).filter(isOnDuty);
