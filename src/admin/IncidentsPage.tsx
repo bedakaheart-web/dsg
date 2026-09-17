@@ -675,9 +675,9 @@ export default function IncidentsPage() {
 const fetchIncidents = async (status: string) => {
      setLoading(true);
      const { data } = await supabase
-       .from("reports")
-       .select("id,type,description,description_lang,description_translated,location,address,reporter_name,reporter_contact,status,evidence_url,created_at,responder_id,responder_notes,action_notes,resolution_type,resolved_at,department_id,department")
-       .eq("status", status)
+        .from("reports")
+        .select("id,type,description,description_lang,description_translated,location,address,reporter_name,reporter_contact,status,evidence_url,created_at,responder_id,responder_notes,action_notes,resolution_type,resolved_at,department")
+        .eq("status", status)
        .order("created_at", { ascending: false });
      setIncidents(data ?? []);
      setLoading(false);

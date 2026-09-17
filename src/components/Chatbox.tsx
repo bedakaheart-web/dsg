@@ -82,6 +82,8 @@ export default function ChatBox({
   const typingChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const otherTypingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const myTypingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Unique realtime channel per ChatBox mount — prevents "cannot add postgres_changes callbacks after subscribe()" when multiple ChatBox instances (Team, Citizen Chat, drawers) mount with the same static name "chat-messages-realtime". Supabase reuses channels by name, so a static name collides when two components subscribe simultaneously after one already called .subscribe().
+  const realtimeChannelIdRef = useRef<string>(`cb-${Math.random().toString(36).slice(2, 9)}`);
 
   const role = userRole ?? user?.role ?? "citizen";
   const isCitizen = role === "citizen";
@@ -275,7 +277,10 @@ export default function ChatBox({
       } catch { if (!cancelled) setLoading(false); }
     };
     loadMessages();
-    const channel = supabase.channel("chat-messages-realtime")
+    // Use a unique channel name per ChatBox instance so concurrent mounts (e.g. Citizen Chat + Team/ResponderChatDrawer) never try to call .on() on an already-subscribed "chat-messages-realtime" channel. All .on() are registered BEFORE .subscribe() as required by Supabase.
+    const realtimeChannelName = `chat-messages-realtime-${realtimeChannelIdRef.current}-${recipientId ?? "all"}-${incidentId ?? "all"}`;
+    const channel = supabase
+      .channel(realtimeChannelName)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages" }, (payload) => {
         const newMsg = payload.new as ChatMessage;
         if (!cancelled) {

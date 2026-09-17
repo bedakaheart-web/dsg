@@ -464,7 +464,7 @@ function OverviewPanel({ onNavigate, responderId, responderDepartment }: Overvie
     try {
       const { data, error } = await supabase
         .from("reports")
-        .select("id,type,description,description_lang,description_translated,location,address,reporter_name,reporter_contact,status,evidence_url,created_at,responder_id,department_id,department")
+        .select("id,type,description,description_lang,description_translated,location,address,reporter_name,reporter_contact,status,evidence_url,created_at,responder_id,department")
         .order("created_at", { ascending: false });
 
       if (error) { console.error("Overview loadData error:", error.message); return; }

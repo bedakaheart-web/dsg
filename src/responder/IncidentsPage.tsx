@@ -626,7 +626,7 @@ export default function ResponderIncidentsPage({ onChatCitizen }: {
   const loadReports = async () => {
     const { data } = await supabase
       .from("reports")
-      .select("id,type,description,description_lang,description_translated,location,address,reporter_name,reporter_contact,status,evidence_url,created_at,responder_id,user_id,responder_notes,action_notes,resolution_type,resolved_at,department_id,department")
+      .select("id,type,description,description_lang,description_translated,location,address,reporter_name,reporter_contact,status,evidence_url,created_at,responder_id,user_id,responder_notes,action_notes,resolution_type,resolved_at,department")
       .order("created_at", { ascending: false });
     setReports(data ?? []);
     setLoading(false);
