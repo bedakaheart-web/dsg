@@ -99,7 +99,7 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
 
   const broadcastMode = tab === "broadcast";
   const { messages, loading, send, markRead } = useRealtimeChat(
-    me || null, broadcastMode ? null : activeId, { broadcast: broadcastMode, incidentId }
+    me || null, broadcastMode ? null : activeId, { broadcast: broadcastMode }
   );
 
   // ── Calling (responder ↔ admin HQ) — Metered SDK ──

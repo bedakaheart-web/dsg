@@ -1,3 +1,6 @@
+import { useEffect, useState } from "react";
+import { supabase } from "../js/supabase";
+
 export default function ResponderAlertsPage() {
   const [alerts, setAlerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
