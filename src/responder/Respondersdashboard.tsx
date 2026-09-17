@@ -758,7 +758,7 @@ export default function RespondersDashboard() {
           setResponderId(user.id);
           await supabase
             .from("profiles")
-            .update({ status: "on_duty", is_online: true })
+            .update({ status: "on_duty" })
             .eq("id", user.id);
 
           const { data: profile } = await supabase
@@ -835,7 +835,7 @@ export default function RespondersDashboard() {
       if (user) {
         await supabase
           .from("profiles")
-          .update({ status: "off_duty", is_online: false })
+          .update({ status: "off_duty" })
           .eq("id", user.id);
       }
     } catch (err) {
