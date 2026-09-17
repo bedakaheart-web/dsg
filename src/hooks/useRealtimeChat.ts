@@ -62,6 +62,13 @@ export function useRealtimeChat(
   const threadKey = `${currentUserId ?? ""}|${targetUserId ?? ""}|${broadcast ? "b" : "d"}|${incidentId ?? ""}`;
   const threadRef = useRef({ currentUserId, targetUserId, broadcast, incidentId });
   threadRef.current = { currentUserId, targetUserId, broadcast, incidentId };
+  // Unique channel per hook instance — prevents "cannot add postgres_changes
+  // callbacks after subscribe()" when multiple useRealtimeChat instances mount
+  // with the same static name. Supabase reuses channels by name, so a static
+  // "chat-messages-realtime" collides when a second instance calls .on() after
+  // the first already called .subscribe(). Mirrors the fix already applied in
+  // src/components/Chatbox.tsx (a7ca257).
+  const channelIdRef = useRef<string>(`urc-${Math.random().toString(36).slice(2, 9)}`);
 
   const markRead = useCallback(async () => {
     const t = threadRef.current;
@@ -132,8 +139,13 @@ export function useRealtimeChat(
 
   useEffect(() => {
     if (!currentUserId) return;
+    // Use a unique channel name per hook instance so concurrent mounts (e.g.
+    // Team page's ResponderChatDrawer + other drawers/ChatBox) never collide on
+    // the same "chat-messages-realtime" topic. All .on() are registered BEFORE
+    // .subscribe() in a single chain as required by Supabase realtime.
+    const channelName = `chat-messages-realtime-${channelIdRef.current}`;
     const channel = supabase
-      .channel("chat-messages-realtime")
+      .channel(channelName)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "chat_messages" },
