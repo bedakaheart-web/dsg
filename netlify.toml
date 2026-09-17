@@ -4,5 +4,5 @@
      functions = "netlify/functions"
 
 [functions.environment]
-  METERED_SECRET_KEY = ""
   VITE_METERED_DOMAIN = "dumasafeguide.metered.live"
+  # METERED_SECRET_KEY is set via Netlify dashboard (Site settings > Environment variables) — do not commit an empty value here

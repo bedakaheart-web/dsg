@@ -133,10 +133,10 @@ export function useRealtimeChat(
   useEffect(() => {
     if (!currentUserId) return;
     const channel = supabase
-      .channel("public:messages")
+      .channel("chat-messages-realtime")
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "messages" },
+        { event: "INSERT", schema: "public", table: "chat_messages" },
         (payload) => {
           const m = payload.new as ChatMessage;
           const t = threadRef.current;
