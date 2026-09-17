@@ -869,7 +869,7 @@ export default function AdminDashboard() {
     if (!adminId) return;
     const ch = supabase
       .channel("dashboard-chat-unread")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, async () => {
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages" }, async () => {
         const unread = await fetchUnreadCounts(adminId);
         setChatUnread(Object.values(unread.bySender).reduce((a, b) => a + b, 0) + unread.broadcast);
       })

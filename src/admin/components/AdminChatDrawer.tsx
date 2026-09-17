@@ -78,6 +78,9 @@ export default function AdminChatDrawer({ open, onClose, targetId = null }: {
   const [draft, setDraft] = useState("");
   const [unread, setUnread] = useState<{ bySender: Record<string, number>; broadcast: number }>({ bySender: {}, broadcast: 0 });
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  // Unique channel IDs per drawer instance — prevents postgres_changes after subscribe()
+  // collisions when multiple drawers (or admin + responder) mount with same static name.
+  const channelIdRef = useRef<string>(`acd-${Math.random().toString(36).slice(2, 9)}`);
 
   const broadcastMode = tab === "broadcast";
   const { messages, loading, send, markRead } = useRealtimeChat(
@@ -144,8 +147,9 @@ export default function AdminChatDrawer({ open, onClose, targetId = null }: {
       setContacts((data ?? []) as Contact[]);
     };
     void load();
+    // Unique channel per drawer instance — all .on() BEFORE .subscribe()
     const ch = supabase
-      .channel("admin-chat-presence")
+      .channel(`admin-chat-presence-${channelIdRef.current}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, load)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
@@ -159,9 +163,10 @@ export default function AdminChatDrawer({ open, onClose, targetId = null }: {
   useEffect(() => {
     if (!me) return;
     void refreshUnread(me);
+    // Unique channel per instance — also fix stale table name: use chat_messages
     const ch = supabase
-      .channel("admin-chat-unread")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => {
+      .channel(`admin-chat-unread-${channelIdRef.current}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages" }, () => {
         void refreshUnread(me);
       })
       .subscribe();

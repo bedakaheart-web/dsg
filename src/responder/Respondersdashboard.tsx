@@ -464,15 +464,21 @@ function OverviewPanel({ onNavigate, responderId, responderDepartment }: Overvie
     try {
       const { data, error } = await supabase
         .from("reports")
-        .select("id,type,description,description_lang,description_translated,location,address,reporter_name,reporter_contact,status,evidence_url,created_at,responder_id,department")
+        // department column not yet live — "column reports.department does not exist"
+        // caused this entire load to fail (blank Overview). Type carries the same
+        // routing value; filter by type-derived department when available.
+        .select("id,type,description,description_lang,description_translated,location,address,reporter_name,reporter_contact,status,evidence_url,created_at,responder_id")
         .order("created_at", { ascending: false });
 
       if (error) { console.error("Overview loadData error:", error.message); return; }
 
-      const rows: Report[] = data ?? [];
-      // Filter by responder's department if set
+      const rows: Report[] = (data ?? []) as Report[];
+      // Filter by responder's department if set — but department column doesn't exist
+      // live yet, so derive department from `type` (migration maps type → department).
+      // Fall back to showing all if no department info is present.
+      const getDept = (r: Report) => (r as any).department ?? (r as any).type ?? null;
       const deptFiltered = responderDepartment
-        ? rows.filter((r) => r.department === responderDepartment || !r.department)
+        ? rows.filter((r) => { const d = getDept(r); return d === responderDepartment || !d; })
         : rows;
       const mine = deptFiltered.filter((r) => r.responder_id === responderId);
       const counts: Record<string, number> = {};
@@ -764,12 +770,18 @@ export default function RespondersDashboard() {
 
           const { data: profile } = await supabase
             .from("profiles")
-            .select("full_name, department")
+            // department column not yet live on profiles either — caused 400
+            // "profiles?select=full_name,department". Only select what exists;
+            // department will be re-added after migration 20260916000000.
+            .select("full_name")
             .eq("id", user.id)
             .single();
 
           if (profile?.full_name) setResponderName(profile.full_name);
-          if (profile?.department) setResponderDepartment(profile.department);
+          // Fallback: department not yet provisioned live, keep null so Overview
+          // shows all reports (type-based filtering handles it until migration).
+          const dept = (profile as any)?.department as string | undefined;
+          if (dept) setResponderDepartment(dept);
         }
 
         const { data: rptData } = await supabase
@@ -803,9 +815,8 @@ export default function RespondersDashboard() {
   }, []);
 
   // HQ chat unread badge: refresh on mount (once id known) + on any new message.
-  // NOTE: requires the `messages` table (migration
-  // 20260912_create_side_chat_messages). Until `supabase db push` runs, the
-  // REST calls below 404 and unread counts stay at zero — by design, no crash.
+  // Uses chat_messages (the active side-chat table via useRealtimeChat).
+  // Previously listened to `messages` which is stale; now aligned.
   useEffect(() => {
     if (!responderId) return;
     const refresh = async () => {
@@ -817,7 +828,7 @@ export default function RespondersDashboard() {
       .channel("realtime:resp-chat-unread")
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "messages" },
+        { event: "INSERT", schema: "public", table: "chat_messages" },
         () => {
           void refresh();
         }

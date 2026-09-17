@@ -676,7 +676,11 @@ const fetchIncidents = async (status: string) => {
      setLoading(true);
      const { data } = await supabase
         .from("reports")
-        .select("id,type,description,description_lang,description_translated,location,address,reporter_name,reporter_contact,status,evidence_url,created_at,responder_id,responder_notes,action_notes,resolution_type,resolved_at,department")
+        // department/department_id columns may not exist yet live (migration
+        // 20260916000000 not yet applied) — selecting them caused 400
+        // "column reports.department does not exist". Type is the canonical
+        // source for routing; department will be re-added after migration.
+        .select("id,type,description,description_lang,description_translated,location,address,reporter_name,reporter_contact,status,evidence_url,created_at,responder_id,responder_notes,action_notes,resolution_type,resolved_at")
         .eq("status", status)
        .order("created_at", { ascending: false });
      setIncidents(data ?? []);

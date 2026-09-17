@@ -53,7 +53,7 @@ function playPing() {
     osc.start();
     osc.stop(ctx.currentTime + 0.4);
   } catch {
-    // Audio unavailable (e.g. autoplay policy) GÇö badge still alerts visually.
+    // Audio unavailable (e.g. autoplay policy) Gï¿½ï¿½ badge still alerts visually.
   }
 }
 
@@ -96,13 +96,18 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
   const [unread, setUnread] = useState<{ bySender: Record<string, number>; broadcast: number }>({ bySender: {}, broadcast: 0 });
   const [flashBroadcast, setFlashBroadcast] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  // Unique channel IDs per drawer instance â€” prevents "cannot add postgres_changes
+  // callbacks after subscribe()" when two ResponderChatDrawers mount concurrently
+  // (Team page + HQ drawer in Respondersdashboard both use same static names).
+  // Mirrors the fix already applied in Chatbox.tsx (a7ca257) and useRealtimeChat.ts.
+  const channelIdRef = useRef<string>(`rcd-${Math.random().toString(36).slice(2, 9)}`);
 
   const broadcastMode = tab === "broadcast";
   const { messages, loading, send, markRead } = useRealtimeChat(
     me || null, broadcastMode ? null : activeId, { broadcast: broadcastMode }
   );
 
-  // GöÇGöÇ Calling (responder Gåö admin HQ) GÇö WebRTC + TURN (unified with AdminChatDrawer & ChatBox) GöÇGöÇ
+  // Gï¿½ï¿½Gï¿½ï¿½ Calling (responder Gï¿½ï¿½ admin HQ) Gï¿½ï¿½ WebRTC + TURN (unified with AdminChatDrawer & ChatBox) Gï¿½ï¿½Gï¿½ï¿½
   const [showCallOverlay, setShowCallOverlay] = useState(false);
   const [callType, setCallType] = useState<"audio" | "video" | null>(null);
   const {
@@ -145,7 +150,7 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
     }
   }, [callState.callState, callState.callType, showCallOverlay]);
 
-  // GöÇGöÇ HQ admin list GöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇ
+  // Gï¿½ï¿½Gï¿½ï¿½ HQ admin list Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½
   useEffect(() => {
     const load = async () => {
       const { data } = await supabase
@@ -156,14 +161,17 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
       setAdmins((data ?? []) as Contact[]);
     };
     void load();
+    // Use a unique channel name per drawer instance so concurrent mounts
+    // (Team page's drawer + Respondersdashboard's HQ drawer) never collide.
+    // All .on() are registered BEFORE .subscribe() in a single chain.
     const ch = supabase
-      .channel("resp-chat-presence")
+      .channel(`resp-chat-presence-${channelIdRef.current}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, load)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
 
-  // GöÇGöÇ Unread badges GöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇ
+  // Gï¿½ï¿½Gï¿½ï¿½ Unread badges Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½
   const refreshUnread = async () => {
     if (!me) return;
     setUnread(await fetchUnreadCounts(me));
@@ -171,9 +179,10 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
   useEffect(() => {
     if (!me) return;
     void refreshUnread();
+    // Unique channel per drawer instance â€” same collision fix as above.
     const ch = supabase
-      .channel("resp-chat-unread")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, (payload) => {
+      .channel(`resp-chat-unread-${channelIdRef.current}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages" }, (payload) => {
         const m = payload.new as ChatMessage;
         const incoming = m.sender_id !== me && (m.receiver_id === me || m.receiver_id === null);
         if (incoming) {
@@ -193,7 +202,7 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [me]);
 
-  // GöÇGöÇ Open thread GåÆ mark read + refresh GöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇ
+  // Gï¿½ï¿½Gï¿½ï¿½ Open thread Gï¿½ï¿½ mark read + refresh Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½
   const openThread = async (id: string | null, nextTab: "hq" | "broadcast") => {
     setTab(nextTab);
     setActiveId(id);
@@ -217,7 +226,7 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, activeId, broadcastMode]);
 
-  // GöÇGöÇ Auto-scroll to bottom on every new message GöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇ
+  // Gï¿½ï¿½Gï¿½ï¿½ Auto-scroll to bottom on every new message Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½Gï¿½ï¿½
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, open, activeId, tab]);
@@ -255,7 +264,7 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
     <>
       <style>{`@keyframes respChatSlideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
 @keyframes respChatFade { from { opacity: 0; } to { opacity: 1; } }`}</style>
-      {/* Backdrop overlay GÇö click outside closes */}
+      {/* Backdrop overlay Gï¿½ï¿½ click outside closes */}
       <div
         onClick={onClose}
         aria-hidden="true"
@@ -283,7 +292,7 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
               Broadcasts{unread.broadcast > 0 && ` (${unread.broadcast})`}
             </button>
             <button onClick={onClose} aria-label="Close chat"
-              style={{ background: "none", border: "none", color: "rgba(238,240,247,0.5)", fontSize: 18, cursor: "pointer" }}>+ù</button>
+              style={{ background: "none", border: "none", color: "rgba(238,240,247,0.5)", fontSize: 18, cursor: "pointer" }}>+ï¿½</button>
           </div>
 
           {(!broadcastMode && !activeId) ? (
@@ -331,9 +340,9 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
               {/* Thread header */}
               <div style={{ padding: "8px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 8 }}>
                 <button onClick={() => (broadcastMode ? onClose() : setActiveId(null))}
-                  style={{ background: "none", border: "none", color: "#2ECC8F", cursor: "pointer", fontSize: 14 }}>GåÉ</button>
+                  style={{ background: "none", border: "none", color: "#2ECC8F", cursor: "pointer", fontSize: 14 }}>Gï¿½ï¿½</button>
                 <span style={{ fontSize: 13, fontWeight: 700, color: "#eef0f7", flex: 1 }}>
-                  {broadcastMode ? "=ƒôó HQ Broadcasts" : (admins.find(a => a.id === activeId)?.full_name || targetName || "HQ Admin")}
+                  {broadcastMode ? "=ï¿½ï¿½ï¿½ HQ Broadcasts" : (admins.find(a => a.id === activeId)?.full_name || targetName || "HQ Admin")}
                 </span>
                 {!broadcastMode && activeId && (
                   <div style={{ display: "flex", gap: 6, marginLeft: "auto" }}>
@@ -352,14 +361,14 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
                   <div style={{ fontSize: 12, color: "rgba(238,240,247,0.4)", textAlign: "center", padding: 20 }}>LoadingGÇª</div>
                 ) : messages.length === 0 ? (
                   <div style={{ fontSize: 12, color: "rgba(238,240,247,0.4)", textAlign: "center", padding: 20 }}>
-                    {broadcastMode ? "No broadcasts from HQ yet." : "No messages yet. Say hello =ƒæï"}
+                    {broadcastMode ? "No broadcasts from HQ yet." : "No messages yet. Say hello =ï¿½ï¿½ï¿½"}
                   </div>
                 ) : (
                   messages.map(m => <Bubble key={m.id} m={m} mine={m.sender_id === me} />)
                 )}
                 <div ref={messagesEndRef} />
               </div>
-              {/* Composer (1-on-1 only GÇö broadcasts are HQ announcements) */}
+              {/* Composer (1-on-1 only Gï¿½ï¿½ broadcasts are HQ announcements) */}
               {!broadcastMode ? (
                 <div style={{ padding: 10, borderTop: "1px solid rgba(255,255,255,0.08)", display: "flex", gap: 8 }}>
                   <input
@@ -377,12 +386,12 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
                 </div>
               ) : (
                 <div style={{ padding: 10, borderTop: "1px solid rgba(255,255,255,0.08)", fontSize: 11, color: "rgba(238,240,247,0.4)", textAlign: "center" }}>
-                  Broadcasts are HQ announcements GÇö reply via direct HQ chat.
+                  Broadcasts are HQ announcements Gï¿½ï¿½ reply via direct HQ chat.
                 </div>
               )}
             </>
           )}
-        {/* Call Overlay GÇö responderGåöadmin via WebRTC + TURN */}
+        {/* Call Overlay Gï¿½ï¿½ responderGï¿½ï¿½admin via WebRTC + TURN */}
         {showCallOverlay && callType && (
           <CallOverlay
             state={callState}
