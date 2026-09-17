@@ -224,7 +224,7 @@ export default function AdminChatDrawer({ open, onClose, targetId = null }: {
     }
   }, [targetId, open]);
 
-  if (!open) return null;
+  if (!open && !(showCallOverlay && callType)) return null;
 
   return (
     <>

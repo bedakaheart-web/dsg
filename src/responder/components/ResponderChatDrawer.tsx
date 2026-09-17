@@ -13,8 +13,8 @@ import {
   useRealtimeChat,
   type ChatMessage,
 } from "../../hooks/useRealtimeChat";
-import { useMeteredCall } from "../../hooks/useMeteredCall";
-import MeteredCallOverlay from "../../components/MeteredCallOverlay";
+import { useWebRTC } from "../../hooks/useWebRTC";
+import CallOverlay from "../../components/CallOverlay";
 import { FaPhone, FaVideo } from "react-icons/fa";
 
 // Full-screen drawer on phones so chat controls stay usable <480px.
@@ -53,7 +53,7 @@ function playPing() {
     osc.start();
     osc.stop(ctx.currentTime + 0.4);
   } catch {
-    // Audio unavailable (e.g. autoplay policy) â€” badge still alerts visually.
+    // Audio unavailable (e.g. autoplay policy) GÇö badge still alerts visually.
   }
 }
 
@@ -77,7 +77,7 @@ function Bubble({ m, mine }: { m: ChatMessage; mine: boolean }) {
       >
         <div>{m.message}</div>
         <div style={{ fontSize: 9, opacity: 0.5, marginTop: 3, textAlign: "right" }}>
-          {failed ? "sendingâ€¦" : fmtTime(m.created_at)}
+          {failed ? "sendingGÇª" : fmtTime(m.created_at)}
         </div>
       </div>
     </div>
@@ -102,29 +102,27 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
     me || null, broadcastMode ? null : activeId, { broadcast: broadcastMode }
   );
 
-  // â”€â”€ Calling (responder â†” admin HQ) â€” Metered SDK â”€â”€
+  // GöÇGöÇ Calling (responder Gåö admin HQ) GÇö WebRTC + TURN (unified with AdminChatDrawer & ChatBox) GöÇGöÇ
   const [showCallOverlay, setShowCallOverlay] = useState(false);
   const [callType, setCallType] = useState<"audio" | "video" | null>(null);
   const {
     state: callState,
-    joinRoom,
+    startCall,
+    endCall,
     toggleMute,
     toggleCamera,
-    endCall,
-  } = useMeteredCall(
-    broadcastMode ? null : activeId,
-    responderName
-  );
+    upgradeToVideo,
+  } = useWebRTC(me || null, broadcastMode ? null : activeId);
 
   const handleStartAudioCall = async () => {
     setCallType("audio");
     setShowCallOverlay(true);
-    await joinRoom("audio");
+    await startCall("audio");
   };
   const handleStartVideoCall = async () => {
     setCallType("video");
     setShowCallOverlay(true);
-    await joinRoom("video");
+    await startCall("video");
   };
   const handleEndCall = () => {
     endCall();
@@ -147,7 +145,7 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
     }
   }, [callState.callState, callState.callType, showCallOverlay]);
 
-  // â”€â”€ HQ admin list â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // GöÇGöÇ HQ admin list GöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇ
   useEffect(() => {
     const load = async () => {
       const { data } = await supabase
@@ -165,7 +163,7 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
     return () => { supabase.removeChannel(ch); };
   }, []);
 
-  // â”€â”€ Unread badges â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // GöÇGöÇ Unread badges GöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇ
   const refreshUnread = async () => {
     if (!me) return;
     setUnread(await fetchUnreadCounts(me));
@@ -195,7 +193,7 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [me]);
 
-  // â”€â”€ Open thread â†’ mark read + refresh â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // GöÇGöÇ Open thread GåÆ mark read + refresh GöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇ
   const openThread = async (id: string | null, nextTab: "hq" | "broadcast") => {
     setTab(nextTab);
     setActiveId(id);
@@ -219,7 +217,7 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, activeId, broadcastMode]);
 
-  // â”€â”€ Auto-scroll to bottom on every new message â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // GöÇGöÇ Auto-scroll to bottom on every new message GöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇ
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, open, activeId, tab]);
@@ -251,13 +249,13 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
     }
   }, [targetId, open]);
 
-  if (!open) return null;
+  if (!open && !(showCallOverlay && callType)) return null;
 
   return (
     <>
       <style>{`@keyframes respChatSlideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
 @keyframes respChatFade { from { opacity: 0; } to { opacity: 1; } }`}</style>
-      {/* Backdrop overlay â€” click outside closes */}
+      {/* Backdrop overlay GÇö click outside closes */}
       <div
         onClick={onClose}
         aria-hidden="true"
@@ -285,7 +283,7 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
               Broadcasts{unread.broadcast > 0 && ` (${unread.broadcast})`}
             </button>
             <button onClick={onClose} aria-label="Close chat"
-              style={{ background: "none", border: "none", color: "rgba(238,240,247,0.5)", fontSize: 18, cursor: "pointer" }}>Ã—</button>
+              style={{ background: "none", border: "none", color: "rgba(238,240,247,0.5)", fontSize: 18, cursor: "pointer" }}>+ù</button>
           </div>
 
           {(!broadcastMode && !activeId) ? (
@@ -333,9 +331,9 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
               {/* Thread header */}
               <div style={{ padding: "8px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 8 }}>
                 <button onClick={() => (broadcastMode ? onClose() : setActiveId(null))}
-                  style={{ background: "none", border: "none", color: "#2ECC8F", cursor: "pointer", fontSize: 14 }}>â†</button>
+                  style={{ background: "none", border: "none", color: "#2ECC8F", cursor: "pointer", fontSize: 14 }}>GåÉ</button>
                 <span style={{ fontSize: 13, fontWeight: 700, color: "#eef0f7", flex: 1 }}>
-                  {broadcastMode ? "ğŸ“¢ HQ Broadcasts" : (admins.find(a => a.id === activeId)?.full_name || targetName || "HQ Admin")}
+                  {broadcastMode ? "=ƒôó HQ Broadcasts" : (admins.find(a => a.id === activeId)?.full_name || targetName || "HQ Admin")}
                 </span>
                 {!broadcastMode && activeId && (
                   <div style={{ display: "flex", gap: 6, marginLeft: "auto" }}>
@@ -351,24 +349,24 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
               {/* Messages */}
               <div style={{ flex: 1, overflowY: "auto", padding: "12px" }}>
                 {loading ? (
-                  <div style={{ fontSize: 12, color: "rgba(238,240,247,0.4)", textAlign: "center", padding: 20 }}>Loadingâ€¦</div>
+                  <div style={{ fontSize: 12, color: "rgba(238,240,247,0.4)", textAlign: "center", padding: 20 }}>LoadingGÇª</div>
                 ) : messages.length === 0 ? (
                   <div style={{ fontSize: 12, color: "rgba(238,240,247,0.4)", textAlign: "center", padding: 20 }}>
-                    {broadcastMode ? "No broadcasts from HQ yet." : "No messages yet. Say hello ğŸ‘‹"}
+                    {broadcastMode ? "No broadcasts from HQ yet." : "No messages yet. Say hello =ƒæï"}
                   </div>
                 ) : (
                   messages.map(m => <Bubble key={m.id} m={m} mine={m.sender_id === me} />)
                 )}
                 <div ref={messagesEndRef} />
               </div>
-              {/* Composer (1-on-1 only â€” broadcasts are HQ announcements) */}
+              {/* Composer (1-on-1 only GÇö broadcasts are HQ announcements) */}
               {!broadcastMode ? (
                 <div style={{ padding: 10, borderTop: "1px solid rgba(255,255,255,0.08)", display: "flex", gap: 8 }}>
                   <input
                     value={draft}
                     onChange={e => setDraft(e.target.value)}
                     onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void submit(); } }}
-                    placeholder="Message HQâ€¦"
+                    placeholder="Message HQGÇª"
                     maxLength={1000}
                     style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "9px 12px", color: "#eef0f7", fontSize: 13, outline: "none" }}
                   />
@@ -379,19 +377,20 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
                 </div>
               ) : (
                 <div style={{ padding: 10, borderTop: "1px solid rgba(255,255,255,0.08)", fontSize: 11, color: "rgba(238,240,247,0.4)", textAlign: "center" }}>
-                  Broadcasts are HQ announcements â€” reply via direct HQ chat.
+                  Broadcasts are HQ announcements GÇö reply via direct HQ chat.
                 </div>
               )}
             </>
           )}
-        {/* Call Overlay â€” responderâ†”admin via Metered SDK */}
+        {/* Call Overlay GÇö responderGåöadmin via WebRTC + TURN */}
         {showCallOverlay && callType && (
-          <MeteredCallOverlay
+          <CallOverlay
             state={callState}
-            callType={callType}
+            callType={callType as "audio" | "video"}
             remoteName={admins.find(a => a.id === activeId)?.full_name || targetName || "HQ Admin"}
             onMute={toggleMute}
             onCamera={toggleCamera}
+            onUpgrade={upgradeToVideo}
             onEnd={handleEndCall}
             isOnline={true}
           />
