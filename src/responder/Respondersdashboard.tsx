@@ -9,6 +9,7 @@ import ResponderIncidentsPage from "./IncidentsPage";
 import ResponderTeamPage from "./ResponderTeam";
 import ResponderChatDrawer from "./components/ResponderChatDrawer";
 import ResponderCitizenChatDrawer from "./components/ResponderCitizenChatDrawer";
+import GlobalResponderCallHandler from "./components/GlobalResponderCallHandler";
 import { fetchUnreadCounts } from "../hooks/useRealtimeChat";
 import { useDepartmentNotifications } from "../hooks/useDepartmentNotifications";
 import dsgLogo from "../assets/dsg.logo.png";
@@ -991,6 +992,8 @@ export default function RespondersDashboard() {
             initialCitizenName={citizenChatTarget?.citizenName ?? null}
           />
         )}
+        {/* Global inbox for Citizen→Responder calls — always mounted so ringing works even when drawers closed (mobile) */}
+        {responderId && <GlobalResponderCallHandler responderId={responderId} />}
       </div>
     </>
   );

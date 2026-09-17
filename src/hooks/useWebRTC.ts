@@ -153,30 +153,40 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      // Ensure channel is subscribed before sending ΓÇö the persistent effect should already be SUBSCRIBED,
-      // but we verify and wait if needed to avoid race.
-      const ch = channelRef.current;
-      if (!ch) {
-        console.error("[useWebRTC] signal sent FAILED: no signaling channel (not subscribed yet)");
-        throw new Error("Signaling channel not ready");
-      }
       const offerPayload = { type: "offer", sdp: pc.localDescription, from: localIdRef.current, to: remoteIdRef.current, callType } as const;
       console.log("[useWebRTC] signal sent: offer to", remoteIdRef.current, "sdp:", pc.localDescription?.type);
-      await ch.send({
-        type: "broadcast",
-        event: "webrtc-signal",
-        payload: offerPayload,
-      });
-      // Also notify callee's personal inbox so ringing works app-wide (even when chat drawer is closed)
+      // Try pair channel first (preferred for 1-1), but don't fail if not ready — inbox is primary for app-wide delivery.
+      const ch = channelRef.current;
+      if (ch) {
+        try {
+          await ch.send({
+            type: "broadcast",
+            event: "webrtc-signal",
+            payload: offerPayload,
+          });
+        } catch (e) {
+          console.warn("[useWebRTC] pair channel send failed (non-fatal, inbox will deliver):", e);
+        }
+      } else {
+        console.warn("[useWebRTC] no pair channel yet — using inbox only for offer");
+      }
+      // Always notify callee's personal inbox so ringing works app-wide (even when chat drawer is closed or pair mismatch like citizen→responder)
       try {
         const inboxChannel = supabase.channel(`call-inbox-${remoteIdRef.current}`);
-        await inboxChannel.subscribe();
+        // Subscribe and wait for SUBSCRIBED before sending to ensure delivery on mobile
+        await new Promise<void>((resolve) => {
+          inboxChannel.subscribe((status) => {
+            if (status === "SUBSCRIBED") resolve();
+          });
+          // Fallback resolve after 800ms even if status callback missed (some SDK versions)
+          setTimeout(() => resolve(), 800);
+        });
         await inboxChannel.send({
           type: "broadcast",
           event: "webrtc-signal",
           payload: offerPayload,
         });
-        setTimeout(() => supabase.removeChannel(inboxChannel), 2000);
+        setTimeout(() => supabase.removeChannel(inboxChannel), 2500);
       } catch (e) {
         console.warn("[useWebRTC] inbox notify failed (non-fatal):", e);
       }

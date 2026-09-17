@@ -26,7 +26,7 @@ const TYPE_ICON: Record<string, string> = {
   crime: "🚨", medical: "🏥", other: "⚠️",
 };
 
-function useIsNarrow(breakpoint = 720) {
+function useIsNarrow(breakpoint = 480) {
   const [narrow, setNarrow] = useState(
     typeof window !== "undefined" ? window.innerWidth < breakpoint : false
   );
@@ -99,13 +99,14 @@ export default function ResponderCitizenChatDrawer({
           status: r.status,
           created_at: r.created_at,
         })));
-        // Preselect: deep-linked incident first, else most recent.
+        // Preselect: deep-linked incident first, else most recent unique citizen.
+        // Use uniqueRows so the active id always exists in the deduped list.
         setActiveReportId(prev => {
-          if (initialReportId && rows.some(r => String(r.id) === initialReportId)) return initialReportId;
-          if (prev && rows.some(r => String(r.id) === prev)) return prev;
-          return rows.length ? String(rows[0].id) : null;
+          if (initialReportId && uniqueRows.some(r => String(r.id) === initialReportId)) return initialReportId;
+          if (prev && uniqueRows.some(r => String(r.id) === prev)) return prev;
+          return uniqueRows.length ? String(uniqueRows[0].id) : null;
         });
-        // On narrow, start on conversation list
+        // On narrow, start on conversation list (only on initial open, not on every resize)
         if (narrow) setShowThread(false);
       } catch {
         if (!cancelled) setConversations([]);
@@ -115,7 +116,7 @@ export default function ResponderCitizenChatDrawer({
     };
     void load();
     return () => { cancelled = true; };
-  }, [open, responderId, initialReportId, narrow]);
+  }, [open, responderId, initialReportId]);
 
   // Deep-link a specific incident (e.g. "Chat Citizen" card button).
   useEffect(() => {
@@ -147,7 +148,8 @@ export default function ResponderCitizenChatDrawer({
   return (
     <>
       <style>{`@keyframes respCitizenSlideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
-@keyframes respCitizenFade { from { opacity: 0; } to { opacity: 1; } }`}</style>
+@keyframes respCitizenFade { from { opacity: 0; } to { opacity: 1; } }
+.resp-citizen-thread-flex > div { flex: 1 !important; height: 100% !important; min-height: 0 !important; max-height: 100% !important; }`}</style>
       <div
         onClick={onClose}
         aria-hidden="true"
@@ -187,8 +189,8 @@ export default function ResponderCitizenChatDrawer({
           </button>
         </div>
 
-        {/* Body */}
-        <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
+        {/* Body - flex row: list + thread */}
+        <div style={{ flex: 1, display: "flex", minHeight: 0, minWidth: 0, overflow: "hidden" }}>
           {/* Conversation list */}
           <div style={{
             width: narrow ? (showThread ? 0 : "100%") : 220,
@@ -196,7 +198,7 @@ export default function ResponderCitizenChatDrawer({
             borderRight: narrow ? "none" : "1px solid rgba(255,255,255,0.08)",
             overflowY: "auto", flexShrink: 0,
             display: narrow ? (showThread ? "none" : "flex") : "flex",
-            flexDirection: "column",
+            flexDirection: "column", minHeight: 0,
           }}>
             {loading ? (
               <div style={{ padding: 16, fontSize: 11, color: "rgba(238,240,247,0.35)" }}>Loading…</div>
@@ -227,10 +229,12 @@ export default function ResponderCitizenChatDrawer({
             )}
           </div>
 
-          {/* Thread — on narrow, full-width when showThread is true */}
+          {/* Thread — on narrow, full-width when showThread is true; flex column fills remaining height */}
           <div style={{
-            flex: 1, minWidth: 0, display: "flex", flexDirection: "column",
-            padding: narrow ? 12 : 12,
+            flex: 1, minWidth: 0,
+            display: narrow ? (showThread ? "flex" : "none") : "flex",
+            flexDirection: "column",
+            padding: 12, overflow: "hidden", minHeight: 0,
           }}>
             {!active && !initialReportId && !showThread ? (
               <div style={{ margin: "auto", fontSize: 12, color: "rgba(238,240,247,0.35)", textAlign: "center", padding: 24 }}>
@@ -241,12 +245,14 @@ export default function ResponderCitizenChatDrawer({
                 This report has no linked citizen account (anonymous report) — chat is unavailable.
               </div>
             ) : (
-              <ChatBox
-                assignedResponderId={citizenId}
-                incidentId={incidentId}
-                userRole="responder"
-                recipientName={citizenName}
-              />
+              <div className="resp-citizen-thread-flex" style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
+                <ChatBox
+                  assignedResponderId={citizenId}
+                  incidentId={incidentId}
+                  userRole="responder"
+                  recipientName={citizenName}
+                />
+              </div>
             )}
           </div>
         </div>
