@@ -683,7 +683,7 @@ const fetchIncidents = async (status: string) => {
         .select("id,type,description,description_lang,description_translated,location,address,reporter_name,reporter_contact,status,evidence_url,created_at,responder_id,responder_notes,action_notes,resolution_type,resolved_at")
         .eq("status", status)
        .order("created_at", { ascending: false });
-     setIncidents(data ?? []);
+     setIncidents((data as unknown as Incident[]) ?? []);
      setLoading(false);
    };
 

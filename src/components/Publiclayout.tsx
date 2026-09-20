@@ -14,7 +14,7 @@ import Navbar from "./Navbar";
 import Footer from "./Footer";
 
 // ── Pages that manage their own layout (no shared Navbar / Footer) ────────────
-const AUTH_PATHS: string[] = [];
+const AUTH_PATHS: string[] = ["/login", "/signup", "/forgot-password"];
 
 // ── PublicLayout ──────────────────────────────────────────────────────────────
 

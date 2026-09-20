@@ -630,7 +630,7 @@ export default function ResponderIncidentsPage({ onChatCitizen }: {
       // caused 400 "column reports.department does not exist". Use type as source.
       .select("id,type,description,description_lang,description_translated,location,address,reporter_name,reporter_contact,status,evidence_url,created_at,responder_id,user_id,responder_notes,action_notes,resolution_type,resolved_at")
       .order("created_at", { ascending: false });
-    setReports(data ?? []);
+    setReports((data as unknown as Report[]) ?? []);
     setLoading(false);
   };
 

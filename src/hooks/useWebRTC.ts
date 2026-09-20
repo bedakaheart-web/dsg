@@ -105,10 +105,12 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
         // Fallback via inbox for app-wide delivery
         try {
           const inboxCh = supabase.channel(`call-inbox-${remoteIdRef.current}`);
-          inboxCh.subscribe().then(() => {
+          inboxCh.subscribe();
+          // Small delay to let SUBSCRIBED propagate before sending (SDK subscribe is sync/no-promise)
+          setTimeout(() => {
             inboxCh.send({ type: "broadcast", event: "webrtc-signal", payload: icePayload });
             setTimeout(() => supabase.removeChannel(inboxCh), 1500);
-          });
+          }, 200);
         } catch {}
       }
     };
@@ -227,9 +229,11 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
         // Fallback to inbox so answer is delivered even before pair channel is subscribed (app-wide ringing)
         try {
           const inboxCh = supabase.channel(`call-inbox-${fromId}`);
-          await inboxCh.subscribe();
-          await inboxCh.send({ type: "broadcast", event: "webrtc-signal", payload: answerPayload });
-          setTimeout(() => supabase.removeChannel(inboxCh), 2000);
+          inboxCh.subscribe();
+          setTimeout(() => {
+            inboxCh.send({ type: "broadcast", event: "webrtc-signal", payload: answerPayload });
+            setTimeout(() => supabase.removeChannel(inboxCh), 2000);
+          }, 200);
         } catch {}
         // Caller will set remote answer and then we go active; keep ringing until caller ack or track?
         // For now mark ringing ΓÇö active will be set on connectionState connected or via explicit answer handling.
@@ -267,11 +271,12 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
     // Inbox fallback
     if (remoteId) {
       const inboxCh = supabase.channel(`call-inbox-${remoteId}`);
-      inboxCh.subscribe().then(() => {
+      inboxCh.subscribe();
+      setTimeout(() => {
         inboxCh.send({ type: "broadcast", event: "webrtc-signal", payload: declinePayload });
         inboxCh.send({ type: "broadcast", event: "webrtc-signal", payload: endedPayload });
         setTimeout(() => supabase.removeChannel(inboxCh), 1500);
-      });
+      }, 200);
     }
     cleanup();
     updateState({ callState: "declined", callType: null, remoteParticipantId: null, localStream: null, remoteStream: null });
@@ -288,11 +293,12 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
     // Inbox fallback
     if (remoteId) {
       const inboxCh = supabase.channel(`call-inbox-${remoteId}`);
-      inboxCh.subscribe().then(() => {
+      inboxCh.subscribe();
+      setTimeout(() => {
         inboxCh.send({ type: "broadcast", event: "webrtc-signal", payload: endedPayload });
         inboxCh.send({ type: "broadcast", event: "webrtc-signal", payload: endPayload });
         setTimeout(() => supabase.removeChannel(inboxCh), 1500);
-      });
+      }, 200);
     }
     // Close peer connection and stop tracks per spec
     if (pcRef.current) {
