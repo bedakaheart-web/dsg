@@ -362,14 +362,15 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
     }
   }, [updateState]);
 
-  // Persistent signaling channel ΓÇö subscribes exactly once when both ids are known.
+  // Persistent signaling channel — subscribes exactly once when both ids are known.
   // This ensures caller and callee are on the EXACT SAME topic: call-<sorted-ids>
   // and that SUBSCRIBED completes BEFORE any offer is sent (caller waits on already-subscribed channel).
+  // NOTE: Remote may be null for global inbox handlers (e.g. GlobalCitizenCallHandler) — that's expected, skip pair channel silently.
   useEffect(() => {
     const localId = localUserId;
     const remoteId = remoteUserId;
     if (!localId || !remoteId) {
-      console.log("[useWebRTC] signaling channel: not subscribing ΓÇö missing id", { localId, remoteId });
+      // No warning for expected inbox-only mode (remote null) — avoids spam
       return;
     }
 const channelName = `call-${[localId, remoteId].sort().join("_")}`;
