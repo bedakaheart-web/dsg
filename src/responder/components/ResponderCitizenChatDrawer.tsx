@@ -286,14 +286,7 @@ export default function ResponderCitizenChatDrawer({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  if (!open) return null;
-
-  const active = conversations.find(c => c.citizenId === activeCitizenId) ?? null;
-  const citizenId = active?.citizenId ?? initialCitizenId;
-  const citizenName = active?.citizenName ?? initialCitizenName ?? "Citizen";
-  const incidentId = active?.reportId ?? initialReportId ?? null;
-
-  // Filtered list for tabs/search
+  // ✅ ALL hooks first — must be before any early return (Rules of Hooks)
   const filtered = useMemo(() => {
     let list = conversations;
     if (filter === "online") list = list.filter(c => c.isOnline);
@@ -305,6 +298,14 @@ export default function ResponderCitizenChatDrawer({
     }
     return list;
   }, [conversations, filter, search]);
+
+  // ✅ early return only after every hook
+  if (!open) return null;
+
+  const active = conversations.find(c => c.citizenId === activeCitizenId) ?? null;
+  const citizenId = active?.citizenId ?? initialCitizenId;
+  const citizenName = active?.citizenName ?? initialCitizenName ?? "Citizen";
+  const incidentId = active?.reportId ?? initialReportId ?? null;
 
   const totalUnread = Object.values(unreadMap).reduce((a, b) => a + b, 0);
   const onlineCount = onlineCitizens.length;
