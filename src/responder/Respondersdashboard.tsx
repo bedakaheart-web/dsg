@@ -737,6 +737,8 @@ export default function RespondersDashboard() {
     setCitizenChatTarget(target ?? null);
     setCitizenChatOpen(true);
     setSidebarOpen(false);
+    // Also switch main view so header shows Citizen Chat and page isn't empty (fixes black screen)
+    setView("citizenChat");
   };
 
   const handleNavigate = (v: ViewId) => {
@@ -837,7 +839,7 @@ export default function RespondersDashboard() {
         }
       )
       .subscribe((status) => {
-        if (status !== "SUBSCRIBED") {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
           console.warn("[resp-chat-unread] channel status:", status);
         }
       });
@@ -894,7 +896,10 @@ export default function RespondersDashboard() {
                   <button
                     key={item.id}
                     className={cls("rd-nav-btn", view === item.id && "active", item.id === "team" && "team-nav")}
-                    onClick={() => item.id === "citizenChat" ? openCitizenChat() : handleNavigate(item.id)}
+                    onClick={() => {
+                      if (item.id === "citizenChat") openCitizenChat();
+                      else handleNavigate(item.id);
+                    }}
                   >
                     <span className="rd-nav-ic">
                       <SvgIcon path={NAV_ICON_MAP[item.id]} size={16} />
@@ -986,6 +991,35 @@ export default function RespondersDashboard() {
               {view === "incidents" && <ResponderIncidentsPage onChatCitizen={openCitizenChat} />}
               {view === "alerts"    && <ResponderAlertsPage />}
               {view === "team"      && <ResponderTeamPage />}
+              {view === "citizenChat" && (
+                <div style={{ maxWidth: 900, margin: "0 auto" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, padding: "14px 18px", background: "rgba(15,21,33,0.82)", border: "1px solid rgba(46,204,143,0.15)", borderLeft: "3px solid #2ECC8F", borderRadius: 12 }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 11, color: "#2ECC8F", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>Centralized Communications</div>
+                      <div style={{ fontSize: 13, color: "rgba(238,240,247,0.65)" }}>
+                        All <strong style={{ color: "#eef0f7" }}>online citizens</strong> and assigned cases appear here. Chat, audio, or video call any citizen — they will be notified instantly and can respond to request assistance.
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setCitizenChatOpen(true)}
+                      style={{ background: "rgba(46,204,143,0.16)", border: "1px solid rgba(46,204,143,0.35)", color: "#2ECC8F", borderRadius: 8, padding: "10px 16px", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
+                    >
+                      💬 Open Citizen Chat
+                    </button>
+                  </div>
+                  {!citizenChatOpen && (
+                    <div style={{ textAlign: "center", padding: "32px 20px", background: "rgba(15,21,33,0.6)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, color: "rgba(238,240,247,0.45)", fontSize: 12 }}>
+                      Click <strong style={{ color: "#2ECC8F" }}>Open Citizen Chat</strong> to see the full conversation list. Citizens who message you also appear automatically in the drawer as <em>Requests</em>.
+                      <div style={{ marginTop: 8, fontSize: 11, color: "rgba(238,240,247,0.3)" }}>Responder is on duty — citizens online can see you as available.</div>
+                    </div>
+                  )}
+                  {citizenChatOpen && (
+                    <div style={{ textAlign: "center", padding: "16px", color: "rgba(238,240,247,0.35)", fontSize: 11 }}>
+                      Drawer is open — use the panel on the right to select a citizen. Close it to return here.
+                    </div>
+                  )}
+                </div>
+              )}
             </main>
           </div>
         </div>

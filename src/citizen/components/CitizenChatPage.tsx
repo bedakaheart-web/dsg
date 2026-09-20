@@ -89,13 +89,28 @@ export default function CitizenChatPage() {
   }, [callState.callState, callState.callType, callState.localStream, callState.remoteStream, showCallOverlay]);
 
   // Initial load: assigned responder from active report (pinned)
+  // NOTE: ProtectedRoute already guarantees only citizens reach this page.
+  // We keep a soft guard but don't hard-navigate to /citizen/dashboard when
+  // the user is a responder — that would loop inside a citizen-only layout
+  // and appear as a black screen. Instead we show an inline unauthorized
+  // message and let ProtectedRoute handle the redirect if needed.
+  const [roleMismatch, setRoleMismatch] = useState(false);
   useEffect(() => {
     (async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { navigate("/login"); return; }
         const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-        if ((profile?.role as string)?.toLowerCase() !== "citizen") { navigate("/citizen/dashboard"); return; }
+        const r = (profile?.role as string)?.toLowerCase().trim() ?? "";
+        if (r && r !== "citizen") {
+          // Don't navigate to /citizen/dashboard (still citizen-only and would
+          // flash a black/empty layout for responders). Show inline message and
+          // let ProtectedRoute redirect on next render if needed.
+          setRoleMismatch(true);
+          setCitizenId(user.id);
+          setLoading(false);
+          return;
+        }
         setCitizenId(user.id);
         const { data: reports } = await supabase
           .from("reports")
@@ -119,11 +134,10 @@ export default function CitizenChatPage() {
             setAssignedResponderName(assignedName);
           }
         }
-        // Wait for presence to load before deciding selection — handled in next effect
-        // but set flag for noResponder interim
-        if (!assignedId && responders.length === 0) setNoResponder(true);
-        else setNoResponder(false);
-      } catch { navigate("/citizen/dashboard"); } finally { setLoading(false); }
+        // Don't decide noResponder here based on stale presence — let the
+        // presence-driven effect below set it once onlineResponders have loaded.
+        setNoResponder(false);
+      } catch { navigate("/login"); } finally { setLoading(false); }
     })();
   }, [navigate]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -176,6 +190,25 @@ export default function CitizenChatPage() {
     return (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "60vh", color: "rgba(238,240,247,0.35)", fontSize: "13px", fontFamily: "'Inter', sans-serif" }}>
         <div style={{ textAlign: "center" }}><div style={{ marginBottom: "12px", fontSize: "24px" }}>🔒</div>{t("chat.loading", "Loading chat...")}</div>
+      </div>
+    );
+  }
+
+  if (roleMismatch) {
+    return (
+      <div style={{ padding: "24px", maxWidth: "600px", margin: "40px auto", background: "rgba(15,21,33,0.82)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", textAlign: "center" }}>
+        <div style={{ fontSize: "32px", marginBottom: "12px" }}>🔒</div>
+        <div style={{ fontSize: "14px", fontWeight: "700", color: "#eef0f7", marginBottom: "8px" }}>Responder account — citizen chat is for citizens</div>
+        <div style={{ fontSize: "12px", color: "rgba(238,240,247,0.55)", marginBottom: "16px" }}>
+          You are logged in as a <strong>responder</strong>. Citizen Chat is only available to citizen accounts.
+          Use <strong>Citizen Chat</strong> in your Responder Dashboard to message citizens who are online.
+        </div>
+        <button
+          onClick={() => navigate("/responder/dashboard")}
+          style={{ background: "rgba(46,204,143,0.16)", border: "1px solid rgba(46,204,143,0.35)", color: "#2ECC8F", borderRadius: "8px", padding: "10px 18px", fontWeight: "700", cursor: "pointer", fontSize: "13px" }}
+        >
+          Go to Responder Dashboard
+        </button>
       </div>
     );
   }

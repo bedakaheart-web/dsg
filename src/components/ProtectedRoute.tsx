@@ -84,6 +84,25 @@ export default function ProtectedRoute({ children, allowedRole }: Props) {
       }
     };
 
+    // Fallback: also try getSession immediately in case onAuthStateChange
+    // hasn't fired INITIAL_SESSION yet (prevents infinite "Verifying..." black screen).
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (cancelled) return;
+      // Only resolve if we haven't already received an auth event that set state
+      // Check if still loading — avoids racing but ensures we don't hang forever.
+      setAuthState(prev => {
+        if (prev.status !== "loading") return prev;
+        // Trigger async resolve without blocking setState
+        resolve(session?.user?.id ?? null);
+        return prev;
+      });
+    });
+
+    // Safety: if nothing resolves within 4s, force unauthenticated instead of hanging on black/loading.
+    const fallbackTimer = setTimeout(() => {
+      setAuthState(prev => prev.status === "loading" ? { status: "unauthenticated" } : prev);
+    }, 4000);
+
     // Use onAuthStateChange so we catch the session whether it was already
     // present (INITIAL_SESSION) or was just written (SIGNED_IN).
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -95,7 +114,7 @@ export default function ProtectedRoute({ children, allowedRole }: Props) {
           setAuthState({ status: "unauthenticated" });
           return;
         }
-        // Skip transient events that fire during token refresh etc.
+        // Handle initial session and sign-in; ignore transient TOKEN_REFRESHED etc.
         if (event !== "INITIAL_SESSION" && event !== "SIGNED_IN") return;
         resolve(session?.user?.id ?? null);
       }
@@ -103,6 +122,7 @@ export default function ProtectedRoute({ children, allowedRole }: Props) {
 
     return () => {
       cancelled = true;
+      clearTimeout(fallbackTimer);
       subscription.unsubscribe();
     };
   }, [allowedRole]);

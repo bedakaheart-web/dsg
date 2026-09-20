@@ -159,10 +159,10 @@ export function useRealtimeChat(
           }
         }
       )
-      // .on() is always chained BEFORE .subscribe(); the status callback
-      // surfaces TIMED_OUT / CHANNEL_ERROR instead of failing silently.
+      // .on() is always chained BEFORE .subscribe(); only warn on real errors —
+      // CLOSED is expected when Realtime is disabled or channel is removed, not an error.
       .subscribe((status) => {
-        if (status !== "SUBSCRIBED") {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
           console.warn("[useRealtimeChat] public:messages status:", status);
         }
       });

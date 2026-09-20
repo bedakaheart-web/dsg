@@ -72,17 +72,20 @@ export function usePresence(pollIntervalMs = 30000): PresenceState {
       const attemptFull = await supabase
         .from("profiles")
         .select("id, full_name, email, role, status, is_online, last_seen")
-        .in("role", ["responder", "citizen"])
         .order("full_name", { ascending: true })
         .limit(500);
       if (attemptFull.error) {
         const fallback = await supabase
           .from("profiles")
           .select("id, full_name, email, role, status")
-          .in("role", ["responder", "citizen"])
           .order("full_name", { ascending: true })
           .limit(500);
         if (!fallback.error) data = (fallback.data ?? []) as PresenceContact[];
+        else {
+          // Last resort: minimal columns
+          const last = await supabase.from("profiles").select("id, email, role").limit(500);
+          if (!last.error) data = (last.data ?? []) as PresenceContact[];
+        }
       } else {
         data = (attemptFull.data ?? []) as PresenceContact[];
       }

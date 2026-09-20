@@ -106,19 +106,31 @@ export default function ResponderCitizenChatDrawer({
         const rows = (reports ?? []) as Array<{ id: string; type: string; status: string; created_at: string; reporter_name: string | null; user_id: string | null }>;
 
         // 2) Recent inbound chat partners (distinct sender_ids who messaged me) — central queue
+        // Robust to schema variance: receiver_id vs recipient_id, message vs content
         let messagedIds: string[] = [];
         let lastMsgMap: Record<string, string> = {};
         try {
-          const { data: msgs } = await supabase
+          let msgs: Array<{ sender_id: string; created_at: string }> | null = null;
+          // Try both column names in one query; if that fails, try each alone
+          const tryBoth = await supabase
             .from("chat_messages")
             .select("sender_id, created_at, receiver_id, recipient_id")
             .or(`receiver_id.eq.${responderId},recipient_id.eq.${responderId}`)
             .order("created_at", { ascending: false })
             .limit(200);
-          for (const m of (msgs ?? []) as Array<{ sender_id: string; created_at: string }>) {
-            const sid = m.sender_id;
+          if (!tryBoth.error) msgs = tryBoth.data as any;
+          else {
+            const tryReceiver = await supabase.from("chat_messages").select("sender_id, created_at").eq("receiver_id", responderId).order("created_at", { ascending: false }).limit(200);
+            if (!tryReceiver.error) msgs = tryReceiver.data as any;
+            else {
+              const tryRecipient = await supabase.from("chat_messages").select("sender_id, created_at").eq("recipient_id", responderId).order("created_at", { ascending: false }).limit(200);
+              if (!tryRecipient.error) msgs = tryRecipient.data as any;
+            }
+          }
+          for (const m of (msgs ?? [])) {
+            const sid = (m as any).sender_id as string;
             if (!sid || sid === responderId) continue;
-            if (!lastMsgMap[sid]) lastMsgMap[sid] = m.created_at;
+            if (!lastMsgMap[sid]) lastMsgMap[sid] = (m as any).created_at;
             if (!messagedIds.includes(sid)) messagedIds.push(sid);
           }
         } catch {}
@@ -212,14 +224,19 @@ export default function ResponderCitizenChatDrawer({
 
         // unread counts per citizen from chat_messages where sender = citizen, receiver = me, is_read=false
         try {
-          const { data: unreadRows } = await supabase
-            .from("chat_messages")
-            .select("sender_id")
-            .or(`receiver_id.eq.${responderId},recipient_id.eq.${responderId}`)
-            .eq("is_read", false)
-            .limit(500);
+          let unreadRows: Array<{ sender_id: string }> | null = null;
+          const tryBothUnread = await supabase.from("chat_messages").select("sender_id").or(`receiver_id.eq.${responderId},recipient_id.eq.${responderId}`).eq("is_read", false).limit(500);
+          if (!tryBothUnread.error) unreadRows = tryBothUnread.data as any;
+          else {
+            const tryR = await supabase.from("chat_messages").select("sender_id").eq("receiver_id", responderId).eq("is_read", false).limit(500);
+            if (!tryR.error) unreadRows = tryR.data as any;
+            else {
+              const tryRc = await supabase.from("chat_messages").select("sender_id").eq("recipient_id", responderId).eq("is_read", false).limit(500);
+              if (!tryRc.error) unreadRows = tryRc.data as any;
+            }
+          }
           const um: Record<string, number> = {};
-          for (const r of (unreadRows ?? []) as Array<{ sender_id: string }>) {
+          for (const r of (unreadRows ?? [])) {
             if (r.sender_id && r.sender_id !== responderId) um[r.sender_id] = (um[r.sender_id] ?? 0) + 1;
           }
           setUnreadMap(um);
