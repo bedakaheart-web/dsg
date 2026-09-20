@@ -138,7 +138,21 @@ export default function CitizenChatPage() {
         // Don't decide noResponder here based on stale presence — let the
         // presence-driven effect below set it once onlineResponders have loaded.
         setNoResponder(false);
-      } catch { navigate("/login"); } finally { setLoading(false); }
+      } catch (e: any) {
+        const msg = String(e?.message ?? e ?? '');
+        if (/Invalid Refresh Token|Refresh Token Not Found/i.test(msg)) {
+          setAuthError('Session expired. Please sign in again.');
+          try { await supabase.auth.signOut(); } catch {}
+          try {
+            Object.keys(localStorage).forEach(k => {
+              if (k.startsWith('sb-') && k.includes('-auth-token')) localStorage.removeItem(k);
+            });
+          } catch {}
+        } else {
+          // Don't navigate to /login inside citizen layout (causes black flash) — show inline error
+          setAuthError('Could not load chat. Please refresh or sign in again.');
+        }
+      } finally { setLoading(false); }
     })();
   }, [navigate]); // eslint-disable-line react-hooks/exhaustive-deps
 
