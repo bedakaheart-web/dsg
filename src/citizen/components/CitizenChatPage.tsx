@@ -209,6 +209,39 @@ export default function CitizenChatPage() {
     );
   }
 
+  if (authError) {
+    return (
+      <div style={{ padding: "24px", maxWidth: "600px", margin: "40px auto", background: "rgba(15,21,33,0.82)", border: "1px solid rgba(239,91,91,0.2)", borderRadius: "12px", textAlign: "center" }}>
+        <div style={{ fontSize: "32px", marginBottom: "12px" }}>⚠️</div>
+        <div style={{ fontSize: "14px", fontWeight: "700", color: "#eef0f7", marginBottom: "8px" }}>{authError}</div>
+        <div style={{ fontSize: "12px", color: "rgba(238,240,247,0.55)", marginBottom: "16px" }}>
+          Your session has expired or is invalid (Invalid Refresh Token). Please clear and sign in again.
+        </div>
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+          <button
+            onClick={() => {
+              try {
+                Object.keys(localStorage).forEach(k => { if (k.startsWith('sb-')) localStorage.removeItem(k); });
+                sessionStorage.clear();
+              } catch {}
+              window.location.hash = '#/login';
+              window.location.reload();
+            }}
+            style={{ background: "#2ECC8F", border: "none", color: "#0a1a14", borderRadius: "8px", padding: "10px 18px", fontWeight: "700", cursor: "pointer", fontSize: "13px" }}
+          >
+            Clear & Go to Login
+          </button>
+          <button
+            onClick={() => window.location.reload()}
+            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#eef0f7", borderRadius: "8px", padding: "10px 18px", fontWeight: "700", cursor: "pointer", fontSize: "13px" }}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (roleMismatch) {
     return (
       <div style={{ padding: "24px", maxWidth: "600px", margin: "40px auto", background: "rgba(15,21,33,0.82)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", textAlign: "center" }}>
