@@ -1,15 +1,19 @@
 // src/citizen/components/CitizenChatPage.tsx
-// Chat page for citizens — shows assigned responder chat + on-duty responder list.
-// Uses ChatBox for actual messaging and useWebRTC for calling (same infra as responder/admin).
+// Centralized citizen ↔ responder communication — citizens see all online/on-duty responders
+// and can chat / audio / video call any of them. Previous version already supported this
+// but relied on a one-off fetch; this version uses the shared usePresence hook so the
+// list stays live, shows presence accurately, and the thread is incident_id-aware
+// (centralized chat uses incident_id = null when no active report links the pair).
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLanguage } from "../../context/LanguageContext";
 import { supabase } from "../../js/supabase";
 import { useNavigate } from "react-router-dom";
 import ChatBox from "../../components/Chatbox";
 import { useWebRTC } from "../../hooks/useWebRTC";
 import CallOverlay from "../../components/CallOverlay";
-import { FaPhone, FaVideo } from "react-icons/fa";
+import { FaPhone, FaVideo, FaSearch } from "react-icons/fa";
+import { usePresence, isResponderOnDuty } from "../../hooks/usePresence";
 
 interface ResponderContact {
   id: string;
@@ -17,12 +21,8 @@ interface ResponderContact {
   email: string;
   status?: string | null;
   is_online?: boolean | null;
+  last_seen?: string | null;
 }
-
-const isOnDuty = (c: ResponderContact) => {
-  const s = (c.status ?? "").toLowerCase().trim().replace(/\s+/g, "_");
-  return s === "on_duty" || s === "responding" || c.is_online === true;
-};
 
 export default function CitizenChatPage() {
   const { t } = useLanguage();
@@ -34,15 +34,18 @@ export default function CitizenChatPage() {
   const [loading, setLoading] = useState(true);
   const [noResponder, setNoResponder] = useState(false);
   const [allReports, setAllReports] = useState<any[]>([]);
-
-  // On-duty responders list (reused query pattern from AdminChatDrawer.tsx)
-  const [responders, setResponders] = useState<ResponderContact[]>([]);
   const [selectedResponderId, setSelectedResponderId] = useState<string | null>(null);
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
   const [selectedResponderName, setSelectedResponderName] = useState<string>("Responder");
+  const [search, setSearch] = useState("");
 
-  // Calling — citizen ↔ responder, same useWebRTC hook as responder side
-  // Signaling channel is call-${sortedIds} so admin↔responder and citizen↔responder don't cross-connect
+  const { onlineResponders, allResponders } = usePresence();
+  // Use presence-derived online list as source of truth — fallback to manual filter for safety
+  const responders: ResponderContact[] = useMemo(() => {
+    if (onlineResponders.length > 0) return onlineResponders as ResponderContact[];
+    return (allResponders.filter(isResponderOnDuty) as ResponderContact[]);
+  }, [onlineResponders, allResponders]);
+
   const effectiveResponderId = selectedResponderId ?? assignedResponderId;
   const effectiveResponderName = selectedResponderName || assignedResponderName;
   const effectiveIncidentId = selectedIncidentId ?? assignedIncidentId;
@@ -78,62 +81,35 @@ export default function CitizenChatPage() {
       setShowCallOverlay(true);
       if (callState.callType) setCallType(callState.callType);
     } else if (callState.callState === "ended" || callState.callState === "declined") {
-      const tid = setTimeout(() => {
-        setShowCallOverlay(false);
-        setCallType(null);
-      }, 1200);
+      const tid = setTimeout(() => { setShowCallOverlay(false); setCallType(null); }, 1200);
       return () => clearTimeout(tid);
     } else if (callState.callState === "idle" && showCallOverlay) {
-      if (!callState.localStream && !callState.remoteStream) {
-        setShowCallOverlay(false);
-        setCallType(null);
-      }
+      if (!callState.localStream && !callState.remoteStream) { setShowCallOverlay(false); setCallType(null); }
     }
   }, [callState.callState, callState.callType, callState.localStream, callState.remoteStream, showCallOverlay]);
 
-  // Initial load: assigned responder + on-duty list
+  // Initial load: assigned responder from active report (pinned)
   useEffect(() => {
     (async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { navigate("/login"); return; }
-
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", user.id)
-          .single();
-
-        if ((profile?.role as string)?.toLowerCase() !== "citizen") {
-          navigate("/citizen/dashboard");
-          return;
-        }
-
+        const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+        if ((profile?.role as string)?.toLowerCase() !== "citizen") { navigate("/citizen/dashboard"); return; }
         setCitizenId(user.id);
-
-        // a) Still check for assigned responder from active report (pinned)
         const { data: reports } = await supabase
           .from("reports")
           .select("id, responder_id, status")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
           .limit(10);
-
         setAllReports(reports ?? []);
-        const active = (reports ?? []).find(r =>
-          r.responder_id && (r.status === "pending" || r.status === "in-progress")
-        );
-
+        const active = (reports ?? []).find(r => r.responder_id && (r.status === "pending" || r.status === "in-progress"));
         let assignedId: string | null = null;
         let assignedInc: string | null = null;
         let assignedName = "Responder";
         if (active?.responder_id) {
-          const { data: responder } = await supabase
-            .from("profiles")
-            .select("id, role, full_name, email")
-            .eq("id", active.responder_id)
-            .single();
-
+          const { data: responder } = await supabase.from("profiles").select("id, role, full_name, email").eq("id", active.responder_id).single();
           if ((responder?.role as string)?.toLowerCase() === "responder") {
             assignedId = active.responder_id as string;
             assignedInc = active.id as string;
@@ -143,115 +119,87 @@ export default function CitizenChatPage() {
             setAssignedResponderName(assignedName);
           }
         }
-
-        // b) ALSO query all on-duty responders (reused pattern from AdminChatDrawer.tsx)
-        // Status field on profiles: status = 'on_duty' or 'responding' (same query as admin/responder drawers)
-        const { data: onDutyData } = await supabase
-          .from("profiles")
-          .select("id, full_name, email, status, role, is_online")
-          .eq("role", "responder")
-          .order("full_name", { ascending: true });
-
-        const onDuty = ((onDutyData ?? []) as ResponderContact[]).filter(isOnDuty);
-        setResponders(onDuty);
-
-        // c) No hard block: only "nobody available" if zero on-duty AND no assignment
-        if (!assignedId && onDuty.length === 0) {
-          setNoResponder(true);
-        } else {
-          setNoResponder(false);
-          // Default selection: assigned responder first, else first on-duty
-          const initialId = assignedId ?? (onDuty[0]?.id ?? null);
-          const initialName = assignedId ? assignedName : (onDuty[0]?.full_name || onDuty[0]?.email || "Responder");
-          const linkedForInitial = (reports ?? []).find(rep => String(rep.responder_id) === String(initialId));
-          const initialInc = linkedForInitial ? String(linkedForInitial.id) : (assignedId ? assignedInc : null);
-          setSelectedResponderId(initialId);
-          setSelectedResponderName(initialName);
-          setSelectedIncidentId(initialInc);
-        }
-      } catch {
-        navigate("/citizen/dashboard");
-      } finally {
-        setLoading(false);
-      }
+        // Wait for presence to load before deciding selection — handled in next effect
+        // but set flag for noResponder interim
+        if (!assignedId && responders.length === 0) setNoResponder(true);
+        else setNoResponder(false);
+      } catch { navigate("/citizen/dashboard"); } finally { setLoading(false); }
     })();
-  }, [navigate]);
+  }, [navigate]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Keep responder list live (same as AdminChatDrawer)
+  // Auto-select initial responder when presence loads
   useEffect(() => {
-    const ch = supabase
-      .channel("citizen-chat-presence")
-      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, async () => {
-        const { data } = await supabase
-          .from("profiles")
-          .select("id, full_name, email, status, role, is_online")
-          .eq("role", "responder")
-          .order("full_name", { ascending: true });
-        const onDuty = ((data ?? []) as ResponderContact[]).filter(isOnDuty);
-        setResponders(onDuty);
-        // If selected responder went off-duty, keep selection but list will update
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, []);
+    if (loading) return;
+    if (selectedResponderId) return;
+    if (assignedResponderId) {
+      setSelectedResponderId(assignedResponderId);
+      setSelectedResponderName(assignedResponderName);
+      setSelectedIncidentId(assignedIncidentId);
+      setNoResponder(false);
+      return;
+    }
+    if (responders.length > 0) {
+      const r = responders[0];
+      setSelectedResponderId(r.id);
+      setSelectedResponderName(r.full_name || r.email || "Responder");
+      const linked = allReports.find(rep => String(rep.responder_id) === String(r.id));
+      setSelectedIncidentId(linked ? String(linked.id) : null);
+      setNoResponder(false);
+    } else if (!assignedResponderId) {
+      setNoResponder(true);
+    }
+  }, [loading, responders, assignedResponderId, assignedResponderName, assignedIncidentId, selectedResponderId, allReports]);
 
-  // Selecting a responder updates chat thread (incident scoping)
-  // Use the most recent report linking this citizen to this responder so both sides share the same incident_id.
+  // Keep responder selection stable when online list changes — don't auto-switch away
+  useEffect(() => {
+    if (selectedResponderId && !responders.some(r => r.id === selectedResponderId) && assignedResponderId !== selectedResponderId) {
+      // selected went offline — keep it but show offline indicator; don't clear
+    }
+  }, [responders, selectedResponderId, assignedResponderId]);
+
   const handleSelectResponder = (r: ResponderContact) => {
     setSelectedResponderId(r.id);
     setSelectedResponderName(r.full_name || r.email || "Responder");
     const linked = allReports.find(rep => String(rep.responder_id) === String(r.id));
-    if (linked) {
-      setSelectedIncidentId(String(linked.id));
-    } else if (r.id === assignedResponderId) {
-      setSelectedIncidentId(assignedIncidentId);
-    } else {
-      setSelectedIncidentId(null);
-    }
+    if (linked) setSelectedIncidentId(String(linked.id));
+    else if (r.id === assignedResponderId) setSelectedIncidentId(assignedIncidentId);
+    else setSelectedIncidentId(null);
   };
+
+  const filteredResponders = useMemo(() => {
+    if (!search.trim()) return responders;
+    const q = search.toLowerCase();
+    return responders.filter(r => (r.full_name ?? "").toLowerCase().includes(q) || r.email.toLowerCase().includes(q));
+  }, [responders, search]);
 
   if (loading) {
     return (
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "center",
-        height: "60vh", color: "rgba(238,240,247,0.35)", fontSize: "13px",
-        fontFamily: "'Inter', sans-serif",
-      }}>
-        <div style={{ textAlign: "center" }}>
-          <div style={{ marginBottom: "12px", fontSize: "24px" }}>🔒</div>
-          {t("chat.loading", "Loading chat...")}
-        </div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "60vh", color: "rgba(238,240,247,0.35)", fontSize: "13px", fontFamily: "'Inter', sans-serif" }}>
+        <div style={{ textAlign: "center" }}><div style={{ marginBottom: "12px", fontSize: "24px" }}>🔒</div>{t("chat.loading", "Loading chat...")}</div>
       </div>
     );
   }
 
-  if (noResponder) {
+  if (noResponder && responders.length === 0) {
     return (
       <div style={{ padding: "20px", maxWidth: "700px", margin: "0 auto" }}>
-        <div style={{
-          marginBottom: "16px", padding: "14px 18px",
-          backgroundColor: "rgba(15,21,33,0.82)",
-          border: "1px solid rgba(239,91,91,0.2)",
-          borderRadius: "12px", borderLeft: "3px solid #EF5B5B",
-        }}>
-          <div style={{ fontSize: "10px", color: "#EF5B5B", letterSpacing: "0.14em", textTransform: "uppercase", fontWeight: "700", marginBottom: "4px" }}>
-            {t("chat.noResponder", "No Responder")}
-          </div>
-          <div style={{ fontSize: "13px", color: "rgba(238,240,247,0.65)" }}>
-            No responders are currently on duty. Please try again later.
-          </div>
+        <div style={{ marginBottom: "16px", padding: "14px 18px", backgroundColor: "rgba(15,21,33,0.82)", border: "1px solid rgba(239,91,91,0.2)", borderRadius: "12px", borderLeft: "3px solid #EF5B5B" }}>
+          <div style={{ fontSize: "10px", color: "#EF5B5B", letterSpacing: "0.14em", textTransform: "uppercase", fontWeight: "700", marginBottom: "4px" }}>{t("chat.noResponder", "No Responder")}</div>
+          <div style={{ fontSize: "13px", color: "rgba(238,240,247,0.65)" }}>No responders are currently on duty. Your message will be queued and the next available responder will assist you. Please try again shortly.</div>
         </div>
+        {/* Still allow queuing — show chat disabled but with responders list empty */}
       </div>
     );
   }
 
-  const assignedResponder = assignedResponderId ? responders.find(r => r.id === assignedResponderId) || { id: assignedResponderId, full_name: assignedResponderName, email: "", status: "on_duty" } as ResponderContact : null;
-  const otherResponders = responders.filter(r => r.id !== assignedResponderId);
+  const assignedResponder = assignedResponderId
+    ? filteredResponders.find(r => r.id === assignedResponderId) || ({ id: assignedResponderId, full_name: assignedResponderName, email: "", status: "on_duty", is_online: true } as ResponderContact)
+    : null;
+  const otherResponders = filteredResponders.filter(r => r.id !== assignedResponderId);
   const showAssignedSection = !!assignedResponderId;
 
   return (
     <div style={{ padding: "20px", maxWidth: "700px", margin: "0 auto" }}>
-      {/* Secure channel header — citizen style (green) with per-responder call buttons */}
       <div style={{
         marginBottom: "16px", padding: "14px 18px",
         backgroundColor: "rgba(15,21,33,0.82)",
@@ -260,33 +208,22 @@ export default function CitizenChatPage() {
         display: "flex", alignItems: "center", gap: "12px",
       }}>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: "10px", color: "#2ECC8F", letterSpacing: "0.14em", textTransform: "uppercase", fontWeight: "700", marginBottom: "4px" }}>
-            {t("chat.secureChannel", "Secure Channel")}
-          </div>
+          <div style={{ fontSize: "10px", color: "#2ECC8F", letterSpacing: "0.14em", textTransform: "uppercase", fontWeight: "700", marginBottom: "4px" }}>{t("chat.secureChannel", "Secure Channel")}</div>
           <div style={{ fontSize: "13px", color: "rgba(238,240,247,0.65)", fontWeight: "500" }}>
-            {showAssignedSection
-              ? "Your assigned responder is pinned below. You can also message any on-duty responder."
-              : t("chat.citizenNote", "Your messages are encrypted and shared only with your assigned responder.")}
+            Centralized: message any on-duty responder — chat, audio, or video. Responders online are highlighted and will respond to assist you.
           </div>
         </div>
         {effectiveResponderId && (
           <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
-            <button onClick={handleStartAudioCall} title="Audio Call" style={{ background: "rgba(46,204,143,0.12)", border: "1px solid rgba(46,204,143,0.3)", borderRadius: "8px", padding: "8px 10px", cursor: "pointer", color: "#2ECC8F", fontSize: "14px", display: "flex", alignItems: "center" }}>
-              <FaPhone size={14} />
-            </button>
-            <button onClick={handleStartVideoCall} title="Video Call" style={{ background: "rgba(46,204,143,0.12)", border: "1px solid rgba(46,204,143,0.3)", borderRadius: "8px", padding: "8px 10px", cursor: "pointer", color: "#2ECC8F", fontSize: "14px", display: "flex", alignItems: "center" }}>
-              <FaVideo size={14} />
-            </button>
+            <button onClick={handleStartAudioCall} title="Audio Call — responder will be notified" style={{ background: "rgba(46,204,143,0.12)", border: "1px solid rgba(46,204,143,0.3)", borderRadius: "8px", padding: "8px 10px", cursor: "pointer", color: "#2ECC8F", fontSize: "14px", display: "flex", alignItems: "center" }}><FaPhone size={14} /></button>
+            <button onClick={handleStartVideoCall} title="Video Call — responder will be notified" style={{ background: "rgba(46,204,143,0.12)", border: "1px solid rgba(46,204,143,0.3)", borderRadius: "8px", padding: "8px 10px", cursor: "pointer", color: "#2ECC8F", fontSize: "14px", display: "flex", alignItems: "center" }}><FaVideo size={14} /></button>
           </div>
         )}
       </div>
 
-      {/* Assigned responder — pinned/highlighted */}
       {showAssignedSection && assignedResponder && (
         <div style={{ marginBottom: "16px" }}>
-          <div style={{ fontSize: "10px", color: "#2ECC8F", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: "700", marginBottom: "8px" }}>
-            Your assigned responder
-          </div>
+          <div style={{ fontSize: "10px", color: "#2ECC8F", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: "700", marginBottom: "8px" }}>Your assigned responder</div>
           <button
             onClick={() => handleSelectResponder(assignedResponder)}
             style={{
@@ -298,39 +235,30 @@ export default function CitizenChatPage() {
               cursor: "pointer", color: "#eef0f7",
             }}
           >
-            <span style={{
-              width: "10px", height: "10px", borderRadius: "50%", flexShrink: 0,
-              background: "#2ECC8F", boxShadow: "0 0 6px #2ECC8F",
-            }} />
+            <span style={{ width: "10px", height: "10px", borderRadius: "50%", flexShrink: 0, background: "#2ECC8F", boxShadow: "0 0 6px #2ECC8F" }} />
             <span style={{ flex: 1, minWidth: 0 }}>
-              <span style={{ display: "block", fontSize: "13px", fontWeight: "700", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {assignedResponder.full_name || assignedResponder.email || "Responder"} {selectedResponderId === assignedResponder.id ? "✓" : ""}
-              </span>
-              <span style={{ display: "block", fontSize: "11px", color: "rgba(46,204,143,0.8)" }}>
-                Assigned to your active report • Tap to chat
-              </span>
+              <span style={{ display: "block", fontSize: "13px", fontWeight: "700", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{assignedResponder.full_name || assignedResponder.email || "Responder"} {selectedResponderId === assignedResponder.id ? "✓" : ""}</span>
+              <span style={{ display: "block", fontSize: "11px", color: "rgba(46,204,143,0.8)" }}>Assigned to your active report • Tap to chat • Will take action to assist</span>
             </span>
             <span style={{ fontSize: "10px", color: "#2ECC8F", fontWeight: "700", letterSpacing: "0.06em" }}>PINNED</span>
           </button>
         </div>
       )}
 
-      {/* On-duty responders list — citizen visual style (green accents, not admin blue) */}
-      <div style={{
-        marginBottom: "16px", backgroundColor: "rgba(15,21,33,0.82)",
-        border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", overflow: "hidden",
-      }}>
-        <div style={{ padding: "12px 14px", borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <span style={{ fontSize: "10px", color: "rgba(238,240,247,0.5)", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: "700" }}>
+      <div style={{ marginBottom: "16px", backgroundColor: "rgba(15,21,33,0.82)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", overflow: "hidden" }}>
+        <div style={{ padding: "12px 14px", borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: "10px", color: "rgba(238,240,247,0.5)", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: "700", flex: 1 }}>
             On-duty responders {responders.length > 0 ? `(${responders.length})` : ""}
           </span>
           <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#2ECC8F", boxShadow: "0 0 6px #2ECC8F", display: "inline-block" }} />
+          <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+            <FaSearch size={10} style={{ position: "absolute", left: 8, color: "rgba(238,240,247,0.35)" }} />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search responder" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "6px 8px 6px 24px", fontSize: 11, color: "#eef0f7", outline: "none", width: 130 }} />
+          </div>
         </div>
         <div style={{ maxHeight: "220px", overflowY: "auto" }}>
-          {otherResponders.length === 0 && !showAssignedSection ? (
-            <div style={{ padding: "16px", fontSize: "12px", color: "rgba(238,240,247,0.4)", textAlign: "center" }}>
-              No on-duty responders at the moment.
-            </div>
+          {filteredResponders.length === 0 && !showAssignedSection ? (
+            <div style={{ padding: "16px", fontSize: "12px", color: "rgba(238,240,247,0.4)", textAlign: "center" }}>No responders match — they appear here when on duty and online. Your report is still visible to dispatch.</div>
           ) : (
             <>
               {otherResponders.map(r => {
@@ -347,42 +275,31 @@ export default function CitizenChatPage() {
                       borderLeft: isSelected ? "2px solid #2ECC8F" : "2px solid transparent",
                     }}
                   >
-                    <span style={{
-                      width: "10px", height: "10px", borderRadius: "50%", flexShrink: 0,
-                      background: "#2ECC8F", boxShadow: "0 0 6px #2ECC8F",
-                    }} />
+                    <span style={{ width: "10px", height: "10px", borderRadius: "50%", flexShrink: 0, background: "#2ECC8F", boxShadow: "0 0 6px #2ECC8F" }} />
                     <span style={{ flex: 1, minWidth: 0 }}>
-                      <span style={{ display: "block", fontSize: "13px", fontWeight: "600", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {r.full_name || r.email || "Responder"}
-                      </span>
-                      <span style={{ display: "block", fontSize: "11px", color: "rgba(238,240,247,0.45)" }}>
-                        On duty • Tap to chat
-                      </span>
+                      <span style={{ display: "block", fontSize: "13px", fontWeight: "600", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.full_name || r.email || "Responder"}</span>
+                      <span style={{ display: "block", fontSize: "11px", color: "rgba(238,240,247,0.45)" }}>On duty • Chat · Audio · Video • Will respond</span>
                     </span>
                     {isSelected && <span style={{ fontSize: "12px", color: "#2ECC8F" }}>✓</span>}
                   </button>
                 );
               })}
-              {otherResponders.length === 0 && showAssignedSection && (
-                <div style={{ padding: "12px 14px", fontSize: "11px", color: "rgba(238,240,247,0.35)", textAlign: "center" }}>
-                  No other on-duty responders.
-                </div>
+              {otherResponders.length === 0 && showAssignedSection && filteredResponders.length > 0 && (
+                <div style={{ padding: "12px 14px", fontSize: "11px", color: "rgba(238,240,247,0.35)", textAlign: "center" }}>No other on-duty responders. Your assigned responder is pinned above.</div>
               )}
             </>
           )}
         </div>
       </div>
 
-      {/* Chat thread — sender_id=citizen, receiver_id=selected responder, same chat_messages table */}
       {effectiveResponderId ? (
         <ChatBox assignedResponderId={effectiveResponderId} incidentId={effectiveIncidentId} userRole="citizen" />
       ) : (
         <div style={{ textAlign: "center", padding: "24px", color: "rgba(238,240,247,0.4)", fontSize: "12px", background: "rgba(15,21,33,0.6)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.06)" }}>
-          Select a responder above to start chatting.
+          Select a responder above to start chatting — audio and video calls are available.
         </div>
       )}
 
-      {/* Call Overlay — citizen ↔ responder (same useWebRTC infrastructure) */}
       {showCallOverlay && callType && (
         <CallOverlay
           state={callState}

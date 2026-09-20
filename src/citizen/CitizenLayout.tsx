@@ -13,6 +13,8 @@ import { FaBars, FaTimes } from "react-icons/fa";
 import { useLanguage } from "../context/LanguageContext";
 import { supabase } from "../js/supabase";
 import dsgLogo from "../assets/dsg_logo.png";
+import { useHeartbeat, markOffline } from "../hooks/useHeartbeat";
+import GlobalCitizenCallHandler from "../components/GlobalCitizenCallHandler";
 
 const NAV_LINK_BASE: React.CSSProperties = {
   display: "flex", alignItems: "center", gap: "10px",
@@ -58,8 +60,12 @@ export default function CitizenLayout() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [citizenId, setCitizenId] = useState<string | null>(null);
+  useEffect(() => { supabase.auth.getUser().then(({ data }) => setCitizenId(data.user?.id ?? null)); }, []);
+  useHeartbeat(citizenId, "citizen", !!citizenId);
 
   const handleLogout = async () => {
+    if (citizenId) await markOffline(citizenId, "citizen");
     await supabase.auth.signOut();
     navigate("/login", { replace: true });
   };
@@ -151,6 +157,7 @@ export default function CitizenLayout() {
       <main style={{ marginLeft: isMobile ? 0 : "260px", paddingTop: isMobile ? "56px" : 0, minHeight: "100vh" }}>
         <Outlet />
       </main>
+      {citizenId && <GlobalCitizenCallHandler citizenId={citizenId} />}
     </div>
   );
 }

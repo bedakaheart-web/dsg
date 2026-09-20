@@ -12,6 +12,7 @@ import ResponderCitizenChatDrawer from "./components/ResponderCitizenChatDrawer"
 import GlobalResponderCallHandler from "./components/GlobalResponderCallHandler";
 import { fetchUnreadCounts } from "../hooks/useRealtimeChat";
 import { useDepartmentNotifications } from "../hooks/useDepartmentNotifications";
+import { useHeartbeat, markOffline } from "../hooks/useHeartbeat";
 import dsgLogo from "../assets/dsg.logo.png";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -712,6 +713,7 @@ export default function RespondersDashboard() {
   const [authReady,     setAuthReady]     = useState(false);
   const [isChatOpen,    setIsChatOpen]    = useState(false);
   const [chatUnread,    setChatUnread]    = useState(0);
+  useHeartbeat(responderId || null, "responder", !!responderId && authReady);
   const [citizenChatOpen, setCitizenChatOpen] = useState(false);
   const [citizenChatTarget, setCitizenChatTarget] = useState<{
     reportId: string; citizenId: string | null; citizenName: string;
@@ -763,10 +765,11 @@ export default function RespondersDashboard() {
 
         if (user) {
           setResponderId(user.id);
-          await supabase
-            .from("profiles")
-            .update({ status: "on_duty" })
-            .eq("id", user.id);
+          try {
+            await supabase.from("profiles").update({ status: "on_duty", is_online: true, last_seen: new Date().toISOString() } as any).eq("id", user.id);
+          } catch {
+            await supabase.from("profiles").update({ status: "on_duty" } as any).eq("id", user.id);
+          }
 
           const { data: profile } = await supabase
             .from("profiles")
@@ -845,10 +848,7 @@ export default function RespondersDashboard() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await supabase
-          .from("profiles")
-          .update({ status: "off_duty" })
-          .eq("id", user.id);
+        await markOffline(user.id, "responder");
       }
     } catch (err) {
       console.error("Logout status update error:", err);
