@@ -104,14 +104,43 @@ export default function App() {
   const [user, setUser]       = useState<any>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    let cancelled = false;
+    const init = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error && /Invalid Refresh Token|Refresh Token Not Found/i.test(error.message ?? '')) {
+          try { await supabase.auth.signOut(); } catch {}
+          try {
+            Object.keys(localStorage).forEach(k => {
+              if (k.startsWith('sb-') && k.includes('-auth-token')) localStorage.removeItem(k);
+            });
+          } catch {}
+          if (!cancelled) {
+            setUser(null);
+            setLoading(false);
+            // Force redirect to login if on protected route
+            if (window.location.hash.includes('/citizen/') || window.location.hash.includes('/responder/') || window.location.hash.includes('/admin/')) {
+              window.location.hash = '#/login';
+            }
+            return;
+          }
+        }
+        if (!cancelled) {
+          setUser(session?.user ?? null);
+          setLoading(false);
+        }
+      } catch {
+        if (!cancelled) {
+          setUser(null);
+          setLoading(false);
+        }
+      }
+    };
+    init();
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
-    return () => { authListener?.subscription?.unsubscribe(); };
+    return () => { cancelled = true; authListener?.subscription?.unsubscribe(); };
   }, []);
 
   if (loading) return <Loader />;

@@ -38,6 +38,8 @@ export default function CitizenChatPage() {
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
   const [selectedResponderName, setSelectedResponderName] = useState<string>("Responder");
   const [search, setSearch] = useState("");
+  const [roleMismatch, setRoleMismatch] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   const { onlineResponders, allResponders } = usePresence();
   // Use presence-derived online list as source of truth — fallback to manual filter for safety
@@ -94,7 +96,6 @@ export default function CitizenChatPage() {
   // the user is a responder — that would loop inside a citizen-only layout
   // and appear as a black screen. Instead we show an inline unauthorized
   // message and let ProtectedRoute handle the redirect if needed.
-  const [roleMismatch, setRoleMismatch] = useState(false);
   useEffect(() => {
     (async () => {
       try {
