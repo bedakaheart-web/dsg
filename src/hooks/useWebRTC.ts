@@ -453,14 +453,26 @@ return () => {
      };
   }, [localUserId, remoteUserId, receiveCall, updateState]);
 
-  // ΓöÇΓöÇ Global inbox: app-wide incoming call listener ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // Global inbox: app-wide incoming call listener (deduped per localId to avoid duplicate channels / CLOSED)
   // Subscribes to call-inbox-${localUserId} regardless of remoteId, so ringing
-  // works even when no chat drawer is open. Mirrors pairing logic above.
+  // works even when no chat drawer is open. Shared across multiple useWebRTC instances via ref-count.
+  const inboxRefCount = (globalThis as any).__inboxRefCount ?? ((globalThis as any).__inboxRefCount = new Map<string, { count: number; channel: ReturnType<typeof supabase.channel> }>());
   useEffect(() => {
     const localId = localUserId;
     if (!localId) return;
     const inboxName = `call-inbox-${localId}`;
-    console.log("[useWebRTC] subscribing to inbox:", inboxName);
+    // Reuse existing inbox channel if already subscribed for this localId (prevents duplicate subscribe / CLOSED)
+    const existing = inboxRefCount.get(localId);
+    if (existing) {
+      existing.count += 1;
+      return () => {
+        existing.count -= 1;
+        if (existing.count <= 0) {
+          supabase.removeChannel(existing.channel);
+          inboxRefCount.delete(localId);
+        }
+      };
+    }
     const inbox = supabase.channel(inboxName);
     inbox.on("broadcast", { event: "webrtc-signal" }, async (payload) => {
       const p = payload.payload as {
@@ -510,11 +522,22 @@ return () => {
       }
     });
     inbox.subscribe((status) => {
-      console.log("[useWebRTC] inbox subscribe status:", status, inboxName);
+      if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+        console.warn("[useWebRTC] inbox subscribe status:", status, inboxName);
+      }
     });
+    inboxRefCount.set(localId, { count: 1, channel: inbox });
     return () => {
-      console.log("[useWebRTC] removing inbox:", inboxName);
-      supabase.removeChannel(inbox);
+      const entry = inboxRefCount.get(localId);
+      if (entry) {
+        entry.count -= 1;
+        if (entry.count <= 0) {
+          supabase.removeChannel(entry.channel);
+          inboxRefCount.delete(localId);
+        }
+      } else {
+        supabase.removeChannel(inbox);
+      }
     };
   }, [localUserId, receiveCall, updateState]);
 
