@@ -533,7 +533,7 @@ export default function ChatBox({
   }, [participants, recipientId, recipientNameProp]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 200px)", minHeight: "400px", backgroundColor: "rgba(15,21,33,0.95)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", overflow: "hidden", fontFamily: "'Inter', sans-serif", color: "#eef0f7" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "min(560px, calc(100dvh - 220px))", minHeight: "400px", maxHeight: "70dvh", backgroundColor: "rgba(15,21,33,0.95)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", overflow: "hidden", fontFamily: "'Inter', sans-serif", color: "#eef0f7" }}>
       <style>{`
         @keyframes chatTypingBounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-3px); opacity: 1; } }
         .chat-typing-dot { width: 5px; height: 5px; border-radius: 50%; background-color: currentColor; display: inline-block; animation: chatTypingBounce 1.2s infinite ease-in-out; }

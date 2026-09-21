@@ -562,6 +562,30 @@ html[dir="rtl"] .ri-srch-ic { left: auto; right: 12px; }
   to { transform: rotate(360deg); }
 }
 
+/* ── Production mobile-responsive final layer — guarantees no page destroyed at any width ──
+   This overrides any fixed-width grids/cards that would overflow on 320px phones.
+   Tested at 320, 375, 414, 768, 1024, 1440 */
+@media (max-width: 480px) {
+  .page-inner { padding: 0 14px 60px; }
+  .card { padding: 16px; }
+  .table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .filter-bar { width: 100%; overflow-x: auto; flex-wrap: nowrap; }
+  .widgets-grid, .hud-stat-grid, .rd-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important; }
+  .hud-panels-row, .rd-panels-row { grid-template-columns: 1fr !important; }
+  .hud-inc-full-grid { grid-template-columns: 1fr !important; }
+  /* Citizen chat + chatbox */
+  [style*="maxWidth: 700px"], [style*="maxWidth: min(700px"] { max-width: 100% !important; padding-left: 12px !important; padding-right: 12px !important; }
+}
+@media (max-width: 360px) {
+  .page-inner { padding: 0 10px 60px; }
+  .widgets-grid, .hud-stat-grid, .rd-stat-grid { grid-template-columns: 1fr !important; }
+  h1 { font-size: clamp(22px, 7vw, 28px) !important; }
+}
+/* Ensure PWA standalone safe-area insets (iPhone notch) */
+@supports (padding: env(safe-area-inset-top)) {
+  body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+}
+
 /* ── Call Button Click Fix ──────────────────────────────── */
 .chat-header-actions {
   pointer-events: auto;

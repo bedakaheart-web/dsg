@@ -297,7 +297,7 @@ export default function CitizenChatPage() {
   const showAssignedSection = !!assignedResponderId;
 
   return (
-    <div style={{ padding: "20px", maxWidth: "700px", margin: "0 auto" }}>
+    <div style={{ padding: "clamp(12px,3vw,20px)", maxWidth: "min(700px, calc(100vw - 24px))", margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
       <div style={{
         marginBottom: "16px", padding: "14px 18px",
         backgroundColor: "rgba(15,21,33,0.82)",
