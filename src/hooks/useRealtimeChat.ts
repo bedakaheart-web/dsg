@@ -289,6 +289,7 @@ export function setBroadcastLastSeen(userId: string, iso = new Date().toISOStrin
 export async function fetchUnreadCounts(
   currentUserId: string,
 ): Promise<{ bySender: Record<string, number>; broadcast: number }> {
+  if (!currentUserId) return { bySender: {}, broadcast: 0 };
   const bySender: Record<string, number> = {};
   // Real column is receiver_id and text is message (ResponderChatDrawer reads m.message)
   const { data: rows, error: rowsErr } = await (supabase.from("chat_messages").select("sender_id,receiver_id").eq("receiver_id", currentUserId).eq("is_read", false).limit(500) as any);

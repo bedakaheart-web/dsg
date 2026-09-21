@@ -1,5 +1,5 @@
 // src/citizen/CitizenDashboard.tsx
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useLanguage } from "../context/LanguageContext";
 import { supabase } from "../js/supabase";
 import { Link, useNavigate } from "react-router-dom";
@@ -10,11 +10,17 @@ import {
 } from "react-icons/fa";
 import pagesBackground from "../assets/pagesbackground.png";
 
-import CitizenSafetyTips from "./CitizenSafetyTips";
-import CitizenAlertsPage from "./CitizenAlertsPage";
-import CitizenReport from "./CitizenReport";
-import CitizenReportDetail from "./CitizenReportDetail";
-import CitizenMap from "./CitizenMap";
+const CitizenSafetyTips = lazy(() => import("./CitizenSafetyTips"));
+const CitizenAlertsPage = lazy(() => import("./CitizenAlertsPage"));
+const CitizenReport = lazy(() => import("./CitizenReport"));
+const CitizenReportDetail = lazy(() => import("./CitizenReportDetail"));
+const CitizenMap = lazy(() => import("./CitizenMap"));
+
+const LazyFallback = () => (
+  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: 40, color: "rgba(238,240,247,0.35)", fontSize: 13 }}>
+    Loading...
+  </div>
+);
 
 interface Report {
   id: string;
@@ -487,28 +493,30 @@ export default function CitizenDashboard() {
             <FaTimes />
           </button>
 
-          {modalView === "safetytips" && <CitizenSafetyTips />}
-          {modalView === "alerts" && <CitizenAlertsPage />}
+          <Suspense fallback={<LazyFallback />}>
+            {modalView === "safetytips" && <CitizenSafetyTips />}
+            {modalView === "alerts" && <CitizenAlertsPage />}
 
-          {modalView === "report" && (
-            <CitizenReport
-              onBack={() => setModalView(null)}
-              onViewHistory={() => navigate("/citizen/history")}
-              onViewReport={(id) => openReportDetail(id)}
-            />
-          )}
+            {modalView === "report" && (
+              <CitizenReport
+                onBack={() => setModalView(null)}
+                onViewHistory={() => navigate("/citizen/history")}
+                onViewReport={(id) => openReportDetail(id)}
+              />
+            )}
 
-          {modalView === "reportdetail" && selectedReportId && (
-            <CitizenReportDetail
-              reportId={selectedReportId}
-              onBack={() => setModalView(null)}
-              onViewHistory={() => navigate("/citizen/history")}
-            />
-          )}
+            {modalView === "reportdetail" && selectedReportId && (
+              <CitizenReportDetail
+                reportId={selectedReportId}
+                onBack={() => setModalView(null)}
+                onViewHistory={() => navigate("/citizen/history")}
+              />
+            )}
 
-          {modalView === "map" && (
-            <CitizenMap onBack={() => setModalView(null)} />
-          )}
+            {modalView === "map" && (
+              <CitizenMap onBack={() => setModalView(null)} />
+            )}
+          </Suspense>
         </div>
       )}
 

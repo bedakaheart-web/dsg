@@ -1,16 +1,3 @@
-declare global {
-  interface ImportMeta {
-    readonly env: Record<string, string | undefined>;
-  }
-  interface Window {
-    turnstile?: {
-      render: (container: string | HTMLElement, options: Record<string, any>) => string;
-      reset: (widgetId?: string) => void;
-      remove: (widgetId?: string) => void;
-    };
-  }
-}
-
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "../js/supabase";
@@ -18,14 +5,7 @@ import { FaEye, FaEyeSlash, FaCheck, FaArrowRight } from "react-icons/fa";
 import logoImage from "../assets/dsg.logo.png";
 import directorybg from "../assets/directorybg.png";
 import { useLanguage } from "../context/LanguageContext";
-
-// ── Cloudflare Turnstile site key ──
-// Production key (public by design). Loaded from VITE_TURNSTILE_SITE_KEY env
-// var when available, falling back to the hardcoded production key. Must match
-// the key configured in the Cloudflare Turnstile widget and the Secret Key in
-// Supabase Auth > CAPTCHA settings. Uses the SAME custom window.turnstile.render()
-// pattern as Homepage.tsx and Signup.tsx for consistency.
-const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || "0x4AAAAAAEyz-wD6yQmn6txp";
+import TurnstileWidget from "../components/TurnstileWidget";
 
 // ── CSS-in-JS ──
 const CSS = `
@@ -547,23 +527,24 @@ const CSS = `
     min-width: 300px;
   }
 
-  /* Explicit-size Turnstile box: the Cloudflare "normal" widget is exactly
-     300×65px. Without reserved dimensions the container can collapse to 0px
-     (e.g. while api.js is still loading or an ad-blocker delays the iframe),
-     making the widget appear missing. The box keeps layout stable and the
-     widget visible above the submit button. */
+  /* Turnstile box — full-width like the login button so it doesn't look
+     like a short/narrow box. Container reserves stable height (65px) and
+     spans 100% width matching .lg-btn; inner Cloudflare widget stays 300×65
+     centered inside. On tiny screens we scale the widget instead of clipping. */
   .lg-turnstile-box {
-    width: 300px;
+    width: 100%;
     height: 65px;
-    min-width: 300px;
     min-height: 65px;
     max-width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: visible;
+    overflow: hidden;
     position: relative;
     z-index: 1;
+    background: rgba(13, 27, 46, 0.55);
+    border: 1.5px solid rgba(0, 200, 224, 0.12);
+    border-radius: 11px;
   }
 
   .lg-turnstile-box > div {
@@ -585,8 +566,7 @@ const CSS = `
   }
 
   @media (max-width: 360px) {
-    /* Shrink the fixed-size widget instead of clipping it on tiny screens. */
-    .lg-turnstile-box { transform: scale(0.86); transform-origin: top center; }
+    .lg-turnstile-box { transform: scale(0.86); transform-origin: center center; }
   }
 
   .lg-success {
@@ -698,82 +678,25 @@ export default function Login() {
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaStatus, setCaptchaStatus] = useState<"loading" | "ready" | "error">("loading");
   const [captchaMsg, setCaptchaMsg] = useState("");
-
-  // Manual Turnstile widget refs — SAME pattern as Homepage.tsx / Signup.tsx
-  const captchaWidgetId = useRef<string | null>(null);
-  const turnstileContainerRef = useRef<HTMLDivElement>(null);
+  const [turnstileKey, setTurnstileKey] = useState(0);
   const mountedRef = useRef(true);
   useEffect(() => {
     mountedRef.current = true;
     return () => { mountedRef.current = false; };
   }, []);
 
-  // Keep latest translator without re-rendering the widget on every keystroke
-  // (`t` is re-created each render and is NOT referentially stable). The custom
-  // window.turnstile.render() pattern reads translations through this ref so the
-  // effect can run once (empty deps) without tearing down the widget on each
-  // keystroke — matching Homepage.tsx's approach.
-  const tRef = useRef(t);
-  tRef.current = t;
-  const tr = (path: string, fallback: string) => {
-    try {
-      return tRef.current(path, fallback);
-    } catch {
-      return fallback;
-    }
-  };
-
-  // ── Retry CAPTCHA — manual window.turnstile pattern ──
   const retryCaptcha = () => {
     setCaptchaMsg("");
     setCaptchaStatus("loading");
     setTurnstileToken(null);
     setCaptchaToken(null);
-    try {
-      if (window.turnstile && captchaWidgetId.current) {
-        window.turnstile.reset(captchaWidgetId.current);
-        setCaptchaStatus("ready");
-        return;
-      }
-    } catch { /* fall through to re-render */ }
-    captchaWidgetId.current = null;
-    if (turnstileContainerRef.current) turnstileContainerRef.current.innerHTML = "";
-    setTimeout(() => {
-      if (!window.turnstile || !turnstileContainerRef.current || captchaWidgetId.current) {
-        setCaptchaStatus("error");
-        setCaptchaMsg(tr("login.errors.captchaLoadFailed", "Security check failed to load. Check your connection / ad-blocker and retry."));
-        return;
-      }
-      try {
-        captchaWidgetId.current = window.turnstile.render(turnstileContainerRef.current, {
-          sitekey: TURNSTILE_SITE_KEY,
-          theme: "dark",
-          callback: (token: string) => {
-            setTurnstileToken(token);
-            setCaptchaToken(token);
-            setCaptchaMsg("");
-            setCaptchaStatus("ready");
-          },
-          "expired-callback": () => {
-            setTurnstileToken(null);
-            setCaptchaToken(null);
-            setCaptchaMsg(tr("login.errors.captchaExpired", "Security check expired. Please verify again."));
-            try { if (window.turnstile && captchaWidgetId.current) window.turnstile.reset(captchaWidgetId.current); } catch { /* ignore */ }
-          },
-          "error-callback": (err: any) => {
-            console.error("[Turnstile:Login] onError failure code:", err);
-            setTurnstileToken(null);
-            setCaptchaToken(null);
-            setCaptchaStatus("error");
-            setCaptchaMsg(tr("login.errors.captchaLoadFailed", "Security check failed to load. Check your connection / ad-blocker and retry."));
-          },
-        });
-        setCaptchaStatus("ready");
-      } catch (e) {
-        console.error("Failed to re-render Turnstile:", e);
-        setCaptchaStatus("error");
-      }
-    }, 50);
+    setTurnstileKey(k => k + 1);
+  };
+
+  const resetCaptcha = () => {
+    setTurnstileToken(null);
+    setCaptchaToken(null);
+    setTurnstileKey(k => k + 1);
   };
 
   // ── Supabase session check ───────────────────────────────────────────────
@@ -812,126 +735,6 @@ export default function Login() {
     checkSession();
     return () => { cancelled = true; };
   }, [navigate]);
-
-  // ── Cloudflare Turnstile lifecycle — SAME custom pattern as Homepage/Signup ──
-  // No <Turnstile> component; we inject api.js ourselves and call
-  // window.turnstile.render(). This avoids the @marsidev wrapper race and
-  // guarantees captchaStatus transitions out of "loading" via the callback
-  // and immediately after render (matching Signup/Homepage behavior).
-  useEffect(() => {
-    let cancelled = false;
-    let pollTimer: ReturnType<typeof setInterval> | null = null;
-
-    const renderWidget = () => {
-      if (cancelled) return false;
-      if (!window.turnstile || !turnstileContainerRef.current || captchaWidgetId.current) {
-        return !!captchaWidgetId.current;
-      }
-      if (turnstileContainerRef.current.childElementCount > 0) {
-        turnstileContainerRef.current.innerHTML = "";
-      }
-      try {
-        captchaWidgetId.current = window.turnstile.render(turnstileContainerRef.current, {
-          sitekey: TURNSTILE_SITE_KEY,
-          theme: "dark",
-          callback: (token: string) => {
-            if (cancelled || !mountedRef.current) return;
-            setTurnstileToken(token);
-            setCaptchaToken(token);
-            setCaptchaMsg("");
-            setCaptchaStatus("ready");
-          },
-          "expired-callback": () => {
-            if (cancelled || !mountedRef.current) return;
-            setTurnstileToken(null);
-            setCaptchaToken(null);
-            setCaptchaMsg(tr("login.errors.captchaExpired", "Security check expired. Please verify again."));
-            try { if (window.turnstile && captchaWidgetId.current) window.turnstile.reset(captchaWidgetId.current); } catch { /* ignore */ }
-          },
-          "timeout-callback": () => {
-            if (cancelled || !mountedRef.current) return;
-            setTurnstileToken(null);
-            setCaptchaToken(null);
-            setCaptchaStatus("error");
-            setCaptchaMsg(tr("login.errors.captchaTimeout", "Security check timed out. Please retry."));
-          },
-          "error-callback": (err: any) => {
-            console.error("[Turnstile:Login] onError failure code:", err);
-            if (cancelled || !mountedRef.current) return;
-            setTurnstileToken(null);
-            setCaptchaToken(null);
-            setCaptchaStatus("error");
-            setCaptchaMsg(tr("login.errors.captchaLoadFailed", "Security check failed to load. Check your connection / ad-blocker and retry."));
-          },
-        });
-        if (mountedRef.current && !cancelled) setCaptchaStatus("ready");
-        return true;
-      } catch (e) {
-        console.error("Failed to render Turnstile:", e);
-        if (mountedRef.current && !cancelled) {
-          setCaptchaStatus("error");
-          setCaptchaMsg(tr("login.errors.captchaLoadFailed", "Security check failed to load. Check your connection / ad-blocker and retry."));
-        }
-        return false;
-      }
-    };
-
-    if (window.turnstile) {
-      renderWidget();
-    } else {
-      let attempts = 0;
-      pollTimer = setInterval(() => {
-        attempts += 1;
-        if (window.turnstile) {
-          if (pollTimer) clearInterval(pollTimer);
-          renderWidget();
-        } else if (attempts > 50) {
-          if (pollTimer) clearInterval(pollTimer);
-          if (!cancelled && mountedRef.current) {
-            setCaptchaStatus("error");
-            setCaptchaMsg(tr("login.errors.captchaLoadFailed", "Security check failed to load. Check your connection / ad-blocker and retry."));
-          }
-        }
-      }, 200);
-
-      const existing = document.querySelector<HTMLScriptElement>('script[src*="turnstile"]');
-      const onLoad = () => renderWidget();
-      existing?.addEventListener("load", onLoad);
-      if (!existing) {
-        const script = document.createElement("script");
-        script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
-        script.async = true;
-        script.defer = true;
-        script.addEventListener("load", onLoad);
-        document.head.appendChild(script);
-      }
-    }
-
-    return () => {
-      cancelled = true;
-      if (pollTimer) clearInterval(pollTimer);
-      try {
-        if (captchaWidgetId.current && window.turnstile) {
-          window.turnstile.remove(captchaWidgetId.current);
-        }
-      } catch { /* ignore */ }
-      captchaWidgetId.current = null;
-    };
-  }, []);
-
-  // ── Reset CAPTCHA — manual window.turnstile pattern ──
-  const resetCaptcha = () => {
-    setTurnstileToken(null);
-    setCaptchaToken(null);
-    try {
-      if (window.turnstile) {
-        if (captchaWidgetId.current) window.turnstile.reset(captchaWidgetId.current);
-        else window.turnstile.reset();
-      }
-    } catch {
-      captchaWidgetId.current = null;
-    }
-  };
 
   // ── Handle login ────────────────────────────────────────────────────────
   // Sends the Turnstile token as `options.captchaToken` (Supabase verifies it
@@ -1176,11 +979,29 @@ export default function Login() {
                 </div>
 
                 <div className="lg-captcha" id="login-turnstile-wrapper">
-                  {/* ── Cloudflare Turnstile — manual window.turnstile.render() pattern,
-                      SAME as Homepage.tsx and Signup.tsx for consistency. The widget
-                      is injected into .lg-turnstile-box which reserves the exact
-                      300×65px footprint so it never collapses. No @marsidev wrapper. ── */}
-                  <div ref={turnstileContainerRef} className="lg-turnstile-box" id="login-turnstile-widget" style={{ minHeight: "65px", width: "100%", display: "flex", justifyContent: "center" }} />
+                  <TurnstileWidget
+                    key={turnstileKey}
+                    className="lg-turnstile-box"
+                    onToken={(token) => {
+                      setTurnstileToken(token);
+                      setCaptchaToken(token);
+                      setCaptchaMsg("");
+                      setCaptchaStatus("ready");
+                    }}
+                    onExpired={() => {
+                      setTurnstileToken(null);
+                      setCaptchaToken(null);
+                      setCaptchaMsg(t("login.errors.captchaExpired", "Security check expired. Please verify again."));
+                      setTurnstileKey(k => k + 1);
+                    }}
+                    onError={(msg) => {
+                      setTurnstileToken(null);
+                      setCaptchaToken(null);
+                      setCaptchaStatus("error");
+                      setCaptchaMsg(msg);
+                    }}
+                    onReady={() => setCaptchaStatus("ready")}
+                  />
                   {captchaStatus === "loading" && !turnstileToken && (
                     <div style={{ fontSize: 12, color: "rgba(168,216,255,0.55)", marginTop: 8 }}>
                       {t("login.captchaLoading", "Loading security check…")}

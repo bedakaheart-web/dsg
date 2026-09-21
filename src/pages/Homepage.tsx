@@ -6,24 +6,7 @@ import { supabase } from "../js/supabase";
 import homepageBg from "../assets/homepage.bg.jpg";
 import { useLanguage } from "../context/LanguageContext";
 import { LanguageSelectModal } from "../components/LanguageSelectModal";
-
-
-// ── Cloudflare Turnstile site key ──
-// Production site key (public by design). Loaded from VITE_TURNSTILE_SITE_KEY
-// env var when available, falling back to the hardcoded production key.
-// The previous 1x0000... test key caused the “For testing only” badge.
-const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || "0x4AAAAAAEyz-wD6yQmn6txp";
-
-declare global {
-  interface Window {
-    turnstile?: {
-      render: (container: string | HTMLElement, options: Record<string, any>) => string;
-      reset: (widgetId?: string) => void;
-      remove: (widgetId?: string) => void;
-    };
-    onTurnstileSuccess?: (token: string) => void;
-  }
-}
+import TurnstileWidget from "../components/TurnstileWidget";
 
 function EmergencyRunner() {
   const { t, tList } = useLanguage();
@@ -270,79 +253,22 @@ export default function Homepage() {
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
   // ── CAPTCHA (Turnstile) state — required by Supabase Auth when captcha
-  // protection is enabled on the project. Without a valid token,
-  // signInWithPassword() is rejected, which is why login only worked
-  // on the dedicated /login page (which already had the widget) and
-  // silently failed here. ──
+  // protection is enabled. Widget loads only on this screen, once per mount.
   const [captchaToken, setCaptchaToken] = useState("");
   const [captchaStatus, setCaptchaStatus] = useState<"loading" | "ready" | "error">("loading");
   const [captchaMsg, setCaptchaMsg] = useState("");
-  const captchaWidgetId = useRef<string | null>(null);
-  const turnstileContainerRef = useRef<HTMLDivElement>(null);
-
-  // Stable translator ref: `t` is re-created on every render, so listing it
-  // in the widget effect's deps would tear down + re-render the widget on
-  // every keystroke — an infinite remove→render loop where each attempt
-  // fails and logs 400020 again. The effect below therefore runs once
-  // (single widget instance) and reads translations through this ref.
-  const tRef = useRef(t);
-  tRef.current = t;
+  const [turnstileKey, setTurnstileKey] = useState(0);
 
   const resetCaptcha = () => {
     setCaptchaToken("");
-    try {
-      if (window.turnstile) {
-        if (captchaWidgetId.current) window.turnstile.reset(captchaWidgetId.current);
-        else window.turnstile.reset();
-      }
-    } catch {
-      captchaWidgetId.current = null;
-    }
+    setTurnstileKey(k => k + 1);
   };
 
   const retryCaptcha = () => {
     setCaptchaMsg("");
     setCaptchaStatus("loading");
     setCaptchaToken("");
-    try {
-      if (window.turnstile && captchaWidgetId.current) {
-        window.turnstile.reset(captchaWidgetId.current);
-        setCaptchaStatus("ready");
-        return;
-      }
-    } catch { /* fall through to re-render */ }
-    captchaWidgetId.current = null;
-    if (turnstileContainerRef.current) turnstileContainerRef.current.innerHTML = "";
-    setTimeout(() => {
-      if (!window.turnstile || !turnstileContainerRef.current || captchaWidgetId.current) {
-        setCaptchaStatus("error");
-        setCaptchaMsg(t("auth.errNeedCaptcha"));
-        return;
-      }
-      try {
-        captchaWidgetId.current = window.turnstile.render(turnstileContainerRef.current, {
-          sitekey: TURNSTILE_SITE_KEY,
-          theme: "dark",
-          callback: (token: string) => {
-            setCaptchaToken(token);
-            setCaptchaMsg("");
-            setCaptchaStatus("ready");
-          },
-          "expired-callback": () => {
-            setCaptchaToken("");
-            setCaptchaMsg(t("auth.errNeedCaptcha"));
-          },
-          "error-callback": (err: any) => {
-            console.log("[Turnstile:Homepage] onError failure code:", err);
-            setCaptchaStatus("error");
-          },
-        });
-        setCaptchaStatus("ready");
-      } catch (e) {
-        console.error("Failed to re-render Turnstile:", e);
-        setCaptchaStatus("error");
-      }
-    }, 50);
+    setTurnstileKey(k => k + 1);
   };
 
   useEffect(() => {
@@ -379,119 +305,7 @@ export default function Homepage() {
     return () => observer.disconnect();
   }, []);
 
-// ── Load the Turnstile widget into our container (single instance). ──
-// No Turnstile <script> tag lives in index.html (it would race/conflict);
-// this effect waits for window.turnstile and self-injects the api.js script
-// exactly once as a fallback. Deps are intentionally [] (NOT [t]): `t` is a
-// new function every render, and re-running here would remove + re-render
-// the widget on each keystroke — an infinite 400020 re-try loop. Messages
-// go through tRef so they still follow the active language.
-  useEffect(() => {
-    let cancelled = false;
-    let pollTimer: ReturnType<typeof setInterval> | null = null;
-
-    const renderWidget = () => {
-      if (cancelled) return false;
-      if (!window.turnstile || !turnstileContainerRef.current || captchaWidgetId.current) {
-        return !!captchaWidgetId.current;
-      }
-      if (turnstileContainerRef.current.childElementCount > 0) {
-        turnstileContainerRef.current.innerHTML = "";
-      }
-      try {
-        captchaWidgetId.current = window.turnstile.render(turnstileContainerRef.current, {
-          sitekey: TURNSTILE_SITE_KEY,
-          theme: "dark",
-          callback: (token: string) => {
-            if (cancelled) return;
-            setCaptchaToken(token);
-            setCaptchaMsg("");
-            setCaptchaStatus("ready");
-          },
-          "expired-callback": () => {
-            if (cancelled) return;
-            setCaptchaToken("");
-            setCaptchaMsg(tRef.current("auth.errNeedCaptcha"));
-            try {
-              if (window.turnstile && captchaWidgetId.current) window.turnstile.reset(captchaWidgetId.current);
-            } catch { /* ignore */ }
-          },
-          "timeout-callback": () => {
-            if (cancelled) return;
-            setCaptchaToken("");
-            setCaptchaStatus("error");
-            setCaptchaMsg(tRef.current("auth.errNeedCaptcha"));
-          },
-          "error-callback": (err: any) => {
-            console.log("[Turnstile:Homepage] onError failure code:", err);
-            console.error(
-              "[Turnstile:Homepage] widget failed. code:", err,
-              "| siteKey:", TURNSTILE_SITE_KEY,
-              "| hostname:", typeof window !== "undefined" ? window.location.hostname : "unknown",
-              "| hint: 400020/110xxx = sitekey rejected for this domain (local dev must use the 1x00000000000000000000AA test key)."
-            );
-            if (cancelled) return;
-            setCaptchaToken("");
-            setCaptchaStatus("error");
-            setCaptchaMsg(tRef.current("auth.errNeedCaptcha"));
-          },
-        });
-        setCaptchaStatus("ready");
-        return true;
-      } catch (e) {
-        console.error("Failed to render Turnstile:", e);
-        if (!cancelled) {
-          setCaptchaStatus("error");
-          setCaptchaMsg(tRef.current("auth.errNeedCaptcha"));
-        }
-        return false;
-      }
-    };
-
-    if (window.turnstile) {
-      renderWidget();
-    } else {
-      let attempts = 0;
-      pollTimer = setInterval(() => {
-        attempts += 1;
-        if (window.turnstile) {
-          if (pollTimer) clearInterval(pollTimer);
-          renderWidget();
-        } else if (attempts > 50) {
-          if (pollTimer) clearInterval(pollTimer);
-          if (!cancelled) {
-            setCaptchaStatus("error");
-            setCaptchaMsg(tRef.current("auth.errNeedCaptcha"));
-          }
-        }
-      }, 200);
-
-      const existing = document.querySelector<HTMLScriptElement>('script[src*="turnstile"]');
-      const onLoad = () => renderWidget();
-      existing?.addEventListener("load", onLoad);
-      if (!existing) {
-        const script = document.createElement("script");
-        script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
-        script.async = true;
-        script.defer = true;
-        script.addEventListener("load", onLoad);
-        document.head.appendChild(script);
-      }
-    }
-
-    return () => {
-      cancelled = true;
-      if (pollTimer) clearInterval(pollTimer);
-      try {
-        if (window.turnstile && captchaWidgetId.current) {
-          window.turnstile.remove(captchaWidgetId.current);
-        }
-      } catch { /* ignore */ }
-      captchaWidgetId.current = null;
-    };
-  // [] = mount/unmount only: re-running on every render would destroy and
-  // re-create the widget in a loop (duplicate instances, repeated 400020s).
-  }, []);
+  // Turnstile is now handled by <TurnstileWidget /> below — single instance per mount, script loaded only on this screen.
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -1108,11 +922,39 @@ export default function Homepage() {
 
         .hp-auth-captcha {
           display: flex;
+          flex-direction: column;
+          align-items: center;
           justify-content: center;
           margin-bottom: 20px;
           min-height: 65px;
           width: 100%;
           box-sizing: border-box;
+        }
+        .hp-turnstile-box {
+          width: 100%;
+          min-height: 65px;
+          height: 65px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(6, 15, 28, 0.55);
+          border: 1px solid rgba(0, 200, 224, 0.12);
+          border-radius: 10px;
+          overflow: hidden;
+        }
+        .hp-turnstile-box > div {
+          width: 300px !important;
+          height: 65px !important;
+          display: flex !important;
+          align-items: center;
+          justify-content: center;
+        }
+        .hp-turnstile-box iframe {
+          display: block !important;
+          visibility: visible !important;
+          width: 300px !important;
+          height: 65px !important;
+          border: 0;
         }
 
         .hp-auth-btn {
@@ -1576,10 +1418,29 @@ export default function Homepage() {
                     ⚠ {error}
                   </div>
                 )}
-                {/* ── Turnstile CAPTCHA widget — required by Supabase Auth ── */}
-                <div className="my-3 flex flex-col items-center">
-                  <div ref={turnstileContainerRef} className="flex justify-center" />
-                  {captchaStatus === "loading" && (
+                {/* ── Turnstile CAPTCHA — loads only here, once per mount, full-width like login button ── */}
+                <div className="my-3 flex flex-col items-center w-full">
+                  <TurnstileWidget
+                    key={turnstileKey}
+                    className="hp-turnstile-box"
+                    onToken={(token) => {
+                      setCaptchaToken(token);
+                      setCaptchaMsg("");
+                      setCaptchaStatus("ready");
+                    }}
+                    onExpired={() => {
+                      setCaptchaToken("");
+                      setCaptchaMsg(t("auth.errNeedCaptcha"));
+                      setTurnstileKey(k => k + 1);
+                    }}
+                    onError={(msg) => {
+                      setCaptchaToken("");
+                      setCaptchaStatus("error");
+                      setCaptchaMsg(msg);
+                    }}
+                    onReady={() => setCaptchaStatus("ready")}
+                  />
+                  {captchaStatus === "loading" && !captchaToken && (
                     <div style={{ fontSize: 12, color: "rgba(168,216,255,0.55)", marginTop: 8 }}>
                       {t("auth.errNeedCaptcha")}
                     </div>

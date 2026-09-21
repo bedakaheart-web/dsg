@@ -41,9 +41,46 @@
          as a fallback when it is absent. Do NOT re-add a Turnstile script
          tag here. -->
     <script src="//cdn.metered.ca/sdk/video/1.4.6/sdk.min.js"></script>
+    <style>
+      /* Lightweight first-paint loader — visible instantly before JS bundles load on slow mobile */
+      #initial-loader {
+        position: fixed; inset: 0; z-index: 99999;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+        background: #080c14; color: #eef0f7; font-family: Inter, system-ui, sans-serif;
+      }
+      #initial-loader .il-spinner {
+        width: 32px; height: 32px; border-radius: 50%;
+        border: 3px solid rgba(0,200,224,0.15); border-top-color: #00c8e0;
+        animation: il-spin 0.7s linear infinite;
+      }
+      #initial-loader .il-text { font-size: 13px; color: rgba(238,240,247,0.55); letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; }
+      @keyframes il-spin { to { transform: rotate(360deg); } }
+    </style>
   </head>
   <body>
+    <div id="initial-loader" aria-live="polite" aria-label="Loading">
+      <div class="il-spinner" role="status"></div>
+      <div class="il-text">DumaSafeGuide — Loading…</div>
+    </div>
     <div id="root"></div>
+    <script>
+      // Remove the static loader once React mounts (fallback: hide after 8s on failure)
+      (function() {
+        var h = function() {
+          var el = document.getElementById('initial-loader');
+          if (el && document.getElementById('root') && document.getElementById('root').childElementCount > 0) {
+            el.style.opacity = '0';
+            el.style.transition = 'opacity 0.35s ease';
+            setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 400);
+            return true;
+          }
+          return false;
+        };
+        var obs = new MutationObserver(function() { if (h()) obs.disconnect(); });
+        obs.observe(document.getElementById('root'), { childList: true });
+        setTimeout(function() { if (!h()) { var el = document.getElementById('initial-loader'); if (el) el.style.display = 'none'; } obs.disconnect(); }, 8000);
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

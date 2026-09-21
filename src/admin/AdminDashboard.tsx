@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../js/supabase";
 import {
@@ -24,15 +24,21 @@ import {
   FaComments,
 } from "react-icons/fa";
 
-import AdminAlertsPage from "./AdminAlertsPage";
-import IncidentsPage from "./IncidentsPage";
-import IncidentAnalytics from "./IncidentAnalytics";
-import RespondersPage from "./RespondersPage";
-import AdminTeamPage from "./AdminTeamPage";
-import AdminHistoryLog from "./AdminHistoryLog";
-import AdminDispatch from "./AdminDispatch";
-import AdminChatDrawer from "./components/AdminChatDrawer";
+const AdminAlertsPage = lazy(() => import("./AdminAlertsPage"));
+const IncidentsPage = lazy(() => import("./IncidentsPage"));
+const IncidentAnalytics = lazy(() => import("./IncidentAnalytics"));
+const RespondersPage = lazy(() => import("./RespondersPage"));
+const AdminTeamPage = lazy(() => import("./AdminTeamPage"));
+const AdminHistoryLog = lazy(() => import("./AdminHistoryLog"));
+const AdminDispatch = lazy(() => import("./AdminDispatch"));
+const AdminChatDrawer = lazy(() => import("./components/AdminChatDrawer"));
 import { fetchUnreadCounts } from "../hooks/useRealtimeChat";
+
+const AdminLazyFallback = () => (
+  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: 40, color: "rgba(238,240,247,0.35)", fontSize: 13 }}>
+    Loading...
+  </div>
+);
 
 import dsgLogo from "../assets/dsg.logo.png";
 import footerBg from "../assets/footer.png";
@@ -843,15 +849,17 @@ export default function AdminDashboard() {
   useEffect(() => {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setAdminId(user.id);
-        const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
-        if (profile?.full_name) setAdminName(profile.full_name);
-        await supabase.from("profiles").update({ status: "on_duty", last_seen: new Date().toISOString() }).eq("id", user.id);
-        await supabase.from("responders").update({ status: "on_duty" }).eq("email", user.email);
-        const unread = await fetchUnreadCounts(user.id);
-        setChatUnread(Object.values(unread.bySender).reduce((a, b) => a + b, 0) + unread.broadcast);
+      if (!user) {
+        setPendingCount(0);
+        return;
       }
+      setAdminId(user.id);
+      const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
+      if (profile?.full_name) setAdminName(profile.full_name);
+      await supabase.from("profiles").update({ status: "on_duty", last_seen: new Date().toISOString() }).eq("id", user.id);
+      await supabase.from("responders").update({ status: "on_duty" }).eq("email", user.email);
+      const unread = await fetchUnreadCounts(user.id);
+      setChatUnread(Object.values(unread.bySender).reduce((a, b) => a + b, 0) + unread.broadcast);
       const { data } = await supabase.from("reports").select("id").eq("status", "pending");
       setPendingCount((data ?? []).length);
     };
@@ -1019,19 +1027,23 @@ export default function AdminDashboard() {
             </div>
 
             <div className="hud-page">
-              {view === "overview"   && <OverviewPanel onNavigate={handleNavigate} />}
-              {view === "dispatch"   && <AdminDispatch />}
-              {view === "incidents"  && <IncidentsPage />}
-              {view === "alerts"     && <AdminAlertsPage />}
-              {view === "responders" && <RespondersPage />}
-              {view === "team"       && <AdminTeamPage />}
-              {view === "analytics"  && <IncidentAnalytics />}
-              {view === "history"    && <AdminHistoryLog />}
+              <Suspense fallback={<AdminLazyFallback />}>
+                {view === "overview"   && <OverviewPanel onNavigate={handleNavigate} />}
+                {view === "dispatch"   && <AdminDispatch />}
+                {view === "incidents"  && <IncidentsPage />}
+                {view === "alerts"     && <AdminAlertsPage />}
+                {view === "responders" && <RespondersPage />}
+                {view === "team"       && <AdminTeamPage />}
+                {view === "analytics"  && <IncidentAnalytics />}
+                {view === "history"    && <AdminHistoryLog />}
+              </Suspense>
             </div>
           </div>
 
           {/* Real-time side chat (all admin views) */}
-          <AdminChatDrawer open={isChatOpen} onClose={() => setIsChatOpen(false)} />
+          <Suspense fallback={null}>
+            <AdminChatDrawer open={isChatOpen} onClose={() => setIsChatOpen(false)} />
+          </Suspense>
         </div>
       </div>
     </>

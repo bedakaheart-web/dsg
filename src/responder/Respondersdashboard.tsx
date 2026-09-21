@@ -1,19 +1,25 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../js/supabase";
 import { TranslatedDescription } from "../components/TranslatedDescription";
 
-import Dispatch from "./Dispatch";
-import ResponderAlertsPage from "./ResponderAlertsPage";
-import ResponderIncidentsPage from "./IncidentsPage";
-import ResponderTeamPage from "./ResponderTeam";
-import ResponderChatDrawer from "./components/ResponderChatDrawer";
-import ResponderCitizenChatDrawer from "./components/ResponderCitizenChatDrawer";
-import GlobalResponderCallHandler from "./components/GlobalResponderCallHandler";
+const Dispatch = lazy(() => import("./Dispatch"));
+const ResponderAlertsPage = lazy(() => import("./ResponderAlertsPage"));
+const ResponderIncidentsPage = lazy(() => import("./IncidentsPage"));
+const ResponderTeamPage = lazy(() => import("./ResponderTeam"));
+const ResponderChatDrawer = lazy(() => import("./components/ResponderChatDrawer"));
+const ResponderCitizenChatDrawer = lazy(() => import("./components/ResponderCitizenChatDrawer"));
+const GlobalResponderCallHandler = lazy(() => import("./components/GlobalResponderCallHandler"));
 import { fetchUnreadCounts } from "../hooks/useRealtimeChat";
 import { useDepartmentNotifications } from "../hooks/useDepartmentNotifications";
 import { useHeartbeat, markOffline } from "../hooks/useHeartbeat";
 import dsgLogo from "../assets/dsg.logo.png";
+
+const ResponderLazyFallback = () => (
+  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: 40, color: "rgba(238,240,247,0.35)", fontSize: 13 }}>
+    Loading...
+  </div>
+);
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -772,29 +778,33 @@ export default function RespondersDashboard() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
 
-        if (user) {
-          setResponderId(user.id);
-          try {
-            await supabase.from("profiles").update({ status: "on_duty", is_online: true, last_seen: new Date().toISOString() } as any).eq("id", user.id);
-          } catch {
-            await supabase.from("profiles").update({ status: "on_duty" } as any).eq("id", user.id);
-          }
-
-          const { data: profile } = await supabase
-            .from("profiles")
-            // department column not yet live on profiles either — caused 400
-            // "profiles?select=full_name,department". Only select what exists;
-            // department will be re-added after migration 20260916000000.
-            .select("full_name")
-            .eq("id", user.id)
-            .single();
-
-          if (profile?.full_name) setResponderName(profile.full_name);
-          // Fallback: department not yet provisioned live, keep null so Overview
-          // shows all reports (type-based filtering handles it until migration).
-          const dept = (profile as any)?.department as string | undefined;
-          if (dept) setResponderDepartment(dept);
+        if (!user) {
+          setPendingCount(0);
+          setAlertCount(0);
+          return;
         }
+
+        setResponderId(user.id);
+        try {
+          await supabase.from("profiles").update({ status: "on_duty", is_online: true, last_seen: new Date().toISOString() } as any).eq("id", user.id);
+        } catch {
+          await supabase.from("profiles").update({ status: "on_duty" } as any).eq("id", user.id);
+        }
+
+        const { data: profile } = await supabase
+          .from("profiles")
+          // department column not yet live on profiles either — caused 400
+          // "profiles?select=full_name,department". Only select what exists;
+          // department will be re-added after migration 20260916000000.
+          .select("full_name")
+          .eq("id", user.id)
+          .single();
+
+        if (profile?.full_name) setResponderName(profile.full_name);
+        // Fallback: department not yet provisioned live, keep null so Overview
+        // shows all reports (type-based filtering handles it until migration).
+        const dept = (profile as any)?.department as string | undefined;
+        if (dept) setResponderDepartment(dept);
 
         const { data: rptData } = await supabase
           .from("reports")
@@ -988,64 +998,72 @@ export default function RespondersDashboard() {
             </header>
 
             <main className="rd-page">
-              {view === "overview" && !authReady && (
-                <div className="rd-empty">
-                  <div className="rd-spinner" style={{ margin: "0 auto" }} />
-                </div>
-              )}
-              {view === "overview"  && authReady && <OverviewPanel onNavigate={handleNavigate} responderId={responderId} responderDepartment={responderDepartment} />}
-              {view === "dispatch"  && <Dispatch />}
-              {view === "incidents" && <ResponderIncidentsPage onChatCitizen={openCitizenChat} />}
-              {view === "alerts"    && <ResponderAlertsPage />}
-              {view === "team"      && <ResponderTeamPage />}
-              {view === "citizenChat" && (
-                <div style={{ maxWidth: 900, margin: "0 auto" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, padding: "14px 18px", background: "rgba(15,21,33,0.82)", border: "1px solid rgba(46,204,143,0.15)", borderLeft: "3px solid #2ECC8F", borderRadius: 12 }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 11, color: "#2ECC8F", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>Centralized Communications</div>
-                      <div style={{ fontSize: 13, color: "rgba(238,240,247,0.65)" }}>
-                        All <strong style={{ color: "#eef0f7" }}>online citizens</strong> and assigned cases appear here. Chat, audio, or video call any citizen — they will be notified instantly and can respond to request assistance.
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setCitizenChatOpen(true)}
-                      style={{ background: "rgba(46,204,143,0.16)", border: "1px solid rgba(46,204,143,0.35)", color: "#2ECC8F", borderRadius: 8, padding: "10px 16px", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
-                    >
-                      💬 Open Citizen Chat
-                    </button>
+              <Suspense fallback={<ResponderLazyFallback />}>
+                {view === "overview" && !authReady && (
+                  <div className="rd-empty">
+                    <div className="rd-spinner" style={{ margin: "0 auto" }} />
                   </div>
-                  {!citizenChatOpen && (
-                    <div style={{ textAlign: "center", padding: "32px 20px", background: "rgba(15,21,33,0.6)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, color: "rgba(238,240,247,0.45)", fontSize: 12 }}>
-                      Click <strong style={{ color: "#2ECC8F" }}>Open Citizen Chat</strong> to see the full conversation list. Citizens who message you also appear automatically in the drawer as <em>Requests</em>.
-                      <div style={{ marginTop: 8, fontSize: 11, color: "rgba(238,240,247,0.3)" }}>Responder is on duty — citizens online can see you as available.</div>
+                )}
+                {view === "overview"  && authReady && <OverviewPanel onNavigate={handleNavigate} responderId={responderId} responderDepartment={responderDepartment} />}
+                {view === "dispatch"  && <Dispatch />}
+                {view === "incidents" && <ResponderIncidentsPage onChatCitizen={openCitizenChat} />}
+                {view === "alerts"    && <ResponderAlertsPage />}
+                {view === "team"      && <ResponderTeamPage />}
+                {view === "citizenChat" && (
+                  <div style={{ maxWidth: 900, margin: "0 auto" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, padding: "14px 18px", background: "rgba(15,21,33,0.82)", border: "1px solid rgba(46,204,143,0.15)", borderLeft: "3px solid #2ECC8F", borderRadius: 12 }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 11, color: "#2ECC8F", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>Centralized Communications</div>
+                        <div style={{ fontSize: 13, color: "rgba(238,240,247,0.65)" }}>
+                          All <strong style={{ color: "#eef0f7" }}>online citizens</strong> and assigned cases appear here. Chat, audio, or video call any citizen — they will be notified instantly and can respond to request assistance.
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setCitizenChatOpen(true)}
+                        style={{ background: "rgba(46,204,143,0.16)", border: "1px solid rgba(46,204,143,0.35)", color: "#2ECC8F", borderRadius: 8, padding: "10px 16px", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
+                      >
+                        💬 Open Citizen Chat
+                      </button>
                     </div>
-                  )}
-                  {citizenChatOpen && (
-                    <div style={{ textAlign: "center", padding: "16px", color: "rgba(238,240,247,0.35)", fontSize: 11 }}>
-                      Drawer is open — use the panel on the right to select a citizen. Close it to return here.
-                    </div>
-                  )}
-                </div>
-              )}
+                    {!citizenChatOpen && (
+                      <div style={{ textAlign: "center", padding: "32px 20px", background: "rgba(15,21,33,0.6)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, color: "rgba(238,240,247,0.45)", fontSize: 12 }}>
+                        Click <strong style={{ color: "#2ECC8F" }}>Open Citizen Chat</strong> to see the full conversation list. Citizens who message you also appear automatically in the drawer as <em>Requests</em>.
+                        <div style={{ marginTop: 8, fontSize: 11, color: "rgba(238,240,247,0.3)" }}>Responder is on duty — citizens online can see you as available.</div>
+                      </div>
+                    )}
+                    {citizenChatOpen && (
+                      <div style={{ textAlign: "center", padding: "16px", color: "rgba(238,240,247,0.35)", fontSize: 11 }}>
+                        Drawer is open — use the panel on the right to select a citizen. Close it to return here.
+                      </div>
+                    )}
+                  </div>
+                )}
+              </Suspense>
             </main>
           </div>
         </div>
 
         {/* Real-time side chat with Admin HQ */}
-        {responderId && <ResponderChatDrawer responderId={responderId} open={isChatOpen} onClose={() => setIsChatOpen(false)} responderName={responderName} />}
+        <Suspense fallback={null}>
+          {responderId && <ResponderChatDrawer responderId={responderId} open={isChatOpen} onClose={() => setIsChatOpen(false)} responderName={responderName} />}
+        </Suspense>
         {/* Direct chat with assigned citizens (text + images via chat_messages) */}
-        {responderId && (
-          <ResponderCitizenChatDrawer
-            responderId={responderId}
-            open={citizenChatOpen}
-            onClose={() => setCitizenChatOpen(false)}
-            initialReportId={citizenChatTarget?.reportId ?? null}
-            initialCitizenId={citizenChatTarget?.citizenId ?? null}
-            initialCitizenName={citizenChatTarget?.citizenName ?? null}
-          />
-        )}
+        <Suspense fallback={null}>
+          {responderId && (
+            <ResponderCitizenChatDrawer
+              responderId={responderId}
+              open={citizenChatOpen}
+              onClose={() => setCitizenChatOpen(false)}
+              initialReportId={citizenChatTarget?.reportId ?? null}
+              initialCitizenId={citizenChatTarget?.citizenId ?? null}
+              initialCitizenName={citizenChatTarget?.citizenName ?? null}
+            />
+          )}
+        </Suspense>
         {/* Global inbox for Citizen→Responder calls — always mounted so ringing works even when drawers closed (mobile) */}
-        {responderId && <GlobalResponderCallHandler responderId={responderId} />}
+        <Suspense fallback={null}>
+          {responderId && <GlobalResponderCallHandler responderId={responderId} />}
+        </Suspense>
       </div>
     </>
   );
