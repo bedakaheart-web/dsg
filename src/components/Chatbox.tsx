@@ -320,23 +320,13 @@ export default function ChatBox({
   }, [recipientId, incidentId, isCitizen, buildChatQuery]);
 
   // ── Mark as read — clears red badge once thread is opened/viewed ──
-  // Updates is_read=true for incoming messages in this thread so other responders won't see stale unread
+  // Real columns: receiver_id (not recipient_id) and message is the text column
   const markThreadRead = useCallback(async () => {
     const me = user?.id ?? userIdRef.current;
     const other = recipientId;
     if (!me || !other) return;
     try {
-      // Try both column names for compatibility (receiver_id vs recipient_id)
-      // First attempt with receiver_id, fallback to recipient_id
-      const tryReceiver = await supabase.from("chat_messages").update({ is_read: true } as any).eq("receiver_id", me).eq("sender_id", other).eq("is_read", false);
-      if ((tryReceiver as any).error && /column.*receiver_id|does not exist/i.test((tryReceiver as any).error.message ?? "")) {
-        await supabase.from("chat_messages").update({ is_read: true } as any).eq("recipient_id", me).eq("sender_id", other).eq("is_read", false);
-      }
-      // If custom is_read column missing, silently ignore — badge will be derived via polling
-    } catch {}
-    // Also try recipient_id path if needed (covers migrations where both exist)
-    try {
-      await supabase.from("chat_messages").update({ is_read: true } as any).eq("recipient_id", me).eq("sender_id", other).eq("is_read", false);
+      await supabase.from("chat_messages").update({ is_read: true } as any).eq("receiver_id", me).eq("sender_id", other).eq("is_read", false);
     } catch {}
   }, [user?.id, recipientId]);
 

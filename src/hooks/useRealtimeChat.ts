@@ -18,13 +18,15 @@ import { supabase } from "../js/supabase";
 
 export interface ChatMessage {
   id: string;
+  legacy_incident_id?: string | null;
   sender_id: string;
   receiver_id: string | null;
   sender_role?: string | null;
   recipient_role?: string | null;
-  incident_id: string | null;
   message: string;
+  image_url?: string | null;
   created_at: string;
+  incident_id: number | string | null;
   is_read: boolean;
 }
 
@@ -73,20 +75,14 @@ export function useRealtimeChat(
   const markRead = useCallback(async () => {
     const t = threadRef.current;
     if (!t.currentUserId || t.broadcast || !t.targetUserId) return;
-    // Clear red badge: mark incoming 1-1 messages as read — handle both column spellings
+    // Clear red badge: mark incoming 1-1 messages as read (real column is receiver_id, text is message)
     try {
-      const res = await supabase
+      await supabase
         .from("chat_messages")
         .update({ is_read: true } as any)
         .eq("receiver_id", t.currentUserId)
         .eq("sender_id", t.targetUserId)
         .eq("is_read", false);
-      if ((res as any).error && /column.*receiver_id|does not exist/i.test((res as any).error.message ?? "")) {
-        await supabase.from("chat_messages").update({ is_read: true } as any).eq("recipient_id", t.currentUserId).eq("sender_id", t.targetUserId).eq("is_read", false);
-      }
-    } catch {}
-    try {
-      await supabase.from("chat_messages").update({ is_read: true } as any).eq("recipient_id", t.currentUserId).eq("sender_id", t.targetUserId).eq("is_read", false);
     } catch {}
   }, []);
 
@@ -236,18 +232,16 @@ export function useRealtimeChat(
       is_read: false,
     };
     setMessages(prev => [...prev, optimistic]);
-    // Payload must match real columns in supabase/migrations:
-    // 20260915000000 uses recipient_id + content, 20260920000000 adds receiver_id + message + sender_role/recipient_role + is_read
-    // Include both aliases so insert succeeds regardless of which migration is applied; sync trigger mirrors them.
+    // Real columns per supabase/migrations (20260920000000_centralized_presence_and_chat_fix.sql & 20260912100000_create_side_chat_messages.sql):
+    // chat_messages = id, sender_id, receiver_id (NULL = broadcast), incident_id, message, sender_role, recipient_role, is_read, created_at
+    // ResponderChatDrawer reads m.message, broadcast is receiver_id=null
     const insertPayload: Record<string, any> = {
       sender_id: optimistic.sender_id,
-      receiver_id: optimistic.receiver_id,
-      recipient_id: optimistic.receiver_id, // alias for legacy schema
+      receiver_id: optimistic.receiver_id, // null for broadcast (receiver_id = null)
       sender_role: myRole,
       recipient_role: theirRole,
       incident_id: optimistic.incident_id,
       message: body,
-      content: body, // alias
     };
     const { data, error: err } = await supabase
       .from("chat_messages")
@@ -296,25 +290,12 @@ export async function fetchUnreadCounts(
   currentUserId: string,
 ): Promise<{ bySender: Record<string, number>; broadcast: number }> {
   const bySender: Record<string, number> = {};
-  // Try receiver_id first, fallback to recipient_id for older migration
-  let rows: Array<{ sender_id: string }> | null = null;
-  const tryReceiver = await (supabase.from("chat_messages").select("sender_id,receiver_id").eq("receiver_id", currentUserId).eq("is_read", false).limit(500) as any);
-  if (!tryReceiver.error) rows = tryReceiver.data;
-  else {
-    // @ts-ignore — recipient_id may not exist on remote (see supabase/migrations)
-    const tryRecipient = await (supabase.from("chat_messages").select("sender_id,recipient_id").eq("recipient_id", currentUserId).eq("is_read", false).limit(500) as any);
-    if (!tryRecipient.error) rows = tryRecipient.data;
+  // Real column is receiver_id (not recipient_id) and text is message (ResponderChatDrawer reads m.message)
+  const { data: rows, error: rowsErr } = await (supabase.from("chat_messages").select("sender_id,receiver_id").eq("receiver_id", currentUserId).eq("is_read", false).limit(500) as any);
+  if (rowsErr) {
+    console.error("[useRealtimeChat] fetchUnreadCounts failed:", rowsErr);
   }
-  // Also merge both if both columns exist (covers mixed data)
-  try {
-    // @ts-ignore — recipient_id may not exist on remote
-    const extra = await (supabase.from("chat_messages").select("sender_id,recipient_id").eq("recipient_id", currentUserId).eq("is_read", false).limit(500) as any);
-    if (!extra.error && extra.data?.length && rows) {
-      const existing = new Set(rows.map(r => r.sender_id));
-      for (const r of extra.data as Array<{ sender_id: string }>) if (!existing.has(r.sender_id)) rows.push(r);
-    } else if (!extra.error && !rows) rows = extra.data;
-  } catch {}
-  for (const row of (rows ?? []) as Array<{ sender_id: string }>) {
+  for (const row of ((rows ?? []) as Array<{ sender_id: string }>)) {
     bySender[row.sender_id] = (bySender[row.sender_id] ?? 0) + 1;
   }
   const { count } = await supabase
