@@ -236,20 +236,28 @@ export function useRealtimeChat(
       is_read: false,
     };
     setMessages(prev => [...prev, optimistic]);
+    // Payload must match real columns in supabase/migrations:
+    // 20260915000000 uses recipient_id + content, 20260920000000 adds receiver_id + message + sender_role/recipient_role + is_read
+    // Include both aliases so insert succeeds regardless of which migration is applied; sync trigger mirrors them.
+    const insertPayload: Record<string, any> = {
+      sender_id: optimistic.sender_id,
+      receiver_id: optimistic.receiver_id,
+      recipient_id: optimistic.receiver_id, // alias for legacy schema
+      sender_role: myRole,
+      recipient_role: theirRole,
+      incident_id: optimistic.incident_id,
+      message: body,
+      content: body, // alias
+    };
     const { data, error: err } = await supabase
       .from("chat_messages")
-      .insert({
-        sender_id: optimistic.sender_id,
-        receiver_id: optimistic.receiver_id,
-        sender_role: myRole,
-        recipient_role: theirRole,
-        incident_id: optimistic.incident_id,
-        message: body,
-      })
+      .insert(insertPayload as any)
       .select()
       .single();
     setSending(false);
     if (err || !data) {
+      // Log full Supabase error object for debugging broadcasts (receiver_id=null)
+      console.error("[useRealtimeChat] chat_messages insert failed:", err, { payload: insertPayload, broadcast: t.broadcast });
       setMessages(prev => prev.filter(m => m.id !== tempId));
       setError("Send failed: " + (err?.message ?? "unknown error"));
       return false;

@@ -83,7 +83,7 @@ export default function AdminChatDrawer({ open, onClose, targetId = null }: {
   const channelIdRef = useRef<string>(`acd-${Math.random().toString(36).slice(2, 9)}`);
 
   const broadcastMode = tab === "broadcast";
-  const { messages, loading, send, markRead } = useRealtimeChat(
+  const { messages, loading, sending, error: chatError, send, markRead } = useRealtimeChat(
     me || null, broadcastMode ? null : activeId, { broadcast: broadcastMode }
   );
 
@@ -205,7 +205,11 @@ export default function AdminChatDrawer({ open, onClose, targetId = null }: {
     if (!draft.trim()) return;
     const text = draft;
     setDraft("");
-    await send(text);
+    const ok = await send(text);
+    if (!ok) {
+      // useRealtimeChat already logged the full Supabase error object; also surface here for admin visibility
+      console.error("[AdminChatDrawer] broadcast/1:1 send failed", { broadcast: broadcastMode, text });
+    }
   };
 
   const visibleContacts = contacts.filter(c => dutyFilter === "all" || isOnDuty(c));
@@ -334,6 +338,12 @@ export default function AdminChatDrawer({ open, onClose, targetId = null }: {
                   </div>
                 )}
               </div>
+              {/* Error banner — show Supabase error to admin (broadcast with receiver_id=null) */}
+              {chatError && (
+                <div role="alert" style={{ margin: "8px 12px 0", padding: "8px 10px", borderRadius: 8, background: "rgba(255,59,48,0.08)", border: "1px solid rgba(255,59,48,0.25)", color: "#FF3B30", fontSize: 12, lineHeight: 1.5 }}>
+                  {chatError}
+                </div>
+              )}
               {/* Messages */}
               <div style={{ flex: 1, overflowY: "auto", padding: "12px" }}>
                 {loading ? (
