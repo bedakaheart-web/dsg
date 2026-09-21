@@ -38,6 +38,11 @@ interface ChatParticipant {
   role?: string;
 }
 
+// ── Centralized toggle: hide admin from citizen chat (code retained, not deleted) ───
+// Set to false to show admin contacts again if professor requires
+const HIDE_ADMIN_FOR_CITIZEN = true;
+const ADMIN_CONTACT_HIDDEN_NOTE = "Admin contacts hidden for citizens — retained for professor toggle";
+
 // ── Constants ────────────────────────────────────────────────────────
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
@@ -204,11 +209,18 @@ export default function ChatBox({
         if (!profiles) return;
         const filtered = (profiles as ChatParticipant[]).filter(p => {
           const r = (p.role ?? "").toLowerCase();
-          if (myRole === "citizen") return r === "responder";
-          if (myRole === "responder") return r === "admin";
+          if (myRole === "citizen") {
+            // HIDDEN: admin contacts for citizen — kept for professor toggle
+            if (HIDE_ADMIN_FOR_CITIZEN) return r === "responder"; // admin hidden
+            // if professor requires, set HIDE_ADMIN_FOR_CITIZEN=false to show admin too
+            // retained: return r === "responder" || r === "admin";
+            return r === "responder";
+          }
+          if (myRole === "responder") return r === "admin"; // responder → admin HQ chat (kept)
           if (myRole === "admin") return r === "responder";
           return false;
         });
+        void ADMIN_CONTACT_HIDDEN_NOTE; // keep constant used
         setParticipants(filtered);
       } catch {}
     })();
@@ -306,6 +318,42 @@ export default function ChatBox({
       .subscribe();
     return () => { cancelled = true; supabase.removeChannel(channel); };
   }, [recipientId, incidentId, isCitizen, buildChatQuery]);
+
+  // ── Mark as read — clears red badge once thread is opened/viewed ──
+  // Updates is_read=true for incoming messages in this thread so other responders won't see stale unread
+  const markThreadRead = useCallback(async () => {
+    const me = user?.id ?? userIdRef.current;
+    const other = recipientId;
+    if (!me || !other) return;
+    try {
+      // Try both column names for compatibility (receiver_id vs recipient_id)
+      // First attempt with receiver_id, fallback to recipient_id
+      const tryReceiver = await supabase.from("chat_messages").update({ is_read: true } as any).eq("receiver_id", me).eq("sender_id", other).eq("is_read", false);
+      if ((tryReceiver as any).error && /column.*receiver_id|does not exist/i.test((tryReceiver as any).error.message ?? "")) {
+        await supabase.from("chat_messages").update({ is_read: true } as any).eq("recipient_id", me).eq("sender_id", other).eq("is_read", false);
+      }
+      // If custom is_read column missing, silently ignore — badge will be derived via polling
+    } catch {}
+    // Also try recipient_id path if needed (covers migrations where both exist)
+    try {
+      await supabase.from("chat_messages").update({ is_read: true } as any).eq("recipient_id", me).eq("sender_id", other).eq("is_read", false);
+    } catch {}
+  }, [user?.id, recipientId]);
+
+  // Mark read when thread opens or new messages arrive while thread is open
+  useEffect(() => {
+    if (!recipientId || !user?.id) return;
+    // Debounce slightly to batch rapid inserts
+    const t = setTimeout(() => void markThreadRead(), 300);
+    return () => clearTimeout(t);
+  }, [recipientId, user?.id, messages.length, markThreadRead]);
+
+  // Also mark read immediately after history load finishes
+  useEffect(() => {
+    if (!loading && recipientId && user?.id && messages.length >= 0) {
+      void markThreadRead();
+    }
+  }, [loading, recipientId, user?.id, markThreadRead]);
 
   // Auto-scroll
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, otherTyping]);

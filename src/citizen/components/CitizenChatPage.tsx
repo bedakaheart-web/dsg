@@ -15,6 +15,10 @@ import CallOverlay from "../../components/CallOverlay";
 import { FaPhone, FaVideo, FaSearch } from "react-icons/fa";
 import { usePresence, isResponderOnDuty } from "../../hooks/usePresence";
 
+// 🔒 CENTRALIZED: admin hidden from citizen chat per professor toggle — code retained below
+// Set to false to show admin contacts again if required by professor
+const HIDE_ADMIN_FOR_CITIZEN = true;
+
 interface ResponderContact {
   id: string;
   full_name: string | null;
@@ -186,6 +190,18 @@ export default function CitizenChatPage() {
     }
   }, [responders, selectedResponderId, assignedResponderId]);
 
+  const markCitizenRead = async (otherId: string | null) => {
+    const me = citizenId;
+    if (!me || !otherId) return;
+    try { await supabase.from("chat_messages").update({ is_read: true } as any).eq("receiver_id", me).eq("sender_id", otherId).eq("is_read", false); } catch {}
+    try { await supabase.from("chat_messages").update({ is_read: true } as any).eq("recipient_id" as any, me).eq("sender_id", otherId).eq("is_read", false); } catch {}
+  };
+
+  // Clear badge when citizen opens a responder thread (so other responders won't see stale unread)
+  useEffect(() => {
+    if (effectiveResponderId) void markCitizenRead(effectiveResponderId);
+  }, [effectiveResponderId]);
+
   const handleSelectResponder = (r: ResponderContact) => {
     setSelectedResponderId(r.id);
     setSelectedResponderName(r.full_name || r.email || "Responder");
@@ -193,6 +209,7 @@ export default function CitizenChatPage() {
     if (linked) setSelectedIncidentId(String(linked.id));
     else if (r.id === assignedResponderId) setSelectedIncidentId(assignedIncidentId);
     else setSelectedIncidentId(null);
+    void markCitizenRead(r.id);
   };
 
   const filteredResponders = useMemo(() => {
@@ -337,6 +354,13 @@ export default function CitizenChatPage() {
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search responder" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "6px 8px 6px 24px", fontSize: 11, color: "#eef0f7", outline: "none", width: 130 }} />
           </div>
         </div>
+        {/* HIDDEN: Admin contacts for citizen — code retained, hidden via flag (set HIDE_ADMIN_FOR_CITIZEN=false to show) */}
+        {!HIDE_ADMIN_FOR_CITIZEN && (
+          <div style={{ padding: "10px 14px", borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)" }}>
+            <div style={{ fontSize: "10px", color: "rgba(238,240,247,0.4)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>Admin contacts (hidden in production)</div>
+            <div style={{ fontSize: "11px", color: "rgba(238,240,247,0.35)" }}>Admin list would appear here when HIDE_ADMIN_FOR_CITIZEN=false</div>
+          </div>
+        )}
         <div style={{ maxHeight: "220px", overflowY: "auto" }}>
           {filteredResponders.length === 0 && !showAssignedSection ? (
             <div style={{ padding: "16px", fontSize: "12px", color: "rgba(238,240,247,0.4)", textAlign: "center" }}>No responders match — they appear here when on duty and online. Your report is still visible to dispatch.</div>

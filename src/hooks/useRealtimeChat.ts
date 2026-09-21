@@ -73,12 +73,21 @@ export function useRealtimeChat(
   const markRead = useCallback(async () => {
     const t = threadRef.current;
     if (!t.currentUserId || t.broadcast || !t.targetUserId) return;
-    await supabase
-      .from("chat_messages")
-      .update({ is_read: true })
-      .eq("receiver_id", t.currentUserId)
-      .eq("sender_id", t.targetUserId)
-      .eq("is_read", false);
+    // Clear red badge: mark incoming 1-1 messages as read — handle both column spellings
+    try {
+      const res = await supabase
+        .from("chat_messages")
+        .update({ is_read: true } as any)
+        .eq("receiver_id", t.currentUserId)
+        .eq("sender_id", t.targetUserId)
+        .eq("is_read", false);
+      if ((res as any).error && /column.*receiver_id|does not exist/i.test((res as any).error.message ?? "")) {
+        await supabase.from("chat_messages").update({ is_read: true } as any).eq("recipient_id", t.currentUserId).eq("sender_id", t.targetUserId).eq("is_read", false);
+      }
+    } catch {}
+    try {
+      await supabase.from("chat_messages").update({ is_read: true } as any).eq("recipient_id", t.currentUserId).eq("sender_id", t.targetUserId).eq("is_read", false);
+    } catch {}
   }, []);
 
   // ── History ──────────────────────────────────────────────────────────────
@@ -279,13 +288,28 @@ export async function fetchUnreadCounts(
   currentUserId: string,
 ): Promise<{ bySender: Record<string, number>; broadcast: number }> {
   const bySender: Record<string, number> = {};
-  const { data } = await supabase
+  // Try receiver_id first, fallback to recipient_id for older migration
+  let rows: Array<{ sender_id: string }> | null = null;
+  const tryReceiver = await supabase
     .from("chat_messages")
     .select("sender_id,receiver_id")
     .eq("receiver_id", currentUserId)
     .eq("is_read", false)
-    .limit(500);
-  for (const row of (data ?? []) as Array<{ sender_id: string }>) {
+    .limit(500) as any;
+  if (!tryReceiver.error) rows = tryReceiver.data;
+  else {
+    const tryRecipient = await supabase.from("chat_messages").select("sender_id,recipient_id").eq("recipient_id" as any, currentUserId).eq("is_read", false).limit(500) as any;
+    if (!tryRecipient.error) rows = tryRecipient.data;
+  }
+  // Also merge both if both columns exist (covers mixed data)
+  try {
+    const extra = await supabase.from("chat_messages").select("sender_id,recipient_id").eq("recipient_id" as any, currentUserId).eq("is_read", false).limit(500) as any;
+    if (!extra.error && extra.data?.length && rows) {
+      const existing = new Set(rows.map(r => r.sender_id));
+      for (const r of extra.data as Array<{ sender_id: string }>) if (!existing.has(r.sender_id)) rows.push(r);
+    } else if (!extra.error && !rows) rows = extra.data;
+  } catch {}
+  for (const row of (rows ?? []) as Array<{ sender_id: string }>) {
     bySender[row.sender_id] = (bySender[row.sender_id] ?? 0) + 1;
   }
   const { count } = await supabase

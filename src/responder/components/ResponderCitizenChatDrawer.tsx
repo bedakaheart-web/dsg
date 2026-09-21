@@ -310,10 +310,27 @@ export default function ResponderCitizenChatDrawer({
   const totalUnread = Object.values(unreadMap).reduce((a, b) => a + b, 0);
   const onlineCount = onlineCitizens.length;
 
+  // Mark red badge as cleared once conversation is opened/read
+  const markDrawerRead = async (otherId: string | null) => {
+    if (!otherId || !responderId) return;
+    try {
+      await supabase.from("chat_messages").update({ is_read: true } as any).eq("receiver_id", responderId).eq("sender_id", otherId).eq("is_read", false);
+    } catch {}
+    try { await supabase.from("chat_messages").update({ is_read: true } as any).eq("recipient_id" as any, responderId).eq("sender_id", otherId).eq("is_read", false); } catch {}
+    setUnreadMap(prev => ({ ...prev, [otherId]: 0 }));
+    setConversations(prev => prev.map(c => c.citizenId === otherId ? { ...c, unread: 0 } : c));
+  };
+
+  // Auto-clear badge when active thread changes or while drawer stays open
+  useEffect(() => {
+    if (open && activeCitizenId) void markDrawerRead(activeCitizenId);
+  }, [open, activeCitizenId]);
+
   const handleSelect = (c: Conversation) => {
     setActiveCitizenId(c.citizenId);
     setActiveReportId(c.reportId);
     if (narrow) setShowThread(true);
+    void markDrawerRead(c.citizenId);
   };
 
   return (
