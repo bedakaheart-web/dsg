@@ -213,10 +213,10 @@ export function useRealtimeChat(
       // only to be coerced below; for NOT NULL we keep a generic value.
       if (!theirRole) theirRole = "citizen";
     } else if (t.broadcast) {
-      // Broadcast has no single recipient — use 'all' to satisfy NOT NULL.
-      // The column is text, so this avoids violating the constraint while
-      // remaining semantically clear. Mirrors the intent of a team-wide message.
-      theirRole = "all";
+      // Broadcast: fixed roles per DB rules (admin -> responder, receiver_id = null)
+      // RLS only allows admins to insert broadcast; direct-message inserts stay unchanged
+      myRole = "admin";
+      theirRole = "responder";
     }
 
     const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -290,7 +290,7 @@ export async function fetchUnreadCounts(
   currentUserId: string,
 ): Promise<{ bySender: Record<string, number>; broadcast: number }> {
   const bySender: Record<string, number> = {};
-  // Real column is receiver_id (not recipient_id) and text is message (ResponderChatDrawer reads m.message)
+  // Real column is receiver_id and text is message (ResponderChatDrawer reads m.message)
   const { data: rows, error: rowsErr } = await (supabase.from("chat_messages").select("sender_id,receiver_id").eq("receiver_id", currentUserId).eq("is_read", false).limit(500) as any);
   if (rowsErr) {
     console.error("[useRealtimeChat] fetchUnreadCounts failed:", rowsErr);

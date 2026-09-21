@@ -320,7 +320,7 @@ export default function ChatBox({
   }, [recipientId, incidentId, isCitizen, buildChatQuery]);
 
   // ── Mark as read — clears red badge once thread is opened/viewed ──
-  // Real columns: receiver_id (not recipient_id) and message is the text column
+  // Real columns: receiver_id and message are the text columns
   const markThreadRead = useCallback(async () => {
     const me = user?.id ?? userIdRef.current;
     const other = recipientId;
