@@ -11,6 +11,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: 'auto',
       // Inject manifest + precache all hashed assets; auto-update on new deploy (no user prompt)
       includeAssets: ['favicon.png'],
       manifest: {
@@ -43,8 +44,11 @@ export default defineConfig({
         // Keep precache small + runtime cache for external APIs (Supabase, fonts, CDN) — never cache auth tokens
         globPatterns: ['**/*.{js,css,html,png,jpg,jpeg,svg,woff2}'],
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
+        cleanupOutdatedCaches: true,
         navigateFallback: 'index.html',
         navigateFallbackDenylist: [/^\/api\//, /^\/supabase\//],
+        skipWaiting: true,
+        clientsClaim: true,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,

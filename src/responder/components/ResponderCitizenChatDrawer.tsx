@@ -7,6 +7,7 @@
 // three sources into one deduplicated contact list and tracks presence + unread.
 
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "../../js/supabase";
 import ChatBox from "../../components/Chatbox";
 import { useWebRTC } from "../../hooks/useWebRTC";
@@ -251,7 +252,7 @@ export default function ResponderCitizenChatDrawer({
       .on("postgres_changes", { event: "*", schema: "public", table: "reports" }, () => void load())
       .subscribe();
     return () => { cancelled = true; supabase.removeChannel(ch); };
-  }, [open, responderId, initialReportId, initialCitizenId, allCitizens]);
+  }, [open, responderId, initialReportId, initialCitizenId, allCitizens, onlineCitizens]);
 
   useEffect(() => {
     if (open && initialCitizenId) { setActiveCitizenId(initialCitizenId); setActiveReportId(initialReportId); }
@@ -268,6 +269,14 @@ export default function ResponderCitizenChatDrawer({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
+
+  // Lock body scroll on mobile while drawer is open and use dvh for iOS
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [open]);
 
   // ✅ ALL hooks first — must be before any early return (Rules of Hooks)
   const filtered = useMemo(() => {
@@ -315,17 +324,17 @@ export default function ResponderCitizenChatDrawer({
     void markDrawerRead(c.citizenId);
   };
 
-  return (
+  const drawerNode = (
     <>
       <style>{`@keyframes respCitizenSlideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
 @keyframes respCitizenFade { from { opacity: 0; } to { opacity: 1; } }
 .resp-citizen-thread-flex > div { flex: 1 !important; height: 100% !important; min-height: 0 !important; max-height: 100% !important; }`}</style>
-      <div onClick={onClose} aria-hidden="true" style={{ position: "fixed", inset: 0, zIndex: 940, background: "rgba(0,0,0,0.5)", animation: "respCitizenFade 0.25s ease" }} />
+      <div onClick={onClose} aria-hidden="true" style={{ position: "fixed", inset: 0, zIndex: 9990, background: "rgba(0,0,0,0.5)", animation: "respCitizenFade 0.25s ease", touchAction: "manipulation" }} />
       <aside aria-label="Citizen chat" style={{
-        position: "fixed", top: 0, right: 0, height: "100vh", zIndex: 950,
-        width: narrow ? "100vw" : "min(720px, 94vw)", maxWidth: narrow ? "100vw" : 720,
+        position: "fixed", top: 0, right: 0, height: "100dvh", maxHeight: "100dvh", zIndex: 9991,
+        width: narrow ? "100dvw" : "min(720px, 94vw)", maxWidth: narrow ? "100dvw" : 720,
         background: "rgba(13,17,23,0.98)", borderLeft: "1px solid rgba(255,255,255,0.1)",
-        display: "flex", flexDirection: "column", overflow: "hidden",
+        display: "flex", flexDirection: "column", overflow: "hidden", overscrollBehavior: "contain", WebkitOverflowScrolling: "touch" as any,
         boxShadow: "-12px 0 48px rgba(0,0,0,0.6)",
         animation: "respCitizenSlideIn 0.28s ease",
         fontFamily: "'Inter', sans-serif", color: "#eef0f7",
@@ -444,4 +453,7 @@ export default function ResponderCitizenChatDrawer({
       </aside>
     </>
   );
+
+  if (typeof document === "undefined") return drawerNode;
+  return createPortal(drawerNode, document.body);
 }

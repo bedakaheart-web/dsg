@@ -5,15 +5,35 @@ import PublicLayout   from './components/Publiclayout';
 import { supabase }   from './js/supabase';
 
 // ── Lazy-load with stale-chunk auto-recovery ────────────────────────────────
-// After a new build is deployed, the browser (or installed service worker) can
-// still reference hashed chunk filenames from the previous bundle, so a
+// After a new build is deployed, the browser (or installed PWA service worker)
+// can still reference hashed chunk filenames from the previous bundle, so a
 // React.lazy() import rejects with a ChunkLoadError ("Failed to fetch
-// dynamically imported module", 404). This wrapper forces a single page reload
-// so the fresh index.html/chunk manifest is picked up; the sessionStorage flag
-// guarantees we reload at most once and then surface the real error instead of
-// looping forever (e.g. during private browsing where storage may throw, the
-// reload still happens once and the error propagates on the second failure).
+// dynamically imported module", 404, "Loading chunk failed", "Unexpected token '<'").
+// This wrapper forces a single page reload so the fresh index.html/chunk manifest
+// is picked up; it also tries to bust the Workbox precache via CacheStorage
+// (when available) before reloading. The sessionStorage flag guarantees we reload
+// at most once and then surface the real error instead of looping forever
+// (e.g. during private/incognito where storage may throw, we still reload once).
 const PAGE_REFRESHED_KEY = 'page_refreshed';
+
+function isChunkLoadError(error: unknown): boolean {
+  const msg = (error as Error)?.message ?? String(error);
+  return /Failed to fetch dynamically imported module|Loading chunk|ChunkLoadError|Unexpected token '<'|Importing a module script failed/i.test(msg);
+}
+
+async function bustServiceWorkerCache(): Promise<void> {
+  try {
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+    }
+    // Ask Workbox to skipWaiting if an update is waiting
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      regs.forEach(r => r.update().catch(() => {}));
+    }
+  } catch { /* ignore */ }
+}
 
 function lazyWithRetry<T extends ComponentType<Record<string, unknown>>>(
   componentImport: () => Promise<{ default: T }>,
@@ -29,18 +49,17 @@ function lazyWithRetry<T extends ComponentType<Record<string, unknown>>>(
       const component = await componentImport();
       try {
         window.sessionStorage.setItem(PAGE_REFRESHED_KEY, 'false');
-      } catch {
-        // Storage unavailable (e.g. private mode) — safe to ignore.
-      }
+      } catch { /* storage unavailable — ignore */ }
       return component;
     } catch (error) {
+      // Only auto-reload for genuine chunk-load failures, not for render errors
+      if (!isChunkLoadError(error)) throw error;
       if (!pageRefreshed) {
-        try {
-          window.sessionStorage.setItem(PAGE_REFRESHED_KEY, 'true');
-        } catch {
-          // Storage unavailable — still reload once below.
-        }
+        try { window.sessionStorage.setItem(PAGE_REFRESHED_KEY, 'true'); } catch { /* ignore */ }
+        await bustServiceWorkerCache();
         window.location.reload();
+        // Return a never-resolving promise while reload happens to avoid throwing during unload
+        return new Promise(() => {}) as Promise<{ default: T }>;
       }
       throw error;
     }

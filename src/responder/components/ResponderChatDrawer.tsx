@@ -6,6 +6,7 @@
 // read-only here with sound + badge alerts on arrival.
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "../../js/supabase";
 import {
   fetchUnreadCounts,
@@ -258,23 +259,31 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
     }
   }, [targetId, open]);
 
+  // Lock body scroll while open
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [open]);
+
   if (!open && !(showCallOverlay && callType)) return null;
 
-  return (
+  const drawerNode = (
     <>
       <style>{`@keyframes respChatSlideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
 @keyframes respChatFade { from { opacity: 0; } to { opacity: 1; } }`}</style>
-      {/* Backdrop overlay G�� click outside closes */}
+      {/* Backdrop overlay — click outside closes */}
       <div
         onClick={onClose}
         aria-hidden="true"
-        style={{ position: "fixed", inset: 0, zIndex: 940, background: "rgba(0,0,0,0.5)", animation: "respChatFade 0.25s ease" }}
+        style={{ position: "fixed", inset: 0, zIndex: 9990, background: "rgba(0,0,0,0.5)", animation: "respChatFade 0.25s ease", touchAction: "manipulation" }}
       />
       <aside
         aria-label="Responder HQ chat"
         style={{
-          position: "fixed", top: 0, right: 0, height: "100vh", zIndex: 950,
-          width: fullScreen ? "100vw" : "min(384px, 92vw)", maxWidth: fullScreen ? "100vw" : 384,
+          position: "fixed", top: 0, right: 0, height: "100dvh", maxHeight: "100dvh", zIndex: 9991,
+          width: fullScreen ? "100dvw" : "min(384px, 92vw)", maxWidth: fullScreen ? "100dvw" : 384,
           background: "rgba(13,17,23,0.98)", borderLeft: flashBroadcast ? "1px solid rgba(239,91,91,0.55)" : "1px solid rgba(255,255,255,0.1)",
           display: "flex", flexDirection: "column", overflow: "hidden",
           boxShadow: "-12px 0 48px rgba(0,0,0,0.6)",
@@ -407,6 +416,9 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
       </aside>
     </>
   );
+
+  if (typeof document === "undefined") return drawerNode;
+  return createPortal(drawerNode, document.body);
 }
 
 function pillStyle(active: boolean): React.CSSProperties {

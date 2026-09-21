@@ -125,10 +125,10 @@ const STYLES = `
 @keyframes spin    { to { transform: rotate(360deg); } }
 
 .rd-portal {
-   position: fixed; inset: 0; z-index: 9000; overflow-y: auto; overflow-x: hidden;
-   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-   color: var(--text); background: var(--bg);
- }
+    position: fixed; inset: 0; z-index: 9000; overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--text); background: var(--bg);
+  }
 
 .rd-bg {
   position: absolute; inset: 0; z-index: 0;
@@ -136,7 +136,7 @@ const STYLES = `
 }
 .rd-bg::after { content: ''; position: absolute; inset: 0; background: rgba(8,12,20,0.93); }
 
-.rd-shell { display: flex; height: 100%; width: 100%; position: relative; z-index: 0; }
+.rd-shell { display: flex; height: 100dvh; width: 100%; position: relative; z-index: 0; min-height: 0; }
 
 .rd-overlay { display: none; position: fixed; inset: 0; z-index: 1; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
 .rd-overlay.open { display: block; }
@@ -182,7 +182,7 @@ const STYLES = `
   padding: 10px 12px; border-radius: 8px; border: 1px solid transparent;
   font-size: 13px; font-weight: 500; color: var(--text-secondary);
   background: transparent; cursor: pointer; margin-bottom: 2px;
-  text-align: left; transition: all 0.2s; position: relative;
+  text-align: left; transition: all 0.2s; position: relative; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
 }
 .rd-nav-btn:hover        { background: var(--bg); color: var(--text); border-color: var(--border); }
 .rd-nav-btn.active       { background: linear-gradient(135deg, var(--primary) 0%, #0052cc 100%); color: white; border-color: transparent; font-weight: 600; box-shadow: 0 2px 8px rgba(0,102,255,0.2); }
@@ -209,7 +209,7 @@ const STYLES = `
 
 .rd-topbar { height: 56px; display: flex; align-items: center; padding: 0 24px; background: var(--surface); border-bottom: 1px solid var(--border); position: relative; z-index: 100; gap: 12px; flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
 
-.rd-hamburger { display: none; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; width: 32px; height: 32px; align-items: center; justify-content: center; color: var(--text-secondary); cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
+.rd-hamburger { display: none; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; width: 32px; height: 32px; align-items: center; justify-content: center; color: var(--text-secondary); cursor: pointer; transition: all 0.2s; flex-shrink: 0; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .rd-hamburger:hover { background: var(--surface); border-color: var(--text-secondary); color: var(--text); }
 
 .rd-crumb        { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text-tertiary); }
@@ -385,19 +385,19 @@ const STYLES = `
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-   .rd-sidebar { transform: translateX(-100%); width: min(260px, 90vw); box-shadow: 4px 0 12px rgba(0,0,0,0.1); }
-   .rd-sidebar.open { transform: translateX(0); }
-   .rd-sidebar-close { display: flex; }
-   .rd-hamburger { display: flex; min-width: 44px; min-height: 44px; align-items: center; justify-content: center; }
-   .rd-main { margin-left: 0; background: var(--bg); }
-   .rd-topbar { padding: 0 16px; }
-   .rd-crumb-hide, .rd-clock { display: none; }
-   .rd-page { padding: 16px; }
-   .rd-title { font-size: 26px; }
-   .rd-stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-   .rd-stat-num { font-size: 24px; }
-   .rd-qgrid { grid-template-columns: 1fr; }
- }
+    .rd-sidebar { transform: translateX(-100%); width: min(280px, 90vw); box-shadow: 4px 0 12px rgba(0,0,0,0.1); }
+    .rd-sidebar.open { transform: translateX(0); }
+    .rd-sidebar-close { display: flex; min-width: 44px; min-height: 44px; }
+    .rd-hamburger { display: flex; min-width: 44px; min-height: 44px; align-items: center; justify-content: center; }
+    .rd-main { margin-left: 0; background: var(--bg); min-height: 0; }
+    .rd-topbar { padding: 0 16px; min-height: 56px; }
+    .rd-crumb-hide, .rd-clock { display: none; }
+    .rd-page { padding: 16px; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+    .rd-title { font-size: 26px; }
+    .rd-stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .rd-stat-num { font-size: 24px; }
+    .rd-qgrid { grid-template-columns: 1fr; }
+  }
 `;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -747,11 +747,25 @@ export default function RespondersDashboard() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Prevent body scroll when sidebar is open on mobile
+  // Prevent body scroll when any overlay (sidebar or citizen chat) is open on mobile
   useEffect(() => {
-    document.body.style.overflow = sidebarOpen ? "hidden" : "";
+    const shouldLock = sidebarOpen || citizenChatOpen || isChatOpen;
+    if (shouldLock) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => { document.body.style.overflow = prev; };
+    } else {
+      document.body.style.overflow = "";
+    }
     return () => { document.body.style.overflow = ""; };
-  }, [sidebarOpen]);
+  }, [sidebarOpen, citizenChatOpen, isChatOpen]);
+
+  // Also close citizen chat on Escape
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { setCitizenChatOpen(false); setIsChatOpen(false); } };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   useEffect(() => {
     const load = async () => {

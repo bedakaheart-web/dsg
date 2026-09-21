@@ -661,12 +661,12 @@ function initials(name: string | null | undefined): string {
 }
 
 function fmtDate(ts?: string) {
-  if (!ts) return "ΓÇö";
+  if (!ts) return "—";
   return new Date(ts).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" });
 }
 
 function fmtRelative(ts?: string) {
-  if (!ts) return "ΓÇö";
+  if (!ts) return "—";
   const diff = Math.floor((Date.now() - new Date(ts).getTime()) / 1000);
   if (diff < 60)    return `${diff}s ago`;
   if (diff < 3600)  return `${Math.floor(diff / 60)}m ago`;
@@ -713,7 +713,7 @@ function MemberCard({ member, index, onChat }: {
   const avBorder = `${unitColor}35`;
 
   const displayName = member.full_name ?? "Unknown Member";
-  const displayRole = member.role ?? "ΓÇö";
+  const displayRole = member.role ?? "—";
 
   return (
     <div
@@ -982,7 +982,7 @@ export default function ResponderTeamPage() {
             </span>
             <input
               className="rtp-search"
-              placeholder="Search name, email, unit or roleΓÇª"
+              placeholder="Search name, email, unit or role…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
