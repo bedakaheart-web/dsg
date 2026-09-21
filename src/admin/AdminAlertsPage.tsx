@@ -573,7 +573,17 @@ export default function AdminAlertsPage() {
     if (!message.trim()) return;
     setSending(true);
     setError(null);
-    const payload = { title: title.trim() || "Alert", message: message.trim(), audience, severity, is_active: true };
+    // Ensure real Supabase columns are populated (see supabase/migrations/20260912130000_ensure_alerts_table.sql: title, message, type, severity, audience)
+    // type mirrors severity for citizen Responder filtering (critical -> danger)
+    const typeMap: Record<string, string> = { critical: "danger", warning: "warning", info: "info" };
+    const payload = {
+      title: title.trim() || "Alert",
+      message: message.trim(),
+      audience,
+      severity,
+      type: typeMap[severity] ?? severity,
+      is_active: true,
+    };
     const { data, error: dbErr } = await supabase.from("alerts").insert(payload).select().single();
     if (dbErr) { setError("Failed to send alert: " + dbErr.message); setSending(false); return; }
     if (data) setAlerts(prev => prev.some(a => a.id === data.id) ? prev : [data, ...prev]);

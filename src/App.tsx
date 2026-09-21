@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState, type ComponentType } from 'react';
+import React, { lazy, Suspense, useEffect, useState, type ComponentType } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicLayout   from './components/Publiclayout';
@@ -99,6 +99,37 @@ const Loader = () => (
   </div>
 );
 
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.error('[ErrorBoundary]', error, info);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#080c14', color: '#eef0f7', padding: 24, fontFamily: 'Inter, sans-serif' }}>
+          <div style={{ maxWidth: 560, width: '100%', background: 'rgba(15,21,33,0.9)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 24, textAlign: 'center' }}>
+            <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 8 }}>Something went wrong</div>
+            <div style={{ fontSize: 13, color: 'rgba(238,240,247,0.65)', marginBottom: 12, wordBreak: 'break-word' }}>
+              {this.state.error?.message ?? 'Unknown error'}
+            </div>
+            <button onClick={() => window.location.reload()} style={{ background: 'rgba(46,204,143,0.16)', border: '1px solid rgba(46,204,143,0.35)', color: '#2ECC8F', borderRadius: 8, padding: '10px 18px', fontWeight: 700, cursor: 'pointer' }}>
+              Reload
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function App() {
   const [loading, setLoading] = useState(true);
   const [user, setUser]       = useState<any>(null);
@@ -147,8 +178,9 @@ export default function App() {
 
   return (
     <HashRouter>
-      <Suspense fallback={<Loader />}>
-        <Routes>
+      <ErrorBoundary>
+        <Suspense fallback={<Loader />}>
+          <Routes>
 
           {/* ── Public pages — all get Navbar + Footer via PublicLayout ──── */}
           <Route path="/" element={
@@ -252,7 +284,8 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
 
         </Routes>
-      </Suspense>
+        </Suspense>
+      </ErrorBoundary>
     </HashRouter>
   );
 }

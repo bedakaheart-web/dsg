@@ -106,27 +106,15 @@ export default function ResponderCitizenChatDrawer({
         const rows = (reports ?? []) as Array<{ id: string; type: string; status: string; created_at: string; reporter_name: string | null; user_id: string | null }>;
 
         // 2) Recent inbound chat partners (distinct sender_ids who messaged me) — central queue
-        // Robust to schema variance: receiver_id vs recipient_id, message vs content
         let messagedIds: string[] = [];
         let lastMsgMap: Record<string, string> = {};
         try {
-          let msgs: Array<{ sender_id: string; created_at: string }> | null = null;
-          // Try both column names in one query; if that fails, try each alone
-          const tryBoth = await supabase
+          const { data: msgs } = await supabase
             .from("chat_messages")
-            .select("sender_id, created_at, receiver_id, recipient_id")
-            .or(`receiver_id.eq.${responderId},recipient_id.eq.${responderId}`)
+            .select("sender_id, created_at")
+            .eq("receiver_id", responderId)
             .order("created_at", { ascending: false })
             .limit(200);
-          if (!tryBoth.error) msgs = tryBoth.data as any;
-          else {
-            const tryReceiver = await supabase.from("chat_messages").select("sender_id, created_at").eq("receiver_id", responderId).order("created_at", { ascending: false }).limit(200);
-            if (!tryReceiver.error) msgs = tryReceiver.data as any;
-            else {
-              const tryRecipient = await supabase.from("chat_messages").select("sender_id, created_at").eq("recipient_id", responderId).order("created_at", { ascending: false }).limit(200);
-              if (!tryRecipient.error) msgs = tryRecipient.data as any;
-            }
-          }
           for (const m of (msgs ?? [])) {
             const sid = (m as any).sender_id as string;
             if (!sid || sid === responderId) continue;
@@ -224,19 +212,14 @@ export default function ResponderCitizenChatDrawer({
 
         // unread counts per citizen from chat_messages where sender = citizen, receiver = me, is_read=false
         try {
-          let unreadRows: Array<{ sender_id: string }> | null = null;
-          const tryBothUnread = await supabase.from("chat_messages").select("sender_id").or(`receiver_id.eq.${responderId},recipient_id.eq.${responderId}`).eq("is_read", false).limit(500);
-          if (!tryBothUnread.error) unreadRows = tryBothUnread.data as any;
-          else {
-            const tryR = await supabase.from("chat_messages").select("sender_id").eq("receiver_id", responderId).eq("is_read", false).limit(500);
-            if (!tryR.error) unreadRows = tryR.data as any;
-            else {
-              const tryRc = await supabase.from("chat_messages").select("sender_id").eq("recipient_id", responderId).eq("is_read", false).limit(500);
-              if (!tryRc.error) unreadRows = tryRc.data as any;
-            }
-          }
+          const { data: unreadRows } = await supabase
+            .from("chat_messages")
+            .select("sender_id")
+            .eq("receiver_id", responderId)
+            .eq("is_read", false)
+            .limit(500);
           const um: Record<string, number> = {};
-          for (const r of (unreadRows ?? [])) {
+          for (const r of (unreadRows ?? []) as Array<{ sender_id: string }>) {
             if (r.sender_id && r.sender_id !== responderId) um[r.sender_id] = (um[r.sender_id] ?? 0) + 1;
           }
           setUnreadMap(um);
@@ -299,6 +282,21 @@ export default function ResponderCitizenChatDrawer({
     return list;
   }, [conversations, filter, search]);
 
+  // Mark red badge as cleared once conversation is opened/read
+  const markDrawerRead = async (otherId: string | null) => {
+    if (!otherId || !responderId) return;
+    try {
+      await supabase.from("chat_messages").update({ is_read: true } as any).eq("receiver_id", responderId).eq("sender_id", otherId).eq("is_read", false);
+    } catch {}
+    setUnreadMap(prev => ({ ...prev, [otherId]: 0 }));
+    setConversations(prev => prev.map(c => c.citizenId === otherId ? { ...c, unread: 0 } : c));
+  };
+
+  // Auto-clear badge when active thread changes or while drawer stays open
+  useEffect(() => {
+    if (open && activeCitizenId) void markDrawerRead(activeCitizenId);
+  }, [open, activeCitizenId]);
+
   // ✅ early return only after every hook
   if (!open) return null;
 
@@ -309,22 +307,6 @@ export default function ResponderCitizenChatDrawer({
 
   const totalUnread = Object.values(unreadMap).reduce((a, b) => a + b, 0);
   const onlineCount = onlineCitizens.length;
-
-  // Mark red badge as cleared once conversation is opened/read
-  const markDrawerRead = async (otherId: string | null) => {
-    if (!otherId || !responderId) return;
-    try {
-      await supabase.from("chat_messages").update({ is_read: true } as any).eq("receiver_id", responderId).eq("sender_id", otherId).eq("is_read", false);
-    } catch {}
-    try { await supabase.from("chat_messages").update({ is_read: true } as any).eq("recipient_id" as any, responderId).eq("sender_id", otherId).eq("is_read", false); } catch {}
-    setUnreadMap(prev => ({ ...prev, [otherId]: 0 }));
-    setConversations(prev => prev.map(c => c.citizenId === otherId ? { ...c, unread: 0 } : c));
-  };
-
-  // Auto-clear badge when active thread changes or while drawer stays open
-  useEffect(() => {
-    if (open && activeCitizenId) void markDrawerRead(activeCitizenId);
-  }, [open, activeCitizenId]);
 
   const handleSelect = (c: Conversation) => {
     setActiveCitizenId(c.citizenId);

@@ -193,8 +193,9 @@ export default function CitizenChatPage() {
   const markCitizenRead = async (otherId: string | null) => {
     const me = citizenId;
     if (!me || !otherId) return;
-    try { await supabase.from("chat_messages").update({ is_read: true } as any).eq("receiver_id", me).eq("sender_id", otherId).eq("is_read", false); } catch {}
-    try { await supabase.from("chat_messages").update({ is_read: true } as any).eq("recipient_id" as any, me).eq("sender_id", otherId).eq("is_read", false); } catch {}
+    try { await (supabase.from("chat_messages").update({ is_read: true } as any).eq("receiver_id", me).eq("sender_id", otherId).eq("is_read", false) as any); } catch {}
+    // @ts-ignore — recipient_id is legacy alias, keep for migration compatibility
+    try { await (supabase.from("chat_messages").update({ is_read: true } as any).eq("recipient_id", me as any).eq("sender_id", otherId).eq("is_read", false) as any); } catch {}
   };
 
   // Clear badge when citizen opens a responder thread (so other responders won't see stale unread)

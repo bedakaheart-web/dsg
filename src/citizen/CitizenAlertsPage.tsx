@@ -9,11 +9,19 @@ import pagesBackground from "../assets/pagesbackground.png";
 
 interface Alert {
   id: string;
-  title: string;
-  message: string;
-  type: string;
+  title: string | null;
+  message: string | null;
+  type: string | null;
+  severity?: string | null;
+  audience?: string | null;
   created_at: string;
   created_by?: string | null;
+  description?: string | null;
+  location?: string | null;
+  address?: string | null;
+  report_id?: string | null;
+  report_link?: string | null;
+  [key: string]: any;
 }
 
 const ALERT_TYPE_META: Record<string, {
@@ -234,28 +242,38 @@ export default function CitizenAlertsPage() {
   // Dynamic card title: per-language table override (es/ilo) first, then
   // t(`alerts.types.<slug>.title`) for dictionary-covered codes, original
   // title (or generic "Alert" fallback) otherwise.
+  // Falls back to type/severity if title is empty, per Supabase real columns
+  // (see supabase/migrations/20260912130000_ensure_alerts_table.sql)
   const alertTitle = (a: Alert): string => {
     const slug = alertSlug(a);
     if (slug) {
       const extra = ALERT_EXTRA_TEXT[slug]?.[language];
       if (extra) return extra.title;
-      return t(`alerts.types.${slug}.title`, a.title);
+      return t(`alerts.types.${slug}.title`, a.title ?? "");
     }
-    return a.title || t("alerts.alert", "Alert");
+    const rawTitle = a.title?.trim() ? a.title.trim() : null;
+    if (rawTitle) return rawTitle;
+    const fallback = (a.type?.trim() ? a.type.trim() : null) ?? (a.severity?.trim() ? a.severity.trim() : null);
+    if (fallback) return fallback;
+    const msg = a.message?.trim() || (a as any).description?.trim() || "";
+    if (msg) return msg.slice(0, 60);
+    if (fallback) return fallback;
+    return t("alerts.alert", "Alert");
   };
 
   // Message translator: per-language table override (es/ilo) first, then
   // t(`alerts.items.<slug>.message`); unknown messages pass through untouched
-  // so backend alerts never render a raw key path. The final `?? ""` guards
-  // against null message bodies from the database.
+  // so backend alerts never render a raw key path. Handles message/description alias
+  // and severity fallback as required by task #2.
   const translateAlertMessage = (a: Alert): string => {
     const slug = alertSlug(a);
     if (slug) {
       const extra = ALERT_EXTRA_TEXT[slug]?.[language];
       if (extra) return extra.message;
-      return t(`alerts.items.${slug}.message`, a.message ?? "");
+      const rawMsg = a.message ?? (a as any).description ?? "";
+      return t(`alerts.items.${slug}.message`, rawMsg);
     }
-    return a.message ?? "";
+    return (a.message ?? (a as any).description ?? "") as string;
   };
 
   const [alerts, setAlerts] = useState<Alert[]>([]);
@@ -263,6 +281,7 @@ export default function CitizenAlertsPage() {
   const [connected, setConnected] = useState(false);
   const [filter, setFilter]       = useState<"all" | "danger" | "warning" | "info">("all");
   const [newIds, setNewIds]       = useState<Set<string>>(new Set());
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -272,7 +291,11 @@ export default function CitizenAlertsPage() {
         .order("created_at", { ascending: false })
         .limit(50);
       if (error) console.error("CitizenAlerts load error:", error);
-      setAlerts((data as Alert[]) ?? []);
+      const rows = (data as Alert[]) ?? [];
+      if (import.meta.env.DEV && rows.length > 0) {
+        console.log("[CitizenAlerts] raw alert row:", rows[0]);
+      }
+      setAlerts(rows);
       setLoading(false);
     };
     load();
@@ -303,12 +326,20 @@ export default function CitizenAlertsPage() {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  const filtered = filter === "all" ? alerts : alerts.filter((a) => a.type === filter);
+  // Normalize admin `severity` (critical/warning/info) vs citizen `type` (danger/warning/info)
+  const normType = (a: Alert): string => {
+    const raw = String((a as any).type ?? (a as any).severity ?? "info").toLowerCase();
+    if (raw === "critical" || raw === "danger") return "danger";
+    if (raw === "warning") return "warning";
+    if (raw === "success") return "info";
+    return "info";
+  };
+  const filtered = filter === "all" ? alerts : alerts.filter((a) => normType(a) === filter);
   const counts = {
     all:     alerts.length,
-    danger:  alerts.filter((a) => a.type === "danger").length,
-    warning: alerts.filter((a) => a.type === "warning").length,
-    info:    alerts.filter((a) => a.type === "info").length,
+    danger:  alerts.filter((a) => normType(a) === "danger").length,
+    warning: alerts.filter((a) => normType(a) === "warning").length,
+    info:    alerts.filter((a) => normType(a) === "info").length,
   };
 
   return (
@@ -380,15 +411,26 @@ export default function CitizenAlertsPage() {
           ) : (
             <div className="ca-list">
               {filtered.map((a, i) => {
-                const meta  = ALERT_TYPE_META[a.type] ?? ALERT_TYPE_META.info;
+                const nt = normType(a);
+                const meta  = ALERT_TYPE_META[nt] ?? ALERT_TYPE_META.info;
                 const isNew = newIds.has(a.id);
+                const isExpanded = expandedId === a.id;
+                const fullMsg = translateAlertMessage(a);
+                const loc = (a.location?.trim() ? a.location.trim() : null) ?? ((a as any).address?.trim() ? (a as any).address.trim() : null);
+                const reportLink = (a.report_id ? `/reports/${a.report_id}` : null) ?? ((a as any).report_link?.trim() ? (a as any).report_link.trim() : null);
                 return (
                   <div
                     key={a.id}
                     className={`ca-card${isNew ? " is-new" : ""}`}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setExpandedId(isExpanded ? null : a.id)}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setExpandedId(isExpanded ? null : a.id); } }}
+                    title={isExpanded ? "Click to collapse" : "Click to expand"}
                     style={{
                       "--ca-color": meta.color,
                       animationDelay: `${Math.min(i * 0.05, 0.5)}s`,
+                      cursor: "pointer",
                     } as React.CSSProperties}
                   >
                     <div className="ca-card-body">
@@ -401,7 +443,7 @@ export default function CitizenAlertsPage() {
                         </div>
                         <div className="ca-card-info">
                           <div className="ca-card-title">{alertTitle(a)}</div>
-                          <div className="ca-card-msg">{translateAlertMessage(a)}</div>
+                          <div className="ca-card-msg">{fullMsg || (isExpanded ? "No details provided." : "")}</div>
                         </div>
                       </div>
                       <div className="ca-card-footer">
@@ -409,7 +451,7 @@ export default function CitizenAlertsPage() {
                           className="ca-tag"
                           style={{ background: meta.bg, color: meta.color, border: `1px solid ${meta.border}` }}
                         >
-                          {levelLabel(a.type)}
+                          {levelLabel(nt)}
                         </span>
                         {isNew && (
                           <span className="ca-new-badge">
@@ -420,7 +462,17 @@ export default function CitizenAlertsPage() {
                           <FaClock size={9} />
                           {timeAgo(a.created_at)}
                         </span>
+                        {!isExpanded && <span style={{ fontSize: 10, color: "rgba(238,240,247,0.35)", marginLeft: 6 }}>▸</span>}
                       </div>
+                      {isExpanded && (
+                        <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.07)", display: "flex", flexDirection: "column", gap: 8, fontSize: 12, color: "rgba(238,240,247,0.65)", lineHeight: 1.6 }}>
+                          {fullMsg && <div><strong style={{ color: "#eef0f7" }}>Message:</strong> <span style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{fullMsg}</span></div>}
+                          <div><strong style={{ color: "#eef0f7" }}>Time:</strong> {new Date(a.created_at).toLocaleString("en-PH", { weekday: "short", year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" })}</div>
+                          {loc && <div><strong style={{ color: "#eef0f7" }}>Location:</strong> {loc}</div>}
+                          {reportLink && <div><strong style={{ color: "#eef0f7" }}>Report:</strong> <a href={reportLink} onClick={(e) => e.stopPropagation()} style={{ color: "#5B8DEF", textDecoration: "underline" }}>{reportLink}</a></div>}
+                          {!loc && !reportLink && !fullMsg && <div style={{ color: "rgba(238,240,247,0.4)" }}>No additional details.</div>}
+                        </div>
+                      )}
                     </div>
                   </div>
                 );

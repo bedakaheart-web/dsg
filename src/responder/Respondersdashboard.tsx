@@ -694,13 +694,6 @@ const PAGE_TITLE: Record<ViewId, string> = {
 export default function RespondersDashboard() {
   const navigate = useNavigate();
   const clock    = usePHTClock();
-  console.log("[RespondersDashboard] window.innerWidth:", window.innerWidth);
-
-  useEffect(() => {
-    const handler = () => console.log("[RespondersDashboard] resize:", window.innerWidth);
-    window.addEventListener("resize", handler);
-    return () => window.removeEventListener("resize", handler);
-  }, []);
 
   const [view,          setView]          = useState<ViewId>("overview");
   const [pendingCount,  setPendingCount]  = useState(0);

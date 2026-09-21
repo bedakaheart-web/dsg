@@ -79,7 +79,7 @@ export function useHeartbeat(userId: string | null, role: HeartbeatRole | null, 
         // Use keepalive fetch alternative; supabase update may not complete on unload,
         // but we at least attempt to set is_online false via navigator.sendBeacon if available.
         // Fallback is heartbeat expiry (3 min) on other clients.
-        if (navigator.sendBeacon) {
+        if (typeof navigator.sendBeacon === "function") {
           // Cannot use supabase client in beacon; rely on server heartbeat expiry instead.
         }
       } catch {}

@@ -290,20 +290,17 @@ export async function fetchUnreadCounts(
   const bySender: Record<string, number> = {};
   // Try receiver_id first, fallback to recipient_id for older migration
   let rows: Array<{ sender_id: string }> | null = null;
-  const tryReceiver = await supabase
-    .from("chat_messages")
-    .select("sender_id,receiver_id")
-    .eq("receiver_id", currentUserId)
-    .eq("is_read", false)
-    .limit(500) as any;
+  const tryReceiver = await (supabase.from("chat_messages").select("sender_id,receiver_id").eq("receiver_id", currentUserId).eq("is_read", false).limit(500) as any);
   if (!tryReceiver.error) rows = tryReceiver.data;
   else {
-    const tryRecipient = await supabase.from("chat_messages").select("sender_id,recipient_id").eq("recipient_id" as any, currentUserId).eq("is_read", false).limit(500) as any;
+    // @ts-ignore — recipient_id may not exist on remote (see supabase/migrations)
+    const tryRecipient = await (supabase.from("chat_messages").select("sender_id,recipient_id").eq("recipient_id", currentUserId).eq("is_read", false).limit(500) as any);
     if (!tryRecipient.error) rows = tryRecipient.data;
   }
   // Also merge both if both columns exist (covers mixed data)
   try {
-    const extra = await supabase.from("chat_messages").select("sender_id,recipient_id").eq("recipient_id" as any, currentUserId).eq("is_read", false).limit(500) as any;
+    // @ts-ignore — recipient_id may not exist on remote
+    const extra = await (supabase.from("chat_messages").select("sender_id,recipient_id").eq("recipient_id", currentUserId).eq("is_read", false).limit(500) as any);
     if (!extra.error && extra.data?.length && rows) {
       const existing = new Set(rows.map(r => r.sender_id));
       for (const r of extra.data as Array<{ sender_id: string }>) if (!existing.has(r.sender_id)) rows.push(r);
