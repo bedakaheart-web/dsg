@@ -67,6 +67,7 @@ export function usePresence(
   const [presenceMap, setPresenceMap] = useState<Record<string, PresenceContact[]>>({});
   const [loading, setLoading] = useState(true);
   const channelIdRef = useRef<string>(`dumasafe-presence-${Math.random().toString(36).slice(2, 9)}`);
+  const fallbackIdRef = useRef<string>(`pf-${Math.random().toString(36).slice(2, 9)}`);
 
   useEffect(() => {
     if (!enabled || !userId || !role) return;
@@ -80,10 +81,8 @@ export function usePresence(
       setLoading(false);
     });
     channel.subscribe();
-    // Secondary fallback: subscribe to profiles changes to keep
-    // last_seen/is_online columns fresh for offline detection.
     const ch = supabase
-      .channel(`profiles-fallback-${userId}`)
+      .channel(`profiles-fallback-${fallbackIdRef.current}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => {
         // Realtime Presence is primary; this is just a safety net
       })
