@@ -94,6 +94,8 @@ export default function AdminChatDrawer({ open, onClose, targetId = null }: {
     state: callState,
     startCall,
     endCall,
+    acceptCall,
+    declineCall,
     toggleMute,
     toggleCamera,
     upgradeToVideo,
@@ -114,6 +116,8 @@ export default function AdminChatDrawer({ open, onClose, targetId = null }: {
     setShowCallOverlay(false);
     setCallType(null);
   };
+  const handleAcceptCall = async () => { await acceptCall(); };
+  const handleDeclineCall = async () => { await declineCall(); setShowCallOverlay(false); setCallType(null); };
   // Sync overlay with remote signaling (incoming call, remote hangup)
   useEffect(() => {
     if (callState.callState === "ringing" || callState.callState === "active") {
@@ -277,7 +281,7 @@ export default function AdminChatDrawer({ open, onClose, targetId = null }: {
               style={{ background: "none", border: "none", color: "rgba(238,240,247,0.5)", fontSize: 18, cursor: "pointer" }}>×</button>
           </div>
 
-          {(!broadcastMode && !activeContact) ? (
+          {(!broadcastMode && !activeId) ? (
             <>
               {/* Duty filter */}
               <div style={{ padding: "8px 12px", display: "flex", gap: 6, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
@@ -392,7 +396,9 @@ export default function AdminChatDrawer({ open, onClose, targetId = null }: {
             onCamera={toggleCamera}
             onUpgrade={upgradeToVideo}
             onEnd={handleEndCall}
-            isOnline={true}
+            onAccept={handleAcceptCall}
+            onDecline={handleDeclineCall}
+            isOnline={callState.callState === "active" ? true : !!activeContact}
           />
         )}
       </aside>
