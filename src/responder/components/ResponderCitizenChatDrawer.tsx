@@ -500,11 +500,11 @@ export default function ResponderCitizenChatDrawer({
               </div>
             ) : (
               <>
-                {/* Thread header with call buttons */}
+                {/* Thread header with call buttons — now shows Online/Offline to match list */}
                 <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", marginBottom: 8, background: "rgba(255,255,255,0.04)", borderRadius: 8, border: "1px solid rgba(255,255,255,0.06)" }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{citizenName}</span>
-                  <button onClick={handleStartAudio} title="Audio call" style={{ background: "rgba(46,204,143,0.12)", border: "1px solid rgba(46,204,143,0.3)", borderRadius: 8, padding: "6px 8px", cursor: "pointer", color: "#2ECC8F", display: "flex", alignItems: "center" }}><FaPhone size={12} /></button>
-                  <button onClick={handleStartVideo} title="Video call" style={{ background: "rgba(46,204,143,0.12)", border: "1px solid rgba(46,204,143,0.3)", borderRadius: 8, padding: "6px 8px", cursor: "pointer", color: "#2ECC8F", display: "flex", alignItems: "center" }}><FaVideo size={12} /></button>
+                  <span style={{ fontSize: 13, fontWeight: 700, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 6 }}>{citizenName} <span style={{ fontSize: 10, fontWeight: 600, color: active?.isOnline ? "#2ECC8F" : "rgba(238,240,247,0.35)" }}>{active?.isOnline ? "● Online" : "○ Offline"}</span></span>
+                  <button onClick={handleStartAudio} disabled={!active?.isOnline} title={active?.isOnline ? "Audio call" : "Citizen offline"} style={{ background: active?.isOnline ? "rgba(46,204,143,0.12)" : "rgba(255,255,255,0.04)", border: `1px solid ${active?.isOnline ? "rgba(46,204,143,0.3)" : "rgba(255,255,255,0.08)"}`, borderRadius: 8, padding: "6px 8px", cursor: active?.isOnline ? "pointer" : "not-allowed", color: active?.isOnline ? "#2ECC8F" : "rgba(238,240,247,0.25)", display: "flex", alignItems: "center", opacity: active?.isOnline ? 1 : 0.5 }}><FaPhone size={12} /></button>
+                  <button onClick={handleStartVideo} disabled={!active?.isOnline} title={active?.isOnline ? "Video call" : "Citizen offline"} style={{ background: active?.isOnline ? "rgba(46,204,143,0.12)" : "rgba(255,255,255,0.04)", border: `1px solid ${active?.isOnline ? "rgba(46,204,143,0.3)" : "rgba(255,255,255,0.08)"}`, borderRadius: 8, padding: "6px 8px", cursor: active?.isOnline ? "pointer" : "not-allowed", color: active?.isOnline ? "#2ECC8F" : "rgba(238,240,247,0.25)", display: "flex", alignItems: "center", opacity: active?.isOnline ? 1 : 0.5 }}><FaVideo size={12} /></button>
                 </div>
                 {active?.source === "messaged" && (
                   <div style={{ marginBottom: 8, padding: "8px 10px", borderRadius: 8, background: "rgba(245,200,66,0.08)", border: "1px solid rgba(245,200,66,0.2)", fontSize: 11, color: "rgba(238,240,247,0.7)" }}>
@@ -520,7 +520,7 @@ export default function ResponderCitizenChatDrawer({
         </div>
 
         {showCallOverlay && callType && (
-          <CallOverlay state={callState} callType={callType} remoteName={effectiveName} onMute={toggleMute} onCamera={toggleCamera} onUpgrade={upgradeToVideo} onEnd={handleEndCall} onAccept={handleAcceptCall} onDecline={handleDeclineCall} isOnline={true} />
+          <CallOverlay state={callState} callType={callType} remoteName={effectiveName} onMute={toggleMute} onCamera={toggleCamera} onUpgrade={upgradeToVideo} onEnd={handleEndCall} onAccept={handleAcceptCall} onDecline={handleDeclineCall} isOnline={callState.callState === "active" ? true : (active?.isOnline ?? true)} />
         )}
       </aside>
     </>

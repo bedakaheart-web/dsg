@@ -16,6 +16,7 @@ import { supabase } from "../js/supabase";
 import { FaPaperPlane, FaImage, FaTimes, FaSpinner, FaPhone, FaVideo, FaPhoneSlash, FaVideoSlash } from "react-icons/fa";
 import { useOfflineQueue } from "../hooks/useOfflineQueue";
 import { useWebRTC } from "../hooks/useWebRTC";
+import { isCitizenOnline, isResponderOnDuty, usePresence } from "../hooks/usePresence";
 import CallOverlay from "./CallOverlay";
 
 // ── Types ────────────────────────────────────────────────────────────
@@ -227,22 +228,37 @@ export default function ChatBox({
     })();
   }, []);
 
-  // Recipient online status from profiles (matches sidebar "on_duty" logic)
+  // Recipient online status - presence-aware (fixes list=Online but private chat=Offline)
+  const { onlineCitizens: presenceOnlineCitizens, onlineResponders: presenceOnlineResponders } = usePresence(user?.id ?? null, user?.role ?? null, !!user?.id);
+  const isRecipientOnlineViaPresence = useMemo(() => {
+    if (!recipientId) return false;
+    const allOnline = [...presenceOnlineCitizens, ...presenceOnlineResponders];
+    return allOnline.some(c => c.id === recipientId);
+  }, [presenceOnlineCitizens, presenceOnlineResponders, recipientId]);
   const [isRecipientOnline, setIsRecipientOnline] = useState(false);
   useEffect(() => {
     if (!recipientId || !user?.id) return;
     const fetch = async () => {
       try {
-        const { data: prof } = await supabase.from("profiles").select("status").eq("id", recipientId).single();
-        setIsRecipientOnline((prof?.status ?? "").toLowerCase() === "on_duty");
+        const { data: prof } = await supabase.from("profiles").select("id, role, status, is_online, last_seen").eq("id", recipientId).single();
+        if (!prof) { setIsRecipientOnline(isRecipientOnlineViaPresence); return; }
+        const p = prof as any;
+        const contact = { id: p.id, full_name: null, email: "", role: p.role, status: p.status, is_online: p.is_online, last_seen: p.last_seen };
+        const dbOnline = p.role?.toLowerCase() === "citizen" ? isCitizenOnline(contact) : isResponderOnDuty(contact);
+        const genericOnline = isCitizenOnline(contact) || isResponderOnDuty(contact);
+        setIsRecipientOnline(dbOnline || genericOnline || isRecipientOnlineViaPresence);
       } catch {
-        setIsRecipientOnline(false);
+        setIsRecipientOnline(isRecipientOnlineViaPresence);
       }
     };
     void fetch();
     const interval = setInterval(() => void fetch(), 30000);
     return () => clearInterval(interval);
-  }, [recipientId, user?.id]);
+  }, [recipientId, user?.id, isRecipientOnlineViaPresence]);
+  // Immediately reflect presence changes without waiting for interval
+  useEffect(() => {
+    if (isRecipientOnlineViaPresence) setIsRecipientOnline(true);
+  }, [isRecipientOnlineViaPresence]);
 
   // ── Build query ──
   const getChatQuery = (userId: string) => {
@@ -655,7 +671,7 @@ export default function ChatBox({
         </button>
       </form>
 
-      {/* Call Overlay — now with Answer/Decline for incoming */}
+      {/* Call Overlay — now with Answer/Decline for incoming, presence-aware */}
       {showCallOverlay && callType && (
         <CallOverlay
           state={callState}
@@ -667,7 +683,7 @@ export default function ChatBox({
           onEnd={handleEndCall}
           onAccept={handleAcceptCall}
           onDecline={handleDeclineCall}
-          isOnline={effectiveOnline}
+          isOnline={isRecipientOnline && effectiveOnline}
         />
       )}
     </div>

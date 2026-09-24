@@ -420,7 +420,7 @@ export default function CitizenChatPage() {
           onEnd={handleEndCall}
           onAccept={handleAcceptCall}
           onDecline={handleDeclineCall}
-          isOnline={true}
+          isOnline={callState.callState === "active" ? true : responders.some(r => r.id === effectiveResponderId)}
         />
       )}
     </div>
