@@ -822,13 +822,6 @@ export default function AdminDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatUnread, setChatUnread] = useState(0);
-  console.log("[AdminDashboard] window.innerWidth:", window.innerWidth);
-
-  useEffect(() => {
-    const handler = () => console.log("[AdminDashboard] resize:", window.innerWidth);
-    window.addEventListener("resize", handler);
-    return () => window.removeEventListener("resize", handler);
-  }, []);
 
   const handleNavigate = (v: ViewId) => {
     setView(v);

@@ -17,18 +17,18 @@ import { useWebRTC } from "../../hooks/useWebRTC";
 import CallOverlay from "../../components/CallOverlay";
 import { FaPhone, FaVideo } from "react-icons/fa";
 
-// Full-screen drawer on phones so chat controls stay usable <480px.
-function useIsNarrow(breakpoint = 480) {
-  const [narrow, setNarrow] = useState(
-    typeof window !== "undefined" ? window.innerWidth < breakpoint : false
-  );
-  useEffect(() => {
-    const onResize = () => setNarrow(window.innerWidth < breakpoint);
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, [breakpoint]);
-  return narrow;
-}
+// Full-screen drawer on phones so chat controls stay usable <768px.
+function useIsNarrow(breakpoint = 768) {
+    const [narrow, setNarrow] = useState(
+      typeof window !== "undefined" ? window.innerWidth < breakpoint : false
+    );
+    useEffect(() => {
+      const onResize = () => setNarrow(window.innerWidth < breakpoint);
+      window.addEventListener("resize", onResize);
+      return () => window.removeEventListener("resize", onResize);
+    }, [breakpoint]);
+    return narrow;
+  }
 
 interface Contact {
   id: string;
@@ -222,6 +222,14 @@ export default function AdminChatDrawer({ open, onClose, targetId = null }: {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
+
+  // Lock body scroll while chat drawer is open on mobile
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [open]);
 
   // Deep-link a specific responder thread (e.g. Message button on a team
   // card): whenever targetId is provided, jump straight into that 1-on-1.

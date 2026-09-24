@@ -18,8 +18,8 @@ import { useWebRTC } from "../../hooks/useWebRTC";
 import CallOverlay from "../../components/CallOverlay";
 import { FaPhone, FaVideo } from "react-icons/fa";
 
-// Full-screen drawer on phones so chat controls stay usable <480px.
-function useIsNarrow(breakpoint = 480) {
+// Full-screen drawer on phones so chat controls stay usable <768px.
+function useIsNarrow(breakpoint = 768) {
   const [narrow, setNarrow] = useState(
     typeof window !== "undefined" ? window.innerWidth < breakpoint : false
   );

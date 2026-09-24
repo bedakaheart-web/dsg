@@ -100,13 +100,13 @@ function usePHTClock() {
 }
 
 function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  useEffect(() => {
-    const handler = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener("resize", handler);
-    return () => window.removeEventListener("resize", handler);
-  }, []);
-  return isMobile;
+   const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
+   useEffect(() => {
+       const handler = () => setIsMobile(window.innerWidth < 900);
+       window.addEventListener("resize", handler);
+       return () => window.removeEventListener("resize", handler);
+   }, []);
+   return isMobile;
 }
 
 export default function CitizenDashboard() {

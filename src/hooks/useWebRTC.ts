@@ -45,7 +45,6 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
   }, []);
 
   const cleanup = useCallback(async () => {
-    console.log("[useWebRTC] cleanup: closing peer connection and stopping tracks");
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach(t => t.stop());
       localStreamRef.current = null;
@@ -54,9 +53,10 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
       pcRef.current.close();
       pcRef.current = null;
     }
-    // Note: channel is managed by the persistent signaling effect ΓÇö do not remove here
-    // unless we are explicitly ending a call and want to keep signaling alive.
-    // We keep channel alive for future calls; only tracks/pc are torn down.
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
   }, []);
 
   const fullCleanup = useCallback(async () => {
@@ -89,7 +89,6 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
 
     pc.onicecandidate = (event) => {
       if (event.candidate && remoteIdRef.current) {
-        console.log("[useWebRTC] signal sent: ice-candidate to", remoteIdRef.current);
         const icePayload = {
           type: "ice-candidate",
           candidate: event.candidate.toJSON(),
@@ -97,30 +96,18 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
           to: remoteIdRef.current,
           callType: callTypeRef.current,
         } as const;
-        channelRef.current?.send({
-          type: "broadcast",
-          event: "webrtc-signal",
-          payload: icePayload,
-        });
-        // Fallback via inbox for app-wide delivery
+        channelRef.current?.send({ type: "broadcast", event: "webrtc-signal", payload: icePayload });
         try {
           const inboxCh = supabase.channel(`call-inbox-${remoteIdRef.current}`);
           inboxCh.subscribe();
-          // Small delay to let SUBSCRIBED propagate before sending (SDK subscribe is sync/no-promise)
-          setTimeout(() => {
-            inboxCh.send({ type: "broadcast", event: "webrtc-signal", payload: icePayload });
-            setTimeout(() => supabase.removeChannel(inboxCh), 1500);
-          }, 200);
+          setTimeout(() => { inboxCh.send({ type: "broadcast", event: "webrtc-signal", payload: icePayload }); setTimeout(() => supabase.removeChannel(inboxCh), 1500); }, 200);
         } catch {}
       }
     };
 
     pc.onconnectionstatechange = () => {
-      console.log("[useWebRTC] connectionState:", pc.connectionState);
       if (pc.connectionState === "connected") {
         updateState({ callState: "active" });
-      } else if (pc.connectionState === "failed" || pc.connectionState === "closed") {
-        // keep idle handling to signaling channel
       }
     };
 
@@ -139,63 +126,32 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
   }, [updateState]);
 
   const startCall = useCallback(async (callType: CallType): Promise<boolean> => {
-    if (!localIdRef.current || !remoteIdRef.current) {
-      console.warn("[useWebRTC] startCall aborted: missing local or remote id", { local: localIdRef.current, remote: remoteIdRef.current });
+    if (!localIdRef.current) {
       return false;
     }
-    console.log("[useWebRTC] startCall:", callType, "from:", localIdRef.current, "to:", remoteIdRef.current);
-
     callTypeRef.current = callType;
     updateState({ callType, callState: "ringing", remoteParticipantId: remoteIdRef.current });
-
     try {
       const stream = await getLocalStream(callType);
       const pc = await createPeerConnection();
-
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
-
       const offerPayload = { type: "offer", sdp: pc.localDescription, from: localIdRef.current, to: remoteIdRef.current, callType } as const;
-      console.log("[useWebRTC] signal sent: offer to", remoteIdRef.current, "sdp:", pc.localDescription?.type);
-      // Try pair channel first (preferred for 1-1), but don't fail if not ready — inbox is primary for app-wide delivery.
       const ch = channelRef.current;
       if (ch) {
-        try {
-          await ch.send({
-            type: "broadcast",
-            event: "webrtc-signal",
-            payload: offerPayload,
-          });
-        } catch (e) {
-          console.warn("[useWebRTC] pair channel send failed (non-fatal, inbox will deliver):", e);
-        }
-      } else {
-        console.warn("[useWebRTC] no pair channel yet — using inbox only for offer");
+        try { await ch.send({ type: "broadcast", event: "webrtc-signal", payload: offerPayload }); } catch (e) { /* non-fatal */ }
       }
-      // Always notify callee's personal inbox so ringing works app-wide (even when chat drawer is closed or pair mismatch like citizen→responder)
       try {
-        const inboxChannel = supabase.channel(`call-inbox-${remoteIdRef.current}`);
-        // Subscribe and wait for SUBSCRIBED before sending to ensure delivery on mobile
+        const inboxChannel = supabase.channel(`call-inbox-${localIdRef.current}`);
         await new Promise<void>((resolve) => {
-          inboxChannel.subscribe((status) => {
-            if (status === "SUBSCRIBED") resolve();
-          });
-          // Fallback resolve after 800ms even if status callback missed (some SDK versions)
+          inboxChannel.subscribe((status) => { if (status === "SUBSCRIBED") resolve(); });
           setTimeout(() => resolve(), 800);
         });
-        await inboxChannel.send({
-          type: "broadcast",
-          event: "webrtc-signal",
-          payload: offerPayload,
-        });
+        await inboxChannel.send({ type: "broadcast", event: "webrtc-signal", payload: offerPayload });
         setTimeout(() => supabase.removeChannel(inboxChannel), 2500);
-      } catch (e) {
-        console.warn("[useWebRTC] inbox notify failed (non-fatal):", e);
-      }
-
+      } catch (e) { /* non-fatal */ }
       return true;
     } catch (err) {
-      console.error("[useWebRTC] Failed to start call:", err);
       updateState({ callState: "idle" });
       return false;
     }
@@ -203,45 +159,28 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
 
   const receiveCall = useCallback(async (callType: CallType, fromId: string, offerSdp?: RTCSessionDescriptionInit) => {
     if (!localIdRef.current) return false;
-    console.log("[useWebRTC] receiveCall: handling incoming", callType, "from:", fromId, "offerSdp:", !!offerSdp);
     callTypeRef.current = callType;
     remoteIdRef.current = fromId;
     updateState({ callType, callState: "ringing", remoteParticipantId: fromId });
-
     try {
       const stream = await getLocalStream(callType);
       const pc = await createPeerConnection();
-
       if (offerSdp) {
-        console.log("[useWebRTC] signal received: offer ΓÇö setting remote description");
         await pc.setRemoteDescription(new RTCSessionDescription(offerSdp));
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
-        console.log("[useWebRTC] signal sent: answer to", fromId);
         const answerPayload = { type: "answer", sdp: answer, from: localIdRef.current, to: fromId } as const;
-        if (channelRef.current) {
-          await channelRef.current.send({
-            type: "broadcast",
-            event: "webrtc-signal",
-            payload: answerPayload,
-          });
-        }
-        // Fallback to inbox so answer is delivered even before pair channel is subscribed (app-wide ringing)
+        try {
+          await supabase.channel(`call-inbox-${fromId}`).send({ type: "broadcast", event: "webrtc-signal", payload: answerPayload });
+        } catch {}
         try {
           const inboxCh = supabase.channel(`call-inbox-${fromId}`);
           inboxCh.subscribe();
-          setTimeout(() => {
-            inboxCh.send({ type: "broadcast", event: "webrtc-signal", payload: answerPayload });
-            setTimeout(() => supabase.removeChannel(inboxCh), 2000);
-          }, 200);
+          setTimeout(() => { inboxCh.send({ type: "broadcast", event: "webrtc-signal", payload: answerPayload }); setTimeout(() => supabase.removeChannel(inboxCh), 2000); }, 200);
         } catch {}
-        // Caller will set remote answer and then we go active; keep ringing until caller ack or track?
-        // For now mark ringing ΓÇö active will be set on connectionState connected or via explicit answer handling.
       }
-      // If no offerSdp, the offer will be handled by the central channel listener which will call this again with sdp.
       return true;
     } catch (err) {
-      console.error("[useWebRTC] Failed to receive call:", err);
       return false;
     }
   }, [getLocalStream, createPeerConnection, updateState]);
@@ -250,25 +189,19 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
     const pc = pcRef.current;
     const remoteId = remoteIdRef.current;
     if (!pc || !remoteId) return;
-    // If we already answered in receiveCall, just mark active
     if (pc.localDescription) {
-      console.log("[useWebRTC] acceptCall: already answered, marking active");
       updateState({ callState: "active" });
       return;
     }
-    // Fallback: create answer if not yet created (edge case where receiveCall didn't have sdp)
-    console.log("[useWebRTC] acceptCall: no localDescription, attempting to create answer");
     updateState({ callState: "active" });
   }, [updateState]);
 
-  const declineCall = useCallback(() => {
+  const declineCall = useCallback(async () => {
     const remoteId = remoteIdRef.current;
-    console.log("[useWebRTC] signal sent: decline to", remoteId);
     const declinePayload = { type: "decline", from: localIdRef.current, to: remoteId } as const;
     const endedPayload = { type: "call-ended", from: localIdRef.current, to: remoteId } as const;
     channelRef.current?.send({ type: "broadcast", event: "webrtc-signal", payload: declinePayload });
     channelRef.current?.send({ type: "broadcast", event: "webrtc-signal", payload: endedPayload });
-    // Inbox fallback
     if (remoteId) {
       const inboxCh = supabase.channel(`call-inbox-${remoteId}`);
       inboxCh.subscribe();
@@ -278,19 +211,17 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
         setTimeout(() => supabase.removeChannel(inboxCh), 1500);
       }, 200);
     }
-    cleanup();
+    await cleanup();
     updateState({ callState: "declined", callType: null, remoteParticipantId: null, localStream: null, remoteStream: null });
     setTimeout(() => updateState({ callState: "idle" }), 1500);
   }, [cleanup, updateState]);
 
-  const endCall = useCallback(() => {
+  const endCall = useCallback(async () => {
     const remoteId = remoteIdRef.current;
-    console.log("[useWebRTC] signal sent: call-ended to", remoteId);
     const endedPayload = { type: "call-ended", from: localIdRef.current, to: remoteId } as const;
     const endPayload = { type: "end", from: localIdRef.current, to: remoteId } as const;
     channelRef.current?.send({ type: "broadcast", event: "webrtc-signal", payload: endedPayload });
     channelRef.current?.send({ type: "broadcast", event: "webrtc-signal", payload: endPayload });
-    // Inbox fallback
     if (remoteId) {
       const inboxCh = supabase.channel(`call-inbox-${remoteId}`);
       inboxCh.subscribe();
@@ -300,25 +231,14 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
         setTimeout(() => supabase.removeChannel(inboxCh), 1500);
       }, 200);
     }
-    // Close peer connection and stop tracks per spec
-    if (pcRef.current) {
-      console.log("[useWebRTC] endCall: pc.close()");
-      pcRef.current.close();
-      pcRef.current = null;
-    }
-    if (localStreamRef.current) {
-      console.log("[useWebRTC] endCall: stopping local tracks");
-      localStreamRef.current.getTracks().forEach(track => track.stop());
-      localStreamRef.current = null;
-    }
+    await fullCleanup();
     updateState({
       callState: "ended", callType: null, remoteParticipantId: null,
       localStream: null, remoteStream: null,
       isMuted: false, isCameraOff: false, isUpgradedToVideo: false,
     });
-    // Reset to idle shortly after so UI can re-enter calls
     setTimeout(() => updateState({ callState: "idle" }), 1200);
-  }, [updateState]);
+  }, [fullCleanup, updateState]);
 
   const toggleMute = useCallback(() => {
     const stream = localStreamRef.current;
@@ -376,8 +296,7 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
 const channelName = `call-${[localId, remoteId].sort().join("_")}`;
     console.log("[useWebRTC] subscribing to channel:", channelName);
 
-    const channel = supabase.channel(channelName);
-
+const channel = supabase.channel(channelName);
     channel.on("broadcast", { event: "webrtc-signal" }, async (payload) => {
       const p = payload.payload as {
         type: string;
@@ -387,46 +306,31 @@ const channelName = `call-${[localId, remoteId].sort().join("_")}`;
         candidate?: RTCIceCandidateInit;
         callType?: CallType;
       };
-      // Ignore own messages and messages not addressed to us (if to field present)
       if (p.from === localId) return;
       if (p.to && p.to !== localId) return;
-
-      console.log("[useWebRTC] signal received:", p.type, "from:", p.from, "to:", p.to, "channel:", channelName);
-
       const pc = pcRef.current;
-
       if (p.type === "offer") {
-        // If already in a call, ignore duplicate offers
-        if (stateRef.current.callState !== "idle") {
-          console.log("[useWebRTC] offer ignored ΓÇö already in callState:", stateRef.current.callState);
-          return;
-        }
-        // Handle incoming offer immediately with SDP
+        if (stateRef.current.callState !== "idle") return;
         callTypeRef.current = (p.callType as CallType) || "audio";
         remoteIdRef.current = p.from;
         await receiveCall((p.callType as CallType) || "audio", p.from, p.sdp);
-        // receiveCall will create PC, set remote, create answer, send it
       } else if (p.type === "answer") {
         if (pc && p.sdp) {
-          console.log("[useWebRTC] handling answer: setRemoteDescription");
-          try { await pc.setRemoteDescription(new RTCSessionDescription(p.sdp)); } catch (e) { console.error("[useWebRTC] setRemoteDescription answer failed:", e); }
+          try { await pc.setRemoteDescription(new RTCSessionDescription(p.sdp)); } catch (e) { /* non-fatal */ }
           updateState({ callState: "active" });
         }
       } else if (p.type === "ice-candidate") {
         if (pc && p.candidate) {
-          console.log("[useWebRTC] handling ice-candidate from", p.from);
-          try { await pc.addIceCandidate(new RTCIceCandidate(p.candidate)); } catch (e) { console.warn("[useWebRTC] addIceCandidate failed:", e); }
+          try { await pc.addIceCandidate(new RTCIceCandidate(p.candidate)); } catch (e) { /* non-fatal */ }
         }
       } else if (p.type === "decline") {
-        console.log("[useWebRTC] handling decline from", p.from);
         if (pcRef.current) { pcRef.current.close(); pcRef.current = null; }
         if (localStreamRef.current) { localStreamRef.current.getTracks().forEach(t => t.stop()); localStreamRef.current = null; }
         updateState({ callState: "declined", callType: null, remoteParticipantId: null, localStream: null, remoteStream: null });
         setTimeout(() => updateState({ callState: "idle" }), 1500);
       } else if (p.type === "end" || p.type === "call-ended") {
-        console.log("[useWebRTC] handling call-ended/end from", p.from);
-        if (pcRef.current) { console.log("[useWebRTC] remote hangup: pc.close()"); pcRef.current.close(); pcRef.current = null; }
-        if (localStreamRef.current) { console.log("[useWebRTC] remote hangup: stopping local tracks"); localStreamRef.current.getTracks().forEach(t => t.stop()); localStreamRef.current = null; }
+        if (pcRef.current) { pcRef.current.close(); pcRef.current = null; }
+        if (localStreamRef.current) { localStreamRef.current.getTracks().forEach(t => t.stop()); localStreamRef.current = null; }
         updateState({
           callState: "ended", callType: null, remoteParticipantId: null,
           localStream: null, remoteStream: null,
@@ -435,22 +339,12 @@ const channelName = `call-${[localId, remoteId].sort().join("_")}`;
         setTimeout(() => updateState({ callState: "idle" }), 1200);
       }
     });
-
-    channel.subscribe((status) => {
-      console.log("[useWebRTC] channel subscribe status:", status, "channel:", channelName);
-      if (status === "SUBSCRIBED") {
-        console.log("[useWebRTC] channel subscribed:", channelName);
-      }
-    });
-
+    channel.subscribe();
     channelRef.current = channel;
-    console.log("[useWebRTC] channelRef set:", channelName);
-
-return () => {
-       console.log("[useWebRTC] removing channel:", channelName);
-       supabase.removeChannel(channel);
-       if (channelRef.current === channel) channelRef.current = null;
-     };
+    return () => {
+      supabase.removeChannel(channel);
+      if (channelRef.current === channel) channelRef.current = null;
+    };
   }, [localUserId, remoteUserId, receiveCall, updateState]);
 
   // Global inbox: app-wide incoming call listener (deduped per localId to avoid duplicate channels / CLOSED)
