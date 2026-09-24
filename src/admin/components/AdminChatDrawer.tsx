@@ -260,12 +260,13 @@ export default function AdminChatDrawer({ open, onClose, targetId = null }: {
       <aside
         aria-label="Admin team chat"
         style={{
-          position: "fixed", top: 0, right: 0, height: "100vh", zIndex: 950,
-          width: fullScreen ? "100vw" : "min(384px, 92vw)", maxWidth: fullScreen ? "100vw" : 384,
+          position: "fixed", top: 0, right: 0, height: "100dvh", maxHeight: "100dvh", zIndex: 950,
+          width: fullScreen ? "100dvw" : "min(384px, 92vw)", maxWidth: fullScreen ? "100dvw" : 384,
           background: "rgba(13,17,23,0.98)", borderLeft: "1px solid rgba(255,255,255,0.1)",
-          display: "flex", flexDirection: "column", overflow: "hidden",
+          display: "flex", flexDirection: "column", overflow: "hidden", overscrollBehavior: "contain" as any, WebkitOverflowScrolling: "touch" as any,
           boxShadow: "-12px 0 48px rgba(0,0,0,0.6)",
-          animation: "adminChatSlideIn 0.28s ease",
+          animation: "adminChatSlideIn 0.28s ease", willChange: "transform" as any,
+          paddingBottom: "env(safe-area-inset-bottom)",
         }}
       >
           {/* Header */}
@@ -356,8 +357,8 @@ export default function AdminChatDrawer({ open, onClose, targetId = null }: {
                   {chatError}
                 </div>
               )}
-              {/* Messages */}
-              <div style={{ flex: 1, overflowY: "auto", padding: "12px" }}>
+              {/* Messages — flex:1 + minHeight:0 ensures composer stays visible on mobile */}
+              <div style={{ flex: 1, overflowY: "auto", padding: "12px", minHeight: 0, WebkitOverflowScrolling: "touch" as any, overscrollBehavior: "contain" as any }}>
                 {loading ? (
                   <div style={{ fontSize: 12, color: "rgba(238,240,247,0.4)", textAlign: "center", padding: 20 }}>Loading…</div>
                 ) : messages.length === 0 ? (
@@ -369,18 +370,18 @@ export default function AdminChatDrawer({ open, onClose, targetId = null }: {
                 )}
                 <div ref={messagesEndRef} />
               </div>
-              {/* Composer */}
-              <div style={{ padding: 10, borderTop: "1px solid rgba(255,255,255,0.08)", display: "flex", gap: 8 }}>
+              {/* Composer — flexShrink:0 + dvh + 16px font on mobile prevents keyboard hiding / iOS zoom */}
+              <div style={{ padding: 10, paddingBottom: "max(10px, env(safe-area-inset-bottom))", borderTop: "1px solid rgba(255,255,255,0.08)", display: "flex", gap: 8, flexShrink: 0, alignItems: "center", background: "rgba(13,17,23,0.98)", position: "sticky" as any, bottom: 0 }}>
                 <input
                   value={draft}
                   onChange={e => setDraft(e.target.value)}
                   onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void submit(); } }}
                   placeholder={broadcastMode ? "Broadcast to team…" : "Message…"}
                   maxLength={1000}
-                  style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "9px 12px", color: "#eef0f7", fontSize: 13, outline: "none" }}
+                  style={{ flex: 1, minWidth: 0, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "12px 12px", color: "#eef0f7", fontSize: fullScreen ? 16 : 13, outline: "none", WebkitAppearance: "none" as any }}
                 />
                 <button onClick={() => void submit()} disabled={!draft.trim()}
-                  style={{ background: "rgba(0,102,255,0.18)", border: "1px solid rgba(0,102,255,0.4)", color: "#4A90D9", borderRadius: 8, padding: "0 16px", fontWeight: 700, cursor: "pointer", opacity: draft.trim() ? 1 : 0.5 }}>
+                  style={{ background: "rgba(0,102,255,0.18)", border: "1px solid rgba(0,102,255,0.4)", color: "#4A90D9", borderRadius: 8, padding: "0 18px", fontWeight: 700, cursor: draft.trim() ? "pointer" : "not-allowed", opacity: draft.trim() ? 1 : 0.5, minHeight: 44, minWidth: 64, flexShrink: 0, touchAction: "manipulation" as any }}>
                   Send
                 </button>
               </div>
