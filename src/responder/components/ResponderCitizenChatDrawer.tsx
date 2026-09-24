@@ -53,7 +53,7 @@ export default function ResponderCitizenChatDrawer({
   initialReportId?: string | null; initialCitizenId?: string | null; initialCitizenName?: string | null;
 }) {
   const narrow = useIsNarrow();
-  const { allCitizens, onlineCitizens } = usePresence();
+  const { allCitizens, onlineCitizens } = usePresence(responderId || null, "responder", !!responderId);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeCitizenId, setActiveCitizenId] = useState<string | null>(null);
   const [activeReportId, setActiveReportId] = useState<string | null>(null);

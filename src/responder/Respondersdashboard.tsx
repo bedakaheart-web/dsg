@@ -12,6 +12,7 @@ const ResponderCitizenChatDrawer = lazy(() => import("./components/ResponderCiti
 const GlobalResponderCallHandler = lazy(() => import("./components/GlobalResponderCallHandler"));
 import { fetchUnreadCounts } from "../hooks/useRealtimeChat";
 import { useDepartmentNotifications } from "../hooks/useDepartmentNotifications";
+import { usePresence } from "../hooks/usePresence";
 import { useHeartbeat, markOffline } from "../hooks/useHeartbeat";
 import dsgLogo from "../assets/dsg.logo.png";
 
@@ -712,7 +713,7 @@ export default function RespondersDashboard() {
   const [authReady,     setAuthReady]     = useState(false);
   const [isChatOpen,    setIsChatOpen]    = useState(false);
   const [chatUnread,    setChatUnread]    = useState(0);
-  useHeartbeat(responderId || null, "responder", !!responderId && authReady);
+  usePresence(responderId || null, "responder", !!responderId && authReady);
   const [citizenChatOpen, setCitizenChatOpen] = useState(false);
   const [citizenChatTarget, setCitizenChatTarget] = useState<{
     reportId: string; citizenId: string | null; citizenName: string;

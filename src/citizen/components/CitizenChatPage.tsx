@@ -45,7 +45,7 @@ export default function CitizenChatPage() {
   const [roleMismatch, setRoleMismatch] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  const { onlineResponders, allResponders } = usePresence();
+  const { onlineResponders, allResponders } = usePresence(citizenId, "citizen", !!citizenId);
   // Use presence-derived online list as source of truth — fallback to manual filter for safety
   const responders: ResponderContact[] = useMemo(() => {
     if (onlineResponders.length > 0) return onlineResponders as ResponderContact[];

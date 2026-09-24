@@ -13,7 +13,8 @@ import { FaBars, FaTimes } from "react-icons/fa";
 import { useLanguage } from "../context/LanguageContext";
 import { supabase } from "../js/supabase";
 import dsgLogo from "../assets/dsg_logo.png";
-import { useHeartbeat, markOffline } from "../hooks/useHeartbeat";
+import { usePresence } from "../hooks/usePresence";
+import { markOffline } from "../hooks/useHeartbeat";
 import GlobalCitizenCallHandler from "../components/GlobalCitizenCallHandler";
 
 const NAV_LINK_BASE: React.CSSProperties = {
@@ -62,7 +63,7 @@ export default function CitizenLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [citizenId, setCitizenId] = useState<string | null>(null);
   useEffect(() => { supabase.auth.getUser().then(({ data }) => setCitizenId(data.user?.id ?? null)); }, []);
-  useHeartbeat(citizenId, "citizen", !!citizenId);
+  usePresence(citizenId, "citizen", !!citizenId);
 
   const handleLogout = async () => {
     if (citizenId) await markOffline(citizenId, "citizen");

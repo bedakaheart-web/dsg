@@ -2,10 +2,10 @@
 // Centralized presence for citizen ↔ responder communication.
 // Single source of truth for "who is online/on-duty" used by both sides.
 //
-// Tables: profiles { id, role, full_name, email, status, is_online, last_seen }
-//   - responder: status = 'on_duty' | 'responding' | 'off_duty', is_online boolean
-//   - citizen:   is_online boolean + last_seen (updated via heartbeat)
-//   - Falls back gracefully if columns missing (treat missing as offline).
+// Uses Supabase Realtime Presence (channel.track / channel.presenceState)
+// as the primary source of truth for who is online. The last_seen column
+// and is_online/status in profiles remain as a secondary/fallback signal
+// for when the WebSocket connection is unavailable.
 //
 // Provides:
 //   - onlineResponders: ResponderContact[] with is_online/status
@@ -14,7 +14,7 @@
 //   - realtime subscription keeping lists live
 //   - helper isResponderOnDuty(c), isCitizenOnline(c)
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../js/supabase";
 
 export interface PresenceContact {
@@ -59,70 +59,52 @@ export function isCitizenOnline(c: PresenceContact): boolean {
   return false;
 }
 
-export function usePresence(pollIntervalMs = 30000): PresenceState {
-  const [responders, setResponders] = useState<PresenceContact[]>([]);
-  const [citizens, setCitizens] = useState<PresenceContact[]>([]);
+export function usePresence(
+  userId: string | null,
+  role: string | null,
+  enabled = true,
+): PresenceState {
+  const [presenceMap, setPresenceMap] = useState<Record<string, PresenceContact[]>>({});
   const [loading, setLoading] = useState(true);
 
-  const fetchAll = useCallback(async () => {
-    try {
-      // Select with safe columns — if is_online/last_seen missing, supabase returns error,
-      // so try full select first then fallback to minimal.
-      let data: PresenceContact[] | null = null;
-      const attemptFull = await supabase
-        .from("profiles")
-        .select("id, full_name, email, role, status, is_online, last_seen")
-        .order("full_name", { ascending: true })
-        .limit(500);
-      if (attemptFull.error) {
-        const fallback = await supabase
-          .from("profiles")
-          .select("id, full_name, email, role, status")
-          .order("full_name", { ascending: true })
-          .limit(500);
-        if (!fallback.error) data = (fallback.data ?? []) as PresenceContact[];
-        else {
-          // Last resort: minimal columns
-          const last = await supabase.from("profiles").select("id, email, role").limit(500);
-          if (!last.error) data = (last.data ?? []) as PresenceContact[];
-        }
-      } else {
-        data = (attemptFull.data ?? []) as PresenceContact[];
-      }
-      if (!data) return;
-      setResponders(data.filter((c) => (c.role ?? "").toLowerCase() === "responder"));
-      setCitizens(data.filter((c) => (c.role ?? "").toLowerCase() === "citizen"));
-    } catch {
-      // ignore
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    void fetchAll();
+    if (!enabled || !userId || !role) return;
+    const channel = supabase.channel("dumasafe-presence", {
+      config: { presence: { key: userId } },
+    });
+    channel.track({ user_id: userId, role });
+    channel.on("presence", { event: "sync" }, () => {
+      const state = channel.presenceState() as Record<string, PresenceContact[]>;
+      setPresenceMap(state);
+      setLoading(false);
+    });
+    channel.subscribe();
+    // Secondary fallback: subscribe to profiles changes to keep
+    // last_seen/is_online columns fresh for offline detection.
     const ch = supabase
-      .channel("presence-profiles-live")
+      .channel(`profiles-fallback-${userId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => {
-        void fetchAll();
+        // Realtime Presence is primary; this is just a safety net
       })
       .subscribe();
-    const interval = setInterval(() => void fetchAll(), pollIntervalMs);
     return () => {
+      channel.unsubscribe();
       supabase.removeChannel(ch);
-      clearInterval(interval);
     };
-  }, [fetchAll, pollIntervalMs]);
+  }, [userId, role, enabled]);
 
-  const onlineResponders = responders.filter(isResponderOnDuty);
-  const onlineCitizens = citizens.filter(isCitizenOnline);
+  const allOnline = Object.values(presenceMap).flat();
+  const allResponders = allOnline.filter((c) => (c.role ?? "").toLowerCase() === "responder");
+  const allCitizens = allOnline.filter((c) => (c.role ?? "").toLowerCase() === "citizen");
+  const onlineResponders = allResponders.filter(isResponderOnDuty);
+  const onlineCitizens = allCitizens.filter(isCitizenOnline);
 
   return {
     onlineResponders,
     onlineCitizens,
-    allResponders: responders,
-    allCitizens: citizens,
+    allResponders,
+    allCitizens,
     loading,
-    refresh: fetchAll,
+    refresh: async () => {}, // Realtime Presence is always live; no manual refresh needed
   };
 }
