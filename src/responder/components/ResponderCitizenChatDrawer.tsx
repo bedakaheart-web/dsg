@@ -33,7 +33,7 @@ const TYPE_ICON: Record<string, string> = {
   crime: "🚨", medical: "🏥", other: "⚠️",
 };
 
-function useIsNarrow(breakpoint = 480) {
+function useIsNarrow(breakpoint = 768) {
   const [narrow, setNarrow] = useState(
     typeof window !== "undefined" ? window.innerWidth < breakpoint : false
   );

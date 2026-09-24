@@ -244,7 +244,7 @@ export default function ChatBox({
   }, [recipientId, user?.id]);
 
   // ── Build query ──
-  const buildChatQuery = useCallback((userId: string) => {
+  const getChatQuery = (userId: string) => {
     let query = supabase.from("chat_messages").select("*");
     if (recipientId && incidentId) {
       query = query.or(`and(sender_id.eq.${userId},receiver_id.eq.${recipientId}),and(sender_id.eq.${recipientId},receiver_id.eq.${userId})`).eq("incident_id", incidentId);
@@ -257,7 +257,7 @@ export default function ChatBox({
       if (incidentId) query = query.eq("incident_id", incidentId);
     }
     return query.order("created_at", { ascending: true });
-  }, [isCitizen, recipientId, incidentId]);
+  };
 
   // ── Load messages & subscribe ──
   useEffect(() => {
@@ -267,7 +267,7 @@ export default function ChatBox({
         const { data: { user: u } } = await supabase.auth.getUser();
         if (!u) { setLoading(false); return; }
         userIdRef.current = u.id;
-        const query = buildChatQuery(u.id);
+        const query = getChatQuery(u.id);
         const { data, error } = await query;
         if (!cancelled) {
           if (error) {
@@ -317,7 +317,7 @@ export default function ChatBox({
       })
       .subscribe();
     return () => { cancelled = true; supabase.removeChannel(channel); };
-  }, [recipientId, incidentId, isCitizen, buildChatQuery]);
+  }, [recipientId, incidentId, isCitizen]);
 
   // ── Mark as read — clears red badge once thread is opened/viewed ──
   // Real columns: receiver_id and message are the text columns
