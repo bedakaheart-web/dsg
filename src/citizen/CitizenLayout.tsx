@@ -14,7 +14,7 @@ import { useLanguage } from "../context/LanguageContext";
 import { supabase } from "../js/supabase";
 import dsgLogo from "../assets/dsg_logo.png";
 import { usePresence } from "../hooks/usePresence";
-import { markOffline } from "../hooks/useHeartbeat";
+import { useHeartbeat, markOffline } from "../hooks/useHeartbeat";
 import GlobalCitizenCallHandler from "../components/GlobalCitizenCallHandler";
 
 const NAV_LINK_BASE: React.CSSProperties = {
@@ -64,6 +64,7 @@ export default function CitizenLayout() {
   const [citizenId, setCitizenId] = useState<string | null>(null);
   useEffect(() => { supabase.auth.getUser().then(({ data }) => setCitizenId(data.user?.id ?? null)); }, []);
   usePresence(citizenId, "citizen", !!citizenId);
+  useHeartbeat(citizenId, "citizen", !!citizenId);
 
   const handleLogout = async () => {
     if (citizenId) await markOffline(citizenId, "citizen");
