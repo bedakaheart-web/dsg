@@ -83,7 +83,6 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
     }
 
     pc.ontrack = (event) => {
-      console.log("[useWebRTC] ontrack: remote stream received");
       updateState({ remoteStream: event.streams[0] || null });
     };
 
@@ -294,9 +293,7 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
       return;
     }
 const channelName = `call-${[localId, remoteId].sort().join("_")}`;
-    console.log("[useWebRTC] subscribing to channel:", channelName);
-
-const channel = supabase.channel(channelName);
+    const channel = supabase.channel(channelName);
     channel.on("broadcast", { event: "webrtc-signal" }, async (payload) => {
       const p = payload.payload as {
         type: string;
@@ -379,11 +376,9 @@ const channel = supabase.channel(channelName);
       };
       if (p.to && p.to !== localId) return;
       if (p.from === localId) return;
-      console.log("[useWebRTC] inbox signal received:", p.type, "from", p.from, "to", p.to, "channel:", inboxName);
       const pc = pcRef.current;
       if (p.type === "offer") {
         if (stateRef.current.callState !== "idle") {
-          console.log("[useWebRTC] inbox offer ignored ΓÇö already in callState:", stateRef.current.callState);
           return;
         }
         // Ensure pair channel exists for subsequent answer/ICE: set remote and trigger pair subscription
@@ -392,34 +387,26 @@ const channel = supabase.channel(channelName);
         await receiveCall((p.callType as CallType) || "audio", p.from, p.sdp);
       } else if (p.type === "answer") {
         if (pc && p.sdp) {
-          console.log("[useWebRTC] inbox handling answer: setRemoteDescription");
           try { await pc.setRemoteDescription(new RTCSessionDescription(p.sdp)); } catch (e) { console.error("[useWebRTC] inbox setRemoteDescription answer failed:", e); }
           updateState({ callState: "active" });
         }
       } else if (p.type === "ice-candidate") {
         if (pc && p.candidate) {
-          console.log("[useWebRTC] inbox handling ice-candidate from", p.from);
           try { await pc.addIceCandidate(new RTCIceCandidate(p.candidate)); } catch (e) { console.warn("[useWebRTC] inbox addIceCandidate failed:", e); }
         }
       } else if (p.type === "decline") {
-        console.log("[useWebRTC] inbox handling decline from", p.from);
         if (pcRef.current) { pcRef.current.close(); pcRef.current = null; }
         if (localStreamRef.current) { localStreamRef.current.getTracks().forEach(t => t.stop()); localStreamRef.current = null; }
         updateState({ callState: "declined", callType: null, remoteParticipantId: null, localStream: null, remoteStream: null });
         setTimeout(() => updateState({ callState: "idle" }), 1500);
       } else if (p.type === "end" || p.type === "call-ended") {
-        console.log("[useWebRTC] inbox handling call-ended/end from", p.from);
         if (pcRef.current) { pcRef.current.close(); pcRef.current = null; }
         if (localStreamRef.current) { localStreamRef.current.getTracks().forEach(t => t.stop()); localStreamRef.current = null; }
         updateState({ callState: "ended", callType: null, remoteParticipantId: null, localStream: null, remoteStream: null, isMuted: false, isCameraOff: false, isUpgradedToVideo: false });
         setTimeout(() => updateState({ callState: "idle" }), 1200);
       }
     });
-    inbox.subscribe((status) => {
-      if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-        console.warn("[useWebRTC] inbox subscribe status:", status, inboxName);
-      }
-    });
+    inbox.subscribe();
     inboxRefCount.set(localId, { count: 1, channel: inbox });
     return () => {
       const entry = inboxRefCount.get(localId);

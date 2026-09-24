@@ -289,6 +289,7 @@ export default function ChatBox({
       } catch { if (!cancelled) setLoading(false); }
     };
     loadMessages();
+    const timeoutId = setTimeout(() => { if (!cancelled) { setLoading(false); cancelled = true; } }, 15000);
     // Use a unique channel name per ChatBox instance so concurrent mounts (e.g. Citizen Chat + Team/ResponderChatDrawer) never try to call .on() on an already-subscribed "chat-messages-realtime" channel. All .on() are registered BEFORE .subscribe() as required by Supabase.
     const realtimeChannelName = `chat-messages-realtime-${realtimeChannelIdRef.current}-${recipientId ?? "all"}-${incidentId ?? "all"}`;
     const channel = supabase
@@ -316,7 +317,7 @@ export default function ChatBox({
         }
       })
       .subscribe();
-    return () => { cancelled = true; supabase.removeChannel(channel); };
+    return () => { cancelled = true; clearTimeout(timeoutId); supabase.removeChannel(channel); };
   }, [recipientId, incidentId, isCitizen]);
 
   // ── Mark as read — clears red badge once thread is opened/viewed ──
