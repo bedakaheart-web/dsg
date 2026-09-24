@@ -15,6 +15,7 @@ export default function GlobalResponderCallHandler({ responderId }: { responderI
   const {
     state: callState,
     endCall,
+    acceptCall,
     declineCall,
     toggleMute,
     toggleCamera,
@@ -61,6 +62,8 @@ export default function GlobalResponderCallHandler({ responderId }: { responderI
     }
   }, [callState.callState, callState.callType, callState.localStream, callState.remoteStream, showOverlay]);
 
+  const handleAccept = async () => { await acceptCall(); };
+  const handleDecline = async () => { await declineCall(); setShowOverlay(false); setCallType(null); };
   const handleEnd = () => {
     // If still ringing (incoming), decline is more correct, but endCall covers both via inbox.
     if (callState.callState === "ringing") declineCall();
@@ -85,6 +88,8 @@ export default function GlobalResponderCallHandler({ responderId }: { responderI
       onCamera={toggleCamera}
       onUpgrade={upgradeToVideo}
       onEnd={handleEnd}
+      onAccept={handleAccept}
+      onDecline={handleDecline}
       isOnline={true}
     />
   );

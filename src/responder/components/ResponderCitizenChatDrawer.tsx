@@ -6,7 +6,7 @@
 // a direct message to an unassigned responder were invisible. This version merges
 // three sources into one deduplicated contact list and tracks presence + unread.
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useDeferredValue } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "../../js/supabase";
 import ChatBox from "../../components/Chatbox";
@@ -71,6 +71,7 @@ export default function ResponderCitizenChatDrawer({
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "online" | "assigned" | "requests">("all");
   const [search, setSearch] = useState("");
+  const deferredSearch = useDeferredValue(search);
   const [unreadMap, setUnreadMap] = useState<Record<string, number>>({});
 
   // calling — responder ↔ selected citizen (centralized, incident_id handled per thread)
@@ -86,6 +87,8 @@ export default function ResponderCitizenChatDrawer({
     state: callState,
     startCall,
     endCall,
+    acceptCall,
+    declineCall,
     toggleMute,
     toggleCamera,
     upgradeToVideo,
@@ -94,6 +97,8 @@ export default function ResponderCitizenChatDrawer({
   const handleStartAudio = async () => { if (!effectiveCitizenId) return; setCallType("audio"); setShowCallOverlay(true); await startCall("audio"); };
   const handleStartVideo = async () => { if (!effectiveCitizenId) return; setCallType("video"); setShowCallOverlay(true); await startCall("video"); };
   const handleEndCall = () => { endCall(); setShowCallOverlay(false); setCallType(null); };
+  const handleAcceptCall = async () => { await acceptCall(); };
+  const handleDeclineCall = async () => { await declineCall(); setShowCallOverlay(false); setCallType(null); };
   useEffect(() => {
     if (callState.callState === "ringing" || callState.callState === "active") { setShowCallOverlay(true); if (callState.callType) setCallType(callState.callType); }
     else if (callState.callState === "ended" || callState.callState === "declined") { const t = setTimeout(() => { setShowCallOverlay(false); setCallType(null); }, 1200); return () => clearTimeout(t); }
@@ -107,26 +112,17 @@ export default function ResponderCitizenChatDrawer({
     const load = async () => {
       setLoading(true);
       try {
-        // 1) Assigned reports (responder_id = me) — as before
-        const { data: reports } = await supabase
-          .from("reports")
-          .select("id, type, status, created_at, reporter_name, user_id")
-          .eq("responder_id", responderId)
-          .order("created_at", { ascending: false })
-          .limit(50);
-        const rows = (reports ?? []) as Array<{ id: string; type: string; status: string; created_at: string; reporter_name: string | null; user_id: string | null }>;
-
-        // 2) Recent inbound chat partners (distinct sender_ids who messaged me) — central queue
+        // 1+2) Parallelize to cut mobile latency (was 2 serial round-trips → 1)
+        let rows: Array<{ id: string; type: string; status: string; created_at: string; reporter_name: string | null; user_id: string | null }> = [];
         let messagedIds: string[] = [];
         let lastMsgMap: Record<string, string> = {};
         try {
-          const { data: msgs } = await supabase
-            .from("chat_messages")
-            .select("sender_id, created_at")
-            .eq("receiver_id", responderId)
-            .order("created_at", { ascending: false })
-            .limit(200);
-          for (const m of (msgs ?? [])) {
+          const [reportsRes, msgsRes] = await Promise.all([
+            supabase.from("reports").select("id, type, status, created_at, reporter_name, user_id").eq("responder_id", responderId).order("created_at", { ascending: false }).limit(50),
+            supabase.from("chat_messages").select("sender_id, created_at").eq("receiver_id", responderId).order("created_at", { ascending: false }).limit(200),
+          ]);
+          rows = ((reportsRes as any)?.data ?? []) as typeof rows;
+          for (const m of ((msgsRes as any)?.data ?? [])) {
             const sid = (m as any).sender_id as string;
             if (!sid || sid === responderId) continue;
             if (!lastMsgMap[sid]) lastMsgMap[sid] = (m as any).created_at;
@@ -343,12 +339,12 @@ export default function ResponderCitizenChatDrawer({
     if (filter === "online") list = list.filter(c => c.isOnline);
     else if (filter === "assigned") list = list.filter(c => c.source === "assigned");
     else if (filter === "requests") list = list.filter(c => c.source === "messaged" && c.status === "request");
-    if (search.trim()) {
-      const q = search.toLowerCase();
+    if (deferredSearch.trim()) {
+      const q = deferredSearch.toLowerCase();
       list = list.filter(c => c.citizenName.toLowerCase().includes(q) || c.type.toLowerCase().includes(q));
     }
     return list;
-  }, [conversations, filter, search]);
+  }, [conversations, filter, deferredSearch]);
 
   // Mark red badge as cleared once conversation is opened/read
   const markDrawerRead = async (otherId: string | null) => {
@@ -395,7 +391,7 @@ export default function ResponderCitizenChatDrawer({
         background: "rgba(13,17,23,0.98)", borderLeft: "1px solid rgba(255,255,255,0.1)",
         display: "flex", flexDirection: "column", overflow: "hidden", overscrollBehavior: "contain", WebkitOverflowScrolling: "touch" as any,
         boxShadow: "-12px 0 48px rgba(0,0,0,0.6)",
-        animation: "respCitizenSlideIn 0.28s ease",
+        animation: "respCitizenSlideIn 0.28s ease", willChange: "transform" as any,
         fontFamily: "'Inter', sans-serif", color: "#eef0f7",
       }}>
         {/* Header */}
@@ -413,8 +409,8 @@ export default function ResponderCitizenChatDrawer({
           <button onClick={onClose} aria-label="Close citizen chat" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "#eef0f7", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 14, flexShrink: 0 }}>✕</button>
         </div>
 
-        {/* Filter row */}
-        <div style={{ display: "flex", gap: 6, padding: "10px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)", alignItems: "center", flexWrap: "wrap", flexShrink: 0 }}>
+        {/* Filter row — dynamic: horizontal scroll on mobile */}
+        <div style={{ display: "flex", gap: 6, padding: "10px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)", alignItems: "center", flexWrap: narrow ? "nowrap" : "wrap", flexShrink: 0, overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" as any }}>
           {(["all", "online", "assigned", "requests"] as const).map(tab => (
             <button key={tab} onClick={() => setFilter(tab)} style={{
               padding: "6px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: "pointer",
@@ -444,7 +440,18 @@ export default function ResponderCitizenChatDrawer({
             flexDirection: "column", minHeight: 0,
           }}>
             {loading ? (
-              <div style={{ padding: 16, fontSize: 11, color: "rgba(238,240,247,0.35)" }}>Loading…</div>
+              <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 10 }}>
+                <style>{`@keyframes rccPulse{0%{opacity:0.4}50%{opacity:1}100%{opacity:0.4}}`}</style>
+                {[0,1,2,3].map(i=>(
+                  <div key={i} style={{ display:"flex", gap:10, padding:"10px 12px", borderRadius:9, background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.05)", animation:`rccPulse 1.2s infinite ${i*0.15}s` }}>
+                    <div style={{ width:10, height:10, borderRadius:"50%", background:"rgba(46,204,143,0.2)", flexShrink:0, alignSelf:"center" }} />
+                    <div style={{ flex:1, display:"flex", flexDirection:"column", gap:6 }}>
+                      <div style={{ height:10, borderRadius:4, background:"rgba(255,255,255,0.06)", width:`${70-i*8}%` }} />
+                      <div style={{ height:8, borderRadius:4, background:"rgba(255,255,255,0.03)", width:`${50+i*5}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : filtered.length === 0 ? (
               <div style={{ padding: 16, fontSize: 11, color: "rgba(238,240,247,0.35)", textAlign: "center" }}>
                 {filter === "requests" ? "No new requests — citizens appear here when they message you directly." : filter === "online" ? "No online citizens at the moment." : "No citizens found."}
@@ -507,7 +514,7 @@ export default function ResponderCitizenChatDrawer({
         </div>
 
         {showCallOverlay && callType && (
-          <CallOverlay state={callState} callType={callType} remoteName={effectiveName} onMute={toggleMute} onCamera={toggleCamera} onUpgrade={upgradeToVideo} onEnd={handleEndCall} isOnline={true} />
+          <CallOverlay state={callState} callType={callType} remoteName={effectiveName} onMute={toggleMute} onCamera={toggleCamera} onUpgrade={upgradeToVideo} onEnd={handleEndCall} onAccept={handleAcceptCall} onDecline={handleDeclineCall} isOnline={true} />
         )}
       </aside>
     </>

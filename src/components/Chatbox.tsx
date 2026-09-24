@@ -104,6 +104,7 @@ export default function ChatBox({
   const {
     state: callState,
     startCall,
+    acceptCall,
     declineCall,
     endCall,
     toggleMute,
@@ -493,6 +494,8 @@ export default function ChatBox({
     setShowCallOverlay(false);
     setCallType(null);
   }, [endCall]);
+  const handleAcceptCall = useCallback(async () => { await acceptCall(); }, [acceptCall]);
+  const handleDeclineCall = useCallback(async () => { await declineCall(); setShowCallOverlay(false); setCallType(null); }, [declineCall]);
 
   // Sync overlay with remote signaling (incoming call, remote hangup)
   useEffect(() => {
@@ -652,7 +655,7 @@ export default function ChatBox({
         </button>
       </form>
 
-      {/* Call Overlay */}
+      {/* Call Overlay — now with Answer/Decline for incoming */}
       {showCallOverlay && callType && (
         <CallOverlay
           state={callState}
@@ -662,6 +665,8 @@ export default function ChatBox({
           onCamera={toggleCamera}
           onUpgrade={upgradeToVideo}
           onEnd={handleEndCall}
+          onAccept={handleAcceptCall}
+          onDecline={handleDeclineCall}
           isOnline={effectiveOnline}
         />
       )}

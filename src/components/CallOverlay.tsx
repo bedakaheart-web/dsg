@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { FaVideoSlash, FaMicrophone, FaVideo, FaPhoneSlash } from "react-icons/fa";
+import { FaVideoSlash, FaMicrophone, FaVideo, FaPhone, FaPhoneSlash, FaCheck } from "react-icons/fa";
 import { WebRTCState, CallType } from "../hooks/useWebRTC";
 
 interface CallOverlayProps {
@@ -10,11 +10,13 @@ interface CallOverlayProps {
   onCamera: () => void;
   onUpgrade: () => void;
   onEnd: () => void;
+  onAccept?: () => void;
+  onDecline?: () => void;
   isOnline: boolean;
 }
 
 export default function CallOverlay({
-  state, callType, remoteName, onMute, onCamera, onUpgrade, onEnd, isOnline,
+  state, callType, remoteName, onMute, onCamera, onUpgrade, onEnd, onAccept, onDecline, isOnline,
 }: CallOverlayProps) {
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -33,7 +35,11 @@ export default function CallOverlay({
 
   if (state.callState === "idle") return null;
 
-  const isActive = state.callState === "active" || state.callState === "ringing";
+  // Dynamic calling state: incoming ringing has no localStream yet (callee hasn't accepted)
+  const isIncomingRinging = state.callState === "ringing" && !state.localStream;
+  const isOutgoingRinging = state.callState === "ringing" && !!state.localStream;
+  const isActive = state.callState === "active";
+  const canControl = isActive;
 
   return (
     <div style={{
@@ -62,9 +68,9 @@ export default function CallOverlay({
           {remoteName ? remoteName[0].toUpperCase() : "?"}
         </div>
         <div>
-          <div style={{ fontSize: "16px", fontWeight: "700" }}>{remoteName}</div>
-          <div style={{ fontSize: "11px", color: "rgba(46,204,143,0.8)" }}>
-            {state.callState === "ringing" ? `${callType === "video" ? "Video" : "Audio"} calling...` : state.callState === "active" ? `${callType === "video" ? "Video" : "Audio"} call` : ""}
+          <div style={{ fontSize: "clamp(14px, 4vw, 16px)", fontWeight: "700" }}>{remoteName}</div>
+          <div style={{ fontSize: "11px", color: isIncomingRinging ? "#F5C842" : "rgba(46,204,143,0.8)" }}>
+            {isIncomingRinging ? `Incoming ${callType === "video" ? "video" : "audio"} call — answer to connect` : state.callState === "ringing" ? `${callType === "video" ? "Video" : "Audio"} calling...` : state.callState === "active" ? `${callType === "video" ? "Video" : "Audio"} call • connected` : ""}
           </div>
         </div>
       </div>
@@ -111,59 +117,92 @@ export default function CallOverlay({
         )}
       </div>
 
-      {/* Controls */}
+      {/* Controls — dynamic: incoming Answer/Decline vs active controls vs outgoing Cancel */}
       <div style={{
-        display: "flex", gap: "16px", alignItems: "center",
+        display: "flex", gap: "clamp(12px, 4vw, 16px)", alignItems: "center", justifyContent: "center", flexWrap: "wrap",
       }}>
-        {/* Mute */}
-        <button onClick={onMute} disabled={!isOnline || !isActive} style={{
-          width: "56px", height: "56px", borderRadius: "50%", border: "none",
-          background: state.isMuted ? "rgba(239,91,91,0.2)" : "rgba(255,255,255,0.1)",
-          color: state.isMuted ? "#EF5B5B" : "#eef0f7", fontSize: "20px",
-          cursor: isOnline && isActive ? "pointer" : "not-allowed",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          transition: "all 0.2s",
-        }} title="Mute">
-          <FaMicrophone />
-        </button>
+        {isIncomingRinging ? (
+          <>
+            <button onClick={onDecline ?? onEnd} style={{
+              width: "clamp(56px, 18vw, 72px)", height: "clamp(56px, 18vw, 72px)", borderRadius: "50%", border: "none",
+              background: "rgba(239,91,91,0.9)", color: "#fff", fontSize: "clamp(20px, 5vw, 26px)",
+              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: "0 4px 16px rgba(239,91,91,0.4)", transition: "transform 0.15s",
+            }} title="Decline" aria-label="Decline call">
+              <FaPhoneSlash />
+            </button>
+            <button onClick={onAccept ?? onEnd} style={{
+              width: "clamp(64px, 20vw, 80px)", height: "clamp(64px, 20vw, 80px)", borderRadius: "50%", border: "none",
+              background: "#2ECC8F", color: "#fff", fontSize: "clamp(22px, 5.5vw, 28px)",
+              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: "0 4px 20px rgba(46,204,143,0.5)", animation: "pulse 1.5s infinite", transition: "transform 0.15s",
+            }} title="Answer" aria-label="Answer call">
+              <FaPhone />
+            </button>
+          </>
+        ) : (
+          <>
+            {/* Mute */}
+            <button onClick={onMute} disabled={!isOnline || !canControl} style={{
+              width: "clamp(48px, 14vw, 56px)", height: "clamp(48px, 14vw, 56px)", borderRadius: "50%", border: "none",
+              background: state.isMuted ? "rgba(239,91,91,0.2)" : "rgba(255,255,255,0.1)",
+              color: state.isMuted ? "#EF5B5B" : "#eef0f7", fontSize: "clamp(18px, 4vw, 20px)",
+              cursor: isOnline && canControl ? "pointer" : "not-allowed",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              transition: "all 0.2s", touchAction: "manipulation",
+            }} title="Mute" aria-label="Mute">
+              <FaMicrophone />
+            </button>
 
-        {/* Camera (only for video calls) */}
-        {callType === "video" && (
-          <button onClick={onCamera} disabled={!isOnline || !isActive} style={{
-            width: "56px", height: "56px", borderRadius: "50%", border: "none",
-            background: state.isCameraOff ? "rgba(239,91,91,0.2)" : "rgba(255,255,255,0.1)",
-            color: state.isCameraOff ? "#EF5B5B" : "#eef0f7", fontSize: "20px",
-            cursor: isOnline && isActive ? "pointer" : "not-allowed",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            transition: "all 0.2s",
-          }} title="Camera">
-            <FaVideo />
-          </button>
+            {/* Camera (only for video calls) */}
+            {callType === "video" && (
+              <button onClick={onCamera} disabled={!isOnline || !canControl} style={{
+                width: "clamp(48px, 14vw, 56px)", height: "clamp(48px, 14vw, 56px)", borderRadius: "50%", border: "none",
+                background: state.isCameraOff ? "rgba(239,91,91,0.2)" : "rgba(255,255,255,0.1)",
+                color: state.isCameraOff ? "#EF5B5B" : "#eef0f7", fontSize: "clamp(18px, 4vw, 20px)",
+                cursor: isOnline && canControl ? "pointer" : "not-allowed",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                transition: "all 0.2s", touchAction: "manipulation",
+              }} title="Camera" aria-label="Camera">
+                <FaVideo />
+              </button>
+            )}
+
+            {/* Upgrade audio to video */}
+            {callType === "audio" && canControl && (
+              <button onClick={onUpgrade} disabled={!isOnline} style={{
+                width: "clamp(48px, 14vw, 56px)", height: "clamp(48px, 14vw, 56px)", borderRadius: "50%", border: "none",
+                background: "rgba(123,158,255,0.15)", color: "#7B9EFF", fontSize: "clamp(16px, 4vw, 18px)",
+                cursor: isOnline ? "pointer" : "not-allowed",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                transition: "all 0.2s", touchAction: "manipulation",
+              }} title="Upgrade to Video" aria-label="Upgrade to video">
+                <FaVideoSlash />
+              </button>
+            )}
+
+            {/* End / Cancel */}
+            <button onClick={onEnd} style={{
+              width: "clamp(56px, 16vw, 64px)", height: "clamp(56px, 16vw, 64px)", borderRadius: "50%", border: "none",
+              background: "rgba(239,91,91,0.2)", color: "#EF5B5B", fontSize: "clamp(22px, 5vw, 24px)",
+              cursor: "pointer", display: "flex", alignItems: "center",
+              justifyContent: "center", transition: "all 0.2s", touchAction: "manipulation",
+            }} title={isOutgoingRinging ? "Cancel call" : "End call"} aria-label="End call">
+              <FaPhoneSlash />
+            </button>
+          </>
         )}
-
-        {/* Upgrade audio to video */}
-        {callType === "audio" && isActive && (
-          <button onClick={onUpgrade} disabled={!isOnline} style={{
-            width: "56px", height: "56px", borderRadius: "50%", border: "none",
-            background: "rgba(123,158,255,0.15)", color: "#7B9EFF", fontSize: "18px",
-            cursor: isOnline ? "pointer" : "not-allowed",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            transition: "all 0.2s",
-          }} title="Upgrade to Video">
-            <FaVideoSlash />
-          </button>
-        )}
-
-        {/* End call */}
-        <button onClick={onEnd} style={{
-          width: "64px", height: "64px", borderRadius: "50%", border: "none",
-          background: "rgba(239,91,91,0.2)", color: "#EF5B5B", fontSize: "24px",
-          cursor: "pointer", display: "flex", alignItems: "center",
-          justifyContent: "center", transition: "all 0.2s",
-        }} title="End Call">
-          <FaPhoneSlash />
-        </button>
       </div>
+      {isIncomingRinging && (
+        <div style={{ marginTop: 12, fontSize: 11, color: "rgba(238,240,247,0.5)", textAlign: "center", letterSpacing: "0.06em" }}>
+          Tap <span style={{ color: "#2ECC8F", fontWeight: 700 }}>Answer</span> to start conversation
+        </div>
+      )}
+      {isOutgoingRinging && (
+        <div style={{ marginTop: 12, fontSize: 11, color: "rgba(238,240,247,0.5)", textAlign: "center" }}>
+          Calling… waiting for answer
+        </div>
+      )}
 
       {/* Offline notification */}
       {!isOnline && (

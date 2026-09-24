@@ -13,6 +13,7 @@ export default function GlobalCitizenCallHandler({ citizenId }: { citizenId: str
   const {
     state: callState,
     endCall,
+    acceptCall,
     declineCall,
     toggleMute,
     toggleCamera,
@@ -44,6 +45,8 @@ export default function GlobalCitizenCallHandler({ citizenId }: { citizenId: str
     }
   }, [callState.callState, callState.callType, callState.localStream, callState.remoteStream, showOverlay]);
 
+  const handleAccept = async () => { await acceptCall(); };
+  const handleDecline = async () => { await declineCall(); setShowOverlay(false); setCallType(null); };
   const handleEnd = () => {
     if (callState.callState === "ringing") declineCall();
     else endCall();
@@ -63,6 +66,8 @@ export default function GlobalCitizenCallHandler({ citizenId }: { citizenId: str
       onCamera={toggleCamera}
       onUpgrade={upgradeToVideo}
       onEnd={handleEnd}
+      onAccept={handleAccept}
+      onDecline={handleDecline}
       isOnline={true}
     />
   );

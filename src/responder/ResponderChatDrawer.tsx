@@ -109,6 +109,8 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
     state: callState,
     startCall,
     endCall,
+    acceptCall,
+    declineCall,
     toggleMute,
     toggleCamera,
     upgradeToVideo,
@@ -129,6 +131,8 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
     setShowCallOverlay(false);
     setCallType(null);
   };
+  const handleAcceptCall = async () => { await acceptCall(); };
+  const handleDeclineCall = async () => { await declineCall(); setShowCallOverlay(false); setCallType(null); };
   useEffect(() => {
     if (callState.callState === "ringing" || callState.callState === "active") {
       setShowCallOverlay(true);
@@ -403,6 +407,8 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
             onCamera={toggleCamera}
             onUpgrade={upgradeToVideo}
             onEnd={handleEndCall}
+            onAccept={handleAcceptCall}
+            onDecline={handleDeclineCall}
             isOnline={true}
           />
         )}

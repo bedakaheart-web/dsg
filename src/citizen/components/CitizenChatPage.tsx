@@ -61,6 +61,8 @@ export default function CitizenChatPage() {
     state: callState,
     startCall,
     endCall,
+    acceptCall,
+    declineCall,
     toggleMute,
     toggleCamera,
     upgradeToVideo,
@@ -82,6 +84,8 @@ export default function CitizenChatPage() {
     setShowCallOverlay(false);
     setCallType(null);
   };
+  const handleAcceptCall = async () => { await acceptCall(); };
+  const handleDeclineCall = async () => { await declineCall(); setShowCallOverlay(false); setCallType(null); };
   useEffect(() => {
     if (callState.callState === "ringing" || callState.callState === "active") {
       setShowCallOverlay(true);
@@ -414,6 +418,8 @@ export default function CitizenChatPage() {
           onCamera={toggleCamera}
           onUpgrade={upgradeToVideo}
           onEnd={handleEndCall}
+          onAccept={handleAcceptCall}
+          onDecline={handleDeclineCall}
           isOnline={true}
         />
       )}

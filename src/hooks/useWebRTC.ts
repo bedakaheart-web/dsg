@@ -35,6 +35,8 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
   const remoteIdRef = useRef<string | null>(remoteUserId);
   const localIdRef = useRef<string | null>(localUserId);
   const stateRef = useRef(state);
+  const pendingOfferRef = useRef<RTCSessionDescriptionInit | null>(null);
+  const pendingCallTypeRef = useRef<CallType | null>(null);
 
   stateRef.current = state;
   remoteIdRef.current = remoteUserId;
@@ -57,6 +59,8 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
       supabase.removeChannel(channelRef.current);
       channelRef.current = null;
     }
+    pendingOfferRef.current = null;
+    pendingCallTypeRef.current = null;
   }, []);
 
   const fullCleanup = useCallback(async () => {
@@ -156,11 +160,30 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
     }
   }, [getLocalStream, createPeerConnection, updateState]);
 
+  // Store incoming offer and ring — wait for user to Accept before creating answer
   const receiveCall = useCallback(async (callType: CallType, fromId: string, offerSdp?: RTCSessionDescriptionInit) => {
     if (!localIdRef.current) return false;
+    pendingOfferRef.current = offerSdp ?? null;
+    pendingCallTypeRef.current = callType;
     callTypeRef.current = callType;
     remoteIdRef.current = fromId;
     updateState({ callType, callState: "ringing", remoteParticipantId: fromId });
+    return true;
+  }, [updateState]);
+
+  const acceptCall = useCallback(async () => {
+    const remoteId = remoteIdRef.current;
+    const localId = localIdRef.current;
+    const offerSdp = pendingOfferRef.current;
+    const callType = pendingCallTypeRef.current || callTypeRef.current || "audio";
+    if (!remoteId || !localId) return;
+    // If already connected (caller side ringing), just activate
+    if (pcRef.current?.localDescription && stateRef.current.callState === "ringing") {
+      updateState({ callState: "active" });
+      pendingOfferRef.current = null;
+      pendingCallTypeRef.current = null;
+      return;
+    }
     try {
       const stream = await getLocalStream(callType);
       const pc = await createPeerConnection();
@@ -168,32 +191,26 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
         await pc.setRemoteDescription(new RTCSessionDescription(offerSdp));
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
-        const answerPayload = { type: "answer", sdp: answer, from: localIdRef.current, to: fromId } as const;
+        const answerPayload = { type: "answer", sdp: answer, from: localId, to: remoteId } as const;
         try {
-          await supabase.channel(`call-inbox-${fromId}`).send({ type: "broadcast", event: "webrtc-signal", payload: answerPayload });
+          await supabase.channel(`call-inbox-${remoteId}`).send({ type: "broadcast", event: "webrtc-signal", payload: answerPayload });
         } catch {}
         try {
-          const inboxCh = supabase.channel(`call-inbox-${fromId}`);
+          const inboxCh = supabase.channel(`call-inbox-${remoteId}`);
           inboxCh.subscribe();
           setTimeout(() => { inboxCh.send({ type: "broadcast", event: "webrtc-signal", payload: answerPayload }); setTimeout(() => supabase.removeChannel(inboxCh), 2000); }, 200);
         } catch {}
+        // Also send via pair channel if available
+        try { await channelRef.current?.send({ type: "broadcast", event: "webrtc-signal", payload: answerPayload }); } catch {}
       }
-      return true;
+      updateState({ callState: "active" });
+      pendingOfferRef.current = null;
+      pendingCallTypeRef.current = null;
     } catch (err) {
-      return false;
+      console.error("[useWebRTC] acceptCall failed:", err);
+      updateState({ callState: "idle" });
     }
   }, [getLocalStream, createPeerConnection, updateState]);
-
-  const acceptCall = useCallback(async () => {
-    const pc = pcRef.current;
-    const remoteId = remoteIdRef.current;
-    if (!pc || !remoteId) return;
-    if (pc.localDescription) {
-      updateState({ callState: "active" });
-      return;
-    }
-    updateState({ callState: "active" });
-  }, [updateState]);
 
   const declineCall = useCallback(async () => {
     const remoteId = remoteIdRef.current;
