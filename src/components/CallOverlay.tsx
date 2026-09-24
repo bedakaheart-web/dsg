@@ -20,16 +20,23 @@ export default function CallOverlay({
 }: CallOverlayProps) {
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  const remoteAudioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     if (localVideoRef.current && state.localStream) {
       localVideoRef.current.srcObject = state.localStream;
+      localVideoRef.current.play().catch(()=>{});
     }
   }, [state.localStream]);
 
   useEffect(() => {
     if (remoteVideoRef.current && state.remoteStream) {
       remoteVideoRef.current.srcObject = state.remoteStream;
+      remoteVideoRef.current.play().catch(()=>{});
+    }
+    if (remoteAudioRef.current && state.remoteStream) {
+      remoteAudioRef.current.srcObject = state.remoteStream;
+      remoteAudioRef.current.play().catch(()=>{});
     }
   }, [state.remoteStream]);
 
@@ -116,6 +123,9 @@ export default function CallOverlay({
           </div>
         )}
       </div>
+
+      {/* Hidden audio element ensures voice is heard even when video element is blocked (display:none blocks autoplay in some browsers) */}
+      <audio ref={remoteAudioRef} autoPlay playsInline style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }} />
 
       {/* Controls — dynamic: incoming Answer/Decline vs active controls vs outgoing Cancel */}
       <div style={{

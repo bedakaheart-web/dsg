@@ -37,10 +37,20 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
   const stateRef = useRef(state);
   const pendingOfferRef = useRef<RTCSessionDescriptionInit | null>(null);
   const pendingCallTypeRef = useRef<CallType | null>(null);
+  const pendingCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
 
   stateRef.current = state;
   remoteIdRef.current = remoteUserId;
   localIdRef.current = localUserId;
+
+  const flushPendingCandidates = useCallback(async () => {
+    const pc = pcRef.current;
+    if (!pc || !pc.remoteDescription) return;
+    for (const cand of pendingCandidatesRef.current) {
+      try { await pc.addIceCandidate(new RTCIceCandidate(cand)); } catch {}
+    }
+    pendingCandidatesRef.current = [];
+  }, []);
 
   const updateState = useCallback((updates: Partial<WebRTCState>) => {
     setState(prev => ({ ...prev, ...updates }));
@@ -61,6 +71,7 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
     }
     pendingOfferRef.current = null;
     pendingCallTypeRef.current = null;
+    pendingCandidatesRef.current = [];
   }, []);
 
   const fullCleanup = useCallback(async () => {
@@ -189,6 +200,7 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
       const pc = await createPeerConnection();
       if (offerSdp) {
         await pc.setRemoteDescription(new RTCSessionDescription(offerSdp));
+        await flushPendingCandidates();
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         const answerPayload = { type: "answer", sdp: answer, from: localId, to: remoteId } as const;
@@ -330,12 +342,14 @@ const channelName = `call-${[localId, remoteId].sort().join("_")}`;
         await receiveCall((p.callType as CallType) || "audio", p.from, p.sdp);
       } else if (p.type === "answer") {
         if (pc && p.sdp) {
-          try { await pc.setRemoteDescription(new RTCSessionDescription(p.sdp)); } catch (e) { /* non-fatal */ }
+          try { await pc.setRemoteDescription(new RTCSessionDescription(p.sdp)); await flushPendingCandidates(); } catch (e) { /* non-fatal */ }
           updateState({ callState: "active" });
         }
       } else if (p.type === "ice-candidate") {
-        if (pc && p.candidate) {
+        if (pc && p.candidate && pc.remoteDescription) {
           try { await pc.addIceCandidate(new RTCIceCandidate(p.candidate)); } catch (e) { /* non-fatal */ }
+        } else if (p.candidate) {
+          pendingCandidatesRef.current.push(p.candidate);
         }
       } else if (p.type === "decline") {
         if (pcRef.current) { pcRef.current.close(); pcRef.current = null; }
@@ -404,12 +418,14 @@ const channelName = `call-${[localId, remoteId].sort().join("_")}`;
         await receiveCall((p.callType as CallType) || "audio", p.from, p.sdp);
       } else if (p.type === "answer") {
         if (pc && p.sdp) {
-          try { await pc.setRemoteDescription(new RTCSessionDescription(p.sdp)); } catch (e) { console.error("[useWebRTC] inbox setRemoteDescription answer failed:", e); }
+          try { await pc.setRemoteDescription(new RTCSessionDescription(p.sdp)); await flushPendingCandidates(); } catch (e) { console.error("[useWebRTC] inbox setRemoteDescription answer failed:", e); }
           updateState({ callState: "active" });
         }
       } else if (p.type === "ice-candidate") {
-        if (pc && p.candidate) {
+        if (pc && p.candidate && pc.remoteDescription) {
           try { await pc.addIceCandidate(new RTCIceCandidate(p.candidate)); } catch (e) { console.warn("[useWebRTC] inbox addIceCandidate failed:", e); }
+        } else if (p.candidate) {
+          pendingCandidatesRef.current.push(p.candidate);
         }
       } else if (p.type === "decline") {
         if (pcRef.current) { pcRef.current.close(); pcRef.current = null; }

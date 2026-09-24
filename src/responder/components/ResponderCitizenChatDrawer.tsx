@@ -137,6 +137,8 @@ export default function ResponderCitizenChatDrawer({
         // Use ref so effect doesn't depend on array reference tick
         onlineCitizensRef.current.forEach(c => allIdsSet.add(c.id));
         const allIds = [...allIdsSet];
+        // Presence-aware online: DB is_online may be stale, presence is real-time (fixes Sherena)
+        const presenceOnlineSet = new Set(onlineCitizensRef.current.map(c => c.id));
 
         let nameMap: Record<string, { name: string; isOnline: boolean; last_seen?: string | null; status?: string | null }> = {};
         if (allIds.length > 0) {
@@ -156,6 +158,7 @@ export default function ResponderCitizenChatDrawer({
           const uid = r.user_id ? String(r.user_id) : null;
           if (!uid) continue;
           if (!citizenEntry[uid] || new Date(r.created_at) > new Date(citizenEntry[uid].created_at)) {
+            const dbOnline = nameMap[uid]?.isOnline ?? false;
             citizenEntry[uid] = {
               reportId: String(r.id),
               citizenId: uid,
@@ -164,7 +167,7 @@ export default function ResponderCitizenChatDrawer({
               status: r.status,
               created_at: r.created_at,
               source: "assigned",
-              isOnline: nameMap[uid]?.isOnline ?? false,
+              isOnline: dbOnline || presenceOnlineSet.has(uid),
               lastMessageAt: lastMsgMap[uid],
             };
           }
@@ -174,8 +177,11 @@ export default function ResponderCitizenChatDrawer({
           if (citizenEntry[sid]) {
             citizenEntry[sid].lastMessageAt = lastMsgMap[sid];
             if (citizenEntry[sid].source !== "assigned") citizenEntry[sid].source = "messaged";
+            // Patch isOnline for already-assigned entries that may have become online via presence
+            if (presenceOnlineSet.has(sid)) citizenEntry[sid].isOnline = true;
             continue;
           }
+          const dbOnlineMsg = nameMap[sid]?.isOnline ?? false;
           citizenEntry[sid] = {
             reportId: null,
             citizenId: sid,
@@ -184,7 +190,7 @@ export default function ResponderCitizenChatDrawer({
             status: "request",
             created_at: lastMsgMap[sid] ?? new Date().toISOString(),
             source: "messaged",
-            isOnline: nameMap[sid]?.isOnline ?? false,
+            isOnline: dbOnlineMsg || presenceOnlineSet.has(sid),
             lastMessageAt: lastMsgMap[sid],
           };
         }
