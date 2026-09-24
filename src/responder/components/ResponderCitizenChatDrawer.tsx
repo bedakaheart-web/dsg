@@ -6,7 +6,7 @@
 // a direct message to an unassigned responder were invisible. This version merges
 // three sources into one deduplicated contact list and tracks presence + unread.
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "../../js/supabase";
 import ChatBox from "../../components/Chatbox";
@@ -54,6 +54,16 @@ export default function ResponderCitizenChatDrawer({
 }) {
   const narrow = useIsNarrow();
   const { allCitizens, onlineCitizens } = usePresence(responderId || null, "responder", !!responderId);
+  // Presence arrays get new references on every Realtime Presence "sync" tick
+  // (usePresence.ts:96-100 computes filter() without useMemo). Keep latest via
+  // refs so the data-loading effect doesn't restart on every tick.
+  const onlineCitizensRef = useRef(onlineCitizens);
+  const allCitizensRef = useRef(allCitizens);
+  useEffect(() => { onlineCitizensRef.current = onlineCitizens; }, [onlineCitizens]);
+  useEffect(() => { allCitizensRef.current = allCitizens; }, [allCitizens]);
+  // Stable primitive — only changes when online citizen IDs actually change,
+  // not on every array-reference tick. Use for lightweight presence sync.
+  const onlineCitizenIdsKey = useMemo(() => onlineCitizens.map(c => c.id).sort().join(","), [onlineCitizens]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeCitizenId, setActiveCitizenId] = useState<string | null>(null);
   const [activeReportId, setActiveReportId] = useState<string | null>(null);
@@ -128,7 +138,8 @@ export default function ResponderCitizenChatDrawer({
         const allIdsSet = new Set<string>();
         rows.forEach(r => { if (r.user_id) allIdsSet.add(String(r.user_id)); });
         messagedIds.forEach(id => allIdsSet.add(id));
-        onlineCitizens.forEach(c => allIdsSet.add(c.id));
+        // Use ref so effect doesn't depend on array reference tick
+        onlineCitizensRef.current.forEach(c => allIdsSet.add(c.id));
         const allIds = [...allIdsSet];
 
         let nameMap: Record<string, { name: string; isOnline: boolean; last_seen?: string | null; status?: string | null }> = {};
@@ -182,7 +193,7 @@ export default function ResponderCitizenChatDrawer({
           };
         }
         // online citizens not yet in map (only online, not every citizen)
-        for (const c of onlineCitizens) {
+        for (const c of onlineCitizensRef.current) {
           if (citizenEntry[c.id]) continue;
           const nm = nameMap[c.id]?.name || c.full_name || c.email || "Citizen";
           citizenEntry[c.id] = {
@@ -252,7 +263,55 @@ export default function ResponderCitizenChatDrawer({
       .on("postgres_changes", { event: "*", schema: "public", table: "reports" }, () => void load())
       .subscribe();
     return () => { cancelled = true; supabase.removeChannel(ch); };
-  }, [open, responderId, initialReportId, initialCitizenId, allCitizens, onlineCitizens]);
+  }, [open, responderId, initialReportId, initialCitizenId]);
+
+  // Lightweight presence sync — updates isOnline/online list without resetting
+  // loading=true. Depends on stable primitive (onlineCitizenIdsKey) so it only
+  // fires when IDs actually change, not on every array-reference tick.
+  useEffect(() => {
+    if (!open || loading || conversations.length === 0) return;
+    const onlineSet = new Set(onlineCitizenIdsKey ? onlineCitizenIdsKey.split(",") : []);
+    setConversations(prev => {
+      let changed = false;
+      const next = prev.map(c => {
+        if (!c.citizenId) return c;
+        const shouldBeOnline = onlineSet.has(c.citizenId);
+        if (c.isOnline !== shouldBeOnline) {
+          changed = true;
+          return { ...c, isOnline: shouldBeOnline };
+        }
+        return c;
+      });
+      // Add newly online citizens that weren't previously in list
+      for (const id of onlineSet) {
+        if (!next.some(c => c.citizenId === id)) {
+          const citizen = onlineCitizensRef.current.find(c => c.id === id);
+          if (citizen) {
+            changed = true;
+            next.push({
+              reportId: null,
+              citizenId: citizen.id,
+              citizenName: citizen.full_name || citizen.email || "Citizen",
+              type: "other",
+              status: "online",
+              created_at: new Date().toISOString(),
+              source: "online",
+              isOnline: true,
+            });
+          }
+        }
+      }
+      if (!changed) return prev;
+      return next.sort((a, b) => {
+        if (a.isOnline !== b.isOnline) return a.isOnline ? -1 : 1;
+        if (a.source === "assigned" && b.source !== "assigned") return -1;
+        if (b.source === "assigned" && a.source !== "assigned") return 1;
+        const ta = a.lastMessageAt ?? a.created_at;
+        const tb = b.lastMessageAt ?? b.created_at;
+        return new Date(tb).getTime() - new Date(ta).getTime();
+      });
+    });
+  }, [onlineCitizenIdsKey, open, loading]);
 
   useEffect(() => {
     if (open && initialCitizenId) { setActiveCitizenId(initialCitizenId); setActiveReportId(initialReportId); }
