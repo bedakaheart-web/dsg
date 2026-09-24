@@ -101,10 +101,12 @@ export function usePresence(
   }, []);
 
   // Primary: DB polling + postgres_changes - ensures list is correct even if Presence is down
+  // Use unique channel per hook instance to avoid "cannot add postgres_changes after subscribe" when
+  // multiple components mount usePresence simultaneously (e.g. hot-reload, multiple drawers).
   useEffect(() => {
     void fetchAll();
     const ch = supabase
-      .channel("presence-profiles-live")
+      .channel(`presence-profiles-live-${Math.random().toString(36).slice(2, 9)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => {
         void fetchAll();
       })
@@ -118,21 +120,55 @@ export function usePresence(
 
   // Secondary: Global Realtime Presence - single shared channel so citizens and responders see each other
   // Previous bug: per-user random channel names (dumasafe-presence-${random}) isolated users
+  // Fix: use singleton ref-counted global channel so multiple hooks on same client don't create
+  // duplicate subscriptions which trigger "cannot add callbacks after subscribe".
   useEffect(() => {
     if (!enabled || !userId || !role) return;
-    const channel = supabase.channel("dumasafe-global-presence", {
+    const channelName = "dumasafe-global-presence";
+    const globalMap: Map<string, { count: number; channel: ReturnType<typeof supabase.channel> }> =
+      ((globalThis as any).__dsgPresenceChannels ??= new Map());
+    const existing = globalMap.get(channelName);
+    if (existing) {
+      existing.count += 1;
+      // Already subscribed globally — just ensure fetch on next sync via existing handlers
+      return () => {
+        existing.count -= 1;
+        if (existing.count <= 0) {
+          existing.channel.unsubscribe();
+          supabase.removeChannel(existing.channel);
+          globalMap.delete(channelName);
+        }
+      };
+    }
+    const channel = supabase.channel(channelName, {
       config: { presence: { key: userId } },
     });
-    // Track minimal payload; full profile comes from fetchAll triggered on sync
-    channel.track({ user_id: userId, role, id: userId });
     const triggerFetch = () => void fetchAll();
+    // All .on() must be registered BEFORE subscribe()
     channel.on("presence", { event: "sync" }, triggerFetch);
     channel.on("presence", { event: "join" }, triggerFetch);
     channel.on("presence", { event: "leave" }, triggerFetch);
-    channel.subscribe();
+    channel.subscribe(async (status) => {
+      if (status === "SUBSCRIBED") {
+        try {
+          await channel.track({ user_id: userId, role, id: userId });
+        } catch {}
+      }
+    });
+    globalMap.set(channelName, { count: 1, channel });
     return () => {
-      channel.unsubscribe();
-      supabase.removeChannel(channel);
+      const entry = globalMap.get(channelName);
+      if (entry) {
+        entry.count -= 1;
+        if (entry.count <= 0) {
+          entry.channel.unsubscribe();
+          supabase.removeChannel(entry.channel);
+          globalMap.delete(channelName);
+        }
+      } else {
+        channel.unsubscribe();
+        supabase.removeChannel(channel);
+      }
     };
   }, [userId, role, enabled, fetchAll]);
 
