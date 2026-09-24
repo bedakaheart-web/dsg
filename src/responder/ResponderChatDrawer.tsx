@@ -7,15 +7,15 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { supabase } from "../../js/supabase";
+import { supabase } from "../js/supabase";
 import {
   fetchUnreadCounts,
   setBroadcastLastSeen,
   useRealtimeChat,
   type ChatMessage,
-} from "../../hooks/useRealtimeChat";
-import { useWebRTC } from "../../hooks/useWebRTC";
-import CallOverlay from "../../components/CallOverlay";
+} from "../hooks/useRealtimeChat";
+import { useWebRTC } from "../hooks/useWebRTC";
+import CallOverlay from "../components/CallOverlay";
 import { FaPhone, FaVideo } from "react-icons/fa";
 
 // Full-screen drawer on phones so chat controls stay usable <768px.
@@ -176,7 +176,7 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
     const unreadId = `resp-chat-unread-${Math.random().toString(36).slice(2, 9)}`;
     const ch = supabase
       .channel(unreadId)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages" }, (payload) => {
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages" }, (payload: any) => {
         const m = payload.new as ChatMessage;
         const incoming = m.sender_id !== me && (m.receiver_id === me || m.receiver_id === null);
         if (incoming) {
@@ -366,7 +366,7 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
                     {broadcastMode ? "No broadcasts from HQ yet." : "No messages yet. Say hello =���"}
                   </div>
                 ) : (
-                  messages.map(m => <Bubble key={m.id} m={m} mine={m.sender_id === me} />)
+                  messages.map((m: ChatMessage) => <Bubble key={m.id} m={m} mine={m.sender_id === me} />)
                 )}
                 <div ref={messagesEndRef} />
               </div>
