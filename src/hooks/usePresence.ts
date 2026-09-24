@@ -14,7 +14,7 @@
 //   - realtime subscription keeping lists live
 //   - helper isResponderOnDuty(c), isCitizenOnline(c)
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "../js/supabase";
 
 export interface PresenceContact {
@@ -66,10 +66,11 @@ export function usePresence(
 ): PresenceState {
   const [presenceMap, setPresenceMap] = useState<Record<string, PresenceContact[]>>({});
   const [loading, setLoading] = useState(true);
+  const channelIdRef = useRef<string>(`dumasafe-presence-${Math.random().toString(36).slice(2, 9)}`);
 
   useEffect(() => {
     if (!enabled || !userId || !role) return;
-    const channel = supabase.channel("dumasafe-presence", {
+    const channel = supabase.channel(channelIdRef.current, {
       config: { presence: { key: userId } },
     });
     channel.track({ user_id: userId, role });

@@ -17,6 +17,7 @@ type HeartbeatRole = "citizen" | "responder";
 export function useHeartbeat(userId: string | null, role: HeartbeatRole | null, enabled = true) {
   const userIdRef = useRef(userId);
   const roleRef = useRef(role);
+  const channelIdRef = useRef<string>(`dumasafe-presence-${Math.random().toString(36).slice(2, 9)}`);
   userIdRef.current = userId;
   roleRef.current = role;
 
@@ -26,7 +27,7 @@ export function useHeartbeat(userId: string | null, role: HeartbeatRole | null, 
     // Track presence on the shared presence channel.
     // Supabase Realtime Presence automatically removes this user
     // when the WebSocket disconnects (e.g., tab backgrounded, network lost).
-    const channel = supabase.channel("dumasafe-presence", {
+    const channel = supabase.channel(channelIdRef.current, {
       config: { presence: { key: userId } },
     });
     channel.track({ user_id: userId, role });
