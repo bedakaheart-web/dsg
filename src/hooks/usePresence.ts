@@ -2,11 +2,13 @@
 // Centralized presence for citizen ↔ responder communication.
 // Single source of truth for "who is online/on-duty" used by both sides.
 //
-// Uses Supabase Realtime Presence (channel.track / channel.presenceState)
-// as the primary source of truth for who is online. The last_seen column
-// and is_online/status in profiles remain as a secondary/fallback signal
-// for when the WebSocket connection is unavailable.
-//
+// Uses hybrid approach:
+//  - Primary: DB polling + postgres_changes (profiles is_online/last_seen/status)
+//    ensures citizens see responders even if Realtime Presence is flaky.
+//  - Secondary: Supabase Realtime Presence on a GLOBAL channel
+//    (dumasafe-global-presence) triggers immediate refetch on join/leave/sync.
+//    Previous version used per-user random channel names which isolated users
+//    and caused citizens to see "No responders" even when responders were on_duty.
 // Provides:
 //   - onlineResponders: ResponderContact[] with is_online/status
 //   - onlineCitizens: CitizenContact[] with is_online
@@ -14,7 +16,7 @@
 //   - realtime subscription keeping lists live
 //   - helper isResponderOnDuty(c), isCitizenOnline(c)
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../js/supabase";
 
 export interface PresenceContact {
@@ -64,47 +66,85 @@ export function usePresence(
   role: string | null,
   enabled = true,
 ): PresenceState {
-  const [presenceMap, setPresenceMap] = useState<Record<string, PresenceContact[]>>({});
+  const [responders, setResponders] = useState<PresenceContact[]>([]);
+  const [citizens, setCitizens] = useState<PresenceContact[]>([]);
   const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    if (!enabled || !userId || !role) return;
-    const presenceId = `dumasafe-presence-${Math.random().toString(36).slice(2, 9)}`;
-    const fallbackId = `pf-${Math.random().toString(36).slice(2, 9)}`;
-    const channel = supabase.channel(presenceId, {
-      config: { presence: { key: userId } },
-    });
-    channel.track({ user_id: userId, role });
-    channel.on("presence", { event: "sync" }, () => {
-      const state = channel.presenceState() as Record<string, PresenceContact[]>;
-      setPresenceMap(state);
+
+  const fetchAll = useCallback(async () => {
+    try {
+      let data: PresenceContact[] | null = null;
+      const attemptFull = await supabase
+        .from("profiles")
+        .select("id, full_name, email, role, status, is_online, last_seen")
+        .in("role", ["responder", "citizen"])
+        .order("full_name", { ascending: true })
+        .limit(500);
+      if (attemptFull.error) {
+        const fallback = await supabase
+          .from("profiles")
+          .select("id, full_name, email, role, status")
+          .in("role", ["responder", "citizen"])
+          .order("full_name", { ascending: true })
+          .limit(500);
+        if (!fallback.error) data = (fallback.data ?? []) as PresenceContact[];
+      } else {
+        data = (attemptFull.data ?? []) as PresenceContact[];
+      }
+      if (!data) return;
+      setResponders(data.filter((c) => (c.role ?? "").toLowerCase() === "responder"));
+      setCitizens(data.filter((c) => (c.role ?? "").toLowerCase() === "citizen"));
+    } catch {
+      // ignore - keep previous data
+    } finally {
       setLoading(false);
-    });
-    channel.subscribe();
+    }
+  }, []);
+
+  // Primary: DB polling + postgres_changes - ensures list is correct even if Presence is down
+  useEffect(() => {
+    void fetchAll();
     const ch = supabase
-      .channel(`profiles-fallback-${fallbackId}`)
+      .channel("presence-profiles-live")
       .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => {
-        // Realtime Presence is primary; this is just a safety net
+        void fetchAll();
       })
       .subscribe();
+    const interval = setInterval(() => void fetchAll(), 30000);
+    return () => {
+      supabase.removeChannel(ch);
+      clearInterval(interval);
+    };
+  }, [fetchAll]);
+
+  // Secondary: Global Realtime Presence - single shared channel so citizens and responders see each other
+  // Previous bug: per-user random channel names (dumasafe-presence-${random}) isolated users
+  useEffect(() => {
+    if (!enabled || !userId || !role) return;
+    const channel = supabase.channel("dumasafe-global-presence", {
+      config: { presence: { key: userId } },
+    });
+    // Track minimal payload; full profile comes from fetchAll triggered on sync
+    channel.track({ user_id: userId, role, id: userId });
+    const triggerFetch = () => void fetchAll();
+    channel.on("presence", { event: "sync" }, triggerFetch);
+    channel.on("presence", { event: "join" }, triggerFetch);
+    channel.on("presence", { event: "leave" }, triggerFetch);
+    channel.subscribe();
     return () => {
       channel.unsubscribe();
       supabase.removeChannel(channel);
-      supabase.removeChannel(ch);
     };
-  }, [userId, role, enabled]);
+  }, [userId, role, enabled, fetchAll]);
 
-  const allOnline = Object.values(presenceMap).flat();
-  const allResponders = allOnline.filter((c) => (c.role ?? "").toLowerCase() === "responder");
-  const allCitizens = allOnline.filter((c) => (c.role ?? "").toLowerCase() === "citizen");
-  const onlineResponders = allResponders.filter(isResponderOnDuty);
-  const onlineCitizens = allCitizens.filter(isCitizenOnline);
+  const onlineResponders = responders.filter(isResponderOnDuty);
+  const onlineCitizens = citizens.filter(isCitizenOnline);
 
   return {
     onlineResponders,
     onlineCitizens,
-    allResponders,
-    allCitizens,
+    allResponders: responders,
+    allCitizens: citizens,
     loading,
-    refresh: async () => {}, // Realtime Presence is always live; no manual refresh needed
+    refresh: fetchAll,
   };
 }
