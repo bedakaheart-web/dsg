@@ -16,7 +16,7 @@
 //   - realtime subscription keeping lists live
 //   - helper isResponderOnDuty(c), isCitizenOnline(c)
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../js/supabase";
 
 export interface PresenceContact {
@@ -68,6 +68,7 @@ export function usePresence(
 ): PresenceState {
   const [responders, setResponders] = useState<PresenceContact[]>([]);
   const [citizens, setCitizens] = useState<PresenceContact[]>([]);
+  const [presenceMap, setPresenceMap] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
 
   const fetchAll = useCallback(async () => {
@@ -119,19 +120,28 @@ export function usePresence(
   }, [fetchAll]);
 
   // Secondary: Global Realtime Presence - single shared channel so citizens and responders see each other
-  // Previous bug: per-user random channel names (dumasafe-presence-${random}) isolated users
-  // Fix: use singleton ref-counted global channel so multiple hooks on same client don't create
-  // duplicate subscriptions which trigger "cannot add callbacks after subscribe".
+  // Previous bug: per-user random channel names isolated users. Also need to handle
+  // multiple hooks on same client sharing the same channel without duplicate subscribe errors,
+  // and make presence actually affect online status (Sherena bug: DB is_online false).
   useEffect(() => {
     if (!enabled || !userId || !role) return;
     const channelName = "dumasafe-global-presence";
-    const globalMap: Map<string, { count: number; channel: ReturnType<typeof supabase.channel> }> =
-      ((globalThis as any).__dsgPresenceChannels ??= new Map());
+    type Entry = { count: number; channel: ReturnType<typeof supabase.channel>; state: Record<string, any>; listeners: Set<(s: Record<string, any>) => void> };
+    const globalMap: Map<string, Entry> = ((globalThis as any).__dsgPresenceChannels ??= new Map());
+    const globalState: { value: Record<string, any>; listeners: Set<(s: Record<string, any>) => void> } =
+      ((globalThis as any).__dsgPresenceState ??= { value: {}, listeners: new Set() });
     const existing = globalMap.get(channelName);
     if (existing) {
       existing.count += 1;
-      // Already subscribed globally — just ensure fetch on next sync via existing handlers
+      const cb = (s: Record<string, any>) => setPresenceMap(s);
+      existing.listeners.add(cb);
+      globalState.listeners.add(cb);
+      // Sync current global state immediately
+      try { setPresenceMap(existing.state); } catch {}
+      try { setPresenceMap(globalState.value); } catch {}
       return () => {
+        existing.listeners.delete(cb);
+        globalState.listeners.delete(cb);
         existing.count -= 1;
         if (existing.count <= 0) {
           existing.channel.unsubscribe();
@@ -143,37 +153,57 @@ export function usePresence(
     const channel = supabase.channel(channelName, {
       config: { presence: { key: userId } },
     });
-    const triggerFetch = () => void fetchAll();
+    const entry: Entry = { count: 1, channel, state: {}, listeners: new Set() };
+    const cbSelf = (s: Record<string, any>) => setPresenceMap(s);
+    entry.listeners.add(cbSelf);
+    globalState.listeners.add(cbSelf);
+    const broadcastState = () => {
+      try {
+        const state = channel.presenceState() as Record<string, any>;
+        entry.state = state;
+        globalState.value = state;
+        setPresenceMap(state);
+        entry.listeners.forEach(fn => { try { fn(state); } catch {} });
+        globalState.listeners.forEach(fn => { try { fn(state); } catch {} });
+      } catch {}
+      void fetchAll();
+    };
     // All .on() must be registered BEFORE subscribe()
-    channel.on("presence", { event: "sync" }, triggerFetch);
-    channel.on("presence", { event: "join" }, triggerFetch);
-    channel.on("presence", { event: "leave" }, triggerFetch);
+    channel.on("presence", { event: "sync" }, broadcastState);
+    channel.on("presence", { event: "join" }, broadcastState);
+    channel.on("presence", { event: "leave" }, broadcastState);
     channel.subscribe(async (status) => {
       if (status === "SUBSCRIBED") {
-        try {
-          await channel.track({ user_id: userId, role, id: userId });
-        } catch {}
+        try { await channel.track({ user_id: userId, role, id: userId }); } catch {}
+        setTimeout(() => broadcastState(), 400);
       }
     });
-    globalMap.set(channelName, { count: 1, channel });
+    globalMap.set(channelName, entry);
     return () => {
-      const entry = globalMap.get(channelName);
-      if (entry) {
-        entry.count -= 1;
-        if (entry.count <= 0) {
-          entry.channel.unsubscribe();
-          supabase.removeChannel(entry.channel);
-          globalMap.delete(channelName);
-        }
-      } else {
-        channel.unsubscribe();
-        supabase.removeChannel(channel);
+      entry.listeners.delete(cbSelf);
+      globalState.listeners.delete(cbSelf);
+      entry.count -= 1;
+      if (entry.count <= 0) {
+        entry.channel.unsubscribe();
+        supabase.removeChannel(entry.channel);
+        globalMap.delete(channelName);
       }
     };
   }, [userId, role, enabled, fetchAll]);
 
-  const onlineResponders = responders.filter(isResponderOnDuty);
-  const onlineCitizens = citizens.filter(isCitizenOnline);
+  // Presence augments DB: user is online if either DB says online OR they are in Realtime Presence
+  // This fixes Sherena bug where DB is_online=false and last_seen stale but presence shows online
+  const presenceIds = useMemo(() => {
+    try {
+      const flat = Object.values(presenceMap).flat() as any[];
+      return new Set(flat.map((c: any) => (c.id || c.user_id) as string).filter(Boolean));
+    } catch {
+      return new Set<string>();
+    }
+  }, [presenceMap]);
+
+  const onlineResponders = useMemo(() => responders.filter(c => isResponderOnDuty(c) || presenceIds.has(c.id)), [responders, presenceIds]);
+  const onlineCitizens = useMemo(() => citizens.filter(c => isCitizenOnline(c) || presenceIds.has(c.id)), [citizens, presenceIds]);
 
   return {
     onlineResponders,
