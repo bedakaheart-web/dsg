@@ -9,7 +9,7 @@
 // Used by CitizenLayout and Respondersdashboard to make "who is online"
 // visible to the other role in real time.
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { supabase } from "../js/supabase";
 
 type HeartbeatRole = "citizen" | "responder";
