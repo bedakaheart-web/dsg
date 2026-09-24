@@ -292,7 +292,7 @@ export default function CitizenAlertsPage() {
         .limit(50);
       if (error) console.error("CitizenAlerts load error:", error);
       const rows = (data as Alert[]) ?? [];
-      if (import.meta.env.DEV && rows.length > 0) {
+      if (rows.length > 0) {
         console.log("[CitizenAlerts] raw alert row:", rows[0]);
       }
       setAlerts(rows);
