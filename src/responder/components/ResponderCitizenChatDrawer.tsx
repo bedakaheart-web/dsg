@@ -236,7 +236,6 @@ export default function ResponderCitizenChatDrawer({
           setActiveCitizenId(list[0].citizenId);
           setActiveReportId(list[0].reportId);
         }
-        if (narrow) setShowThread(false);
       } catch {
         if (!cancelled) setConversations([]);
       } finally {
