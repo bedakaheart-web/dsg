@@ -14,7 +14,7 @@
 //   - realtime subscription keeping lists live
 //   - helper isResponderOnDuty(c), isCitizenOnline(c)
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../js/supabase";
 
 export interface PresenceContact {
@@ -66,12 +66,11 @@ export function usePresence(
 ): PresenceState {
   const [presenceMap, setPresenceMap] = useState<Record<string, PresenceContact[]>>({});
   const [loading, setLoading] = useState(true);
-  const channelIdRef = useRef<string>(`dumasafe-presence-${Math.random().toString(36).slice(2, 9)}`);
-  const fallbackIdRef = useRef<string>(`pf-${Math.random().toString(36).slice(2, 9)}`);
-
   useEffect(() => {
     if (!enabled || !userId || !role) return;
-    const channel = supabase.channel(channelIdRef.current, {
+    const presenceId = `dumasafe-presence-${Math.random().toString(36).slice(2, 9)}`;
+    const fallbackId = `pf-${Math.random().toString(36).slice(2, 9)}`;
+    const channel = supabase.channel(presenceId, {
       config: { presence: { key: userId } },
     });
     channel.track({ user_id: userId, role });
@@ -82,13 +81,14 @@ export function usePresence(
     });
     channel.subscribe();
     const ch = supabase
-      .channel(`profiles-fallback-${fallbackIdRef.current}`)
+      .channel(`profiles-fallback-${fallbackId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => {
         // Realtime Presence is primary; this is just a safety net
       })
       .subscribe();
     return () => {
       channel.unsubscribe();
+      supabase.removeChannel(channel);
       supabase.removeChannel(ch);
     };
   }, [userId, role, enabled]);

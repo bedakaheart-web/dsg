@@ -9,7 +9,7 @@
 // Used by CitizenLayout and Respondersdashboard to make "who is online"
 // visible to the other role in real time.
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { supabase } from "../js/supabase";
 
 type HeartbeatRole = "citizen" | "responder";
@@ -17,23 +17,24 @@ type HeartbeatRole = "citizen" | "responder";
 export function useHeartbeat(userId: string | null, role: HeartbeatRole | null, enabled = true) {
   const userIdRef = useRef(userId);
   const roleRef = useRef(role);
-  const channelIdRef = useRef<string>(`dumasafe-presence-${Math.random().toString(36).slice(2, 9)}`);
   userIdRef.current = userId;
   roleRef.current = role;
 
   useEffect(() => {
     if (!enabled || !userId || !role) return;
 
-    // Track presence on the shared presence channel.
+    // Track presence on a unique channel to avoid collisions with other useHeartbeat instances.
     // Supabase Realtime Presence automatically removes this user
     // when the WebSocket disconnects (e.g., tab backgrounded, network lost).
-    const channel = supabase.channel(channelIdRef.current, {
+    const channelId = `dumasafe-presence-${Math.random().toString(36).slice(2, 9)}`;
+    const channel = supabase.channel(channelId, {
       config: { presence: { key: userId } },
     });
     channel.track({ user_id: userId, role });
 
     return () => {
       channel.unsubscribe();
+      supabase.removeChannel(channel);
     };
   }, [userId, role, enabled]);
 }
