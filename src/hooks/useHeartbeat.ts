@@ -39,48 +39,12 @@ export function useHeartbeat(userId: string | null, role: HeartbeatRole | null, 
     };
     void markOnline();
     const heartbeatInterval = setInterval(() => void markOnline(), 45000);
-
-    // Use GLOBAL presence channel so citizens and responders see each other.
-    // Random per-user channels isolated users and caused "No responders" bug.
-    const channelName = "dumasafe-global-presence";
-    const globalMap: Map<string, { count: number; channel: ReturnType<typeof supabase.channel> }> =
-      ((globalThis as any).__dsgHeartbeatChannels ??= new Map());
-    const existing = globalMap.get(channelName);
-    if (existing) {
-      existing.count += 1;
-      return () => {
-        existing.count -= 1;
-        if (existing.count <= 0) {
-          existing.channel.unsubscribe();
-          supabase.removeChannel(existing.channel);
-          globalMap.delete(channelName);
-        }
-        clearInterval(heartbeatInterval);
-      };
-    }
-    const channel = supabase.channel(channelName, {
-      config: { presence: { key: userId } },
-    });
-    channel.subscribe(async (status) => {
-      if (status === "SUBSCRIBED") {
-        try { await channel.track({ user_id: userId, role, id: userId }); } catch {}
-      }
-    });
-    globalMap.set(channelName, { count: 1, channel });
+    // DB heartbeat is the source of truth for is_online/last_seen polling in usePresence.
+    // Realtime Presence is now handled solely by usePresence's global channel
+    // (dumasafe-global-presence) to avoid duplicate channel subscribe errors
+    // when CitizenLayout mounts both usePresence and useHeartbeat.
     return () => {
       clearInterval(heartbeatInterval);
-      const entry = globalMap.get(channelName);
-      if (entry) {
-        entry.count -= 1;
-        if (entry.count <= 0) {
-          entry.channel.unsubscribe();
-          supabase.removeChannel(entry.channel);
-          globalMap.delete(channelName);
-        }
-      } else {
-        channel.unsubscribe();
-        supabase.removeChannel(channel);
-      }
     };
   }, [userId, role, enabled]);
 }
