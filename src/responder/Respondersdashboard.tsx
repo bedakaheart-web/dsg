@@ -508,8 +508,9 @@ function OverviewPanel({ onNavigate, responderId, responderDepartment }: Overvie
 
   useEffect(() => {
     loadData();
+    const overviewId = `resp-overview-${Math.random().toString(36).slice(2, 9)}`;
     const ch = supabase
-      .channel("resp-overview")
+      .channel(overviewId)
       .on("postgres_changes", { event: "*", schema: "public", table: "reports" }, loadData)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
@@ -829,8 +830,9 @@ export default function RespondersDashboard() {
     };
 
     load();
+    const pendingId = `resp-pending-${Math.random().toString(36).slice(2, 9)}`;
     const ch = supabase
-      .channel("resp-pending")
+      .channel(pendingId)
       .on("postgres_changes", { event: "*", schema: "public", table: "reports" }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "alerts"  }, load)
       .subscribe();
@@ -847,8 +849,9 @@ export default function RespondersDashboard() {
       setChatUnread(Object.values(unread.bySender).reduce((a, b) => a + b, 0) + unread.broadcast);
     };
     void refresh();
+    const unreadId = `resp-chat-unread-${Math.random().toString(36).slice(2, 9)}`;
     const ch = supabase
-      .channel("realtime:resp-chat-unread")
+      .channel(unreadId)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "chat_messages" },

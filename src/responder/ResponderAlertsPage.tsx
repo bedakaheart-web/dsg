@@ -72,8 +72,9 @@ export default function ResponderAlertsPage() {
 
     void load();
 
+    const channelId = `resp-alerts-${Math.random().toString(36).slice(2, 9)}`;
     const channel = supabase
-      .channel("resp-alerts-changes")
+      .channel(channelId)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "alerts" }, (payload) => {
         const newAlert = payload.new as ResponderAlert;
         setAlerts(prev => {

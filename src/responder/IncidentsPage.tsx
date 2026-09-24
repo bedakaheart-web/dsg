@@ -636,8 +636,9 @@ export default function ResponderIncidentsPage({ onChatCitizen }: {
 
   useEffect(() => {
     loadReports();
+    const incId = `rinc-reports-${Math.random().toString(36).slice(2, 9)}`;
     const ch = supabase
-      .channel("rinc-reports")
+      .channel(incId)
       .on("postgres_changes", { event: "*", schema: "public", table: "reports" }, loadReports)
       .subscribe();
     return () => { supabase.removeChannel(ch); };

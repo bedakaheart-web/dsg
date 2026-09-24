@@ -97,12 +97,6 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
   const [unread, setUnread] = useState<{ bySender: Record<string, number>; broadcast: number }>({ bySender: {}, broadcast: 0 });
   const [flashBroadcast, setFlashBroadcast] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  // Unique channel IDs per drawer instance — prevents "cannot add postgres_changes
-  // callbacks after subscribe()" when two ResponderChatDrawers mount concurrently
-  // (Team page + HQ drawer in Respondersdashboard both use same static names).
-  // Mirrors the fix already applied in Chatbox.tsx (a7ca257) and useRealtimeChat.ts.
-  const channelIdRef = useRef<string>(`rcd-${Math.random().toString(36).slice(2, 9)}`);
-
   const broadcastMode = tab === "broadcast";
   const { messages, loading, send, markRead } = useRealtimeChat(
     me || null, broadcastMode ? null : activeId, { broadcast: broadcastMode }
@@ -162,11 +156,10 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
       setAdmins((data ?? []) as Contact[]);
     };
     void load();
-    // Use a unique channel name per drawer instance so concurrent mounts
-    // (Team page's drawer + Respondersdashboard's HQ drawer) never collide.
     // All .on() are registered BEFORE .subscribe() in a single chain.
+    const presenceId = `resp-chat-presence-${Math.random().toString(36).slice(2, 9)}`;
     const ch = supabase
-      .channel(`resp-chat-presence-${channelIdRef.current}`)
+      .channel(presenceId)
       .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, load)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
@@ -180,9 +173,9 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
   useEffect(() => {
     if (!me) return;
     void refreshUnread();
-    // Unique channel per drawer instance — same collision fix as above.
+    const unreadId = `resp-chat-unread-${Math.random().toString(36).slice(2, 9)}`;
     const ch = supabase
-      .channel(`resp-chat-unread-${channelIdRef.current}`)
+      .channel(unreadId)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages" }, (payload) => {
         const m = payload.new as ChatMessage;
         const incoming = m.sender_id !== me && (m.receiver_id === me || m.receiver_id === null);

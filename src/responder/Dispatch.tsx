@@ -1140,8 +1140,9 @@ export default function Dispatch() {
 
   useEffect(() => {
     loadReports();
+    const dispatchId = `dispatch-reports-${Math.random().toString(36).slice(2, 9)}`;
     const ch = supabase
-      .channel("dispatch-reports")
+      .channel(dispatchId)
       .on("postgres_changes", { event: "*", schema: "public", table: "reports" }, loadReports)
       .subscribe();
     return () => { supabase.removeChannel(ch); };

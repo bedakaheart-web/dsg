@@ -898,8 +898,9 @@ export default function ResponderTeamPage() {
 
   useEffect(() => {
     loadTeam();
+    const teamId = `rtp-team-${Math.random().toString(36).slice(2, 9)}`;
     const ch = supabase
-      .channel("rtp-team-presence")
+      .channel(teamId)
       .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, loadTeam)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
