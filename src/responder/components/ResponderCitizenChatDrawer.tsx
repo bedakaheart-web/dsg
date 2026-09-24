@@ -244,8 +244,9 @@ export default function ResponderCitizenChatDrawer({
     };
     void load();
     // live updates: refresh on new chat_messages and profile changes
+    const citizenId = `resp-citizen-central-${Math.random().toString(36).slice(2, 9)}`;
     const ch = supabase
-      .channel(`resp-citizen-central-${responderId}`)
+      .channel(citizenId)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages" }, () => void load())
       .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => void load())
       .on("postgres_changes", { event: "*", schema: "public", table: "reports" }, () => void load())
