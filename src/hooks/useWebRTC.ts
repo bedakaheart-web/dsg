@@ -30,6 +30,7 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
+  const remoteStreamRef = useRef<MediaStream | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const callTypeRef = useRef<CallType | null>(null);
   const remoteIdRef = useRef<string | null>(remoteUserId);
@@ -60,6 +61,10 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach(t => t.stop());
       localStreamRef.current = null;
+    }
+    if (remoteStreamRef.current) {
+      remoteStreamRef.current.getTracks().forEach(t => t.stop());
+      remoteStreamRef.current = null;
     }
     if (pcRef.current) {
       pcRef.current.close();
@@ -99,6 +104,7 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
 
     pc.ontrack = (event) => {
       updateState({ remoteStream: event.streams[0] || null });
+      remoteStreamRef.current = event.streams[0] || null;
     };
 
     pc.onicecandidate = (event) => {
@@ -239,10 +245,10 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
         setTimeout(() => supabase.removeChannel(inboxCh), 1500);
       }, 200);
     }
-    await cleanup();
-    updateState({ callState: "declined", callType: null, remoteParticipantId: null, localStream: null, remoteStream: null });
+    await fullCleanup();
+    updateState({ callState: "declined" });
     setTimeout(() => updateState({ callState: "idle" }), 1500);
-  }, [cleanup, updateState]);
+  }, [fullCleanup, updateState]);
 
   const endCall = useCallback(async () => {
     const remoteId = remoteIdRef.current;
@@ -260,11 +266,7 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
       }, 200);
     }
     await fullCleanup();
-    updateState({
-      callState: "ended", callType: null, remoteParticipantId: null,
-      localStream: null, remoteStream: null,
-      isMuted: false, isCameraOff: false, isUpgradedToVideo: false,
-    });
+    updateState({ callState: "ended" });
     setTimeout(() => updateState({ callState: "idle" }), 1200);
   }, [fullCleanup, updateState]);
 
@@ -302,7 +304,7 @@ export function useWebRTC(localUserId: string | null, remoteUserId: string | nul
         const sender = pcRef.current.getSenders().find(s => s.track?.kind === "video");
         if (sender) await sender.replaceTrack(videoTrack);
       }
-      if (localStreamRef.current) localStreamRef.current.getVideoTracks().forEach(t => t.stop());
+      if (localStreamRef.current) localStreamRef.current.getTracks().forEach(t => t.stop());
       localStreamRef.current = newStream;
       updateState({ localStream: newStream, isUpgradedToVideo: true });
     } catch (err) {
@@ -352,18 +354,12 @@ const channelName = `call-${[localId, remoteId].sort().join("_")}`;
           pendingCandidatesRef.current.push(p.candidate);
         }
       } else if (p.type === "decline") {
-        if (pcRef.current) { pcRef.current.close(); pcRef.current = null; }
-        if (localStreamRef.current) { localStreamRef.current.getTracks().forEach(t => t.stop()); localStreamRef.current = null; }
-        updateState({ callState: "declined", callType: null, remoteParticipantId: null, localStream: null, remoteStream: null });
+        await fullCleanup();
+        updateState({ callState: "declined" });
         setTimeout(() => updateState({ callState: "idle" }), 1500);
       } else if (p.type === "end" || p.type === "call-ended") {
-        if (pcRef.current) { pcRef.current.close(); pcRef.current = null; }
-        if (localStreamRef.current) { localStreamRef.current.getTracks().forEach(t => t.stop()); localStreamRef.current = null; }
-        updateState({
-          callState: "ended", callType: null, remoteParticipantId: null,
-          localStream: null, remoteStream: null,
-          isMuted: false, isCameraOff: false, isUpgradedToVideo: false,
-        });
+        await fullCleanup();
+        updateState({ callState: "ended" });
         setTimeout(() => updateState({ callState: "idle" }), 1200);
       }
     });
@@ -373,7 +369,7 @@ const channelName = `call-${[localId, remoteId].sort().join("_")}`;
       supabase.removeChannel(channel);
       if (channelRef.current === channel) channelRef.current = null;
     };
-  }, [localUserId, remoteUserId, receiveCall, updateState]);
+  }, [localUserId, remoteUserId, receiveCall, updateState, fullCleanup]);
 
   // Global inbox: app-wide incoming call listener (deduped per localId to avoid duplicate channels / CLOSED)
   // Subscribes to call-inbox-${localUserId} regardless of remoteId, so ringing
@@ -429,13 +425,13 @@ const channelName = `call-${[localId, remoteId].sort().join("_")}`;
         }
       } else if (p.type === "decline") {
         if (pcRef.current) { pcRef.current.close(); pcRef.current = null; }
-        if (localStreamRef.current) { localStreamRef.current.getTracks().forEach(t => t.stop()); localStreamRef.current = null; }
-        updateState({ callState: "declined", callType: null, remoteParticipantId: null, localStream: null, remoteStream: null });
+        await fullCleanup();
+        updateState({ callState: "declined" });
         setTimeout(() => updateState({ callState: "idle" }), 1500);
       } else if (p.type === "end" || p.type === "call-ended") {
         if (pcRef.current) { pcRef.current.close(); pcRef.current = null; }
-        if (localStreamRef.current) { localStreamRef.current.getTracks().forEach(t => t.stop()); localStreamRef.current = null; }
-        updateState({ callState: "ended", callType: null, remoteParticipantId: null, localStream: null, remoteStream: null, isMuted: false, isCameraOff: false, isUpgradedToVideo: false });
+        await fullCleanup();
+        updateState({ callState: "ended" });
         setTimeout(() => updateState({ callState: "idle" }), 1200);
       }
     });
@@ -453,7 +449,7 @@ const channelName = `call-${[localId, remoteId].sort().join("_")}`;
         supabase.removeChannel(inbox);
       }
     };
-  }, [localUserId, receiveCall, updateState]);
+  }, [localUserId, receiveCall, updateState, fullCleanup]);
 
   // Cleanup on unmount
   useEffect(() => {
