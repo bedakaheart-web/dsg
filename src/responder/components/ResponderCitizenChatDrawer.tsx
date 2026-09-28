@@ -66,7 +66,9 @@ export default function ResponderCitizenChatDrawer({
   const onlineCitizenIdsKey = useMemo(() => onlineCitizens.map(c => c.id).sort().join(","), [onlineCitizens]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeCitizenId, setActiveCitizenId] = useState<string | null>(null);
+  const activeCitizenIdRef = useRef<string | null>(null);
   const [activeReportId, setActiveReportId] = useState<string | null>(null);
+  const activeReportIdRef = useRef<string | null>(null);
   const [showThread, setShowThread] = useState(false);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "online" | "assigned" | "requests">("all");
@@ -244,10 +246,14 @@ export default function ResponderCitizenChatDrawer({
         const targetCitizen = initialCitizenId ?? (initialReportId ? list.find(x => x.reportId === initialReportId)?.citizenId ?? null : null);
         if (targetCitizen && list.some(x => x.citizenId === targetCitizen)) {
           setActiveCitizenId(targetCitizen);
+          activeCitizenIdRef.current = targetCitizen;
           setActiveReportId(list.find(x => x.citizenId === targetCitizen)?.reportId ?? initialReportId);
-        } else if (list.length && !activeCitizenId) {
+          activeReportIdRef.current = list.find(x => x.citizenId === targetCitizen)?.reportId ?? initialReportId;
+        } else if (list.length && !activeCitizenIdRef.current) {
           setActiveCitizenId(list[0].citizenId);
+          activeCitizenIdRef.current = list[0].citizenId;
           setActiveReportId(list[0].reportId);
+          activeReportIdRef.current = list[0].reportId;
         }
       } catch {
         if (!cancelled) setConversations([]);
@@ -332,11 +338,11 @@ const citizenId = `resp-citizen-central-${Math.random().toString(36).slice(2, 9)
   }, [onlineCitizenIdsKey, open, loading]);
 
   useEffect(() => {
-    if (open && initialCitizenId) { setActiveCitizenId(initialCitizenId); setActiveReportId(initialReportId); }
+    if (open && initialCitizenId) { setActiveCitizenId(initialCitizenId); activeCitizenIdRef.current = initialCitizenId; setActiveReportId(initialReportId); activeReportIdRef.current = initialReportId; }
     if (open && initialCitizenId && narrow) setShowThread(true);
     if (open && initialReportId && !initialCitizenId) {
       const hit = conversations.find(c => c.reportId === initialReportId);
-      if (hit?.citizenId) setActiveCitizenId(hit.citizenId);
+      if (hit?.citizenId) { setActiveCitizenId(hit.citizenId); activeCitizenIdRef.current = hit.citizenId; }
     }
   }, [open, initialCitizenId, initialReportId, narrow]);
 
@@ -396,7 +402,9 @@ const citizenId = `resp-citizen-central-${Math.random().toString(36).slice(2, 9)
 
   const handleSelect = (c: Conversation) => {
     setActiveCitizenId(c.citizenId);
+    activeCitizenIdRef.current = c.citizenId;
     setActiveReportId(c.reportId);
+    activeReportIdRef.current = c.reportId;
     if (narrow) setShowThread(true);
     void markDrawerRead(c.citizenId);
   };
