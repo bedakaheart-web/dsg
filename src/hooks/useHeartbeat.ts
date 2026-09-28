@@ -14,6 +14,8 @@ import { supabase } from "../js/supabase";
 
 type HeartbeatRole = "citizen" | "responder";
 
+export const IDLE_TIMEOUT_MS = 4 * 60 * 1000; // 4 minutes
+
 export function useHeartbeat(userId: string | null, role: HeartbeatRole | null, enabled = true) {
   const userIdRef = useRef(userId);
   const roleRef = useRef(role);
@@ -23,10 +25,14 @@ export function useHeartbeat(userId: string | null, role: HeartbeatRole | null, 
   useEffect(() => {
     if (!enabled || !userId || !role) return;
 
+    // Track last activity timestamp for idle detection
+    const activityRef = useRef(Date.now());
+
     // Mark online in DB immediately so isResponderOnDuty / isCitizenOnline see it via polling
     const markOnline = async () => {
       try {
         const payload: Record<string, unknown> = { is_online: true, last_seen: new Date().toISOString() };
+        activityRef.current = Date.now(); // update activity timestamp
         if (role === "responder") {
           // Ensure responder appears as on_duty for citizen list
           payload.status = "on_duty";
@@ -43,8 +49,20 @@ export function useHeartbeat(userId: string | null, role: HeartbeatRole | null, 
     // Realtime Presence is now handled solely by usePresence's global channel
     // (dumasafe-global-presence) to avoid duplicate channel subscribe errors
     // when CitizenLayout mounts both usePresence and useHeartbeat.
+
+    // Idle timeout: after 4 minutes of no new activity, mark user as idle in DB
+    const idleTimeout = setTimeout(async () => {
+      try {
+        const payload: Record<string, unknown> = { is_online: false, last_seen: new Date().toISOString(), status: "idle" };
+        if (role === "responder") payload.status = "off_duty";
+        await supabase.from("profiles").update(payload).eq("id", userId);
+      } catch {}
+    }, IDLE_TIMEOUT_MS);
+
+    // Clear timeout on unmount
     return () => {
       clearInterval(heartbeatInterval);
+      clearTimeout(idleTimeout);
     };
   }, [userId, role, enabled]);
 }

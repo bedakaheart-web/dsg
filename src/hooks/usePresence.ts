@@ -38,26 +38,32 @@ export interface PresenceState {
   refresh: () => Promise<void>;
 }
 
+export const ONLINE_THRESHOLD_MS = 4 * 60 * 1000; // 4 minutes
+
 export function isResponderOnDuty(c: PresenceContact): boolean {
   const s = (c.status ?? "").toLowerCase().trim().replace(/\s+/g, "_");
   if (s === "on_duty" || s === "responding") return true;
   if (c.is_online === true) return true;
-  // fallback: last_seen within 3 minutes = online
+  // fallback: last_seen within 4 minutes = online
   if (c.last_seen) {
     const diff = Date.now() - new Date(c.last_seen).getTime();
-    if (diff < 3 * 60 * 1000) return true;
+    if (diff < ONLINE_THRESHOLD_MS) return true;
   }
   return false;
 }
 
 export function isCitizenOnline(c: PresenceContact): boolean {
-  if (c.is_online === true) return true;
-  const s = (c.status ?? "").toLowerCase().trim();
-  if (s === "online" || s === "on_duty") return true;
+  // 1. Check last_seen age first — most reliable indicator of current presence
   if (c.last_seen) {
     const diff = Date.now() - new Date(c.last_seen).getTime();
-    if (diff < 3 * 60 * 1000) return true;
+    if (diff < ONLINE_THRESHOLD_MS) return true;
+    // last_seen is stale beyond 4 minutes — do not consider online based on stale heartbeat
   }
+  // 2. Fallback: is_online flag (only if last_seen not available or very recent)
+  if (c.is_online === true) return true;
+  // 3. Check status
+  const s = (c.status ?? "").toLowerCase().trim();
+  if (s === "online" || s === "on_duty") return true;
   return false;
 }
 
