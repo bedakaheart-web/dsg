@@ -89,7 +89,7 @@ export default function ResponderAlertsPage() {
 
     return () => {
       cancelled = true;
-      supabase.removeChannel(channel);
+      channel.unsubscribe();
     };
   }, []);
 

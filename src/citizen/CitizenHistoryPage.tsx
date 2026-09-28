@@ -101,7 +101,6 @@ const STYLES = `
   background: linear-gradient(160deg, rgba(8,12,20,.92) 0%, rgba(8,12,20,.80) 50%, rgba(8,12,20,.94) 100%);
   pointer-events: none; z-index: 1;
 }
-.ch-shell { display: flex; height: 100%; width: 100%; position: relative; z-index: 2; }
 .ch-overlay { display: none; position: fixed; inset: 0; z-index: 190; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
 .ch-overlay.open { display: block; }
 
@@ -134,20 +133,7 @@ const STYLES = `
 .ch-logout-btn  { display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 12px; background: rgba(8,12,20,.6); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-weight: 500; color: var(--text-2); cursor: pointer; transition: all 0.2s; }
 .ch-logout-btn:hover { background: rgba(255,107,107,.12); color: var(--red); border-color: var(--red); }
 
-.ch-main { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 100vh; overflow-x: hidden; position: relative; z-index: 1; }
-.ch-topbar { height: 56px; display: flex; align-items: center; padding: 0 24px; background: rgba(15,21,33,.82); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; gap: 12px; flex-shrink: 0; backdrop-filter: blur(16px); }
-.ch-hamburger { display: none; background: rgba(8,12,20,.6); border: 1px solid var(--border); border-radius: 6px; width: 32px; height: 32px; align-items: center; justify-content: center; color: var(--text-3); cursor: pointer; transition: all 0.2s; flex-shrink: 0; font-size: 14px; }
-.ch-hamburger:hover { background: var(--surface); border-color: var(--text-2); color: var(--text); }
-.ch-crumb { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text-3); }
-.ch-crumb-sep { color: var(--text-3); }
-.ch-crumb-active { color: var(--text); font-weight: 600; }
-.ch-crumb-hide { white-space: nowrap; }
-.ch-topbar-right { margin-left: auto; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
-.ch-clock  { font-size: 12px; font-weight: 500; color: var(--text-2); background: rgba(8,12,20,.6); border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; white-space: nowrap; }
-.ch-icon-btn { width: 32px; height: 32px; border-radius: 6px; border: 1px solid var(--border); background: transparent; display: flex; align-items: center; justify-content: center; color: var(--text-3); cursor: pointer; font-size: 13px; transition: all 0.2s; }
-.ch-icon-btn:hover { background: rgba(46,204,143,.08); color: var(--text); }
-
-.ch-page { flex: 1; padding: 24px; overflow-x: hidden; min-width: 0; }
+.ch-page { flex: 1; padding: 24px; overflow-x: hidden; min-width: 0; min-height: calc(100vh - 56px); }
 .ch-page > div { animation: fadeIn 0.4s ease-out both; }
 .ch-page-hd { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
 .ch-eyebrow { font-size: 11px; color: var(--green); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 6px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
@@ -267,8 +253,6 @@ const STYLES = `
   .ch-sidebar.open { transform: translateX(0); }
   .ch-sidebar-close { display: flex; }
   .ch-hamburger { display: flex; }
-  .ch-main { margin-left: 0; }
-  .ch-topbar { padding: 0 16px; }
   .ch-crumb-hide { display: none; }
   .ch-page { padding: 16px; }
   .ch-title { font-size: 26px; }
@@ -590,40 +574,11 @@ export default function CitizenHistoryPage() {
     <>
       <style>{STYLES}</style>
       <div className="ch-portal">
-        <div className="ch-shell">
+        <div className="ch-page">
+          <div>
 
-          {/* Sidebar is provided by the persistent CitizenLayout — see src/citizen/CitizenLayout.tsx. */}
-
-          {/* ── Main ── */}
-          <div className="ch-main">
-            <div className="ch-topbar">
-              <div className="ch-crumb">
-                <span className="ch-crumb-hide">DUMASAFEGUIDE</span>
-                <span className="ch-crumb-sep ch-crumb-hide">/</span>
-                <span className="ch-crumb-hide">{t("history.citizen")}</span>
-                <span className="ch-crumb-sep ch-crumb-hide">/</span>
-                <span
-                  className={selectedReport ? "ch-crumb-hide" : "ch-crumb-active"}
-                  style={{ cursor: selectedReport ? "pointer" : "default" }}
-                  onClick={() => selectedReport && navigate("/citizen/history")}
-                >
-                  {t("history.pageTitle")}
-                </span>
-                {selectedReport && (
-                  <><span className="ch-crumb-sep">/</span><span className="ch-crumb-active">{t("reportDetail.reportDetail")}</span></>
-                )}
-              </div>
-              <div className="ch-topbar-right">
-                <span className="ch-clock">{clock}</span>
-                <button className="ch-icon-btn"><FaBell size={13} /></button>
-              </div>
-            </div>
-
-            <div className="ch-page">
-              <div>
-
-                {selectedReport ? (
-                  <ReportDetail report={selectedReport} onBack={() => navigate("/citizen/history")} />
+{selectedReport ? (
+              <ReportDetail report={selectedReport} onBack={() => navigate("/citizen/history")} />
                 ) : (
                   <>
                     <div className="ch-page-hd">
@@ -706,12 +661,9 @@ export default function CitizenHistoryPage() {
                   </>
                 )}
 
-              </div>
-            </div>
-          </div>
-
-        </div>
+</div>
       </div>
+    </div>
     </>
   );
 }

@@ -263,6 +263,7 @@ export default function CitizenDashboard() {
     { label: t("dashboard.quickActionFileReport"), icon: "📝", modal: "report" as const },
     { label: t("dashboard.quickActionSafetyMap"),  icon: "🗺️",  modal: "map" as const },
     { label: t("dashboard.quickActionMyReports"),  icon: "📂", to: "/citizen/history"   },
+    { label: t("dashboard.quickActionAlerts", "Alerts"), icon: "🔔", to: "/citizen/alerts" },
     { label: t("dashboard.quickActionSafetyTips"), icon: "💡", modal: "safetytips" as const },
     { label: t("dashboard.quickActionChat"), icon: "💬", to: "/citizen/chat" },
   ];

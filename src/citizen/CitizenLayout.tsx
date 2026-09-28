@@ -149,8 +149,8 @@ export default function CitizenLayout() {
 
       {isMobile && drawerOpen && (
         <>
-          <div onClick={() => setDrawerOpen(false)} style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.6)", zIndex: 299, backdropFilter: "blur(2px)" }} />
-          <aside style={{ position: "fixed", left: 0, top: 0, width: "280px", height: "100vh", backgroundColor: "rgba(8,12,20,0.98)", borderRight: "1px solid rgba(255,255,255,0.10)", display: "flex", flexDirection: "column", zIndex: 300 }}>
+          <div onClick={() => setDrawerOpen(false)} style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.6)", zIndex: 299 }} />
+          <aside style={{ position: "fixed", left: 0, top: 0, width: "280px", height: "100vh", backgroundColor: "rgba(8,12,20,0.98)", borderRight: "1px solid rgba(255,255,255,0.10)", display: "flex", flexDirection: "column", zIndex: 300, pointerEvents: "auto" }}>
             {sidebarBody}
           </aside>
         </>

@@ -721,7 +721,7 @@ export default function CitizenReport() {
     const { agreed: _agreed, isSubmitting, currentStep: _currentStep, ...submissionPayload } = formData;
 
     const { data, error } = await supabase
-      .from('incident_reports')
+      .from('reports')
       .insert([{
         ...submissionPayload,
         status: 'pending'
@@ -730,8 +730,8 @@ export default function CitizenReport() {
 
     if (error) {
       console.error("Supabase Error Details:", error);
-      alert(`Submission error: ${error.message}`);
-      setSubmitError(t("report.form.submitFailed", "Failed to submit report. Please try again."));
+      const errMsg = error.message || error.details || error.code || t("report.form.submitFailed", "Failed to submit report. Please try again.");
+      setSubmitError(errMsg);
       setSubmitting(false);
       return;
     }
