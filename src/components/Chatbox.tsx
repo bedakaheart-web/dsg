@@ -454,27 +454,27 @@ export default function ChatBox({
       const safeRecipientRole = rRole || (mRole === "citizen" ? "responder" : mRole === "admin" ? "responder" : "citizen");
       const msgData = { sender_id: session.user.id, receiver_id: recipientId, sender_role: safeSenderRole, recipient_role: safeRecipientRole, incident_id: incidentId ?? null, message: inputText.trim(), image_url: imageUrl };
 
+      const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const optimisticMsg: ChatMessage = { id: tempId, sender_id: session.user.id, receiver_id: recipientId, sender_role: safeSenderRole, recipient_role: safeRecipientRole, incident_id: incidentId ?? null, message: inputText.trim(), image_url: imageUrl, created_at: new Date().toISOString() };
+      setMessages(prev => [...prev, optimisticMsg]);
+      setInputText(""); setImageFile(null); setImagePreview(null);
+
       if (!effectiveOnline) {
-        // Queue offline
-        const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
         await addToQueue({ content: inputText.trim(), timestamp: new Date().toISOString(),
           senderId: session.user.id, senderRole: safeSenderRole, recipientId, incidentId: incidentId ?? null,
           imageUrl, status: "pending", tempId,
         });
-        // Optimistic UI
-        const optimisticMsg: ChatMessage = { id: tempId, sender_id: session.user.id, receiver_id: recipientId, sender_role: safeSenderRole, recipient_role: safeRecipientRole, incident_id: incidentId ?? null, message: inputText.trim(), image_url: imageUrl, created_at: new Date().toISOString() };
-        setMessages(prev => [...prev, optimisticMsg]);
-        setInputText(""); setImageFile(null); setImagePreview(null);
         setSending(false);
         broadcastTyping(false);
         return;
       }
 
-      const { error: insertError } = await supabase.from("chat_messages").insert(msgData);
+      const { data, error: insertError } = await supabase.from("chat_messages").insert(msgData).select().single();
       broadcastTyping(false);
       if (myTypingTimeoutRef.current) clearTimeout(myTypingTimeoutRef.current);
 
       if (insertError) {
+        setMessages(prev => prev.filter(m => m.id !== tempId));
         const isTableMissing = (insertError as { code?: string }).code === "PGRST205";
         const isPermissionError = /permission|unauthorized|no row|rate limit/i.test(insertError.message ?? "");
         console.error("[ChatBox] chat_messages insert failed:", insertError);
@@ -482,7 +482,8 @@ export default function ChatBox({
         else if (isPermissionError) { alert("Chat permission error."); setSending(false); }
         else { alert(`Send failed: ${insertError.message}`); setSending(false); }
       } else {
-        setInputText(""); setImageFile(null); setImagePreview(null); setSending(false);
+        setMessages(prev => prev.map(m => (m.id === tempId ? (data as ChatMessage) : m)));
+        setSending(false);
       }
     } catch { setSending(false); setUploading(false); }
   }, [inputText, imageFile, recipientId, incidentId, isCitizen, sending, broadcastTyping, effectiveOnline, addToQueue]);
