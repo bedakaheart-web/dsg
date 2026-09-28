@@ -21,6 +21,7 @@ export interface ChatMessage {
   legacy_incident_id?: string | null;
   sender_id: string;
   receiver_id: string | null;
+  conversation_id: string | null;
   sender_role?: string | null;
   recipient_role?: string | null;
   message: string;
@@ -33,15 +34,18 @@ export interface ChatMessage {
 interface UseRealtimeChatOptions {
   incidentId?: string | null;
   broadcast?: boolean;
+  conversationId?: string | null;
 }
 
 function sameThread(
-  m: Pick<ChatMessage, "sender_id" | "receiver_id" | "incident_id">,
+  m: Pick<ChatMessage, "sender_id" | "receiver_id" | "incident_id" | "conversation_id">,
   me: string,
   target: string | null,
   broadcast: boolean,
   incidentId: string | null | undefined,
+  conversationId?: string | null,
 ): boolean {
+  if (conversationId && m.conversation_id !== conversationId) return false;
   if (String(incidentId ?? "") !== String(m.incident_id ?? "")) return false;
   if (broadcast) return m.receiver_id === null;
   if (!target) return false;
@@ -56,14 +60,14 @@ export function useRealtimeChat(
   targetUserId: string | null,
   opts: UseRealtimeChatOptions = {},
 ) {
-  const { incidentId = null, broadcast = false } = opts;
+  const { incidentId = null, broadcast = false, conversationId = null } = opts;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading]   = useState(true);
   const [sending, setSending]   = useState(false);
   const [error, setError]       = useState<string | null>(null);
-  const threadKey = `${currentUserId ?? ""}|${targetUserId ?? ""}|${broadcast ? "b" : "d"}|${incidentId ?? ""}`;
-  const threadRef = useRef({ currentUserId, targetUserId, broadcast, incidentId });
-  threadRef.current = { currentUserId, targetUserId, broadcast, incidentId };
+  const threadKey = `${currentUserId ?? ""}|${targetUserId ?? ""}|${broadcast ? "b" : "d"}|${incidentId ?? ""}|${conversationId ?? ""}`;
+  const threadRef = useRef({ currentUserId, targetUserId, broadcast, incidentId, conversationId });
+  threadRef.current = { currentUserId, targetUserId, broadcast, incidentId, conversationId };
   // Unique channel per hook instance — prevents "cannot add postgres_changes
   // callbacks after subscribe()" when multiple useRealtimeChat instances mount
   // with the same static name. Supabase reuses channels by name, so a static
@@ -75,14 +79,14 @@ export function useRealtimeChat(
   const markRead = useCallback(async () => {
     const t = threadRef.current;
     if (!t.currentUserId || t.broadcast || !t.targetUserId) return;
-    // Clear red badge: mark incoming 1-1 messages as read (real column is receiver_id, text is message)
     try {
       await supabase
         .from("chat_messages")
         .update({ is_read: true } as any)
         .eq("receiver_id", t.currentUserId)
         .eq("sender_id", t.targetUserId)
-        .eq("is_read", false);
+        .eq("is_read", false)
+        .eq("conversation_id", t.conversationId ?? "");
     } catch {}
   }, []);
 
@@ -98,6 +102,9 @@ export function useRealtimeChat(
       setLoading(true);
       setError(null);
       let query = supabase.from("chat_messages").select("*").order("created_at", { ascending: true }).limit(200);
+      if (conversationId) {
+        query = query.eq("conversation_id", conversationId);
+      }
       if (broadcast) {
         query = query.is("receiver_id", null);
       } else {
@@ -172,7 +179,7 @@ export function useRealtimeChat(
         }
       });
     return () => { supabase.removeChannel(channel); };
-  }, [currentUserId, markRead]);
+  }, [currentUserId, markRead, targetUserId, broadcast, incidentId]);
 
   // ── Send (optimistic) ────────────────────────────────────────────────────
   // Inserts into chat_messages must populate sender_role/recipient_role
@@ -224,6 +231,7 @@ export function useRealtimeChat(
       id: tempId,
       sender_id: t.currentUserId,
       receiver_id: t.broadcast ? null : t.targetUserId,
+      conversation_id: t.conversationId,
       sender_role: myRole,
       recipient_role: theirRole,
       incident_id: t.incidentId ?? null,
@@ -237,11 +245,12 @@ export function useRealtimeChat(
     // ResponderChatDrawer reads m.message, broadcast is receiver_id=null
     const insertPayload: Record<string, any> = {
       sender_id: optimistic.sender_id,
-      receiver_id: optimistic.receiver_id, // null for broadcast (receiver_id = null)
+      receiver_id: optimistic.receiver_id,
       sender_role: myRole,
       recipient_role: theirRole,
       incident_id: optimistic.incident_id,
       message: body,
+      ...(optimistic.conversation_id ? { conversation_id: optimistic.conversation_id } : {}),
     };
     const { data, error: err } = await supabase
       .from("chat_messages")

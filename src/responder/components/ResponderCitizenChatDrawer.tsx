@@ -256,11 +256,27 @@ export default function ResponderCitizenChatDrawer({
       }
     };
     void load();
-    // live updates: refresh on new chat_messages and profile changes
-    const citizenId = `resp-citizen-central-${Math.random().toString(36).slice(2, 9)}`;
-    const ch = supabase
-      .channel(citizenId)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages" }, () => void load())
+    // live updates: refresh unread counts on new chat_messages and profile/report changes
+    // Do NOT call load() on every INSERT — it resets activeCitizenId and causes view jumps.
+    // Instead, only reload conversation list for profile/report changes, and update unread counts for new messages.
+const citizenId = `resp-citizen-central-${Math.random().toString(36).slice(2, 9)}`;
+     const ch = supabase
+       .channel(citizenId)
+       .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages" }, async (payload) => {
+         const m = payload.new as any;
+         if (m.sender_id && m.sender_id !== responderId) {
+           try {
+             const { data: unreadRows } = await supabase
+               .from("chat_messages").select("sender_id").eq("receiver_id", responderId).eq("is_read", false).eq("conversation_id", m.conversation_id ?? "").limit(500);
+             const um: Record<string, number> = {};
+             for (const r of (unreadRows ?? []) as Array<{ sender_id: string }>) {
+               if (r.sender_id && r.sender_id !== responderId) um[r.sender_id] = (um[r.sender_id] ?? 0) + 1;
+             }
+             setUnreadMap(um);
+             setConversations(prev => prev.map(c => ({ ...c, unread: c.citizenId ? (um[c.citizenId] ?? 0) : 0 })));
+           } catch {}
+         }
+       })
       .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => void load())
       .on("postgres_changes", { event: "*", schema: "public", table: "reports" }, () => void load())
       .subscribe();
@@ -322,7 +338,7 @@ export default function ResponderCitizenChatDrawer({
       const hit = conversations.find(c => c.reportId === initialReportId);
       if (hit?.citizenId) setActiveCitizenId(hit.citizenId);
     }
-  }, [open, initialCitizenId, initialReportId, narrow, conversations]);
+  }, [open, initialCitizenId, initialReportId, narrow]);
 
   useEffect(() => {
     if (!open) return;

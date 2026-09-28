@@ -24,6 +24,7 @@ interface ChatMessage {
   id: string;
   sender_id: string;
   receiver_id: string | null;
+  conversation_id: string | null;
   sender_role?: string | null;
   recipient_role?: string | null;
   incident_id: string | null;
@@ -94,6 +95,7 @@ export default function ChatBox({
   const role = userRole ?? user?.role ?? "citizen";
   const isCitizen = role === "citizen";
   const recipientId = assignedResponderId ?? null;
+  const [conversationId, setConversationId] = useState<string | null>(null);
 
   const {
     isOnline: queueOnline,
@@ -261,8 +263,11 @@ export default function ChatBox({
   }, [isRecipientOnlineViaPresence]);
 
   // ── Build query ──
-  const getChatQuery = (userId: string) => {
+  const getChatQuery = (userId: string, convId?: string | null) => {
     let query = supabase.from("chat_messages").select("*");
+    if (convId) {
+      query = query.eq("conversation_id", convId);
+    }
     if (recipientId && incidentId) {
       query = query.or(`and(sender_id.eq.${userId},receiver_id.eq.${recipientId}),and(sender_id.eq.${recipientId},receiver_id.eq.${userId})`).eq("incident_id", incidentId);
     } else if (recipientId) {
@@ -284,7 +289,7 @@ export default function ChatBox({
         const { data: { user: u } } = await supabase.auth.getUser();
         if (!u) { setLoading(false); return; }
         userIdRef.current = u.id;
-        const query = getChatQuery(u.id);
+        const query = getChatQuery(u.id, conversationId);
         const { data, error } = await query;
         if (!cancelled) {
           if (error) {
@@ -301,6 +306,8 @@ export default function ChatBox({
           const allMsgs = (data as ChatMessage[]) || [];
           const deduped = Array.from(new Map(allMsgs.map(m => [m.id, m])).values());
           setMessages(deduped.slice(-MAX_VISIBLE_MESSAGES));
+          const firstConvId = deduped.length > 0 ? deduped[0].conversation_id ?? null : null;
+          if (firstConvId) setConversationId(firstConvId);
           setLoading(false);
         }
       } catch { if (!cancelled) setLoading(false); }
@@ -315,6 +322,7 @@ export default function ChatBox({
         const newMsg = payload.new as ChatMessage;
         if (!cancelled) {
           const me = userIdRef.current;
+          if (conversationId && newMsg.conversation_id !== conversationId) return;
           if (recipientId) {
             const inPair = (newMsg.sender_id === me && newMsg.receiver_id === recipientId) || (newMsg.sender_id === recipientId && newMsg.receiver_id === me);
             if (!inPair) return;
@@ -335,7 +343,7 @@ export default function ChatBox({
       })
       .subscribe();
     return () => { cancelled = true; clearTimeout(timeoutId); supabase.removeChannel(channel); };
-  }, [recipientId, incidentId, isCitizen]);
+  }, [recipientId, incidentId, isCitizen, conversationId]);
 
   // ── Mark as read — clears red badge once thread is opened/viewed ──
   // Real columns: receiver_id and message are the text columns
@@ -452,10 +460,10 @@ export default function ChatBox({
 
       const safeSenderRole = mRole || role || user?.role || "citizen";
       const safeRecipientRole = rRole || (mRole === "citizen" ? "responder" : mRole === "admin" ? "responder" : "citizen");
-      const msgData = { sender_id: session.user.id, receiver_id: recipientId, sender_role: safeSenderRole, recipient_role: safeRecipientRole, incident_id: incidentId ?? null, message: inputText.trim(), image_url: imageUrl };
+      const msgData = { sender_id: session.user.id, receiver_id: recipientId, ...(conversationId ? { conversation_id: conversationId } : {}), sender_role: safeSenderRole, recipient_role: safeRecipientRole, incident_id: incidentId ?? null, message: inputText.trim(), image_url: imageUrl };
 
       const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      const optimisticMsg: ChatMessage = { id: tempId, sender_id: session.user.id, receiver_id: recipientId, sender_role: safeSenderRole, recipient_role: safeRecipientRole, incident_id: incidentId ?? null, message: inputText.trim(), image_url: imageUrl, created_at: new Date().toISOString() };
+      const optimisticMsg: ChatMessage = { id: tempId, sender_id: session.user.id, receiver_id: recipientId, conversation_id: conversationId, sender_role: safeSenderRole, recipient_role: safeRecipientRole, incident_id: incidentId ?? null, message: inputText.trim(), image_url: imageUrl, created_at: new Date().toISOString() };
       setMessages(prev => [...prev, optimisticMsg]);
       setInputText(""); setImageFile(null); setImagePreview(null);
 
