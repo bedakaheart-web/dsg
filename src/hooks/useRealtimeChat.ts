@@ -80,13 +80,18 @@ export function useRealtimeChat(
     const t = threadRef.current;
     if (!t.currentUserId || t.broadcast || !t.targetUserId) return;
     try {
-      await supabase
+      // NOTE: only filter by conversation_id when the thread actually has
+      // one. The live DB has no conversation_id column, so an unconditional
+      // `.eq("conversation_id", "")` fails the whole update and read
+      // receipts (unread badges) never clear.
+      let q = supabase
         .from("chat_messages")
         .update({ is_read: true } as any)
         .eq("receiver_id", t.currentUserId)
         .eq("sender_id", t.targetUserId)
-        .eq("is_read", false)
-        .eq("conversation_id", t.conversationId ?? "");
+        .eq("is_read", false);
+      if (t.conversationId) q = q.eq("conversation_id", t.conversationId);
+      await q;
     } catch {}
   }, []);
 
@@ -165,7 +170,7 @@ export function useRealtimeChat(
           const m = payload.new as ChatMessage;
           const t = threadRef.current;
           setLastEvent({ msg: m, at: Date.now() });
-          if (sameThread(m, t.currentUserId!, t.targetUserId, t.broadcast, t.incidentId)) {
+          if (sameThread(m, t.currentUserId!, t.targetUserId, t.broadcast, t.incidentId, t.conversationId)) {
             setMessages(prev => (prev.some(x => x.id === m.id) ? prev : [...prev, m]));
             void markRead();
           }
@@ -189,7 +194,12 @@ export function useRealtimeChat(
   const send = useCallback(async (text: string): Promise<boolean> => {
     const t = threadRef.current;
     const body = text.trim();
-    if (!t.currentUserId || !body || (!t.broadcast && !t.targetUserId)) return false;
+    // Surface "not ready" instead of silently dropping the message — both
+    // drawers clear the composer on send, so a silent false loses broadcasts.
+    if (!t.currentUserId || !body || (!t.broadcast && !t.targetUserId)) {
+      if (!t.currentUserId) setError("Still connecting — please wait a moment and retry.");
+      return false;
+    }
     setSending(true);
     setError(null);
 
@@ -308,11 +318,19 @@ export async function fetchUnreadCounts(
   for (const row of ((rows ?? []) as Array<{ sender_id: string }>)) {
     bySender[row.sender_id] = (bySender[row.sender_id] ?? 0) + 1;
   }
-  const { count } = await supabase
-    .from("chat_messages")
-    .select("id", { count: "exact", head: true })
-    .is("receiver_id", null)
-    .neq("sender_id", currentUserId)
-    .gt("created_at", getBroadcastLastSeen(currentUserId));
-  return { bySender, broadcast: count ?? 0 };
+  // Broadcast count is best-effort: a failure here must not throw and break
+  // badge refresh in the drawers (unhandled rejection).
+  let broadcast = 0;
+  try {
+    const { count } = await supabase
+      .from("chat_messages")
+      .select("id", { count: "exact", head: true })
+      .is("receiver_id", null)
+      .neq("sender_id", currentUserId)
+      .gt("created_at", getBroadcastLastSeen(currentUserId));
+    broadcast = count ?? 0;
+  } catch (e) {
+    console.error("[useRealtimeChat] broadcast unread count failed:", e);
+  }
+  return { bySender, broadcast };
 }

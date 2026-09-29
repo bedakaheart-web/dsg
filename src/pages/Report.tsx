@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import reportBg from "../assets/report.bg.png";
 import { supabase } from "../js/supabase";
 import { useLanguage } from "../context/LanguageContext";
-import { getDepartmentCodeForType } from "../js/departments";
 
 // Translates the user's description to English server-side via the
 // translate-report edge function (free MyMemory API — no key required).
@@ -227,8 +226,12 @@ export default function Report() {
     }
     const validTypes = new Set(["fire", "medical", "crime", "flood", "disaster", "other", "accident"]);
     const normalizedType = validTypes.has(selectedType as string) ? selectedType : "other";
+    // NOTE: only columns verified to exist in the live `reports` table are
+    // sent. `incident_type` / `department` / `department_id` /
+    // `assigned_department_id` (migration 20260916000000, not applied live)
+    // make PostgREST reject the insert, so guest reports never arrived.
+    // `type` carries the routing value; the DB trigger backfills department.
     const payload: Record<string, unknown> = {
-      incident_type: normalizedType,
       type: normalizedType,
       reporter_name: reporterName.trim() || null,
       reporter_contact: reporterContact.trim() || null,
@@ -241,9 +244,6 @@ export default function Report() {
       user_id: user?.id ?? null,
       responder_id: null,
       evidence_url: evidenceUrl,
-      department: getDepartmentCodeForType(normalizedType as string),
-      department_id: null,
-      assigned_department_id: null,
     };
     const { error } = await supabase.from("reports").insert(payload);
     if (error) {

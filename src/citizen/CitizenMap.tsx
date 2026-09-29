@@ -76,7 +76,7 @@ export default function CitizenMap({ onBack }: CitizenMapProps = {}) {
   };
 
   function createIcon(category: string, isSelected = false) {
-    const cfg = CAT_CONFIG[category];
+    const cfg = CAT_CONFIG[category] ?? CAT_CONFIG.emergency;
     const size = isSelected ? 44 : 38;
     return L.divIcon({
       className: "",

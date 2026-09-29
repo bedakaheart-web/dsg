@@ -686,7 +686,7 @@ export default function ResponderIncidentsPage({ onChatCitizen }: {
   if (search.trim()) {
     const q = search.toLowerCase();
     filtered = filtered.filter((r) =>
-      r.type.includes(q) ||
+      (r.type ?? "").includes(q) ||
       (r.address ?? "").toLowerCase().includes(q) ||
       (r.reporter_name ?? "").toLowerCase().includes(q) ||
       (r.description ?? "").toLowerCase().includes(q)

@@ -118,16 +118,22 @@ const Loader = () => (
   </div>
 );
 
-class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null }> {
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null; componentStack: string | null }> {
   constructor(props: { children: React.ReactNode }) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, componentStack: null };
   }
   static getDerivedStateFromError(error: Error) {
     return { hasError: true, error };
   }
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error('[ErrorBoundary]', error, info);
+    // Log the real stack trace + which component crashed so the culprit is
+    // visible in DevTools instead of just "Something went wrong".
+    console.error('[ErrorBoundary] message:', error?.message);
+    console.error('[ErrorBoundary] stack:', (error as Error)?.stack);
+    console.error('[ErrorBoundary] componentStack:', info?.componentStack);
+    console.error('[ErrorBoundary] error object:', error, info);
+    this.setState({ componentStack: info?.componentStack ?? null });
   }
   render() {
     if (this.state.hasError) {
@@ -138,6 +144,15 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
             <div style={{ fontSize: 13, color: 'rgba(238,240,247,0.65)', marginBottom: 12, wordBreak: 'break-word' }}>
               {this.state.error?.message ?? 'Unknown error'}
             </div>
+            {this.state.error?.stack && (
+              <details style={{ textAlign: 'left', marginBottom: 12 }}>
+                <summary style={{ cursor: 'pointer', fontSize: 12, opacity: 0.7 }}>Stack trace</summary>
+                <pre style={{ fontSize: 11, whiteSpace: 'pre-wrap', wordBreak: 'break-word', opacity: 0.7, maxHeight: 200, overflow: 'auto' }}>
+                  {this.state.error.stack}
+                  {this.state.componentStack ?? ''}
+                </pre>
+              </details>
+            )}
             <button onClick={() => window.location.reload()} style={{ background: 'rgba(46,204,143,0.16)', border: '1px solid rgba(46,204,143,0.35)', color: '#2ECC8F', borderRadius: 8, padding: '10px 18px', fontWeight: 700, cursor: 'pointer' }}>
               Reload
             </button>

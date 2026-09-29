@@ -537,7 +537,7 @@ function IncidentCard({ r, onChanged }: { r: Report; onChanged: () => void }) {
       <div className="hud-inc-full-header">
         <div className="hud-inc-full-title">
           <span>{tm.icon}</span>
-          <span style={{ color: tm.color, textTransform: "capitalize" }}>{r.type.replace(/_/g," ")}</span>
+          <span style={{ color: tm.color, textTransform: "capitalize" }}>{(r.type ?? "other").replace(/_/g," ")}</span>
           <span style={{ fontSize: 9, opacity: .4, fontWeight: 400 }}>
             #{String(r.id).slice(0, 8)}
           </span>
@@ -604,7 +604,7 @@ function IncidentCard({ r, onChanged }: { r: Report; onChanged: () => void }) {
         <div className="hud-modal-overlay" onClick={() => setAction(null)}>
           <div className="hud-modal" onClick={e => e.stopPropagation()}>
             <div className="hud-modal-head">
-              <span style={{ color: tm.color, textTransform: "capitalize" }}>{r.type.replace(/_/g, " ")} #{String(r.id).slice(0, 8)}</span>
+              <span style={{ color: tm.color, textTransform: "capitalize" }}>{(r.type ?? "other").replace(/_/g, " ")} #{String(r.id).slice(0, 8)}</span>
               <button className="hud-modal-x" onClick={() => setAction(null)} aria-label="Close">×</button>
             </div>
             <div className="hud-inc-full-grid">

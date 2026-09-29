@@ -233,7 +233,9 @@ export default function ResponderChatDrawer({ responderId, open, onClose, target
     if (broadcastMode || !draft.trim()) return;
     const text = draft;
     setDraft("");
-    await send(text);
+    const ok = await send(text);
+    // Restore the composer so the message is not silently lost on failure
+    if (!ok) setDraft(text);
   };
 
   // Escape closes the drawer.

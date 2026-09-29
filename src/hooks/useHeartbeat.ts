@@ -19,14 +19,16 @@ export const IDLE_TIMEOUT_MS = 4 * 60 * 1000; // 4 minutes
 export function useHeartbeat(userId: string | null, role: HeartbeatRole | null, enabled = true) {
   const userIdRef = useRef(userId);
   const roleRef = useRef(role);
+  // Track last activity timestamp for idle detection — must live at the top
+  // level of the hook. Calling useRef() inside useEffect is an invalid hook
+  // call ("Hooks can only be called inside of the body of a function
+  // component") and crashes the whole tree via the ErrorBoundary.
+  const activityRef = useRef(Date.now());
   userIdRef.current = userId;
   roleRef.current = role;
 
   useEffect(() => {
     if (!enabled || !userId || !role) return;
-
-    // Track last activity timestamp for idle detection
-    const activityRef = useRef(Date.now());
 
     // Mark online in DB immediately so isResponderOnDuty / isCitizenOnline see it via polling
     const markOnline = async () => {

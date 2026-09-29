@@ -504,7 +504,7 @@ export default function CitizenAbout() {
               <h3>{t("about.cta.title")}</h3>
               <p>{t("about.cta.desc")}</p>
             </div>
-            <Link to="/report" className="ca-cta-btn">
+            <Link to="/citizen/report" className="ca-cta-btn">
               <FaFileAlt size={12} /> {t("about.cta.btn")} <FaChevronRight size={10} />
             </Link>
           </div>

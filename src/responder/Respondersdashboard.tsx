@@ -715,20 +715,37 @@ export default function RespondersDashboard() {
   const [isChatOpen,    setIsChatOpen]    = useState(false);
   const [chatUnread,    setChatUnread]    = useState(0);
   usePresence(responderId || null, "responder", !!responderId && authReady);
+  // Heartbeat keeps profiles.is_online/last_seen fresh while the dashboard is
+  // open so citizens see this responder in their online list (usePresence).
+  // Previously imported but never called — the row went stale ~4 min after load.
+  useHeartbeat(responderId || null, "responder", !!responderId && authReady);
+
+  // Best-effort offline mark when the tab closes (logout button already calls
+  // markOffline). Realtime Presence leave also removes them from the live set.
+  useEffect(() => {
+    if (!responderId) return;
+    const onUnload = () => { void markOffline(responderId, "responder"); };
+    window.addEventListener("beforeunload", onUnload);
+    return () => window.removeEventListener("beforeunload", onUnload);
+  }, [responderId]);
   const [citizenChatOpen, setCitizenChatOpen] = useState(false);
   const [citizenChatTarget, setCitizenChatTarget] = useState<{
     reportId: string; citizenId: string | null; citizenName: string;
   } | null>(null);
 
-  // Track when the user last viewed alerts so we only badge NEW ones
-  const lastSeenAlertTime = React.useRef<string>(
-    localStorage.getItem("dsg_alerts_last_seen") ?? new Date(0).toISOString()
-  );
+  // Track when the user last viewed alerts so we only badge NEW ones.
+  // Guarded: localStorage throws in private mode / blocked cookies — a throw
+  // during render would unmount the whole dashboard.
+  let initialSeen = new Date(0).toISOString();
+  try {
+    initialSeen = localStorage.getItem("dsg_alerts_last_seen") ?? initialSeen;
+  } catch { /* storage unavailable — fall back to epoch */ }
+  const lastSeenAlertTime = React.useRef<string>(initialSeen);
 
   const markAlertsRead = () => {
     const now = new Date().toISOString();
     lastSeenAlertTime.current = now;
-    localStorage.setItem("dsg_alerts_last_seen", now);
+    try { localStorage.setItem("dsg_alerts_last_seen", now); } catch { /* ignore */ }
     setAlertCount(0);
   };
 

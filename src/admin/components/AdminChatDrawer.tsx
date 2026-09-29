@@ -211,6 +211,8 @@ export default function AdminChatDrawer({ open, onClose, targetId = null }: {
     setDraft("");
     const ok = await send(text);
     if (!ok) {
+      // Restore the composer so the broadcast/announcement is not silently lost
+      setDraft(text);
       // useRealtimeChat already logged the full Supabase error object; also surface here for admin visibility
       console.error("[AdminChatDrawer] broadcast/1:1 send failed", { broadcast: broadcastMode, text });
     }

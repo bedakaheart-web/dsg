@@ -416,8 +416,8 @@ export default function CitizenAlertsPage() {
                 const isNew = newIds.has(a.id);
                 const isExpanded = expandedId === a.id;
                 const fullMsg = translateAlertMessage(a);
-                const loc = (a.location?.trim() ? a.location.trim() : null) ?? ((a as any).address?.trim() ? (a as any).address.trim() : null);
-                const reportLink = (a.report_id ? `/reports/${a.report_id}` : null) ?? ((a as any).report_link?.trim() ? (a as any).report_link.trim() : null);
+                const loc = (a.location?.trim() ? a.location.trim() : null) ?? (typeof (a as any).address === "string" && (a as any).address.trim() ? (a as any).address.trim() : null);
+                const reportLink = (a.report_id ? `/citizen/history/${a.report_id}` : null) ?? (typeof (a as any).report_link === "string" && (a as any).report_link.trim() ? (a as any).report_link.trim() : null);
                 return (
                   <div
                     key={a.id}

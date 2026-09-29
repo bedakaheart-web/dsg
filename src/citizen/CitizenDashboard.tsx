@@ -100,7 +100,9 @@ function usePHTClock() {
 }
 
 function useIsMobile() {
-   const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
+   const [isMobile, setIsMobile] = useState(
+     typeof window !== "undefined" ? window.innerWidth < 900 : false
+   );
    useEffect(() => {
        const handler = () => setIsMobile(window.innerWidth < 900);
        window.addEventListener("resize", handler);

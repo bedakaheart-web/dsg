@@ -698,8 +698,14 @@ export default function CitizenReport() {
       evidenceUrl = url;
     }
 
+    // NOTE: send only columns verified to exist in the live `reports` table.
+    // `incident_type` / `department*` come from migration
+    // 20260916000000_department_routing.sql which is not applied live yet —
+    // including them makes PostgREST reject the whole insert (42703) so the
+    // report never reaches the responder/admin dashboards. `type` carries
+    // the same value and the DB trigger backfills department from it once
+    // the migration is applied.
     const formData = {
-      incident_type: selectedType,
       type: selectedType,
       reporter_name: reporterName.trim() || null,
       reporter_contact: reporterContact.trim() || null,

@@ -13,7 +13,7 @@ import ChatBox from "../../components/Chatbox";
 import { useWebRTC } from "../../hooks/useWebRTC";
 import CallOverlay from "../../components/CallOverlay";
 import { FaPhone, FaVideo, FaSearch } from "react-icons/fa";
-import { usePresence, isResponderOnDuty } from "../../hooks/usePresence";
+import { usePresence } from "../../hooks/usePresence";
 
 // 🔒 CENTRALIZED: admin hidden from citizen chat per professor toggle — code retained below
 // Set to false to show admin contacts again if required by professor
@@ -46,11 +46,22 @@ export default function CitizenChatPage() {
   const [authError, setAuthError] = useState<string | null>(null);
 
   const { onlineResponders, allResponders } = usePresence(citizenId, "citizen", !!citizenId);
-  // Use presence-derived online list as source of truth — fallback to manual filter for safety
+  // Live online set from usePresence (DB is_online/last_seen/status + Realtime
+  // Presence). Updates in real time via postgres_changes — no refresh needed.
+  const onlineIdSet = useMemo(() => new Set(onlineResponders.map(r => r.id)), [onlineResponders]);
+  const isOnline = (id: string) => onlineIdSet.has(id);
+  // Full roster, online first — offline responders stay visible but greyed out
+  // and disabled so citizens always see who can actually help right now.
   const responders: ResponderContact[] = useMemo(() => {
-    if (onlineResponders.length > 0) return onlineResponders as ResponderContact[];
-    return (allResponders.filter(isResponderOnDuty) as ResponderContact[]);
-  }, [onlineResponders, allResponders]);
+    const all = allResponders as ResponderContact[];
+    return [...all].sort((a, b) => {
+      const ao = onlineIdSet.has(a.id) ? 0 : 1;
+      const bo = onlineIdSet.has(b.id) ? 0 : 1;
+      if (ao !== bo) return ao - bo;
+      return (a.full_name || a.email || "").localeCompare(b.full_name || b.email || "");
+    });
+  }, [allResponders, onlineIdSet]);
+  const onlineCount = onlineResponders.length;
 
   const effectiveResponderId = selectedResponderId ?? assignedResponderId;
   const effectiveResponderName = selectedResponderName || assignedResponderName;
@@ -176,7 +187,10 @@ export default function CitizenChatPage() {
       return;
     }
     if (responders.length > 0) {
-      const r = responders[0];
+      // Prefer an online responder so the citizen can start chatting immediately
+      const r = responders.find(x => onlineIdSet.has(x.id)) ?? responders[0];
+      // Don't auto-select an offline responder — let the citizen pick an online one
+      if (!onlineIdSet.has(r.id) && !assignedResponderId) { setNoResponder(true); return; }
       setSelectedResponderId(r.id);
       setSelectedResponderName(r.full_name || r.email || "Responder");
       const linked = allReports.find(rep => String(rep.responder_id) === String(r.id));
@@ -185,7 +199,7 @@ export default function CitizenChatPage() {
     } else if (!assignedResponderId) {
       setNoResponder(true);
     }
-  }, [loading, responders, assignedResponderId, assignedResponderName, assignedIncidentId, selectedResponderId, allReports]);
+  }, [loading, responders, onlineIdSet, assignedResponderId, assignedResponderName, assignedIncidentId, selectedResponderId, allReports]);
 
   // Keep responder selection stable when online list changes — don't auto-switch away
   useEffect(() => {
@@ -286,8 +300,8 @@ export default function CitizenChatPage() {
     return (
       <div style={{ padding: "20px", maxWidth: "700px", margin: "0 auto" }}>
         <div style={{ marginBottom: "16px", padding: "14px 18px", backgroundColor: "rgba(15,21,33,0.82)", border: "1px solid rgba(239,91,91,0.2)", borderRadius: "12px", borderLeft: "3px solid #EF5B5B" }}>
-          <div style={{ fontSize: "10px", color: "#EF5B5B", letterSpacing: "0.14em", textTransform: "uppercase", fontWeight: "700", marginBottom: "4px" }}>{t("chat.noResponder", "No Responder")}</div>
-          <div style={{ fontSize: "13px", color: "rgba(238,240,247,0.65)" }}>No responders are currently on duty. Your message will be queued and the next available responder will assist you. Please try again shortly.</div>
+          <div style={{ fontSize: "10px", color: "#EF5B5B", letterSpacing: "0.14em", textTransform: "uppercase", fontWeight: "700", marginBottom: "4px" }}>{t("chat.noResponder", "No Responders Online")}</div>
+          <div style={{ fontSize: "13px", color: "rgba(238,240,247,0.65)" }}>No responders online right now. Your message will be queued and the next available responder will assist you. Please try again shortly.</div>
         </div>
         {/* Still allow queuing — show chat disabled but with responders list empty */}
       </div>
@@ -337,10 +351,10 @@ export default function CitizenChatPage() {
               cursor: "pointer", color: "#eef0f7",
             }}
           >
-            <span style={{ width: "10px", height: "10px", borderRadius: "50%", flexShrink: 0, background: "#2ECC8F", boxShadow: "0 0 6px #2ECC8F" }} />
+            <span style={{ width: "10px", height: "10px", borderRadius: "50%", flexShrink: 0, background: assignedResponderId && isOnline(assignedResponderId) ? "#2ECC8F" : "rgba(238,240,247,0.3)", boxShadow: assignedResponderId && isOnline(assignedResponderId) ? "0 0 6px #2ECC8F" : "none" }} />
             <span style={{ flex: 1, minWidth: 0 }}>
               <span style={{ display: "block", fontSize: "13px", fontWeight: "700", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{assignedResponder.full_name || assignedResponder.email || "Responder"} {selectedResponderId === assignedResponder.id ? "✓" : ""}</span>
-              <span style={{ display: "block", fontSize: "11px", color: "rgba(46,204,143,0.8)" }}>Assigned to your active report • Tap to chat • Will take action to assist</span>
+              <span style={{ display: "block", fontSize: "11px", color: assignedResponderId && isOnline(assignedResponderId) ? "rgba(46,204,143,0.8)" : "rgba(238,240,247,0.35)" }}>{assignedResponderId && isOnline(assignedResponderId) ? "Assigned to your active report • Tap to chat • Will take action to assist" : "Assigned to your active report • Currently offline"}</span>
             </span>
             <span style={{ fontSize: "10px", color: "#2ECC8F", fontWeight: "700", letterSpacing: "0.06em" }}>PINNED</span>
           </button>
@@ -350,9 +364,9 @@ export default function CitizenChatPage() {
       <div style={{ marginBottom: "16px", backgroundColor: "rgba(15,21,33,0.82)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", overflow: "hidden" }}>
         <div style={{ padding: "12px 14px", borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ fontSize: "10px", color: "rgba(238,240,247,0.5)", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: "700", flex: 1 }}>
-            On-duty responders {responders.length > 0 ? `(${responders.length})` : ""}
+            Responders {responders.length > 0 ? `(${onlineCount} online)` : ""}
           </span>
-          <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#2ECC8F", boxShadow: "0 0 6px #2ECC8F", display: "inline-block" }} />
+          <span title={onlineCount > 0 ? `${onlineCount} responder(s) online` : "No responders online"} style={{ width: "8px", height: "8px", borderRadius: "50%", background: onlineCount > 0 ? "#2ECC8F" : "rgba(238,240,247,0.25)", boxShadow: onlineCount > 0 ? "0 0 6px #2ECC8F" : "none", display: "inline-block" }} />
           <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
             <FaSearch size={10} style={{ position: "absolute", left: 8, color: "rgba(238,240,247,0.35)" }} />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search responder" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "6px 8px 6px 24px", fontSize: 11, color: "#eef0f7", outline: "none", width: 130 }} />
@@ -366,28 +380,37 @@ export default function CitizenChatPage() {
           </div>
         )}
         <div style={{ maxHeight: "220px", overflowY: "auto" }}>
+          {onlineCount === 0 && filteredResponders.length > 0 && (
+            <div style={{ padding: "12px 14px", fontSize: "12px", color: "rgba(239,91,91,0.85)", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+              No responders online right now — they will appear as Online below when available.
+            </div>
+          )}
           {filteredResponders.length === 0 && !showAssignedSection ? (
-            <div style={{ padding: "16px", fontSize: "12px", color: "rgba(238,240,247,0.4)", textAlign: "center" }}>No responders match — they appear here when on duty and online. Your report is still visible to dispatch.</div>
+            <div style={{ padding: "16px", fontSize: "12px", color: "rgba(238,240,247,0.4)", textAlign: "center" }}>No responders online right now — they appear here when on duty and online. Your report is still visible to dispatch.</div>
           ) : (
             <>
               {otherResponders.map(r => {
                 const isSelected = selectedResponderId === r.id;
+                const online = isOnline(r.id);
                 return (
                   <button
                     key={r.id}
                     onClick={() => handleSelectResponder(r)}
+                    disabled={!online}
+                    title={online ? `Chat with ${r.full_name || r.email}` : "Responder is offline"}
                     style={{
                       display: "flex", alignItems: "center", gap: "10px", width: "100%", textAlign: "left",
-                      padding: "10px 14px", cursor: "pointer", color: "#eef0f7",
+                      padding: "10px 14px", cursor: online ? "pointer" : "not-allowed", color: "#eef0f7",
+                      opacity: online ? 1 : 0.45,
                       background: isSelected ? "rgba(46,204,143,0.08)" : "transparent",
                       border: "none", borderBottom: "1px solid rgba(255,255,255,0.06)",
                       borderLeft: isSelected ? "2px solid #2ECC8F" : "2px solid transparent",
                     }}
                   >
-                    <span style={{ width: "10px", height: "10px", borderRadius: "50%", flexShrink: 0, background: "#2ECC8F", boxShadow: "0 0 6px #2ECC8F" }} />
+                    <span style={{ width: "10px", height: "10px", borderRadius: "50%", flexShrink: 0, background: online ? "#2ECC8F" : "rgba(238,240,247,0.3)", boxShadow: online ? "0 0 6px #2ECC8F" : "none" }} />
                     <span style={{ flex: 1, minWidth: 0 }}>
                       <span style={{ display: "block", fontSize: "13px", fontWeight: "600", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.full_name || r.email || "Responder"}</span>
-                      <span style={{ display: "block", fontSize: "11px", color: "rgba(238,240,247,0.45)" }}>On duty • Chat · Audio · Video • Will respond</span>
+                      <span style={{ display: "block", fontSize: "11px", color: online ? "rgba(46,204,143,0.8)" : "rgba(238,240,247,0.35)" }}>{online ? "● Online • Chat · Audio · Video • Will respond" : "○ Offline"}</span>
                     </span>
                     {isSelected && <span style={{ fontSize: "12px", color: "#2ECC8F" }}>✓</span>}
                   </button>
@@ -420,7 +443,7 @@ export default function CitizenChatPage() {
           onEnd={handleEndCall}
           onAccept={handleAcceptCall}
           onDecline={handleDeclineCall}
-          isOnline={callState.callState === "active" ? true : responders.some(r => r.id === effectiveResponderId)}
+          isOnline={callState.callState === "active" ? true : !!effectiveResponderId && isOnline(effectiveResponderId)}
         />
       )}
     </div>

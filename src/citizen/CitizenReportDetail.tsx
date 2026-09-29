@@ -33,7 +33,7 @@ export default function CitizenReportDetail({ reportId, onBack, onViewHistory }:
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id) { setLoading(false); return; }
 
     const fetchReport = async () => {
       const { data, error } = await supabase
