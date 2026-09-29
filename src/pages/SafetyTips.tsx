@@ -243,9 +243,9 @@ export default function SafetyTips() {
   const [bagFilter,   setBagFilter]   = useState("All");
 
   const PHASE_META = {
-    before: { label: t("safetyTips.phases.beforeLabel", "Bago"), icon: "⚡", desc: t("safetyTips.phases.beforeDesc", "Maghanda nang maaga") },
-    during: { label: t("safetyTips.phases.duringLabel", "Habang Nangyayari"), icon: "🔴", desc: t("safetyTips.phases.duringDesc", "Manatiling ligtas ngayon") },
-    after:  { label: t("safetyTips.phases.afterLabel", "Pagkatapos"),  icon: "✅", desc: t("safetyTips.phases.afterDesc", "Bumangon nang ligtas") },
+    before: { label: t("safetyTips.phases.beforeLabel", "Before"), icon: "⚡", desc: t("safetyTips.phases.beforeDesc", "Prepare ahead") },
+    during: { label: t("safetyTips.phases.duringLabel", "During"), icon: "🔴", desc: t("safetyTips.phases.duringDesc", "Stay safe now") },
+    after:  { label: t("safetyTips.phases.afterLabel", "After"),  icon: "✅", desc: t("safetyTips.phases.afterDesc", "Recover safely") },
   };
 
   const toggleCheck = (id: number) =>
@@ -775,7 +775,7 @@ export default function SafetyTips() {
               </div>
 
               <div className="mt-6 p-6 bg-slate-900/80 border border-slate-700/60 rounded-xl">
-                <h4 className="text-lg font-bold text-emerald-400 mb-4">Mga Hakbang sa Kaligtasan:</h4>
+                <h4 className="text-lg font-bold text-emerald-400 mb-4">{t("safetyTips.stepsTitle", "Safety Steps")}:</h4>
                 <ul className="space-y-3 text-slate-200">
                   {activePhaseObj?.tips ? (
                     activePhaseObj.tips.map((tip, idx) => (
@@ -785,7 +785,7 @@ export default function SafetyTips() {
                       </li>
                     ))
                   ) : (
-                    <li className="text-slate-400">Maghanda ng emergency supply kit at subaybayan ang mga balita sa radyo at TV.</li>
+                    <li className="text-slate-400">Prepare an emergency supply kit and monitor news on radio and TV.</li>
                   )}
                 </ul>
               </div>

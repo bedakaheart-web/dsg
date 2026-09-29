@@ -461,9 +461,9 @@ export default function CitizenSafetyTips() {
   const [bagFilter,   setBagFilter]   = useState("All");
 
   const PHASE_META = {
-    before: { label: t("safetyTips.phases.beforeLabel", "Bago"), icon: "⚡", desc: t("safetyTips.phases.beforeDesc", "Maghanda nang maaga") },
-    during: { label: t("safetyTips.phases.duringLabel", "Habang Nangyayari"), icon: "🔴", desc: t("safetyTips.phases.duringDesc", "Manatiling ligtas ngayon") },
-    after:  { label: t("safetyTips.phases.afterLabel", "Pagkatapos"),  icon: "✅", desc: t("safetyTips.phases.afterDesc", "Bumangon nang ligtas") },
+    before: { label: t("safetyTips.phases.beforeLabel", "Before"), icon: "⚡", desc: t("safetyTips.phases.beforeDesc", "Prepare ahead") },
+    during: { label: t("safetyTips.phases.duringLabel", "During"), icon: "🔴", desc: t("safetyTips.phases.duringDesc", "Stay safe now") },
+    after:  { label: t("safetyTips.phases.afterLabel", "After"),  icon: "✅", desc: t("safetyTips.phases.afterDesc", "Recover safely") },
   };
 
   const toggleCheck = (id: number) =>
