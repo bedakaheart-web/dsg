@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useEffect, useState, type ComponentType } from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Link } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicLayout   from './components/Publiclayout';
 import { supabase }   from './js/supabase';
@@ -14,18 +14,26 @@ import { supabase }   from './js/supabase';
 // (when available) before reloading. The sessionStorage flag guarantees we reload
 // at most once and then surface the real error instead of looping forever
 // (e.g. during private/incognito where storage may throw, we still reload once).
-const PAGE_REFRESHED_KEY = 'page_refreshed';
+const PAGE_REFRESHED_KEY = 'dsg_chunk_retry_v1';
 
 function isChunkLoadError(error: unknown): boolean {
   const msg = (error as Error)?.message ?? String(error);
   return /Failed to fetch dynamically imported module|Loading chunk|ChunkLoadError|Unexpected token '<'|Importing a module script failed/i.test(msg);
 }
 
+const PRESERVED_CACHES = ['google-fonts-cache', 'gfonts-cache', 'supabase-api', 'leaflet-cdn'];
+
 async function bustServiceWorkerCache(): Promise<void> {
   try {
     if ('caches' in window) {
       const keys = await caches.keys();
-      await Promise.all(keys.map(k => caches.delete(k)));
+      // Only delete Workbox precache / app-shell caches. Preserve long-lived
+      // runtime caches (fonts, leaflet, supabase) so a chunk retry on mobile
+      // data does not force a full refetch of large static assets.
+      const deletable = keys.filter(
+        (k) => !PRESERVED_CACHES.some((keep) => k.includes(keep)),
+      );
+      await Promise.all(deletable.map(k => caches.delete(k)));
     }
     // Ask Workbox to skipWaiting if an update is waiting
     if ('serviceWorker' in navigator) {
@@ -35,13 +43,13 @@ async function bustServiceWorkerCache(): Promise<void> {
   } catch { /* ignore */ }
 }
 
-function lazyWithRetry<T extends ComponentType<Record<string, unknown>>>(
+function lazyWithRetry<T extends ComponentType<any>>(
   componentImport: () => Promise<{ default: T }>,
 ) {
   return lazy(async (): Promise<{ default: T }> => {
     let pageRefreshed = false;
     try {
-      pageRefreshed = JSON.parse(window.sessionStorage.getItem(PAGE_REFRESHED_KEY) || 'false');
+      pageRefreshed = window.sessionStorage.getItem(PAGE_REFRESHED_KEY) === 'true';
     } catch {
       pageRefreshed = false;
     }
@@ -108,6 +116,43 @@ const CitizenDirectory   = lazyWithRetry(() => import('./citizen/CitizenDirector
 const CitizenResources   = lazyWithRetry(() => import('./citizen/CitizenResources'));
 const CitizenAbout       = lazyWithRetry(() => import('./citizen/CitizenAbout'));
 const CitizenChatPage    = lazyWithRetry(() => import('./citizen/components/CitizenChatPage'));
+
+// ── Idle preload of most-likely-next routes ─────────────────────────────────
+// After first paint, fetch the chunks the user will probably visit next so
+// in-app navigation feels instant and avoids a Suspense flash on slow mobile.
+// Runs once, off the critical path, and never blocks rendering.
+function preloadCriticalRoutes(): void {
+  try {
+    const idle = (cb: () => void) => {
+      const w = window as unknown as { requestIdleCallback?: (c: () => void, o?: { timeout: number }) => void };
+      if (typeof w.requestIdleCallback === 'function') w.requestIdleCallback(cb, { timeout: 3000 });
+      else window.setTimeout(cb, 2000);
+    };
+    idle(() => {
+      // Public entry points — cheap and almost always visited
+      void import('./pages/Homepage');
+      void import('./pages/Login');
+      // Role homes — preloaded so post-login redirect has no second spinner
+      void import('./citizen/CitizenDashboard');
+      void import('./responder/Respondersdashboard');
+      void import('./admin/AdminDashboard');
+    });
+  } catch { /* ignore */ }
+}
+
+function NotFound() {
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#080c14', color: '#eef0f7', padding: 24, fontFamily: 'Inter, sans-serif' }}>
+      <div style={{ maxWidth: 480, textAlign: 'center', background: 'rgba(15,21,33,0.9)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 32 }}>
+        <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 8 }}>Page not found</div>
+        <div style={{ fontSize: 13, color: 'rgba(238,240,247,0.65)', marginBottom: 20 }}>The link you followed does not exist. It may have moved after an update.</div>
+        <Link to="/" style={{ display: 'inline-block', background: 'rgba(46,204,143,0.16)', border: '1px solid rgba(46,204,143,0.35)', color: '#2ECC8F', borderRadius: 8, padding: '10px 18px', fontWeight: 700, textDecoration: 'none' }}>
+          Back to Home
+        </Link>
+      </div>
+    </div>
+  );
+}
 
 const Loader = () => (
   <div style={{
@@ -206,6 +251,11 @@ export default function App() {
       setUser(session?.user ?? null);
     });
     return () => { cancelled = true; authListener?.subscription?.unsubscribe(); };
+  }, []);
+
+  // Preload likely-next chunks off the critical path (once, after mount)
+  useEffect(() => {
+    preloadCriticalRoutes();
   }, []);
 
   if (loading) return <Loader />;
@@ -314,8 +364,8 @@ export default function App() {
               <Route path="/privacy" element={<PublicLayout><PrivacyPolicy /></PublicLayout>} />
               <Route path="/terms" element={<PublicLayout><Terms /></PublicLayout>} />
               <Route path="/report" element={<PublicLayout><Report /></PublicLayout>} />
-          {/* ── Catch-all ─────────────────────────────────────────────────── */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          {/* ── Catch-all — explicit 404 so bad URLs / stale chunks are visible ── */}
+          <Route path="*" element={<NotFound />} />
 
         </Routes>
         </Suspense>

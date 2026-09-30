@@ -61,8 +61,9 @@ const emergency: EmergencyAgency[] = [
     phones: [
       { label: "Emergency 348",  number: "348" },
       { label: "Admin Landline", number: "(035) 226-3483" },
-      { label: "Operations",     number: "(035) 225-1911" },
-      { label: "Globe Mobile",   number: "0936 795 4163" },
+      { label: "Operations",     number: "(035) 527-0931" },
+      { label: "Globe Mobile",   number: "0997 904 6158" },
+      { label: "Smart Mobile",   number: "0924 325 0104" },
     ],
     facebook: "CDRRMO DUMAGUETE",
     notes: "City Disaster Risk Reduction & Management — 24/7 operations",
